@@ -1,0 +1,283 @@
+/* ============================================================
+   NurseDashboard.css — MD3 Compliant
+   All colors: var(--md-sys-color-*)
+   All spacing: 8dp token system
+   Breakpoints: Compact(≤599px), Medium(600-1199), Expanded(≥1200)
+   Motion: MD3 standard / standard-decelerate easing
+   ============================================================ */
+
+.nurse-page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ─── Top App Bar (MD3 Small) ─── */
+.nurse-header {
+  background-color: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  box-shadow:
+    0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent),
+    0 4px 12px color-mix(in srgb, var(--md-sys-color-shadow) 4%, transparent);
+  flex-shrink: 0;
+}
+
+/* ─── Brand ─── */
+.nurse-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.nurse-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nurse-brand-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nurse-brand-sub {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Header Right ─── */
+.nurse-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.nurse-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px 5px 5px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  cursor: default;
+  transition: background-color 0.2s ease;
+}
+
+.nurse-user-badge:hover {
+  background-color: var(--md-sys-color-surface-container);
+}
+
+.nurse-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  gap: 4px;
+  min-width: 0;
+}
+
+.nurse-user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ─── Stats Bar (MD3 Stat Cards Grid ─── */
+.nurse-stats-bar {
+  background-color: var(--md-sys-color-surface-container-low);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 16px 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ─── Main Workspace ─── */
+.nurse-main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1680px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ─── 2-Column Layout: Queue | Sheet ─── */
+.nurse-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) minmax(0, 1.5fr);
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+  animation: nurseMainIn 0.28s cubic-bezier(0.05, 0.7, 0.1, 1) both;
+}
+
+@keyframes nurseMainIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.nurse-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nurse-col--queue {
+  position: sticky;
+  top: calc(64px + 80px + 24px);
+  align-self: start;
+  max-height: calc(100vh - 64px - 80px - 48px);
+  overflow: hidden;
+}
+
+.nurse-col--sheet {
+  min-width: 0;
+}
+
+/* ─── Responsive: Medium (600–900px) ─── */
+@media (min-width: 600px) and (max-width: 900px) {
+  .nurse-header { padding: 0 20px; }
+
+  .nurse-stats-bar {
+    padding: 16px 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .nurse-main { padding: 20px; }
+
+  .nurse-layout {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .nurse-col--queue {
+    position: static;
+    max-height: 480px;
+  }
+}
+
+/* ─── Responsive: Compact (≤599px) ─── */
+@media (max-width: 599px) {
+  .nurse-header {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .nurse-brand-title {
+    font-size: 0.9rem;
+    max-width: 180px;
+  }
+
+  .nurse-brand-sub {
+    display: none;
+  }
+
+  .nurse-user-info { display: none; }
+
+  .nurse-user-badge {
+    padding: 4px;
+    background: transparent;
+    border-color: transparent;
+    gap: 0;
+  }
+
+  .nurse-stats-bar {
+    padding: 12px 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .nurse-main { padding: 12px; }
+
+  .nurse-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .nurse-col--queue {
+    position: static;
+    max-height: 420px;
+  }
+}
+
+/* ─── Responsive: Desktop Docked Layout (≥901px) ─── */
+@media (min-width: 901px) {
+  .nurse-page {
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  .nurse-main {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .nurse-layout {
+    display: grid !important;
+    grid-template-columns: 380px 1fr !important;
+    gap: 0 !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    width: 100% !important;
+  }
+
+  .nurse-col--queue {
+    position: relative !important;
+    top: 0 !important;
+    align-self: stretch !important;
+    max-height: none !important;
+    height: 100% !important;
+    border-right: 1px solid var(--md-sys-color-outline-variant) !important;
+    background-color: var(--md-sys-color-surface) !important;
+  }
+
+  .nurse-col--sheet {
+    align-self: stretch !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    background-color: var(--md-sys-color-surface-container-lowest) !important;
+  }
+}
+
+/* ─── Responsive: Expanded (≥1200px) ─── */
+@media (min-width: 1200px) {
+  .nurse-header { padding: 0 32px; }
+  .nurse-stats-bar { padding: 20px 32px; gap: 16px; }
+}

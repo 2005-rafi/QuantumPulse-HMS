@@ -1,0 +1,114 @@
+/* ============================================================
+   AdminControls.css — Reusable Search & Segmented Toggles
+   ============================================================ */
+
+.md3-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 100px;
+  padding: 4px 12px 4px 16px;
+  min-height: 44px;
+  width: 320px;
+  max-width: 100%;
+  box-sizing: border-box;
+  transition: all 180ms ease;
+}
+
+.md3-search-bar:focus-within {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+}
+
+.md3-search-icon {
+  font-size: 20px;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.8;
+}
+
+.md3-search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  flex: 1;
+  width: 100%;
+  font-family: inherit;
+}
+
+.md3-search-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.7;
+}
+
+.md3-search-clear {
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  transition: background-color 150ms ease;
+}
+
+.md3-search-clear:hover {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-search-clear span {
+  font-size: 18px;
+}
+
+/* Segmented Buttons */
+.md3-segmented-filter {
+  display: inline-flex;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 100px;
+  overflow: hidden;
+  background-color: var(--md-sys-color-surface-container-lowest, #fff);
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.md3-segmented-item {
+  border: none;
+  background: transparent;
+  padding: 8px 20px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: all 180ms ease;
+  outline: none;
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+}
+
+.md3-segmented-item:last-child {
+  border-right: none;
+}
+
+.md3-segmented-item.is-selected {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md3-segmented-item:hover:not(.is-selected) {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}
+
+.md3-segmented-item:active {
+  opacity: 0.85;
+}

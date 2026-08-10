@@ -1,0 +1,390 @@
+const visitRepository = require('./visit.repository');
+const AppError = require('../../core/errors/AppError');
+const { withTransaction } = require('../../core/database/transaction');
+const tokenGenerator = require('./token.generator');
+const Department = require('../administration/department.model');
+
+/**
+ * VisitService — Orchestrates the patient visit lifecycle.
+ *
+ * SOLID:
+ *   SRP — Each method owns one phase of the lifecycle.
+ *   OCP — Token generation delegated to TokenGenerator; adding new status
+ *         transitions doesn't require modifying existing methods.
+ *   DIP — Depends on repository and token generator abstractions.
+ */
+class VisitService {
+
+  // ── CREATE ──────────────────────────────────────────────────────────────────
+
+  async createVisit(data, registeredBy, externalSession = null) {
+    const execute = async (session) => {
+      // 1. Generate visit number (legacy identifier)
+      const dateStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
+      const randomStr = Math.floor(1000 + Math.random() * 9000).toString();
+      const visitNumber = `VST-${dateStr}-${randomStr}`;
+
+      // 2. Determine initial status
+      let status = 'WAITING_TRIAGE';
+      if (data.isDirectPharmacy) status = 'WAITING_PHARMACY';
+
+      // 3. Generate department-prefixed daily token (CARD-014, GEN-001, etc.)
+      let tokenString = null;
+      let tokenSerial = null;
+      if (!data.isDirectPharmacy) {
+        let department = null;
+        if (data.departmentId) {
+          department = await Department.findById(data.departmentId).select('name code').session(session);
+        }
+        const token = await tokenGenerator.generate(department, session);
+        tokenString = token.tokenString;
+        tokenSerial = token.tokenSerial;
+      }
+
+      // 4. Build visit document
+      const visitData = {
+        visitNumber,
+        tokenString,
+        tokenSerial,
+        patientId:       data.patientId,
+        registeredBy,
+        status,
+        visitType:       data.visitType || 'OPD',
+        reasonForVisit:  data.reasonForVisit || '',
+        departmentId:    data.departmentId || null,
+        receptionPayment: data.receptionPayment || {
+          registrationFee: 0,
+          consultationFee: 0,
+          paymentMethod:   'Cash',
+        },
+      };
+
+      // 5. Pre-assign doctor if selected at reception
+      if (data.doctorId) {
+        visitData.consultation = { doctorId: data.doctorId, status: 'DRAFT' };
+      }
+
+      return visitRepository.create(visitData, session ? { session } : {});
+    };
+
+    if (externalSession) {
+      return await execute(externalSession);
+    }
+    return withTransaction(execute);
+  }
+
+  // ── TRIAGE QUEUE ACTIONS ─────────────────────────────────────────────────────
+
+  /**
+   * Mark a patient as "called" — their token has been announced.
+   * Valid from: WAITING_TRIAGE, WAITING_DOCTOR (nurse or doctor calling).
+   */
+  async callPatient(visitId, staffId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      const callableStatuses = ['WAITING_TRIAGE', 'WAITING_DOCTOR', 'SKIPPED'];
+      if (!callableStatuses.includes(visit.status)) {
+        throw new AppError('BUSINESS_002', `Cannot call patient in status: ${visit.status}`);
+      }
+
+      return visitRepository.updateById(visitId, {
+        status: 'CALLED',
+        calledAt: new Date(),
+      }, { session });
+    });
+  }
+
+  /**
+   * Skip a patient — they did not respond when called.
+   * Token is preserved; patient can be re-queued without a new token.
+   * Valid from: CALLED only.
+   */
+  async skipVisit(visitId, staffId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      if (visit.status !== 'CALLED') {
+        throw new AppError('BUSINESS_002', `Can only skip a patient after calling. Current status: ${visit.status}`);
+      }
+
+      return visitRepository.updateById(visitId, {
+        status: 'SKIPPED',
+        skippedAt: new Date(),
+      }, { session });
+    });
+  }
+
+  /**
+   * Re-queue a skipped patient back into the triage or doctor queue.
+   * Uses the original token (no new token generated).
+   */
+  async requeueVisit(visitId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      if (visit.status !== 'SKIPPED') {
+        throw new AppError('BUSINESS_002', 'Only SKIPPED visits can be re-queued');
+      }
+
+      // If vitals have been recorded, send back to WAITING_DOCTOR; otherwise WAITING_TRIAGE
+      const hasVitals = visit.vitals && visit.vitals.chiefComplaint;
+      const nextStatus = hasVitals ? 'WAITING_DOCTOR' : 'WAITING_TRIAGE';
+
+      return visitRepository.updateById(visitId, { status: nextStatus }, { session });
+    });
+  }
+
+  // ── VITALS & CONSULTATION ────────────────────────────────────────────────────
+
+  async recordVitals(visitId, vitalsData, nurseId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      const allowedStatuses = ['WAITING_TRIAGE', 'CALLED', 'WAITING_DOCTOR'];
+      if (!allowedStatuses.includes(visit.status)) {
+        throw new AppError('BUSINESS_002', `Cannot record vitals in current status: ${visit.status}`);
+      }
+
+      // Enforce department-specific vital fields validation rules on the backend
+      if (visit.departmentId && visit.departmentId.vitalFields && visit.departmentId.vitalFields.length > 0) {
+        for (const field of visit.departmentId.vitalFields) {
+          const val = vitalsData.dynamicVitals?.[field.name];
+          if (field.required && (val === undefined || val === null || val === '')) {
+            throw new AppError('VALIDATION_001', `${field.label} is required for this department`);
+          }
+        }
+      }
+
+      // Update patient-level fields (allergies & operations) atomically
+      if (vitalsData.allergies !== undefined || vitalsData.operations !== undefined) {
+        const Patient = require('../patient/patient.model');
+        const { encryptPatient } = require('../patient/patient.repository');
+
+        const patientUpdates = {};
+        if (vitalsData.allergies !== undefined) patientUpdates.allergies = vitalsData.allergies;
+        if (vitalsData.operations !== undefined) patientUpdates.operations = vitalsData.operations;
+
+        const encrypted = encryptPatient(patientUpdates);
+        await Patient.findByIdAndUpdate(visit.patientId._id || visit.patientId, encrypted, { session });
+      }
+
+      // Separate out allergies/operations/doctorId from clinical vitals record
+      const { allergies, operations, doctorId, ...cleanVitals } = vitalsData;
+
+      const visitUpdates = {
+        vitals: {
+          ...cleanVitals,
+          recordedBy: nurseId,
+          recordedAt: new Date(),
+        },
+        status: 'WAITING_DOCTOR',
+      };
+
+      if (doctorId) {
+        visitUpdates['consultation.doctorId'] = doctorId;
+      }
+
+      return visitRepository.updateById(visitId, visitUpdates, { session });
+    });
+  }
+
+  async startConsultation(visitId, doctorId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND');
+
+      const allowedStatuses = ['WAITING_DOCTOR', 'CALLED'];
+      if (!allowedStatuses.includes(visit.status)) {
+        throw new AppError('BUSINESS_002', `Cannot start consultation from status: ${visit.status}`);
+      }
+
+      return visitRepository.updateById(visitId, {
+        status: 'IN_PROGRESS',
+        calledAt: new Date(),
+        'consultation.doctorId': doctorId,
+      }, { session });
+    });
+  }
+
+  async _populateLabOrders(labOrders) {
+    if (!labOrders || labOrders.length === 0) return labOrders;
+    try {
+      const Laboratory = require('../laboratory/laboratory.model');
+      const labIds = labOrders.map(o => o.laboratoryId);
+      const labs = await Laboratory.find({ _id: { $in: labIds } }).lean();
+      const labMap = labs.reduce((acc, lab) => {
+        acc[lab._id.toString()] = lab;
+        return acc;
+      }, {});
+
+      return labOrders.map(order => {
+        const lab = labMap[order.laboratoryId?.toString()];
+        return {
+          ...order,
+          labDepartmentId: order.labDepartmentId || (lab ? lab.departmentId : undefined),
+          labName: order.labName || (lab ? lab.name : ''),
+        };
+      });
+    } catch (err) {
+      console.error('Failed to populate lab orders metadata:', err);
+      return labOrders;
+    }
+  }
+
+  async saveConsultationDraft(visitId, data, doctorId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      const allowedStatuses = ['WAITING_DOCTOR', 'CALLED', 'IN_PROGRESS', 'WAITING_DOCTOR_REVIEW'];
+      if (!allowedStatuses.includes(visit.status)) {
+        throw new AppError('BUSINESS_002', `Cannot update consultation in current status: ${visit.status}`);
+      }
+      if (visit.consultation?.status === 'FINALIZED' && visit.status !== 'WAITING_DOCTOR_REVIEW') {
+        throw new AppError('BUSINESS_003', 'Consultation is already finalized and locked.');
+      }
+
+      const { prescribedMedications, labOrders, ...consultationData } = data;
+      const populatedLabOrders = labOrders ? await this._populateLabOrders(labOrders) : undefined;
+
+      const updatedData = {
+        status: 'IN_PROGRESS',
+        consultation: {
+          ...visit.consultation?.toObject?.() ?? visit.consultation ?? {},
+          ...consultationData,
+          doctorId,
+          status: 'DRAFT',
+          recordedAt: new Date(),
+        },
+      };
+      if (prescribedMedications) updatedData.prescribedMedications = prescribedMedications;
+      if (populatedLabOrders) updatedData.labOrders = populatedLabOrders;
+
+      return visitRepository.updateById(visitId, updatedData, { session });
+    });
+  }
+
+  async finalizeConsultation(visitId, data, doctorId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      const allowedStatuses = ['WAITING_DOCTOR', 'CALLED', 'IN_PROGRESS', 'WAITING_DOCTOR_REVIEW'];
+      if (!allowedStatuses.includes(visit.status)) {
+        throw new AppError('BUSINESS_002', `Cannot finalize consultation in current status: ${visit.status}`);
+      }
+      if (visit.consultation?.status === 'FINALIZED' && visit.status !== 'WAITING_DOCTOR_REVIEW') {
+        throw new AppError('BUSINESS_003', 'Consultation is already finalized and locked.');
+      }
+
+      const { prescribedMedications, labOrders, ...consultationData } = data;
+      const populatedLabOrders = labOrders ? await this._populateLabOrders(labOrders) : undefined;
+
+      let nextStatus = 'COMPLETED';
+      const hasPendingLabs = populatedLabOrders?.some(order => order.status !== 'COMPLETED');
+      if (hasPendingLabs) {
+        nextStatus = 'WAITING_LAB';
+      } else if (prescribedMedications?.length > 0) {
+        nextStatus = 'WAITING_PHARMACY';
+      }
+
+      const updatedData = {
+        status: nextStatus,
+        consultation: {
+          ...visit.consultation?.toObject?.() ?? visit.consultation ?? {},
+          ...consultationData,
+          doctorId,
+          status: 'FINALIZED',
+          recordedAt: new Date(),
+        },
+      };
+      if (prescribedMedications) updatedData.prescribedMedications = prescribedMedications;
+      if (populatedLabOrders) updatedData.labOrders = populatedLabOrders;
+
+      return visitRepository.updateById(visitId, updatedData, { session });
+    });
+  }
+
+  // ── QUERIES ──────────────────────────────────────────────────────────────────
+
+  async getQueue(status, filters = {}) {
+    const query = { ...filters };
+    if (query.startDate || query.endDate) {
+      query.createdAt = {};
+      if (query.startDate) {
+        const start = new Date(query.startDate);
+        start.setHours(0, 0, 0, 0);
+        query.createdAt.$gte = start;
+      }
+      if (query.endDate) {
+        const end = new Date(query.endDate);
+        end.setHours(23, 59, 59, 999);
+        query.createdAt.$lte = end;
+      }
+      delete query.startDate;
+      delete query.endDate;
+    }
+    return visitRepository.getQueue(status, query);
+  }
+
+  async getHospitalStats() {
+    const [rawStats, activeDepts, pendingLabs] = await Promise.all([
+      visitRepository.getHospitalStats(),
+      visitRepository.getActiveDepartmentLoads(),
+      visitRepository.getPendingLabPressures(),
+    ]);
+
+    let patientIn = rawStats.totalToday;
+    let patientOut = 0;
+    let pendingLab = 0;
+    let pendingPharmacy = 0;
+    let waitingTriage = 0;
+    let waitingDoctor = 0;
+    let inProgress = 0;
+    let skipped = 0;
+
+    rawStats.byStatus.forEach((stat) => {
+      if (stat._id === 'COMPLETED')         patientOut      += stat.count;
+      if (stat._id === 'WAITING_LAB')       pendingLab      += stat.count;
+      if (stat._id === 'WAITING_PHARMACY')  pendingPharmacy += stat.count;
+      if (stat._id === 'WAITING_TRIAGE')    waitingTriage   += stat.count;
+      if (stat._id === 'WAITING_DOCTOR')    waitingDoctor   += stat.count;
+      if (stat._id === 'IN_PROGRESS')       inProgress      += stat.count;
+      if (stat._id === 'SKIPPED')           skipped         += stat.count;
+    });
+
+    const departmentLoads = activeDepts.reduce((acc, curr) => {
+      if (curr._id) acc[curr._id.toString()] = curr.count;
+      return acc;
+    }, {});
+
+    const laboratoryPressures = pendingLabs.reduce((acc, curr) => {
+      if (curr._id) acc[curr._id.toString()] = curr.count;
+      return acc;
+    }, {});
+
+    return { 
+      patientIn, 
+      patientOut, 
+      pendingLab, 
+      pendingPharmacy,
+      waitingTriage,
+      waitingDoctor,
+      inProgress,
+      skipped,
+      departmentLoads,
+      laboratoryPressures
+    };
+  }
+
+  async getVisitsByPatientId(patientId) {
+    return visitRepository.find({ patientId });
+  }
+}
+
+module.exports = new VisitService();

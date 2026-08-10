@@ -1,0 +1,371 @@
+/* ── Reception Dashboard — MD3 Adaptive Layout ── */
+
+/* ── Page Shell ── */
+.reception-page {
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ── Top App Bar (MD3 Small App Bar) ── */
+.reception-header {
+  background-color: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0 24px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  /* MD3 Tonal surface elevation — depth via color, not shadow */
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent),
+              0 4px 12px color-mix(in srgb, var(--md-sys-color-shadow) 4%, transparent);
+  flex-shrink: 0;
+}
+
+/* ── Brand / Logo Area ── */
+.reception-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.reception-brand-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+}
+
+.reception-brand-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reception-brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.reception-brand-sub {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Header Right — user + logout ── */
+.reception-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.reception-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 14px 5px 5px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  cursor: default;
+  transition: background-color 0.2s ease;
+}
+
+.reception-user-badge:hover {
+  background-color: var(--md-sys-color-surface-container);
+}
+
+.reception-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reception-user-info {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+  gap: 4px;
+  min-width: 0;
+}
+
+.reception-user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+/* MD3 Icon Button — Logout */
+.reception-logout-icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.reception-logout-icon-btn:hover {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+/* ── Stats Bar (MD3 StatCards grid below header) ── */
+.reception-stats-bar {
+  background-color: var(--md-sys-color-surface-container-low);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 16px 24px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Main Content Area ── */
+.reception-main {
+  flex: 1;
+  padding: 28px 24px 100px; /* bottom pad for FAB clearance */
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ── View State Transitions ── */
+.reception-view {
+  animation: receptionViewIn 0.25s cubic-bezier(0.05, 0.7, 0.1, 1) both;
+}
+
+@keyframes receptionViewIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Print State Container ── */
+.reception-print-container {
+  max-width: 840px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.reception-print-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.reception-print-success-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reception-print-success-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reception-print-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.reception-print-subtitle {
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 2px 0 0 0;
+}
+
+/* ── Profile View ── */
+.profile-view-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.profile-view-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.profile-view-back-btn:hover {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: var(--md-sys-color-secondary);
+}
+
+.profile-view-back-btn svg {
+  flex-shrink: 0;
+}
+
+.profile-view-breadcrumb {
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.profile-view-breadcrumb-sep {
+  opacity: 0.5;
+}
+
+/* ── Responsive: Compact (mobile ≤ 599px) ── */
+@media (max-width: 599px) {
+  .reception-header {
+    padding: 0 16px;
+    height: 56px;
+  }
+
+  .reception-brand-title {
+    font-size: 0.9rem;
+    max-width: 140px;
+  }
+
+  .reception-user-name {
+    display: none;
+  }
+
+  .reception-user-info {
+    display: none;
+  }
+
+  .reception-user-badge {
+    padding: 4px;
+    background: transparent;
+    border-color: transparent;
+    gap: 0;
+  }
+
+  .reception-stats-bar {
+    padding: 12px 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .reception-main {
+    padding: 16px 12px 96px;
+  }
+
+  .reception-print-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-view-breadcrumb {
+    display: none;
+  }
+}
+
+/* ── Responsive: Medium (tablet 600–1199px) ── */
+@media (min-width: 600px) and (max-width: 1199px) {
+  .reception-header {
+    padding: 0 20px;
+  }
+
+  .reception-stats-bar {
+    padding: 16px 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .reception-main {
+    padding: 24px 20px 96px;
+  }
+}
+
+/* ── Responsive: Expanded (desktop 1200px+) ── */
+@media (min-width: 1200px) {
+  .reception-header {
+    padding: 0 32px;
+  }
+
+  .reception-stats-bar {
+    padding: 20px 32px;
+    gap: 16px;
+  }
+
+  .reception-main {
+    padding: 32px 32px 100px;
+  }
+}
+
+/* --- FAB Dock --- */
+.reception-fab-dock {
+  position: fixed;
+  bottom: var(--md-spacing-xl);
+  right: var(--md-spacing-xl);
+  z-index: 100;
+  animation: md3ScaleIn 0.3s cubic-bezier(0.2, 0, 0, 1);
+}
+

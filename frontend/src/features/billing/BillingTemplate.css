@@ -1,0 +1,186 @@
+.billing-template-container {
+  padding: 40px;
+  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #1e293b;
+  background: white;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.billing-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.hospital-name {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 5px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hospital-address, .hospital-contact {
+  margin: 2px 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.divider {
+  border: 0;
+  height: 2px;
+  background: #cbd5e1;
+  margin: 25px 0;
+}
+
+.billing-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 30px;
+}
+
+.billing-title h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.billing-title p {
+  margin: 2px 0;
+  font-size: 14px;
+  color: #475569;
+}
+
+.patient-info {
+  display: flex;
+  justify-content: space-between;
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 30px;
+}
+
+.info-column p {
+  margin: 5px 0;
+  font-size: 15px;
+}
+
+.info-column p strong {
+  color: #64748b;
+  display: inline-block;
+  min-width: 120px;
+}
+
+.billing-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 40px;
+}
+
+.billing-table th {
+  background: #f1f5f9;
+  padding: 12px 15px;
+  text-align: left;
+  font-weight: 700;
+  color: #334155;
+  border-bottom: 2px solid #cbd5e1;
+}
+
+.billing-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #0f172a;
+}
+
+.amount-col {
+  text-align: right !important;
+}
+
+.total-label {
+  text-align: right;
+  font-weight: 800;
+  font-size: 18px;
+  padding: 15px;
+}
+
+.total-amount {
+  text-align: right;
+  font-weight: 800;
+  font-size: 20px;
+  color: #059669;
+  padding: 15px;
+}
+
+.signature-area {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 80px;
+}
+
+.signature-block {
+  text-align: center;
+  width: 250px;
+}
+
+.signature-line {
+  border-top: 1px solid #94a3b8;
+  margin-bottom: 10px;
+}
+
+.signature-block p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.footer-note {
+  text-align: center;
+  margin-top: 50px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Print specific styles */
+@media print {
+  @page {
+    margin: 10mm;
+    size: auto;
+  }
+  
+  body {
+    background: white;
+  }
+  
+  .billing-template-container {
+    padding: 0;
+    max-width: 100%;
+    margin: 0;
+  }
+  
+  /* Ensure colors print correctly */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent page breaks inside table rows, signature block, and headers */
+  .billing-table tr {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+  .signature-area {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Hide scrollbars or any extra UI if they leak in */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+}

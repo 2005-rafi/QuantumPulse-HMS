@@ -1,0 +1,516 @@
+/* ============================================================
+   PatientProfile.css — Refactored with MD3 Responsive Standards
+   All colors from theme.css (--md-sys-color-*)
+   ============================================================ */
+
+.pp-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ──────────────────────────────────────────────────────
+   Compressed Patient Hero Card (Identity, Stats, Demographics)
+   ────────────────────────────────────────────────────── */
+.pp-hero-card {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+}
+
+.pp-hero__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px;
+  flex-wrap: wrap;
+}
+
+.pp-hero__identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pp-hero__id-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.pp-hero__name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.pp-hero__name {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.pp-hero__meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.92rem;
+  font-weight: 500;
+  flex-wrap: wrap;
+}
+
+.pp-hero__meta-dot {
+  color: var(--md-sys-color-outline-variant);
+}
+
+.pp-hero__meta-item--blood {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--md-sys-color-error);
+  font-weight: 700;
+}
+
+.pp-hero__meta-item--blood svg {
+  flex-shrink: 0;
+}
+
+.pp-hero__stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  padding: 10px 20px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.pp-hero__stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 70px;
+}
+
+.pp-hero__stat-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary);
+  line-height: 1.1;
+}
+
+.pp-hero__stat-label {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.pp-hero__stat-sep {
+  width: 1px;
+  height: 24px;
+  background-color: var(--md-sys-color-outline-variant);
+}
+
+.pp-hero__print {
+  flex-shrink: 0;
+}
+
+.pp-hero__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 24px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  flex-wrap: wrap;
+}
+
+.pp-hero__demographics {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.pp-hero__demo-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+.pp-hero__demo-label {
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+}
+
+.pp-hero__demo-val {
+  color: var(--md-sys-color-on-surface);
+  font-weight: 500;
+}
+
+.pp-hero__actions {
+  flex-shrink: 0;
+}
+
+/* ──────────────────────────────────────────────────────
+   Bento Box Adaptive Layout
+   ────────────────────────────────────────────────────── */
+.pp-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  align-items: start;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.pp-layout__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+.pp-layout__content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* Sidebar Containers */
+.pp-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pp-sidebar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-sidebar-vitals {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-sidebar-vitals--empty {
+  padding: 16px 0;
+  text-align: center;
+}
+
+.pp-vitals-empty-text {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.pp-vitals-bmi {
+  margin-top: 4px;
+  display: flex;
+}
+
+/* ──────────────────────────────────────────────────────
+   Tab Content Views
+   ────────────────────────────────────────────────────── */
+.pp-tab-views {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Overview Clinical Note Details */
+.pp-overview-clinical {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.pp-clinical-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-clinical-label {
+  font-size: 0.88rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-primary);
+}
+
+.pp-clinical-value {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pp-clinical-value--diagnosis {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  font-size: 1.1rem;
+}
+
+.pp-clinical-value--notes {
+  white-space: pre-wrap;
+}
+
+.pp-clinical-divider {
+  border-top-color: var(--md-sys-color-outline-variant);
+  opacity: 0.6;
+}
+
+/* Prescription meds styling */
+.pp-prescriptions-section {
+  margin-top: 8px;
+}
+
+.pp-overview-meds {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.pp-med-card {
+  padding: 16px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-med-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.pp-med-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--md-sys-color-primary);
+}
+
+.pp-med-title-row svg {
+  flex-shrink: 0;
+}
+
+.pp-med-name {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.pp-med-details {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pp-med-dot {
+  color: var(--md-sys-color-outline);
+}
+
+.pp-med-instructions {
+  font-size: 0.85rem;
+  padding: 8px 12px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  color: var(--md-sys-color-on-surface-variant);
+  border-left: 3px solid var(--md-sys-color-tertiary);
+}
+
+/* Lab Results cells */
+.pp-lab-pending {
+  color: var(--md-sys-color-on-surface-variant);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.pp-lab-results-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-lab-result-metric {
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pp-lab-result-metric strong {
+  color: var(--md-sys-color-on-surface);
+}
+
+.pp-lab-notes {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-tertiary);
+  margin-top: 4px;
+}
+
+/* Check-In form errors */
+.pp-form-error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--md-spacing-s, 12px);
+  padding: 12px 16px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 35%, transparent);
+  font-size: 0.87rem;
+  font-weight: 500;
+  margin-bottom: 16px;
+  animation: ppFadeSlide 0.25s var(--md-sys-motion-easing-standard, cubic-bezier(0.2,0,0,1)) both;
+}
+
+.pp-form-error svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+}
+
+.pp-checkin-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-spacing-m, 16px);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@keyframes ppFadeSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ──────────────────────────────────────────────────────
+   Responsive Breakpoint: Mobile (max-width: 599px)
+   ────────────────────────────────────────────────────── */
+@media (max-width: 599px) {
+  .pp-page {
+    gap: 16px;
+  }
+
+  .pp-hero__top {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .pp-hero__identity {
+    align-items: flex-start;
+  }
+
+  .pp-hero__name {
+    font-size: 1.25rem;
+  }
+
+  .pp-hero__stats {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-around;
+  }
+
+  .pp-hero__bottom {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .pp-hero__demographics {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .pp-hero__actions {
+    width: 100%;
+  }
+
+  .pp-hero__actions > * {
+    width: 100%;
+  }
+
+  .pp-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .pp-layout__sidebar {
+    position: static;
+  }
+
+  .pp-overview-meds {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   Responsive Breakpoint: Tablet (600px - 1199px)
+   ────────────────────────────────────────────────────── */
+@media (min-width: 600px) and (max-width: 1199px) {
+  .pp-hero__top {
+    padding: 20px 24px;
+  }
+
+  .pp-hero__bottom {
+    padding: 16px 24px;
+  }
+
+  .pp-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .pp-layout__sidebar {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────
+   Responsive Breakpoint: Desktop (min-width: 1200px)
+   ────────────────────────────────────────────────────── */
+@media (min-width: 1200px) {
+  .pp-page {
+    gap: 24px;
+  }
+}

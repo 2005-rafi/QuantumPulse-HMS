@@ -1,0 +1,35 @@
+/* AppShell.css
+ * Global page shell layout — the outermost wrapper for all role dashboards.
+ *
+ * Enforces:
+ *   - Full viewport height (100dvh for mobile safe area)
+ *   - Flex column direction (header → stats → main)
+ *   - No x-axis overflow (prevents horizontal scroll)
+ *   - Background from MD3 color tokens
+ */
+
+.app-shell {
+  min-height: 100dvh;
+  min-height: 100vh; /* fallback for browsers without dvh support */
+  width: 100%;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* Desktop docked layout — used by dashboards that need full-height split panes */
+@media (min-width: 901px) {
+  .app-shell--docked {
+    height: 100dvh;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .app-shell--docked .app-shell__main {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+}

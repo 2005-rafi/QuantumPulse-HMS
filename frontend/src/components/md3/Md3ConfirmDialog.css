@@ -1,0 +1,294 @@
+/* ==========================================
+   Md3ConfirmDialog.css
+   Material Design 3 Confirmation Dialog
+   Clean rounded corners, portal overlay
+   ========================================== */
+
+/* Overlay */
+.md3-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: transparent;
+}
+
+.md3-dialog-overlay--open {
+  animation: md3-overlay-in 180ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+.md3-dialog-overlay--closing {
+  animation: md3-overlay-out 200ms cubic-bezier(0.2, 0, 0.4, 1) forwards;
+}
+
+@keyframes md3-overlay-in {
+  from { background: rgba(0, 0, 0, 0); }
+  to   { background: rgba(0, 0, 0, 0.45); }
+}
+
+@keyframes md3-overlay-out {
+  from { background: rgba(0, 0, 0, 0.45); }
+  to   { background: rgba(0, 0, 0, 0); }
+}
+
+/* Surface */
+.md3-dialog-surface {
+  position: relative;
+  background: var(--md-sys-color-surface, #fffbfe);
+  border-radius: 28px;
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 24px 20px;
+  box-shadow:
+    0 4px 8px rgba(0,0,0,.12),
+    0 12px 32px rgba(0,0,0,.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  overflow: hidden;
+}
+
+.md3-dialog-surface--open {
+  animation: md3-surface-in 200ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+.md3-dialog-surface--closing {
+  animation: md3-surface-out 200ms cubic-bezier(0.4, 0, 0.8, 1) forwards;
+}
+
+@keyframes md3-surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes md3-surface-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+/* Icon wrap */
+.md3-dialog-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-dialog-icon-wrap--danger  { background: var(--md-sys-color-error-container, #ffdad6); }
+.md3-dialog-icon-wrap--warning { background: #fff3e0; }
+.md3-dialog-icon-wrap--info    { background: var(--md-sys-color-secondary-container, #e8eaf6); }
+.md3-dialog-icon-wrap--success { background: #e8f5e9; }
+
+.md3-dialog-icon {
+  font-size: 32px;
+  font-variation-settings: 'FILL' 1;
+}
+
+.md3-dialog-icon-wrap--danger  .md3-dialog-icon { color: var(--md-sys-color-error, #ba1a1a); }
+.md3-dialog-icon-wrap--warning .md3-dialog-icon { color: #e65100; }
+.md3-dialog-icon-wrap--info    .md3-dialog-icon { color: var(--md-sys-color-primary, #1565c0); }
+.md3-dialog-icon-wrap--success .md3-dialog-icon { color: #2e7d32; }
+
+/* Content */
+.md3-dialog-content {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.md3-dialog-title {
+  font-family: var(--md-sys-typescale-headline-small-font, 'Roboto', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.md3-dialog-message {
+  font-family: var(--md-sys-typescale-body-medium-font, 'Roboto', sans-serif);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Divider */
+.md3-dialog-surface::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 64px; /* above the button row */
+  height: 1px;
+  background: var(--md-sys-color-outline-variant, #e0e0e0);
+  opacity: 0.6;
+}
+
+/* Actions */
+.md3-dialog-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  width: 100%;
+  padding-top: 4px;
+}
+
+/* Base button */
+.md3-dialog-btn {
+  border: none;
+  border-radius: 100px;
+  font-family: var(--md-sys-typescale-label-large-font, 'Roboto', sans-serif);
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 100ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  min-height: 40px;
+  outline: none;
+}
+
+.md3-dialog-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Cancel */
+.md3-dialog-btn--cancel {
+  background: transparent;
+  color: var(--md-sys-color-primary, #1565c0);
+  border: 1.5px solid var(--md-sys-color-outline, #c4c4c4);
+}
+
+.md3-dialog-btn--cancel:hover:not(:disabled) {
+  background: rgba(21, 101, 192, 0.07);
+}
+
+.md3-dialog-btn--cancel:active:not(:disabled) {
+  background: rgba(21, 101, 192, 0.12);
+  transform: scale(0.98);
+}
+
+/* Confirm — danger */
+.md3-dialog-btn--confirm-danger {
+  background: var(--md-sys-color-error, #ba1a1a);
+  color: #fff;
+}
+
+.md3-dialog-btn--confirm-danger:hover:not(:disabled) {
+  background: #9b1414;
+  box-shadow: 0 2px 8px rgba(186,26,26,0.35);
+}
+
+.md3-dialog-btn--confirm-danger:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Confirm — warning */
+.md3-dialog-btn--confirm-warning {
+  background: #e65100;
+  color: #fff;
+}
+
+.md3-dialog-btn--confirm-warning:hover:not(:disabled) {
+  background: #bf360c;
+  box-shadow: 0 2px 8px rgba(230,81,0,0.30);
+}
+
+.md3-dialog-btn--confirm-warning:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Confirm — info / default */
+.md3-dialog-btn--confirm-info {
+  background: var(--md-sys-color-primary, #1565c0);
+  color: #fff;
+}
+
+.md3-dialog-btn--confirm-info:hover:not(:disabled) {
+  background: #0d47a1;
+  box-shadow: 0 2px 8px rgba(21,101,192,0.30);
+}
+
+.md3-dialog-btn--confirm-info:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Confirm — success */
+.md3-dialog-btn--confirm-success {
+  background: #2e7d32;
+  color: #fff;
+}
+
+.md3-dialog-btn--confirm-success:hover:not(:disabled) {
+  background: #1b5e20;
+  box-shadow: 0 2px 8px rgba(46,125,50,0.30);
+}
+
+.md3-dialog-btn--confirm-success:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Loading spinner */
+.md3-dialog-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: md3-spin 600ms linear infinite;
+  display: inline-block;
+}
+
+@keyframes md3-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .md3-dialog-surface {
+    border-radius: 20px;
+    max-width: 100%;
+    padding: 24px 18px 16px;
+  }
+
+  .md3-dialog-actions {
+    flex-direction: column-reverse;
+    gap: 8px;
+  }
+
+  .md3-dialog-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

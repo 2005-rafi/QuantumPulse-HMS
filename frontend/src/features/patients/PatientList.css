@@ -1,0 +1,299 @@
+/* ── Patient List — MD3 Adaptive Styles ── */
+
+/* ── Container ── */
+.patient-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  height: 100%;
+  flex: 1;
+}
+
+/* ── Main Card Shell ── */
+.patient-list-card {
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+/* ── List Header (search + title) ── */
+.patient-list-header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0 24px;
+  margin-bottom: 8px;
+}
+
+@media (min-width: 640px) {
+  .patient-list-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .patient-list-header {
+    padding: 0 24px;
+  }
+}
+
+/* ── Title Group ── */
+.patient-list-title-group h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.patient-list-title-group p {
+  font-size: 0.88rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 4px 0 0 0;
+  font-weight: 500;
+}
+
+/* ── Controls Layer ── */
+.patient-list-controls-layer {
+  padding: 12px 24px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Table/List Wrapper ── */
+.patient-table-wrapper {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+  margin-top: 16px;
+}
+
+/* ─────────────────────────────────────────────
+   MD3 Data Table (Desktop/Tablet ≥ 600px)
+   ───────────────────────────────────────────── */
+.md3-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.md3-data-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.md3-data-table th {
+  background-color: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+  padding: 12px 18px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+  white-space: nowrap;
+}
+
+.md3-data-table td {
+  padding: 13px 18px;
+  color: var(--md-sys-color-on-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  vertical-align: middle;
+}
+
+.md3-data-table tbody tr {
+  transition: background-color 0.12s ease;
+}
+
+.md3-data-table tbody tr:hover {
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.md3-data-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* ─────────────────────────────────────────────
+   Patient Mobile Cards (Compact ≤ 599px)
+   ───────────────────────────────────────────── */
+.patient-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  align-content: start;
+  gap: 16px;
+  overflow-y: auto;
+  scrollbar-gutter: stable both-edges;
+  padding: 16px 24px;
+}
+
+
+/* ── MRN Badge (table) ── */
+.patient-mrn-badge {
+  display: inline-block;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-primary-container);
+  padding: 3px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.03em;
+}
+
+.patient-name-cell {
+  font-weight: 600;
+}
+
+/* ── View Details Button (table row) ── */
+.patient-view-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  min-height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.patient-view-btn:hover {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: var(--md-sys-color-secondary);
+}
+
+/* ── Empty & Loading States ── */
+.patient-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  flex: 1;
+}
+
+.patient-empty-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant);
+  opacity: 0.7;
+}
+
+.patient-empty-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.patient-empty-subtitle {
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* Spinner animation */
+.md3-spinner {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  border: 2.5px solid color-mix(in srgb, var(--md-sys-color-primary) 24%, transparent);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Pagination Footer ── */
+.patient-pagination-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background-color: transparent;
+}
+
+@media (min-width: 640px) {
+  .patient-pagination-footer {
+    flex-direction: row;
+    padding: 14px 24px;
+  }
+}
+
+.pagination-info {
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+}
+
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  min-height: 36px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: var(--md-sys-color-secondary);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.pagination-page-indicator {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  padding: 0 8px;
+  min-width: 40px;
+  text-align: center;
+}

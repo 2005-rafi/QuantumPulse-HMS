@@ -1,0 +1,43 @@
+/* ============================================================
+   SearchSortFilterPanel.css — Reusable Filter Bar styles
+   ============================================================ */
+
+.md3-ssf-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.md3-ssf-main-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.md3-ssf-search-wrapper {
+  flex: 1;
+  min-width: 0;
+}
+
+.md3-ssf-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Responsive adjustment */
+@media (max-width: 768px) {
+  .md3-ssf-main-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .md3-ssf-actions {
+    justify-content: flex-end;
+  }
+}

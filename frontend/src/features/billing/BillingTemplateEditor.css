@@ -1,0 +1,108 @@
+.billing-editor-layout {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: var(--md-spacing-l);
+  align-items: start;
+  width: 100%;
+}
+
+.billing-editor-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-spacing-l);
+}
+
+.billing-preview-panel {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-spacing-s);
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium);
+  padding: var(--md-spacing-m);
+  max-height: calc(100vh - 120px);
+}
+
+.billing-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding-bottom: var(--md-spacing-xs);
+}
+
+.billing-preview-header h3 {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-family: inherit;
+  font-size: var(--md-sys-typescale-title-medium-font-size);
+  font-weight: 700;
+}
+
+.billing-preview-desk {
+  background-color: #cbd5e1; /* A neutral paper desk tone */
+  border-radius: var(--md-sys-shape-corner-small);
+  padding: var(--md-spacing-m);
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: start;
+}
+
+.billing-preview-sheet {
+  background-color: white;
+  width: 100%;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  transform-origin: top center;
+}
+
+/* Custom override to fit BillingTemplate cleanly in preview */
+.billing-preview-sheet .billing-template-container {
+  padding: var(--md-spacing-m);
+  font-size: 13px;
+}
+
+.billing-preview-sheet .hospital-name {
+  font-size: 20px;
+}
+
+.billing-preview-sheet .billing-title h2 {
+  font-size: 16px;
+}
+
+.billing-preview-sheet .patient-info {
+  padding: 12px;
+  margin-bottom: 16px;
+}
+
+.billing-preview-sheet .billing-table {
+  margin-bottom: 20px;
+}
+
+.billing-preview-sheet .signature-area {
+  margin-top: 40px;
+}
+
+.billing-preview-sheet .signature-block {
+  width: 120px;
+}
+
+.billing-preview-sheet .footer-note {
+  margin-top: 24px;
+}
+
+@media (max-width: 1024px) {
+  .billing-editor-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .billing-preview-panel {
+    position: static;
+    max-height: none;
+  }
+}

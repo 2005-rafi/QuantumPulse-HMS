@@ -1,0 +1,639 @@
+/* PharmacyDashboard.css
+ * Pharmacy Dispensing & Billing Dashboard styles.
+ * All styling uses MD3 color tokens. Zero inline styles in JSX.
+ * ============================================================ */
+
+/* ── Page Shell ── */
+.pharmacy-page {
+  min-height: 100dvh;
+  min-height: 100vh;
+  width: 100%;
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+/* ── Navigation Tabs ── */
+.pharmacy-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface);
+  flex-shrink: 0;
+}
+
+.pharmacy-tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  border: none;
+  border-bottom: 3px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.pharmacy-tab svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.pharmacy-tab--active {
+  color: var(--md-sys-color-primary);
+  border-bottom-color: var(--md-sys-color-primary);
+  font-weight: 700;
+}
+
+.pharmacy-tab:hover:not(.pharmacy-tab--active) {
+  color: var(--md-sys-color-on-surface);
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+/* ── Main ── */
+.pharmacy-main {
+  flex: 1;
+  padding: 24px;
+  max-width: 1440px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ── Single-view panels (search / profile) ── */
+.pharmacy-panel {
+  background-color: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: 24px;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* ── Split Pane Desk (queue tab) ── */
+.pharmacy-desk {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 64px - 50px - 48px); /* viewport - header - tabs - main padding */
+}
+
+/* ── Queue Pane ── */
+.pharmacy-queue-pane {
+  flex: 0 0 360px;
+  background-color: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: 20px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 6%, transparent);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pharmacy-queue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+.pharmacy-queue-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pharmacy-queue-count {
+  font-weight: 400;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+}
+
+.pharmacy-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.pharmacy-refresh-btn:hover {
+  background-color: var(--md-sys-color-surface-container);
+}
+
+.pharmacy-refresh-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.pharmacy-queue-empty {
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.pharmacy-queue-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pharmacy-queue-card {
+  padding: 14px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-lowest);
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.pharmacy-queue-card:hover {
+  background-color: var(--md-sys-color-surface-container-low);
+  border-color: var(--md-sys-color-primary);
+}
+
+.pharmacy-queue-card--active {
+  border: 2px solid var(--md-sys-color-primary);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary-container) 40%, transparent);
+}
+
+.pharmacy-queue-card__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.pharmacy-queue-card__name {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pharmacy-queue-card__meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pharmacy-queue-card__wait-badge {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Workspace Pane ── */
+.pharmacy-workspace-pane {
+  flex: 1;
+  background-color: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 6%, transparent);
+  overflow-y: auto;
+}
+
+/* ── Idle State ── */
+.pharmacy-idle-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--md-sys-color-on-surface-variant);
+  gap: 12px;
+  padding: 48px;
+}
+
+.pharmacy-idle-icon {
+  font-size: 3rem;
+  line-height: 1;
+}
+
+.pharmacy-idle-text {
+  margin: 0;
+  font-size: 0.95rem;
+  text-align: center;
+  max-width: 280px;
+}
+
+/* ── Dispense Desk ── */
+.pharmacy-dispense-desk {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Patient Header */
+.pharmacy-patient-header {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding-bottom: 16px;
+}
+
+.pharmacy-patient-name {
+  margin: 0 0 8px 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.pharmacy-patient-meta {
+  display: flex;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: var(--md-sys-color-on-surface-variant);
+  flex-wrap: wrap;
+}
+
+/* Clinical Context */
+.pharmacy-clinical-context {
+  background-color: var(--md-sys-color-surface-container-low);
+  padding: 20px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.pharmacy-clinical-context__title {
+  margin: 0 0 14px 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pharmacy-clinical-context__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pharmacy-label {
+  display: block;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+
+.pharmacy-value {
+  margin: 0;
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.95rem;
+}
+
+/* Medications Section */
+.pharmacy-medications__title {
+  margin: 0 0 14px 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pharmacy-no-meds {
+  color: var(--md-sys-color-error);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.pharmacy-med-table-wrapper {
+  overflow-x: auto;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.pharmacy-med-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.pharmacy-med-table thead tr {
+  background-color: var(--md-sys-color-surface-container-low);
+  border-bottom: 2px solid var(--md-sys-color-outline-variant);
+}
+
+.pharmacy-med-table th {
+  padding: 12px 14px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pharmacy-med-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+}
+
+.pharmacy-med-table tr:last-child td {
+  border-bottom: none;
+}
+
+.pharmacy-med-table__narrow {
+  width: 120px;
+}
+
+.pharmacy-med-table__action {
+  width: 60px;
+}
+
+.pharmacy-med-input {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.88rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.pharmacy-med-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+
+.pharmacy-med-input--narrow {
+  width: 100px;
+}
+
+.pharmacy-dosage-chips {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.pharmacy-dosage-chip {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.pharmacy-remove-med-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  color: var(--md-sys-color-error);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.pharmacy-remove-med-btn:hover {
+  background-color: var(--md-sys-color-error-container);
+}
+
+.pharmacy-remove-med-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pharmacy-add-med-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-top: 12px;
+  border-radius: 999px;
+  border: 1.5px dashed var(--md-sys-color-primary);
+  background: none;
+  color: var(--md-sys-color-primary);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.pharmacy-add-med-btn:hover {
+  background-color: var(--md-sys-color-primary-container);
+}
+
+.pharmacy-add-med-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Charges Section */
+.pharmacy-charges__title {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.pharmacy-charges__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.pharmacy-charge-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pharmacy-charge-input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-size: 1rem;
+  font-weight: 600;
+  transition: border-color 0.15s;
+}
+
+.pharmacy-charge-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary);
+}
+
+/* Bill Summary */
+.pharmacy-bill-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.pharmacy-bill-total {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pharmacy-bill-total__label {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pharmacy-bill-total__value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary);
+}
+
+.pharmacy-preview-btn {
+  padding: 12px 24px;
+  border-radius: 999px;
+  border: none;
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.pharmacy-preview-btn:hover {
+  opacity: 0.88;
+}
+
+/* Bill Preview Area */
+.pharmacy-preview {
+  padding: 24px;
+}
+
+.pharmacy-preview__actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.pharmacy-back-btn,
+.pharmacy-print-btn,
+.pharmacy-finalize-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, background-color 0.15s;
+}
+
+.pharmacy-back-btn {
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: none;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.pharmacy-print-btn {
+  border: 1px solid var(--md-sys-color-secondary);
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.pharmacy-finalize-btn {
+  border: none;
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  margin-left: auto;
+}
+
+.pharmacy-finalize-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pharmacy-back-btn svg,
+.pharmacy-print-btn svg,
+.pharmacy-finalize-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .pharmacy-desk {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .pharmacy-queue-pane {
+    flex: none;
+    max-height: 360px;
+  }
+
+  .pharmacy-clinical-context__grid,
+  .pharmacy-charges__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pharmacy-main {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 599px) {
+  .pharmacy-tab span {
+    display: none;
+  }
+
+  .pharmacy-tab {
+    padding: 14px 16px;
+  }
+}

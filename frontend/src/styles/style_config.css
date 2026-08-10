@@ -1,0 +1,53 @@
+/* ── MD3 Style Configuration ── */
+
+:root {
+  /* Spacing System (8dp Grid) */
+  --md-spacing-none: 0;
+  --md-spacing-xxs: 4px;
+  --md-spacing-xs: 8px;
+  --md-spacing-s: 12px;
+  --md-spacing-m: 16px;
+  --md-spacing-l: 24px;
+  --md-spacing-xl: 32px;
+  --md-spacing-xxl: 40px;
+  --md-spacing-xxxl: 48px;
+  --md-spacing-huge: 64px;
+
+  /* Shape Corners */
+  --md-sys-shape-corner-none: 0px;
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 9999px;
+
+  /* Typography Scales */
+  --md-sys-typescale-display-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  --md-sys-typescale-display-large-size: 3.5rem;
+  --md-sys-typescale-display-large-weight: 400;
+
+  --md-sys-typescale-headline-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  --md-sys-typescale-headline-large-size: 2rem;
+  --md-sys-typescale-headline-large-weight: 400;
+
+  --md-sys-typescale-title-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  --md-sys-typescale-title-large-size: 1.375rem;
+  --md-sys-typescale-title-large-weight: 400;
+
+  --md-sys-typescale-body-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  --md-sys-typescale-body-large-size: 1rem;
+  --md-sys-typescale-body-large-weight: 400;
+  --md-sys-typescale-body-large-line-height: 1.5;
+
+  --md-sys-typescale-label-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+  --md-sys-typescale-label-large-size: 0.875rem;
+  --md-sys-typescale-label-large-weight: 500;
+
+  /* Motion & Easing */
+  --md-sys-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-sys-motion-duration-short: 200ms;
+  --md-sys-motion-duration-medium: 300ms;
+  --md-sys-motion-duration-long: 500ms;
+}

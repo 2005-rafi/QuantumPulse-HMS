@@ -1,0 +1,40 @@
+/* DashboardStatsBar.css
+ * Shared stats bar layout for all role dashboards.
+ * Uses CSS grid that adapts based on --stats-count custom property.
+ */
+
+.dashboard-stats-bar {
+  background-color: var(--md-sys-color-surface-container-low);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 16px 24px;
+  display: grid;
+  grid-template-columns: repeat(var(--stats-count, 4), 1fr);
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Responsive: Medium */
+@media (min-width: 600px) and (max-width: 1199px) {
+  .dashboard-stats-bar {
+    padding: 16px 20px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+}
+
+/* Responsive: Compact */
+@media (max-width: 599px) {
+  .dashboard-stats-bar {
+    padding: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}
+
+/* Responsive: Desktop */
+@media (min-width: 1200px) {
+  .dashboard-stats-bar {
+    padding: 20px 32px;
+    gap: 16px;
+  }
+}

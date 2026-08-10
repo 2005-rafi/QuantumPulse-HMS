@@ -1,0 +1,461 @@
+/* ─────────────────────────────────────────────────────────────
+   PURE 2-LAYER GLASSMORPHISM OVERLAY & CANVAS
+   No nested dialog boxes — Physical card floats directly on glass
+   ───────────────────────────────────────────────────────────── */
+
+.id-card-print-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1200;
+  padding: 20px;
+  animation: glassOverlayFade 0.2s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+@keyframes glassOverlayFade {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(16px);
+  }
+}
+
+/* ── Direct Floating Canvas Container (No background, no borders) ── */
+.id-card-glass-canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 360px;
+  width: 100%;
+}
+
+/* ── Floating Action Bar (Pill Buttons Directly Over Glass) ── */
+.id-card-floating-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.id-card-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  white-space: nowrap;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.id-card-pill-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+}
+
+.id-card-pill-btn:active {
+  transform: translateY(0);
+}
+
+.id-card-pill-btn-secondary {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.id-card-pill-btn-secondary:hover {
+  background-color: var(--md-sys-color-surface-container-highest);
+}
+
+.id-card-pill-btn-primary {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+
+.id-card-pill-btn-primary:hover {
+  opacity: 0.94;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PHYSICAL ID CARD (CR80 Standard Ratio: 340px x 214px)
+   Floats directly on Frosted Glass Backdrop
+   ───────────────────────────────────────────────────────────── */
+.id-card-physical {
+  width: 340px;
+  height: 214px;
+  background-color: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  /* High contrast elevation shadow against dark glass */
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.45),
+    0 4px 16px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  user-select: none;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  transition: transform 0.2s cubic-bezier(0.05, 0.7, 0.1, 1);
+}
+
+/* ── Brand Header Banner ── */
+.id-card-brand-header {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.id-card-brand-logo {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background-color: color-mix(in srgb, var(--md-sys-color-on-primary) 18%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.id-card-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.id-card-hospital-name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  line-height: 1.1;
+}
+
+.id-card-doc-type {
+  font-size: 0.48rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  opacity: 0.85;
+}
+
+/* ── Card Content Area ── */
+.id-card-content {
+  flex: 1;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* ── Identity Row (Avatar + Name & UHID) ── */
+.id-card-identity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.id-card-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 2px solid var(--md-sys-color-outline-variant);
+}
+
+.id-card-identity-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.id-card-patient-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.id-card-mrn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--md-sys-color-surface-container-high);
+  padding: 2px 8px;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.mrn-label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.mrn-code {
+  font-family: monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  letter-spacing: 0.04em;
+}
+
+/* ── Key-Value Data Grid ── */
+.id-card-data-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px 12px;
+  padding: 4px 0;
+}
+
+.id-card-data-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.data-label {
+  font-size: 0.5rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.data-value {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Barcode Graphic ── */
+.id-card-barcode-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.id-card-barcode-svg {
+  width: 100%;
+  height: 16px;
+  color: var(--md-sys-color-on-surface);
+  opacity: 0.85;
+}
+
+.barcode-text {
+  font-family: monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Card Footer ── */
+.id-card-footer {
+  background-color: var(--md-sys-color-surface-container);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  padding: 4px 12px;
+  font-size: 0.52rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PRINT MEDIA QUERY (Clean 300 DPI Spooling)
+   ───────────────────────────────────────────────────────────── */
+@media print {
+  /* Center the card on standard print pages */
+  .id-card-print-portal {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    width: 100%;
+    background-color: white !important;
+  }
+
+  .id-card-physical {
+    width: 3.375in !important;
+    height: 2.125in !important;
+    box-shadow: none !important;
+    border: 1.5px solid #000000 !important;
+    background-color: white !important;
+    color: black !important;
+    border-radius: 12px !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  /* Force background colors for printable badges & headers */
+  .id-card-brand-header {
+    background-color: #0f172a !important; /* dark header */
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .id-card-avatar {
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .id-card-mrn-badge {
+    background-color: #f1f5f9 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .id-card-footer {
+    background-color: #f8fafc !important;
+    border-top: 1px solid #cbd5e1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force barcode color to print properly */
+  .id-card-barcode-svg {
+    color: black !important;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   INLINE ADAPTIVE MODE (Bento Tab Layout)
+   ───────────────────────────────────────────────────────────── */
+.id-card-inline-container {
+  display: flex;
+  flex-direction: row;
+  gap: var(--md-spacing-l, 24px);
+  padding: var(--md-spacing-l, 24px);
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.id-card-inline-preview-pane {
+  flex: 1.2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--md-spacing-l, 24px);
+  background-color: var(--md-sys-color-surface-container-lowest);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px dashed var(--md-sys-color-outline-variant);
+  min-height: 280px;
+}
+
+.id-card-inline-controls-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-spacing-m, 16px);
+  justify-content: space-between;
+}
+
+.id-card-inline-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.id-card-inline-desc {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.5;
+}
+
+.id-card-tips-box {
+  background-color: var(--md-sys-color-surface-container-high);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  padding: var(--md-spacing-m, 16px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.id-card-tips-title {
+  margin: 0 0 var(--md-spacing-xs, 8px) 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-primary);
+}
+
+.id-card-tips-box ul {
+  margin: 0;
+  padding-left: var(--md-spacing-m, 16px);
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.id-card-inline-print-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--md-spacing-xs, 8px);
+  padding: 12px 24px;
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+.id-card-inline-print-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 92%, black);
+  transform: translateY(-1px);
+}
+
+.id-card-inline-print-btn:active {
+  transform: translateY(0);
+}
+
+/* Tablet/Mobile Responsive styling */
+@media (max-width: 768px) {
+  .id-card-inline-container {
+    flex-direction: column;
+  }
+}

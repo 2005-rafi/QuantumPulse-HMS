@@ -1,0 +1,195 @@
+.md3-file-upload-card {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  background: var(--md-sys-color-surface-container-low, #f8f9fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.md3-file-upload-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.md3-file-upload-card__title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1f1f1f);
+}
+
+.md3-file-upload-card__subtitle {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #757575);
+}
+
+.md3-file-upload-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.md3-file-upload-card__select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.md3-file-upload-card__label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-file-upload-card__select {
+  padding: 0.625rem 0.875rem;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline, #79747e);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.md3-file-upload-card__select:focus {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 2px rgba(103, 80, 164, 0.15);
+}
+
+.md3-file-upload-dropzone {
+  position: relative;
+  border: 2px dashed var(--md-sys-color-outline-variant, #c4c7c5);
+  border-radius: 12px;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  background: var(--md-sys-color-surface, #ffffff);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.md3-file-upload-dropzone:hover,
+.md3-file-upload-dropzone.is-drag-active {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  background: var(--md-sys-color-primary-container, #eaddff);
+}
+
+.md3-file-upload-dropzone.has-file {
+  cursor: default;
+  border-style: solid;
+}
+
+.md3-file-upload-input {
+  display: none;
+}
+
+.md3-file-upload-dropzone__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.md3-file-upload-dropzone__icon {
+  font-size: 2rem;
+  color: var(--md-sys-color-primary, #6750a4);
+  margin-bottom: 0.25rem;
+}
+
+.md3-file-upload-dropzone__text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-file-upload-dropzone__hint {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-file-upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.5rem;
+}
+
+.md3-file-upload-preview__img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
+}
+
+.md3-file-upload-preview__icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border-radius: 8px;
+  font-size: 1.5rem;
+}
+
+.md3-file-upload-preview__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 1;
+  overflow: hidden;
+}
+
+.md3-file-upload-preview__filename {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.md3-file-upload-preview__filesize {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-file-upload-preview__remove {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-error, #b3261e);
+  font-size: 1.125rem;
+  cursor: pointer;
+  padding: 0.35rem 0.5rem;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.md3-file-upload-preview__remove:hover {
+  background: rgba(179, 38, 30, 0.1);
+}
+
+.md3-file-upload-error {
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-error, #b3261e);
+  padding: 0.375rem 0.5rem;
+  background: var(--md-sys-color-error-container, #f9dedc);
+  border-radius: 6px;
+}
+
+.md3-file-upload-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.25rem;
+}

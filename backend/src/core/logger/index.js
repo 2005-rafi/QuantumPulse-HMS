@@ -1,0 +1,25 @@
+const winston = require('winston');
+const path = require('path');
+const config = require('../config');
+
+const logger = winston.createLogger({
+  level: config.env === 'production' ? 'warn' : 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.printf(({ timestamp, level, message, ...meta }) => {
+          const metaStr = Object.keys(meta).length ? ' ' + JSON.stringify(meta) : '';
+          return `${timestamp} [${level}]: ${message}${metaStr}`;
+        })
+      ),
+    }),
+  ],
+});
+
+module.exports = logger;

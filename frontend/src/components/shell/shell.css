@@ -1,0 +1,317 @@
+/* =============================================================
+   SHARED ROLE APP SHELL — Tokenized MD3 · 4-tier breakpoints
+   Files using this:
+     - DoctorDashboard (doctor-page imports shell.css)
+     - LabDashboard (lab-dashboard imports shell.css)
+     - All future role dashboards
+   Tokens (no hardcodes): --md-spacing-*, --md-sys-color-*,
+     --md-sys-shape-corner-*, --md-sys-typescale-*, motion
+   ============================================================= */
+
+.role-app-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.role-app-header__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--md-spacing-m);
+  padding: var(--md-spacing-s) var(--md-spacing-xl);
+  min-height: 72px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.role-app-header__grid--two-col {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.role-app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--md-spacing-m);
+  min-width: 0;
+}
+
+.role-app-header__brand-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  color: var(--md-sys-color-on-primary-container);
+  background-color: var(--md-sys-color-primary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: background-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+}
+
+.role-app-header__brand-mark--secondary {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.role-app-header__brand-mark--tertiary {
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.role-app-header__brand-mark svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.role-app-header__brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.role-app-header__brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--md-spacing-xxs);
+}
+
+.role-app-header__brand-name {
+  font: var(--md-sys-typescale-title-large-font);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-app-header__brand-subtitle {
+  font: var(--md-sys-typescale-body-small-font);
+  color: var(--md-sys-color-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-app-header__tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.role-app-header__tabs > * {
+  flex-shrink: 0;
+}
+
+.role-app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--md-spacing-s);
+  justify-self: end;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.role-app-header__user {
+  display: flex;
+  align-items: center;
+  gap: var(--md-spacing-s);
+  min-width: 0;
+  max-width: 20rem;
+  padding: var(--md-spacing-xs) var(--md-spacing-s);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.role-app-header__user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--md-spacing-xxs);
+}
+
+.role-app-header__user-name {
+  font: var(--md-sys-typescale-label-large-font);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-app-header__user-role {
+  font: var(--md-sys-typescale-body-small-font);
+  color: var(--md-sys-color-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.role-app-header__button-content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--md-spacing-xs);
+}
+
+.role-app-header__refresh--spinning svg {
+  animation: role-app-header-spin var(--md-sys-motion-duration-long) linear infinite;
+}
+
+@keyframes role-app-header-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ------ LIST-DETAIL DESK (2-pane list + workspace adaptive) ------ */
+
+.list-detail-desk {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--md-spacing-l);
+  padding: var(--md-spacing-l) var(--md-spacing-xl);
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  min-height: calc(100vh - 72px - 1px);
+}
+
+.list-detail-desk__list-pane {
+  flex: 0 1 clamp(280px, 32%, 420px);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-detail-desk__detail-pane {
+  flex: 1 1 auto;
+  min-width: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   4-TIER BREAKPOINT SYSTEM (design.md §4.1)
+   XL ≥ 1241 · LG 901–1240 · MD 561–900 · SM ≤ 560
+   ============================================================ */
+
+/* Large Desktop (XL ≥ 1241) — no changes beyond defaults above */
+
+/* Desktop default (LG) 901-1240 — already handled; keep defaults */
+
+/* Tablet (MD 561-900): 2-row header stack + list→detail vertical stack */
+@media (max-width: 900px) {
+  .role-app-header__grid {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    padding: var(--md-spacing-s) var(--md-spacing-l);
+    min-height: 64px;
+    gap: var(--md-spacing-s);
+  }
+  .role-app-header__tabs {
+    grid-column: 1 / -1;
+    justify-self: stretch;
+    order: 3;
+  }
+  .role-app-header__user-role {
+    display: none;
+  }
+  .role-app-header__user {
+    max-width: 16rem;
+  }
+  .role-app-header__brand-subtitle {
+    display: none;
+  }
+
+  .list-detail-desk {
+    flex-direction: column;
+    padding: var(--md-spacing-m) var(--md-spacing-l);
+    gap: var(--md-spacing-m);
+    min-height: auto;
+  }
+  .list-detail-desk__list-pane {
+    flex: 1 1 auto;
+    width: 100%;
+    max-height: 40vh;
+    overflow: hidden;
+  }
+  .list-detail-desk__detail-pane {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    min-height: 600px;
+  }
+}
+
+/* Phone (SM ≤ 560): header single column, action bar radius top, list-pane 100% */
+@media (max-width: 560px) {
+  .role-app-header__grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    padding: var(--md-spacing-s) var(--md-spacing-m);
+    gap: var(--md-spacing-xs);
+  }
+  .role-app-header__brand {
+    width: 100%;
+  }
+  .role-app-header__actions {
+    justify-self: stretch;
+    justify-content: space-between;
+    order: 2;
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .role-app-header__user {
+    max-width: none;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .role-app-header__user-name {
+    max-width: 100%;
+  }
+  .role-app-header__tabs {
+    order: 3;
+  }
+  .role-app-header__brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .list-detail-desk {
+    flex-direction: column;
+    padding: var(--md-spacing-s) var(--md-spacing-m);
+    gap: var(--md-spacing-s);
+  }
+  .list-detail-desk__list-pane {
+    max-height: none;
+  }
+  .list-detail-desk__detail-pane {
+    min-height: 0;
+  }
+}
+
+/* Motion guard */
+@media (prefers-reduced-motion: reduce) {
+  .role-app-header,
+  .role-app-header__brand-mark,
+  .list-detail-desk,
+  .list-detail-desk__list-pane,
+  .list-detail-desk__detail-pane {
+    transition: none !important;
+    animation: none !important;
+  }
+  .role-app-header__refresh--spinning svg {
+    animation: none !important;
+  }
+}

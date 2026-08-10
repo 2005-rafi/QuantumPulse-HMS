@@ -1,0 +1,181 @@
+/* "?"? Reusable Patient Card (MD3) "?"? */
+
+.md3-patient-card {
+  position: relative;
+  background-color: var(--md-sys-color-surface);
+  border-radius: 12px; /* shape-medium */
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  cursor: pointer;
+  overflow: hidden;
+  height: 100%;
+  box-sizing: border-box;
+  transition: background-color 200ms cubic-bezier(0.2, 0, 0, 1), transform 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.md3-patient-card:hover {
+  background-color: var(--md-sys-color-surface-container-low);
+}
+
+.md3-patient-card--selected {
+  background-color: var(--md-sys-color-surface-container-high);
+}
+
+/* 3dp Interactive Rail */
+.md3-patient-card-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: transparent;
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 200ms cubic-bezier(0.2, 0, 0, 1), background-color 200ms ease;
+}
+
+.md3-patient-card:hover .md3-patient-card-rail {
+  background-color: var(--md-sys-color-secondary);
+  transform: scaleY(1);
+}
+
+.md3-patient-card--selected .md3-patient-card-rail {
+  background-color: var(--md-sys-color-primary);
+  transform: scaleY(1);
+}
+
+.md3-patient-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+/* "?"? Top Row "?"? */
+.md3-patient-card-top-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.md3-patient-card-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.md3-patient-card-name {
+  font-family: var(--md-sys-typescale-title-small-font-family);
+  font-weight: var(--md-sys-typescale-title-small-font-weight);
+  font-size: var(--md-sys-typescale-title-small-font-size);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-patient-card-demographics {
+  font-family: var(--md-sys-typescale-body-small-font-family);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-patient-card-badges {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+/* "?"? Middle Row "?"? */
+.md3-patient-card-mid-row {
+  display: flex;
+  align-items: center;
+}
+
+.md3-patient-card-mrn {
+  font-family: 'Roboto Mono', monospace; /* Monospace requirement */
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface-container-highest, #f0f0f0);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px dashed var(--md-sys-color-outline-variant);
+  display: inline-block;
+}
+
+/* 🏷️ Meta Row 🏷️ */
+.md3-patient-card-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .md3-patient-card-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+.md3-patient-card-time {
+  font-family: var(--md-sys-typescale-body-small-font-family);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-patient-card-reason {
+  font-family: var(--md-sys-typescale-body-small-font-family);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  max-width: 65%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-patient-card-meta-item {
+  font-family: var(--md-sys-typescale-body-small-font-family);
+  font-size: var(--md-sys-typescale-body-small-font-size);
+  color: var(--md-sys-color-on-surface-variant);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.md3-patient-card-meta-item svg {
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .md3-patient-card-reason {
+    max-width: 100%;
+    text-align: left;
+  }
+}
+
+
