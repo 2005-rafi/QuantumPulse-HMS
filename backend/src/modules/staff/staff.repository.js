@@ -3,7 +3,18 @@ const Staff = require('./staff.model');
 const create = (data) => Staff.create(data);
 
 const findById = (id) =>
-  Staff.findById(id).populate('departmentId', 'name').populate('roleId', 'name').lean();
+  Staff.findById(id)
+    .populate({
+      path: 'departmentId',
+      select: 'name code type status headOfDepartment description floor',
+      populate: {
+        path: 'headOfDepartment',
+        select: 'fullName employeeId position',
+      },
+    })
+    .populate('roleId', 'name description')
+    .populate('reportingTo', 'fullName employeeId position')
+    .lean();
 
 const findByEmployeeId = (employeeId) =>
   Staff.findOne({ employeeId }).populate('departmentId', 'name').populate('roleId', 'name').lean();

@@ -1,6 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './md3/Md3Widgets';
+import { useConfig } from '../contexts/ConfigContext';
+import { CURRENCY_SYMBOL } from '../constants/currency';
 import './PrintableVisitSlip.css';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -164,24 +166,24 @@ const PaymentReceipt = ({ patient, visit }) => {
         <thead>
           <tr>
             <th className="print-slip__th">Description</th>
-            <th className="print-slip__th print-slip__th--right">Amount (₹)</th>
+            <th className="print-slip__th print-slip__th--right">Amount ({CURRENCY_SYMBOL})</th>
           </tr>
         </thead>
         <tbody>
           <tr>
             <td className="print-slip__td">Registration Fee</td>
-            <td className="print-slip__td print-slip__td--right">{regFee.toFixed(2)}</td>
+            <td className="print-slip__td print-slip__td--right">{CURRENCY_SYMBOL}{regFee.toFixed(2)}</td>
           </tr>
           <tr>
             <td className="print-slip__td">Consultation Fee</td>
-            <td className="print-slip__td print-slip__td--right">{consultFee.toFixed(2)}</td>
+            <td className="print-slip__td print-slip__td--right">{CURRENCY_SYMBOL}{consultFee.toFixed(2)}</td>
           </tr>
         </tbody>
         <tfoot>
           <tr className="print-slip__total-row">
             <td className="print-slip__td print-slip__td--total">Total Paid</td>
             <td className="print-slip__td print-slip__td--right print-slip__td--total">
-              ₹ {total.toFixed(2)}
+              {CURRENCY_SYMBOL}{total.toFixed(2)}
             </td>
           </tr>
         </tfoot>
@@ -249,13 +251,18 @@ const QueueTokenCard = ({ patient, visit }) => {
 };
 
 /* ─── Shared: Slip Header ────────────────────────────────────────────────── */
-const SlipHeader = ({ title, subtitle, compact = false }) => (
-  <header className={`print-slip__header${compact ? ' print-slip__header--compact' : ''}`}>
-    <h2 className="print-slip__hospital-name">HMS — Hospital Management System</h2>
-    <h3 className="print-slip__slip-title">{title}</h3>
-    {subtitle && <p className="print-slip__slip-subtitle">{subtitle}</p>}
-  </header>
-);
+const SlipHeader = ({ title, subtitle, compact = false }) => {
+  const config = useConfig();
+  return (
+    <header className={`print-slip__header${compact ? ' print-slip__header--compact' : ''}`}>
+      <h2 className="print-slip__hospital-name">
+        {config?.SHORT_NAME || 'HMS'} — {config?.HOSPITAL_NAME || 'Hospital Management System'}
+      </h2>
+      <h3 className="print-slip__slip-title">{title}</h3>
+      {subtitle && <p className="print-slip__slip-subtitle">{subtitle}</p>}
+    </header>
+  );
+};
 
 /* ─── Root Component ─────────────────────────────────────────────────────── */
 const PrintableVisitSlip = ({ patient, visit, onClose }) => {

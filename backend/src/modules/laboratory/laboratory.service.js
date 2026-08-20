@@ -154,13 +154,24 @@ class LaboratoryService {
    */
   async getPendingVisits(departmentId) {
     const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours
+
+    // Department isolation: Technician only sees patients belonging to their department or assigned lab
+    const deptMatch = departmentId
+      ? {
+          $or: [
+            { 'labOrders.labDepartmentId': departmentId },
+            { departmentId: departmentId },
+          ],
+        }
+      : {};
+
     const query = {
+      ...deptMatch,
       $or: [
         {
           'labOrders': {
             $elemMatch: {
               status: { $in: ['PENDING_SAMPLE', 'PROCESSING'] },
-              ...(departmentId ? { labDepartmentId: departmentId } : {}),
             },
           },
         },
@@ -169,12 +180,16 @@ class LaboratoryService {
             $elemMatch: {
               status: 'COMPLETED',
               processedAt: { $gte: cutoff },
-              ...(departmentId ? { labDepartmentId: departmentId } : {}),
             },
           },
         },
+        {
+          status: 'WAITING_LAB',
+          'labOrders.0': { $exists: true },
+        },
       ],
     };
+
     return await visitRepository.find(query);
   }
 
@@ -190,7 +205,9 @@ class LaboratoryService {
       const visit = await visitRepository.findById(visitId, { session });
       if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
 
-      const order = visit.labOrders.id(orderId);
+      const order = visit.labOrders.find(
+        (o) => o._id?.toString() === orderId?.toString() || o.id?.toString() === orderId?.toString()
+      );
       if (!order) throw new AppError('NOT_FOUND', 'Lab order not found');
 
       // Department ownership check
@@ -204,10 +221,18 @@ class LaboratoryService {
         throw new AppError('BUSINESS_002', `Cannot collect sample for order in status: ${order.status}`);
       }
 
-      order.status = 'PROCESSING';
-      order.sampleCollectedAt = new Date();
+      const updatedLabOrders = visit.labOrders.map((o) => {
+        if (o._id.toString() === orderId.toString() || o.id?.toString() === orderId.toString()) {
+          return {
+            ...o,
+            status: 'PROCESSING',
+            sampleCollectedAt: new Date(),
+          };
+        }
+        return o;
+      });
 
-      return await visit.save({ session });
+      return await visitRepository.updateById(visitId, { labOrders: updatedLabOrders }, { session });
     });
   }
 
@@ -226,7 +251,9 @@ class LaboratoryService {
       const visit = await visitRepository.findById(visitId, { session });
       if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
 
-      const order = visit.labOrders.id(orderId);
+      const order = visit.labOrders.find(
+        (o) => o._id?.toString() === orderId?.toString() || o.id?.toString() === orderId?.toString()
+      );
       if (!order) throw new AppError('NOT_FOUND', 'Lab order not found');
 
       // Department ownership check
@@ -240,19 +267,32 @@ class LaboratoryService {
         throw new AppError('BUSINESS_002', `Cannot upload results for order in status: ${order.status}`);
       }
 
-      order.status = 'COMPLETED';
       // Merge new results into existing (preserves any file refs already stored as scan IDs)
-      const existing = order.results ? Object.fromEntries(order.results) : {};
-      order.results = new Map({ ...existing, ...results });
-      if (notes !== undefined) order.notes = notes;
-      order.technicianId = technicianId;
-      order.processedAt = new Date();
+      const existing = order.results ? (order.results instanceof Map ? Object.fromEntries(order.results) : order.results) : {};
+      const updatedResults = { ...existing, ...results };
+
+      const updatedLabOrders = visit.labOrders.map((o) => {
+        if (o._id.toString() === orderId.toString() || o.id?.toString() === orderId.toString()) {
+          return {
+            ...o,
+            status: 'COMPLETED',
+            results: updatedResults,
+            notes: notes !== undefined ? notes : o.notes,
+            technicianId,
+            processedAt: new Date(),
+          };
+        }
+        return o;
+      });
 
       // Promote visit status only when all lab orders are done
-      const allCompleted = visit.labOrders.every((o) => o.status === 'COMPLETED');
-      if (allCompleted) visit.status = 'WAITING_DOCTOR_REVIEW';
+      const allCompleted = updatedLabOrders.every((o) => o.status === 'COMPLETED');
+      const updateData = { labOrders: updatedLabOrders };
+      if (allCompleted) {
+        updateData.status = 'WAITING_DOCTOR_REVIEW';
+      }
 
-      return await visit.save({ session });
+      return await visitRepository.updateById(visitId, updateData, { session });
     });
   }
 
@@ -290,6 +330,22 @@ class LaboratoryService {
       sizeBytes: file.size,
       storagePath,
     });
+
+    // Update the visit document to link this scan report ID in MongoDB metadata
+    const visit = await visitRepository.findById(visitId);
+    if (visit) {
+      const updatedLabOrders = visit.labOrders.map((o) => {
+        if (o._id.toString() === orderId.toString() || o.id?.toString() === orderId.toString()) {
+          const existingResults = o.results ? (o.results instanceof Map ? Object.fromEntries(o.results) : o.results) : {};
+          return {
+            ...o,
+            results: { ...existingResults, scanReportId: scanReport._id.toString() },
+          };
+        }
+        return o;
+      });
+      await visitRepository.updateById(visitId, { labOrders: updatedLabOrders });
+    }
 
     return scanReport;
   }

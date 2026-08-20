@@ -43,6 +43,13 @@ const ERROR_CODES = {
   LAB_003: { code: 'LAB_003', message: 'File upload rejected — unsupported file type', httpStatus: 422, severity: 'WARN', retryable: false, isOperational: true },
   LAB_004: { code: 'LAB_004', message: 'File upload rejected — file size exceeds limit', httpStatus: 422, severity: 'WARN', retryable: false, isOperational: true },
   LAB_005: { code: 'LAB_005', message: 'Scan file not found on storage', httpStatus: 404, severity: 'WARN', retryable: false, isOperational: true },
+
+  // Appointments — 400/404/409/422
+  APPT_001: { code: 'APPT_001', message: 'Selected appointment slot is no longer available or full', httpStatus: 409, severity: 'WARN', retryable: false, isOperational: true },
+  APPT_002: { code: 'APPT_002', message: 'Doctor schedule or availability not configured for this date', httpStatus: 404, severity: 'WARN', retryable: false, isOperational: true },
+  APPT_003: { code: 'APPT_003', message: 'Invalid appointment status transition', httpStatus: 409, severity: 'WARN', retryable: false, isOperational: true },
+  APPT_004: { code: 'APPT_004', message: 'Doctor is not assigned or eligible for the selected department', httpStatus: 422, severity: 'WARN', retryable: false, isOperational: true },
+  APPT_005: { code: 'APPT_005', message: 'Appointment cannot be checked in outside valid window or current status', httpStatus: 400, severity: 'WARN', retryable: false, isOperational: true },
 };
 
 module.exports = ERROR_CODES;

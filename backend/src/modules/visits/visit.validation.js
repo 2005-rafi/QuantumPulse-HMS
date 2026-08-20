@@ -5,7 +5,7 @@ const createVisitSchema = Joi.object({
   isDirectPharmacy: Joi.boolean().optional(),
   departmentId: Joi.string().optional(),
   doctorId: Joi.string().optional(),
-  visitType: Joi.string().valid('OPD', 'IPD').optional(),
+  visitType: Joi.string().valid('OPD', 'IPD', 'EMERGENCY').optional(),
   reasonForVisit: Joi.string().allow('').optional(),
   receptionPayment: Joi.object({
     registrationFee: Joi.number().min(0).optional(),
@@ -80,9 +80,21 @@ const finalizeConsultationSchema = Joi.object({
   ).optional()
 });
 
+const cancelVisitSchema = Joi.object({
+  cancellationReason: Joi.string().trim().min(3).max(500).optional().messages({
+    'string.min': 'Cancellation reason must be at least 3 characters',
+  }),
+  reason: Joi.string().trim().min(3).max(500).optional().messages({
+    'string.min': 'Cancellation reason must be at least 3 characters',
+  }),
+}).or('cancellationReason', 'reason').messages({
+  'object.missing': 'Cancellation reason is required',
+});
+
 module.exports = {
   createVisitSchema,
   recordVitalsSchema,
   saveDraftSchema,
-  finalizeConsultationSchema
+  finalizeConsultationSchema,
+  cancelVisitSchema,
 };

@@ -1,15 +1,16 @@
-import React, { useRef } from 'react';
+import React from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../contexts/ConfigContext';
 import { usePharmacyDispense } from '../hooks/usePharmacyDispense';
-import { useReactToPrint } from 'react-to-print';
 import CommonHeader from '../components/shell/CommonHeader';
 import PatientList from '../features/patients/PatientList';
 import PatientProfile from '../features/patients/PatientProfile';
 import BillingTemplate from '../features/billing/BillingTemplate';
 import { Icon } from '../components/md3/Md3Widgets';
-import { timeSince } from '../utils/dateFormatting';
+import { timeSince, formatQueueWaitTime } from '../utils/dateFormatting';
+import { CURRENCY_SYMBOL } from '../constants/currency';
 import './PharmacyDashboard.css';
 
 /**
@@ -30,7 +31,6 @@ const PharmacyDashboard = () => {
   const { user, logout } = useAuth();
   const config = useConfig();
   const navigate = useNavigate();
-  const billRef = useRef();
 
   const {
     activeTab,
@@ -39,6 +39,7 @@ const PharmacyDashboard = () => {
     queue,
     selectedVisit,
     medications,
+    validationErrors,
     consultationFee,
     setConsultationFee,
     labCharges,
@@ -66,7 +67,9 @@ const PharmacyDashboard = () => {
     navigate('/login', { replace: true });
   };
 
-  const handlePrint = useReactToPrint({ content: () => billRef.current });
+  const handlePrint = () => {
+    window.print();
+  };
 
   return (
     <div className="pharmacy-page">
@@ -167,15 +170,23 @@ const PharmacyDashboard = () => {
                       aria-label={`${v.patientId.firstName} ${v.patientId.lastName}, waiting ${timeSince(v.updatedAt)}`}
                     >
                       <div className="pharmacy-queue-card__info">
-                        <h3 className="pharmacy-queue-card__name">
-                          {v.patientId.firstName} {v.patientId.lastName}
-                        </h3>
+                        <div className="pharmacy-queue-card__top-row">
+                          <h3 className="pharmacy-queue-card__name">
+                            {v.patientId.firstName} {v.patientId.lastName}
+                          </h3>
+                          {v.tokenNumber && (
+                            <span className="pharmacy-queue-card__token-chip">
+                              #{v.tokenNumber}
+                            </span>
+                          )}
+                        </div>
                         <p className="pharmacy-queue-card__meta">
-                          {v.patientId.age} yrs · {v.patientId.gender}
+                          {v.patientId.age} yrs · {v.patientId.gender} {v.patientId.mrn ? `· ${v.patientId.mrn}` : ''}
                         </p>
                       </div>
                       <span className="pharmacy-queue-card__wait-badge">
-                        WAITING {timeSince(v.updatedAt)}
+                        <span className="material-symbols-rounded">schedule</span>
+                        <span>{formatQueueWaitTime(v.updatedAt || v.createdAt)}</span>
                       </span>
                     </article>
                   ))}
@@ -187,7 +198,7 @@ const PharmacyDashboard = () => {
             <section className="pharmacy-workspace-pane">
               {!selectedVisit ? (
                 <div className="pharmacy-idle-state">
-                  <span className="pharmacy-idle-icon" aria-hidden="true">💊</span>
+                  <span className="material-symbols-rounded text-primary" style={{ fontSize: '64px', color: 'var(--md-sys-color-primary)' }} aria-hidden="true">medication</span>
                   <p className="pharmacy-idle-text">
                     Select a patient to view and dispense their prescription.
                   </p>
@@ -232,7 +243,7 @@ const PharmacyDashboard = () => {
                   {/* Medication dispense table */}
                   <div className="pharmacy-medications">
                     <h3 className="pharmacy-medications__title">
-                      <span>💊</span>
+                      <span className="material-symbols-rounded text-primary" style={{ fontSize: '24px', marginRight: '8px', color: 'var(--md-sys-color-primary)' }}>pill</span>
                       {selectedVisit.consultation?.doctorId ? 'Prescribed Medications' : 'Direct Dispense Cart'}
                     </h3>
 
@@ -250,7 +261,7 @@ const PharmacyDashboard = () => {
                               <th>Medicine Name</th>
                               <th>Alternative Given</th>
                               <th className="pharmacy-med-table__narrow">Quantity *</th>
-                              <th className="pharmacy-med-table__narrow">Amount (₹) *</th>
+                              <th className="pharmacy-med-table__narrow">Amount ({CURRENCY_SYMBOL}) *</th>
                               <th className="pharmacy-med-table__action">Action</th>
                             </tr>
                           </thead>
@@ -265,28 +276,31 @@ const PharmacyDashboard = () => {
                                     onChange={(e) => handleMedChange(index, 'recommended', e.target.value)}
                                     className="pharmacy-med-input"
                                   />
-                                  {med.dosageSchedule && (
-                                    <div className="pharmacy-dosage-chips">
-                                      <span className="pharmacy-dosage-chip">
-                                        🌅 M: {med.dosageSchedule.morning?.count ?? 0}
-                                        {med.dosageSchedule.morning?.timing !== 'N/A'
-                                          ? ` (${(med.dosageSchedule.morning?.timing || '').replace('_', ' ')})`
-                                          : ''}
-                                      </span>
-                                      <span className="pharmacy-dosage-chip">
-                                        ☀️ A: {med.dosageSchedule.afternoon?.count ?? 0}
-                                        {med.dosageSchedule.afternoon?.timing !== 'N/A'
-                                          ? ` (${(med.dosageSchedule.afternoon?.timing || '').replace('_', ' ')})`
-                                          : ''}
-                                      </span>
-                                      <span className="pharmacy-dosage-chip">
-                                        🌙 N: {med.dosageSchedule.night?.count ?? 0}
-                                        {med.dosageSchedule.night?.timing !== 'N/A'
-                                          ? ` (${(med.dosageSchedule.night?.timing || '').replace('_', ' ')})`
-                                          : ''}
-                                      </span>
-                                    </div>
-                                  )}
+                                    {med.dosageSchedule && (
+                                      <div className="pharmacy-dosage-chips">
+                                        <span className="pharmacy-dosage-chip">
+                                          <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>light_mode</span>
+                                          M: {med.dosageSchedule.morning?.count ?? 0}
+                                          {med.dosageSchedule.morning?.timing !== 'N/A'
+                                            ? ` (${(med.dosageSchedule.morning?.timing || '').replace('_', ' ')})`
+                                            : ''}
+                                        </span>
+                                        <span className="pharmacy-dosage-chip">
+                                          <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>sunny</span>
+                                          A: {med.dosageSchedule.afternoon?.count ?? 0}
+                                          {med.dosageSchedule.afternoon?.timing !== 'N/A'
+                                            ? ` (${(med.dosageSchedule.afternoon?.timing || '').replace('_', ' ')})`
+                                            : ''}
+                                        </span>
+                                        <span className="pharmacy-dosage-chip">
+                                          <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>bedtime</span>
+                                          N: {med.dosageSchedule.night?.count ?? 0}
+                                          {med.dosageSchedule.night?.timing !== 'N/A'
+                                            ? ` (${(med.dosageSchedule.night?.timing || '').replace('_', ' ')})`
+                                            : ''}
+                                        </span>
+                                      </div>
+                                    )}
                                 </td>
                                 <td>
                                   <input
@@ -298,24 +312,34 @@ const PharmacyDashboard = () => {
                                   />
                                 </td>
                                 <td>
-                                  <input
-                                    type="text"
-                                    placeholder="e.g. 10"
-                                    value={med.quantity}
-                                    onChange={(e) => handleMedChange(index, 'quantity', e.target.value)}
-                                    className="pharmacy-med-input pharmacy-med-input--narrow"
-                                  />
+                                  <div className="pharmacy-input-wrap">
+                                    <input
+                                      type="text"
+                                      placeholder="e.g. 10"
+                                      value={med.quantity}
+                                      onChange={(e) => handleMedChange(index, 'quantity', e.target.value)}
+                                      className={`pharmacy-med-input pharmacy-med-input--narrow ${validationErrors[index]?.quantity ? 'pharmacy-med-input--error' : ''}`}
+                                    />
+                                    {validationErrors[index]?.quantity && (
+                                      <span className="pharmacy-input-error-msg">{validationErrors[index].quantity}</span>
+                                    )}
+                                  </div>
                                 </td>
                                 <td>
-                                  <input
-                                    type="number"
-                                    placeholder="0.00"
-                                    value={med.amount}
-                                    onChange={(e) => handleMedChange(index, 'amount', e.target.value)}
-                                    className="pharmacy-med-input pharmacy-med-input--narrow"
-                                    min="0"
-                                    step="0.01"
-                                  />
+                                  <div className="pharmacy-input-wrap">
+                                    <input
+                                      type="number"
+                                      placeholder="0.00"
+                                      value={med.amount}
+                                      onChange={(e) => handleMedChange(index, 'amount', e.target.value)}
+                                      className={`pharmacy-med-input pharmacy-med-input--narrow ${validationErrors[index]?.amount ? 'pharmacy-med-input--error' : ''}`}
+                                      min="0"
+                                      step="0.01"
+                                    />
+                                    {validationErrors[index]?.amount && (
+                                      <span className="pharmacy-input-error-msg">{validationErrors[index].amount}</span>
+                                    )}
+                                  </div>
                                 </td>
                                 <td>
                                   <button
@@ -349,7 +373,7 @@ const PharmacyDashboard = () => {
                     <h3 className="pharmacy-charges__title">Additional Charges</h3>
                     <div className="pharmacy-charges__grid">
                       <label className="pharmacy-charge-label">
-                        Consultation Fee (₹)
+                        Consultation Fee ({CURRENCY_SYMBOL})
                         <input
                           type="number"
                           value={consultationFee}
@@ -359,7 +383,7 @@ const PharmacyDashboard = () => {
                         />
                       </label>
                       <label className="pharmacy-charge-label">
-                        Lab Charges (₹)
+                        Lab Charges ({CURRENCY_SYMBOL})
                         <input
                           type="number"
                           value={labCharges}
@@ -375,7 +399,7 @@ const PharmacyDashboard = () => {
                   <div className="pharmacy-bill-summary">
                     <div className="pharmacy-bill-total">
                       <span className="pharmacy-bill-total__label">Total Amount Due</span>
-                      <span className="pharmacy-bill-total__value">₹{totalBillAmount}</span>
+                      <span className="pharmacy-bill-total__value">{CURRENCY_SYMBOL}{totalBillAmount}</span>
                     </div>
                     <button
                       type="button"
@@ -411,20 +435,45 @@ const PharmacyDashboard = () => {
                       onClick={handleFinalize}
                       disabled={submitting}
                     >
-                      {submitting ? 'Saving…' : '✔ Finalize & Complete Visit'}
+                      {submitting ? 'Saving…' : (
+                        <>
+                          <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '8px', verticalAlign: 'middle' }}>check_circle</span>
+                          Finalize & Complete Visit
+                        </>
+                      )}
                     </button>
                   </div>
-                  <div ref={billRef}>
+                  
+                  {/* On-screen Preview */}
+                  <div className="billing-template-screen-card">
                     <BillingTemplate
                       visit={selectedVisit}
                       medications={medications}
                       consultationFee={Number(consultationFee)}
                       labCharges={Number(labCharges)}
+                      total={Number(totalBillAmount)}
                       hospitalInfo={hospitalInfo}
                       labels={labels}
                       customFields={customFields}
                     />
                   </div>
+
+                  {/* High-Fidelity Print Portal */}
+                  {createPortal(
+                    <div className="print-only-document">
+                      <BillingTemplate
+                        visit={selectedVisit}
+                        medications={medications}
+                        consultationFee={Number(consultationFee)}
+                        labCharges={Number(labCharges)}
+                        total={Number(totalBillAmount)}
+                        hospitalInfo={hospitalInfo}
+                        labels={labels}
+                        customFields={customFields}
+                      />
+                    </div>,
+                    document.body
+                  )}
                 </div>
               )}
             </section>

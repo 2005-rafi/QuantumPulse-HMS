@@ -170,7 +170,7 @@
 
 /* ── View State Transitions ── */
 .reception-view {
-  animation: receptionViewIn 0.25s cubic-bezier(0.05, 0.7, 0.1, 1) both;
+  animation: receptionViewIn 0.25s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
 }
 
 @keyframes receptionViewIn {
@@ -180,7 +180,7 @@
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 

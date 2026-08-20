@@ -1,16 +1,15 @@
 /* ============================================================
-   TriageQueue.css — MD3 Compliant
-   All colors from theme.css tokens
+   TriageQueue.css — Material 3 Compliant Queue Panel
    ============================================================ */
 
-/* ─── Called section — floats to top with indicator ─── */
+/* ─── Called section — highlights active called patients ─── */
 .triage-queue__called-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: var(--md-spacing-xs, 8px);
-  border-bottom: 2px solid var(--md-sys-color-tertiary);
-  margin-bottom: var(--md-spacing-xs, 8px);
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--md-sys-color-tertiary, #7d5260);
+  margin-bottom: 8px;
 }
 
 .triage-queue {
@@ -24,8 +23,7 @@
 .triage-queue__body {
   flex: 1;
   overflow-y: auto;
-  max-height: calc(100vh - 320px);
-  padding: var(--md-spacing-s, 12px);
+  padding: 12px;
   box-sizing: border-box;
 }
 
@@ -42,15 +40,15 @@
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 64px 24px;
+  padding: 48px 20px;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.87rem;
+  font-size: 0.85rem;
   font-weight: 500;
 }
 
 .triage-queue__spinner {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border: 3px solid var(--md-sys-color-surface-container-high);
   border-top-color: var(--md-sys-color-primary);
   border-radius: 50%;
@@ -62,111 +60,36 @@
 }
 
 /* ─── Queue Item Card ─── */
-/* ─── Token Hero Row ─── */
-.triage-queue-card__token-row {
-  display: flex;
-  align-items: center;
-  gap: var(--md-spacing-xs, 8px);
-  min-width: 0;
-}
-
-.triage-queue-card__token {
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-family: 'Roboto Mono', monospace;
-  color: var(--md-sys-color-primary);
-  letter-spacing: 0.03em;
-  line-height: 1.16;
-  flex-shrink: 0;
-}
-
-.triage-queue-card--selected .triage-queue-card__token {
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-.triage-queue-card--called .triage-queue-card__token {
-  color: var(--md-sys-color-tertiary);
-}
-
-.triage-queue-card__actions {
-  margin-left: auto;
-  display: flex;
-  gap: var(--md-spacing-xxs, 4px);
-  align-items: center;
-  flex-shrink: 0;
-}
-
-/* ─── Collision Guard: phone + DOB ─── */
-.triage-queue-card__collision-guard {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 2px;
-}
-
-.triage-queue-card__dob,
-.triage-queue-card__phone {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.78rem;
-  font-family: 'Roboto Mono', monospace;
-  color: var(--md-sys-color-on-surface-variant);
-  letter-spacing: 0.015em;
-  line-height: 1.32;
-}
-
-.triage-queue-card__meta-icon {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-/* ─── Called card — pulsing border ring ─── */
-.triage-queue-card--called {
-  border-color: var(--md-sys-color-tertiary);
-  background-color: color-mix(in srgb, var(--md-sys-color-tertiary-container) 25%, var(--md-sys-color-surface));
-  animation: triageCardIn 0.22s var(--md-sys-motion-easing-standard-decelerate, cubic-bezier(0,0,0,1)) both,
-             calledPulse 2s ease-in-out 0.3s infinite;
-}
-
-@keyframes calledPulse {
-  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--md-sys-color-tertiary) 0%, transparent); }
-  50%       { box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-tertiary) 28%, transparent); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .triage-queue-card--called { animation: none !important; }
-}
-
 .triage-queue-card {
-
   display: flex;
   flex-direction: column;
-  gap: var(--md-spacing-xs, 8px);
-  padding: 14px 16px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background-color: var(--md-sys-color-surface-container-lowest);
-  border: 1px solid var(--md-sys-color-outline-variant);
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   cursor: pointer;
-  transition:
-    background-color 0.18s var(--md-sys-motion-easing-standard, cubic-bezier(0.2,0,0,1)),
-    border-color 0.18s var(--md-sys-motion-easing-standard, cubic-bezier(0.2,0,0,1)),
-    box-shadow 0.18s var(--md-sys-motion-easing-standard, cubic-bezier(0.2,0,0,1)),
-    transform 0.18s var(--md-sys-motion-easing-standard, cubic-bezier(0.2,0,0,1));
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
   outline: none;
-  animation: triageCardIn 0.22s var(--md-sys-motion-easing-standard-decelerate, cubic-bezier(0,0,0,1)) both;
+  position: relative;
+  overflow: hidden;
 }
 
-@keyframes triageCardIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+.triage-queue-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: transparent;
+  transition: background-color 0.18s ease;
 }
 
 .triage-queue-card:hover {
-  background-color: var(--md-sys-color-surface-container-low);
-  border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, var(--md-sys-color-outline-variant));
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  transform: translateY(-1px);
 }
 
 .triage-queue-card:focus-visible {
@@ -175,137 +98,191 @@
 }
 
 .triage-queue-card--selected {
-  background-color: var(--md-sys-color-secondary-container);
-  border-color: var(--md-sys-color-secondary);
-  box-shadow:
-    0 2px 8px color-mix(in srgb, var(--md-sys-color-secondary) 18%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--md-sys-color-secondary) 35%, transparent);
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+.triage-queue-card--selected::before {
+  background-color: var(--md-sys-color-primary, #6750a4);
 }
 
 .triage-queue-card--selected:hover {
-  background-color: color-mix(in srgb, var(--md-sys-color-secondary-container) 92%, var(--md-sys-color-primary-container) 8%);
+  background-color: var(--md-sys-color-primary-container, #eaddff);
 }
 
+/* ─── Token Hero Row ─── */
+.triage-queue-card__token-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.triage-queue-card__token {
+  font-size: 1.05rem;
+  font-weight: 800;
+  font-family: 'Roboto Mono', monospace;
+  color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+
+.triage-queue-card--selected .triage-queue-card__token {
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.triage-queue-card--called .triage-queue-card__token {
+  color: var(--md-sys-color-tertiary);
+  background-color: var(--md-sys-color-tertiary-container);
+}
+
+.triage-queue-card__actions {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* ─── Patient identity ─── */
 .triage-queue-card__top {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 10px;
   min-width: 0;
 }
 
 .triage-queue-card__main {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
   flex: 1;
 }
 
 .triage-queue-card__name-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-width: 0;
 }
 
 .triage-queue-card__name {
   margin: 0;
-  font-size: 0.98rem;
+  font-size: 0.94rem;
   font-weight: 700;
-  color: var(--md-sys-color-on-surface);
-  line-height: 1.2;
-  letter-spacing: -0.01em;
-  min-width: 0;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  line-height: 1.25;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .triage-queue-card--selected .triage-queue-card__name {
-  color: var(--md-sys-color-on-secondary-container);
-}
-
-.triage-queue-card__wait-chip {
-  flex-shrink: 0;
+  color: var(--md-sys-color-on-primary-container, #21005d);
 }
 
 .triage-queue-card__meta {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.triage-queue-card__mrn {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--md-sys-color-primary);
-  letter-spacing: 0.02em;
-}
-
-.triage-queue-card--selected .triage-queue-card__mrn {
-  color: var(--md-sys-color-secondary);
-}
-
-.triage-queue-card__demog {
-  font-size: 0.82rem;
-  color: var(--md-sys-color-on-surface-variant);
-  font-weight: 500;
-}
-
-.triage-queue-card--selected .triage-queue-card__demog {
-  color: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 80%, transparent);
-}
-
-/* ─── Reason ─── */
-.triage-queue-card__reason {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 8px 10px;
-  background-color: var(--md-sys-color-surface-container-low);
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  font-size: 0.84rem;
-  color: var(--md-sys-color-on-surface-variant);
-  font-weight: 500;
-  line-height: 1.4;
-  border-left: 3px solid var(--md-sys-color-tertiary);
-}
-
-.triage-queue-card__reason svg {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  margin-top: 1px;
-  color: var(--md-sys-color-tertiary);
-}
-
-.triage-queue-card--selected .triage-queue-card__reason {
-  background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 8%, var(--md-sys-color-secondary-container));
-  color: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 92%, transparent);
-}
-
-/* ─── History chips ─── */
-.triage-queue-card__history {
   display: flex;
   align-items: center;
   gap: 6px;
   flex-wrap: wrap;
 }
 
+.triage-queue-card__mrn {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #6750a4);
+  letter-spacing: 0.02em;
+}
+
+.triage-queue-card--selected .triage-queue-card__mrn {
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.triage-queue-card__demog {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-weight: 500;
+}
+
+.triage-queue-card--selected .triage-queue-card__demog {
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  opacity: 0.85;
+}
+
+/* ─── Collision Guard: phone + DOB ─── */
+.triage-queue-card__collision-guard {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.triage-queue-card__dob,
+.triage-queue-card__phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-family: 'Roboto Mono', monospace;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.01em;
+}
+
+.triage-queue-card__meta-icon {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+/* ─── Reason for Visit ─── */
+.triage-queue-card__reason {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 500;
+  border-left: 3px solid var(--md-sys-color-primary, #6750a4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.triage-queue-card__reason svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: var(--md-sys-color-primary);
+}
+
+.triage-queue-card--selected .triage-queue-card__reason {
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-primary-container);
+  border-left-color: var(--md-sys-color-primary);
+}
+
+/* ─── Called card — pulsing border ring ─── */
+.triage-queue-card--called {
+  border-color: var(--md-sys-color-tertiary);
+  background-color: color-mix(in srgb, var(--md-sys-color-tertiary-container) 25%, var(--md-sys-color-surface));
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 599px) {
   .triage-queue__body {
     max-height: 45vh;
-    padding: 10px;
+    padding: 8px;
   }
-
   .triage-queue-card {
-    padding: 12px;
-  }
-
-  .triage-queue-card__name {
-    font-size: 0.92rem;
+    padding: 10px;
   }
 }
 

@@ -13,8 +13,8 @@ const AdminPatientManager = () => {
       {selectedPatientId ? (
         <div style={{ position: 'relative' }}>
           <PatientProfile patientId={selectedPatientId} onBack={() => setSelectedPatientId(null)} />
-          <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#fff3f3', borderLeft: '4px solid #ef4444', borderRadius: '4px' }}>
-            <h3 style={{ color: '#b91c1c', marginBottom: '10px' }}>Admin Actions</h3>
+          <div style={{ marginTop: '20px', padding: '16px', backgroundColor: 'var(--md-sys-color-error-container, #ffdad6)', border: '1px solid var(--md-sys-color-outline-variant, #c9c7b6)', borderRadius: '16px' }}>
+            <h3 style={{ color: 'var(--md-sys-color-on-error-container, #93000a)', marginBottom: '10px' }}>Admin Actions</h3>
             <button
               onClick={() => {
                 window._deletionReasonText = '';
@@ -35,11 +35,11 @@ const AdminPatientManager = () => {
                           width: '100%',
                           padding: '12px',
                           borderRadius: '12px',
-                          border: '1px solid var(--md-sys-color-outline-variant, #ccc)',
+                          border: '1px solid var(--md-sys-color-outline-variant, #c9c7b6)',
                           outline: 'none',
                           boxSizing: 'border-box',
-                          background: '#fafafa',
-                          color: '#333',
+                          background: 'var(--md-sys-color-surface, #ffffff)',
+                          color: 'var(--md-sys-color-on-surface, #1c1c14)',
                           fontSize: '14px'
                         }}
                         onChange={(e) => {
@@ -65,8 +65,8 @@ const AdminPatientManager = () => {
                   },
                 });
               }}
-              className="btn-primary"
-              style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}
+              className="md3-card-btn md3-card-btn-error"
+              style={{ width: 'auto', padding: '8px 20px' }}
             >
               Request Patient Deletion
             </button>

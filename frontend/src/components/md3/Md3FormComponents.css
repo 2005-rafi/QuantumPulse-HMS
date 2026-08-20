@@ -211,6 +211,49 @@
   transform: scale(0.985) translateY(0);
 }
 
+.md3-btn-tonal {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md3-btn-tonal:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary-container) 92%, var(--md-sys-color-on-secondary-container) 8%);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
+}
+
+.md3-btn-tonal:active:not(:disabled) {
+  transform: scale(0.985) translateY(0);
+}
+
+.md3-btn-outlined {
+  background-color: transparent;
+  color: var(--md-sys-color-primary);
+  border: 1px solid var(--md-sys-color-outline);
+}
+
+.md3-btn-outlined:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  border-color: var(--md-sys-color-primary);
+  transform: translateY(-1px);
+}
+
+.md3-btn-outlined:active:not(:disabled) {
+  transform: scale(0.985) translateY(0);
+}
+
+.md3-btn-text {
+  background-color: transparent;
+  color: var(--md-sys-color-primary);
+  border: none;
+  min-height: 40px;
+  padding: var(--md-spacing-s, 12px) var(--md-spacing-m, 16px);
+}
+
+.md3-btn-text:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
 .md3-btn:disabled {
   opacity: 0.38;
   cursor: not-allowed;
@@ -327,40 +370,80 @@
 }
 
 .md3-select-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  width: 100%;
-  max-height: 250px;
-  overflow-y: auto;
+  position: fixed;
+  max-height: 340px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   margin: 0;
-  padding: var(--md-spacing-xs, 8px);
-  list-style: none;
-  background-color: var(--md-sys-color-surface-container-high);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent), 0 8px 24px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
-  z-index: 100;
-  transform-origin: top;
+  padding: 8px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-radius: var(--md-sys-shape-corner-medium, 16px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow:
+    0 12px 36px color-mix(in srgb, var(--md-sys-color-shadow, #000) 24%, transparent),
+    0 4px 12px color-mix(in srgb, var(--md-sys-color-shadow, #000) 12%, transparent);
+  backdrop-filter: blur(12px);
+  box-sizing: border-box;
+  z-index: 999999;
   animation: md3DropdownOpen 0.2s var(--md-sys-motion-easing-emphasized, cubic-bezier(0.2, 0, 0, 1)) forwards;
 }
 
 .md3-select-dropdown-menu.is-closing {
-  animation: md3DropdownClose 0.2s var(--md-sys-motion-easing-emphasized, cubic-bezier(0.2, 0, 0, 1)) forwards;
+  animation: md3DropdownClose 0.18s var(--md-sys-motion-easing-emphasized, cubic-bezier(0.2, 0, 0, 1)) forwards;
+}
+
+.md3-select-search-wrapper {
+  padding: 4px 4px 8px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.md3-select-search-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 10px);
+  background-color: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-on-surface);
+  font: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+.md3-select-search-input:focus {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
+}
+
+.md3-select-dropdown-list {
+  max-height: 240px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  overscroll-behavior: contain;
 }
 
 .md3-select-dropdown-item {
-  height: 48px;
-  padding: 0 var(--md-spacing-m, 16px);
-  font: var(--md-sys-typescale-body-large-font);
-  font-size: var(--md-sys-typescale-body-large-size);
+  min-height: 44px;
+  height: auto;
+  padding: 8px 14px;
+  line-height: 1.35;
+  font: var(--md-sys-typescale-body-medium-font);
+  font-size: var(--md-sys-typescale-body-medium-size);
   color: var(--md-sys-color-on-surface);
   cursor: pointer;
   transition: background-color 0.15s ease;
   display: flex;
   align-items: center;
-  border-radius: var(--md-sys-shape-corner-extra-small, 4px);
-  margin-bottom: 2px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  margin-bottom: 3px;
+  word-break: break-word;
+  white-space: normal;
 }
 .md3-select-dropdown-item:last-child {
   margin-bottom: 0;
@@ -374,7 +457,7 @@
 .md3-select-dropdown-item.is-selected {
   background-color: var(--md-sys-color-secondary-container);
   color: var(--md-sys-color-on-secondary-container);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .md3-select-dropdown-item.is-disabled {
@@ -795,4 +878,58 @@
 
 .md3-date-action-btn:hover {
   background-color: color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
+}
+
+/* Reusable Material 3 Icon Button Styles */
+.md3-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  color: var(--md-sys-color-on-surface-variant);
+  outline: none;
+  user-select: none;
+}
+
+.md3-icon-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 10%, transparent);
+}
+
+.md3-icon-btn:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 20%, transparent);
+  transform: scale(0.95);
+}
+
+.md3-icon-btn.is-error {
+  color: var(--md-sys-color-error);
+}
+
+.md3-icon-btn.is-error:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 10%, transparent);
+}
+
+.md3-icon-btn.is-error:active {
+  background-color: color-mix(in srgb, var(--md-sys-color-error) 20%, transparent);
+  transform: scale(0.95);
+}
+
+.md3-dashed-card-btn {
+  border: 2px dashed var(--md-sys-color-outline-variant) !important;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
+}
+
+.md3-dashed-card-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent) !important;
+  border-color: var(--md-sys-color-primary) !important;
+  color: var(--md-sys-color-primary) !important;
+}
+
+.md3-dashed-card-btn:active {
+  transform: scale(0.99);
 }

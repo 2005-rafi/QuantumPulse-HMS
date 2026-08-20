@@ -83,22 +83,47 @@ class LaboratoryController {
    * This must be a route middleware, not a class method, to run before multer.
    */
   static injectDeptCode = catchAsync(async (req, res, next) => {
-    // dept code comes from the authenticated user's department (populated at login)
-    // The department's code field (e.g. 'RAD') is not currently in the JWT,
-    // so we fall back to a sanitized version of the department name.
+    const AppError = require('../../core/errors/AppError');
+    const visitRepository = require('../visits/visit.repository');
+
+    const { visitId, orderId } = req.params;
+    if (!visitId) {
+      throw new AppError('VALIDATION_001', 'visitId parameter is required');
+    }
+
+    const visit = await visitRepository.findById(visitId);
+    if (!visit) {
+      throw new AppError('NOT_FOUND', 'Visit not found');
+    }
+
+    const order = visit.labOrders?.find(o => o._id.toString() === orderId.toString());
+
     req.labDeptCode = (req.user.department || 'GENERAL').toUpperCase().replace(/\W/g, '').slice(0, 8);
+    req.patientId = visit.patientId?._id?.toString() || visit.patientId?.toString() || '';
+    req.laboratoryId = order?.laboratoryId?.toString() || '';
+
     next();
   });
 
   uploadScan = catchAsync(async (req, res) => {
     const { visitId, orderId } = req.params;
+    const fs = require('fs');
+    const AppError = require('../../core/errors/AppError');
+
     if (!req.file) {
-      const AppError = require('../../core/errors/AppError');
       throw new AppError('VALIDATION_001', 'No file attached to the request');
     }
 
+    // Enforce 5 KB minimum size check
+    const MIN_SIZE = 5 * 1024;
+    if (req.file.size < MIN_SIZE) {
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
+      throw new AppError('LAB_004', 'File is too small. Minimum allowed size is 5 KB.');
+    }
+
     // Inspect magic bytes of the file on disk to prevent MIME spoofing
-    const fs = require('fs');
     try {
       const buffer = Buffer.alloc(12);
       const fd = fs.openSync(req.file.path, 'r');
@@ -121,7 +146,6 @@ class LaboratoryController {
 
       if (!isValid) {
         fs.unlinkSync(req.file.path); // Delete the invalid file
-        const AppError = require('../../core/errors/AppError');
         throw new AppError('LAB_003', 'File content verification failed: magic bytes do not match MIME type');
       }
     } catch (err) {
@@ -135,8 +159,8 @@ class LaboratoryController {
       {
         visitId,
         orderId,
-        labId:           req.body.labId,
-        patientId:       req.body.patientId,
+        labId:           req.laboratoryId,
+        patientId:       req.patientId,
         labDepartmentId: req.user.departmentId,
         uploadedBy:      req.user.staffId,
         deptCode:        req.labDeptCode,

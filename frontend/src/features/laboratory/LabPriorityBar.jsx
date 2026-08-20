@@ -1,8 +1,8 @@
 import React from 'react';
-import { Icon, Md3Chip } from '../../components/md3/Md3Widgets';
+import { Icon } from '../../components/md3/Md3Widgets';
 
 const PRIORITY_FILTERS = [
-  { id: 'all', label: 'All orders', icon: <Icon.Inbox />, variant: 'default' },
+  { id: 'all', label: 'All', icon: <Icon.Inbox />, variant: 'default' },
   { id: 'STAT', label: 'STAT', icon: <Icon.Flag />, variant: 'error' },
   { id: 'URGENT', label: 'Urgent', icon: <Icon.Alert />, variant: 'warning' },
   { id: 'ROUTINE', label: 'Routine', icon: <Icon.Activity />, variant: 'secondary' },
@@ -32,7 +32,7 @@ const LabPriorityBar = ({
       role="group"
       aria-label="Laboratory filters and status summary"
     >
-      <div className="lab-priority-bar__group" role="tablist" aria-label="Priority filter">
+      <div className="lab-priority-bar__filters" role="tablist" aria-label="Priority filter">
         {PRIORITY_FILTERS.map((item) => {
           const count = getCount(item.id);
           const isActive = activeFilter === item.id;
@@ -62,14 +62,20 @@ const LabPriorityBar = ({
         })}
       </div>
 
-      <div className="lab-priority-bar__divider" role="separator" aria-orientation="vertical" />
-
-      <div className="lab-priority-bar__group lab-priority-bar__group--status" role="group" aria-label="Queue status counters">
+      <div className="lab-priority-bar__status-grid" role="group" aria-label="Queue status counters">
         {statusChips.map((s) => (
-          <Md3Chip key={s.key} variant={s.variant} size="small" icon={s.icon} className="lab-priority-bar__status-chip">
-            <span className="lab-priority-bar__status-label">{s.label}</span>
-            <span className="lab-priority-bar__status-value">{String(s.value)}</span>
-          </Md3Chip>
+          <div
+            key={s.key}
+            className={`lab-priority-bar__status-card lab-priority-bar__status-card--${s.variant}`}
+          >
+            <span className="lab-priority-bar__status-icon" aria-hidden="true">
+              {s.icon}
+            </span>
+            <div className="lab-priority-bar__status-info">
+              <span className="lab-priority-bar__status-value">{String(s.value)}</span>
+              <span className="lab-priority-bar__status-label">{s.label}</span>
+            </div>
+          </div>
         ))}
       </div>
     </div>

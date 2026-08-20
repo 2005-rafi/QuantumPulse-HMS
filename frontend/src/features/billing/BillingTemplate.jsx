@@ -1,4 +1,5 @@
 import React from 'react';
+import { CURRENCY_SYMBOL } from '../../constants/currency';
 import './BillingTemplate.css';
 
 const BillingTemplate = React.forwardRef(({
@@ -9,7 +10,8 @@ const BillingTemplate = React.forwardRef(({
   medications,
   consultationFee,
   labCharges,
-  total
+  total,
+  currency = CURRENCY_SYMBOL,
 }, ref) => {
   const getDynamicValue = (fieldPath) => {
     if (!fieldPath) return '';
@@ -75,7 +77,7 @@ const BillingTemplate = React.forwardRef(({
             <tr>
               <td>{labels.consultationFee}</td>
               <td>1</td>
-              <td className="amount-col">${Number(consultationFee).toFixed(2)}</td>
+              <td className="amount-col">{currency}{Number(consultationFee).toFixed(2)}</td>
             </tr>
           )}
           
@@ -84,7 +86,7 @@ const BillingTemplate = React.forwardRef(({
             <tr>
               <td>{labels.labCharges}</td>
               <td>1</td>
-              <td className="amount-col">${Number(labCharges).toFixed(2)}</td>
+              <td className="amount-col">{currency}{Number(labCharges).toFixed(2)}</td>
             </tr>
           )}
 
@@ -110,15 +112,25 @@ const BillingTemplate = React.forwardRef(({
                   )}
                 </td>
                 <td>{med.quantity}</td>
-                <td className="amount-col">${Number(med.amount || 0).toFixed(2)}</td>
+                <td className="amount-col">{currency}{Number(med.amount || 0).toFixed(2)}</td>
               </tr>
             );
           })}
         </tbody>
         <tfoot>
           <tr>
-            <td colSpan="2" className="total-label">{labels.totalAmount}</td>
-            <td className="total-amount">${Number(total).toFixed(2)}</td>
+            <td colSpan="2" className="total-label">{labels.totalAmount || 'TOTAL AMOUNT DUE'}</td>
+            <td className="total-amount">
+              {currency}{(
+                total !== undefined && total !== null && !isNaN(Number(total))
+                  ? Number(total)
+                  : (
+                      Number(consultationFee || 0) +
+                      Number(labCharges || 0) +
+                      (medications || []).reduce((acc, m) => acc + (Number(m.amount) || 0), 0)
+                    )
+              ).toFixed(2)}
+            </td>
           </tr>
         </tfoot>
       </table>

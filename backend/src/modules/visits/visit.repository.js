@@ -6,9 +6,17 @@ const decryptPopulatedVisit = (visit) => {
   if (Array.isArray(visit)) {
     return visit.map(v => decryptPopulatedVisit(v));
   }
-  const clone = visit.toObject ? visit.toObject() : { ...visit };
+  const clone = visit.toObject ? visit.toObject({ flattenMaps: true }) : { ...visit };
   if (clone.patientId) {
     clone.patientId = decryptPatient(clone.patientId);
+  }
+  if (clone.labOrders && Array.isArray(clone.labOrders)) {
+    clone.labOrders = clone.labOrders.map(order => {
+      if (order.results && order.results instanceof Map) {
+        order.results = Object.fromEntries(order.results);
+      }
+      return order;
+    });
   }
   return clone;
 };
@@ -42,15 +50,20 @@ class VisitRepository {
   }
 
   async getQueue(status, filters = {}) {
-    const statusQuery = typeof status === 'string' && status.includes(',')
-      ? { $in: status.split(',') }
-      : status;
+    let statusQuery;
+    if (status === 'ALL' || status === 'all') {
+      statusQuery = { $exists: true };
+    } else if (typeof status === 'string' && status.includes(',')) {
+      statusQuery = { $in: status.split(',') };
+    } else {
+      statusQuery = status;
+    }
     const query = { status: statusQuery, ...filters };
     const docs = await Visit.find(query)
       .populate('patientId')
       .populate('departmentId')
       .populate('consultation.doctorId')
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: -1 });
     return decryptPopulatedVisit(docs);
   }
 
@@ -63,17 +76,37 @@ class VisitRepository {
   }
 
   async getHospitalStats() {
+    const now = new Date();
     const targetTimezone = 'Asia/Kolkata';
-    const localDateStr = new Date().toLocaleDateString('en-CA', { timeZone: targetTimezone }); // YYYY-MM-DD
+    const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: targetTimezone, year: 'numeric', month: '2-digit', day: '2-digit' });
+    const localDateStr = formatter.format(now); // YYYY-MM-DD
     const [year, month, day] = localDateStr.split('-').map(Number);
-    const today = new Date(Date.UTC(year, month - 1, day));
+
+    // Start & end of today in local timezone (IST = UTC+5:30)
+    const startOfTodayUtc = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0) - (5.5 * 60 * 60 * 1000));
+    const endOfTodayUtc = new Date(startOfTodayUtc.getTime() + (24 * 60 * 60 * 1000) - 1);
 
     const matchToday = {
-      createdAt: { $gte: today }
+      createdAt: { $gte: startOfTodayUtc, $lte: endOfTodayUtc }
     };
 
-    const stats = await Visit.aggregate([
-      { $match: matchToday },
+    // 1. Total registrations today
+    const totalToday = await Visit.countDocuments(matchToday);
+
+    // 2. Total all-time visits
+    const totalAll = await Visit.countDocuments({});
+
+    // 3. Completed visits today
+    const completedToday = await Visit.countDocuments({
+      status: 'COMPLETED',
+      updatedAt: { $gte: startOfTodayUtc, $lte: endOfTodayUtc }
+    });
+
+    // 4. Total all-time completed visits
+    const totalCompleted = await Visit.countDocuments({ status: 'COMPLETED' });
+
+    // 5. Real-time Live Queue breakdown across ALL active and queued visits
+    const liveStats = await Visit.aggregate([
       {
         $group: {
           _id: '$status',
@@ -82,11 +115,12 @@ class VisitRepository {
       }
     ]);
 
-    const totalToday = await Visit.countDocuments(matchToday);
-
     return {
       totalToday,
-      byStatus: stats
+      totalAll,
+      completedToday,
+      totalCompleted,
+      byStatus: liveStats
     };
   }
 

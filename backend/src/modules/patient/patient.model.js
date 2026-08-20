@@ -37,8 +37,17 @@ const patientSchema = new mongoose.Schema(
     },
     medicalHistory: [medicalHistorySchema]
   },
-  { timestamps: true, optimisticConcurrency: true }
+  { 
+    timestamps: true, 
+    optimisticConcurrency: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true }
+  }
 );
+
+patientSchema.virtual('fullName').get(function () {
+  return `${this.firstName || ''} ${this.lastName || ''}`.trim();
+});
 
 patientSchema.index({ firstName: 1, lastName: 1, phone: 1 });
 patientSchema.index({ phone: 1 });

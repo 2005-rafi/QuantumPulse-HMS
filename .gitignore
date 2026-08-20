@@ -91,3 +91,7 @@ graphify-out/
 temp/
 tmp/
 docs/
+
+# ── Storage files ─────────────────────────────────────────────────────
+certificates/
+scans/

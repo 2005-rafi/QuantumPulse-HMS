@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const DEFAULT_CONFIG = {
-  HOSPITAL_NAME: 'Hospital Management System',
-  SHORT_NAME: 'HMS',
-  DESCRIPTION: 'OPD HMS · Secure Login',
+  HOSPITAL_NAME: 'CareOne-QPT Hospital Management System',
+  SHORT_NAME: 'CareOne-QPT',
+  DESCRIPTION: 'CareOne-QPT HMS · Secure Login',
   LOGO_URL: 'http://localhost:5000/assets/logo/logo.jpg'
 };
 

@@ -4,37 +4,38 @@
  */
 
 .dashboard-stats-bar {
-  background-color: var(--md-sys-color-surface-container-low);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant);
-  padding: 16px 24px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding: 10px 20px;
   display: grid;
   grid-template-columns: repeat(var(--stats-count, 4), 1fr);
-  gap: 12px;
+  gap: 10px;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 /* Responsive: Medium */
 @media (min-width: 600px) and (max-width: 1199px) {
   .dashboard-stats-bar {
-    padding: 16px 20px;
+    padding: 10px 16px;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
 }
 
 /* Responsive: Compact */
 @media (max-width: 599px) {
   .dashboard-stats-bar {
-    padding: 12px;
+    padding: 8px 12px;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 6px;
   }
 }
 
 /* Responsive: Desktop */
 @media (min-width: 1200px) {
   .dashboard-stats-bar {
-    padding: 20px 32px;
-    gap: 16px;
+    padding: 10px 24px;
+    gap: 12px;
   }
 }

@@ -196,7 +196,7 @@ const CreateDepartmentSheet = ({ isOpen, onClose, onSuccess, department }) => {
               type="text"
               value={formData.name}
               onChange={handleChange}
-              placeholder="e.g. Cardiology"
+              placeholder="Enter department name"
               required
               style={{
                 ...inputStyle,
@@ -220,7 +220,7 @@ const CreateDepartmentSheet = ({ isOpen, onClose, onSuccess, department }) => {
               type="text"
               value={formData.code}
               onChange={handleChange}
-              placeholder="e.g. CARD"
+              placeholder="Enter code (e.g. CARD)"
               maxLength={10}
               required
               style={{

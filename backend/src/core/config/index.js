@@ -3,7 +3,7 @@ require('dotenv').config({ path: require('path').resolve(__dirname, '../../../..
 const config = {
   env: process.env.NODE_ENV || 'development',
   port: parseInt(process.env.PORT, 10) || 5000,
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/hms_opd',
+  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/quantum_careone',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000, // 15 mins

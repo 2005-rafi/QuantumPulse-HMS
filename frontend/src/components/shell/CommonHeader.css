@@ -1,35 +1,57 @@
-/* CommonHeader.css - MD3 App Bar Implementation */
+/* ==========================================================================
+   CommonHeader.css — Material 3 App Bar & Scalable User Popover Menu
+   ========================================================================== */
 
 .common-header {
   position: sticky;
   top: 0;
   z-index: 100;
-  background-color: var(--md-sys-color-surface);
-  color: var(--md-sys-color-on-surface);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* subtle elevation */
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 6%, transparent);
   height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 var(--md-spacing-l);
+  padding: 0 1.5rem;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .common-header__left {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-m);
+  gap: 0.85rem;
 }
 
 .common-header__brand-icon {
   width: 40px;
   height: 40px;
-  border-radius: var(--md-sys-shape-corner-large);
-  background-color: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
+  border-radius: 12px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.common-header__brand-icon:hover {
+  transform: scale(1.05);
+}
+
+.common-header__brand-icon--has-logo {
+  background-color: transparent;
+}
+
+.common-header__brand-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  display: block;
 }
 
 .common-header__brand-text {
@@ -39,19 +61,19 @@
 
 .common-header__title {
   font-family: 'Roboto', sans-serif;
-  font-size: 1.25rem; /* Title Large */
-  font-weight: 500;
+  font-size: 1.15rem;
+  font-weight: 700;
   line-height: 1.2;
-  letter-spacing: 0;
   margin: 0;
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  letter-spacing: -0.01em;
 }
 
 .common-header__subtitle {
   font-family: 'Roboto', sans-serif;
-  font-size: 0.875rem; /* Body Medium */
-  font-weight: 400;
-  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
 }
 
@@ -60,95 +82,256 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 0 var(--md-spacing-l);
+  padding: 0 1.5rem;
 }
 
 .common-header__right {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-s);
+  gap: 0.75rem;
   position: relative;
 }
 
-/* User Popover Container */
+/* User Avatar Trigger */
 .common-header__user-trigger {
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 2px;
   display: flex;
   align-items: center;
-  border-radius: var(--md-sys-shape-corner-full);
+  justify-content: center;
+  border-radius: 50%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+.common-header__user-trigger:hover {
+  transform: scale(1.06);
+}
+
+.common-header__user-trigger:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary, #6750a4);
+  outline-offset: 2px;
+}
+
+/* ─── Material 3 Scalable User Popover Menu ─── */
 .common-header__user-popover {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 10px);
   right: 0;
-  margin-top: var(--md-spacing-s);
-  background: var(--md-sys-color-surface-container-high);
-  border-radius: var(--md-sys-shape-corner-medium);
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08);
-  padding: var(--md-spacing-m);
-  min-width: 200px;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  border-radius: 20px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 
+    0 10px 30px color-mix(in srgb, var(--md-sys-color-shadow, #000) 12%, transparent),
+    0 2px 8px color-mix(in srgb, var(--md-sys-color-shadow, #000) 6%, transparent);
+  padding: 0.85rem;
+  min-width: 290px;
+  max-width: 340px;
   display: flex;
   flex-direction: column;
-  gap: var(--md-spacing-s);
-  z-index: 101;
+  gap: 0.4rem;
+  z-index: 1000;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-10px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+  transform: translateY(-8px) scale(0.96);
+  transform-origin: top right;
+  transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+              visibility 0.2s;
+  box-sizing: border-box;
 }
 
 .common-header__user-popover--open {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
-.common-header__user-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border-bottom: 1px solid var(--md-sys-color-surface-variant);
-  padding-bottom: var(--md-spacing-s);
-  margin-bottom: var(--md-spacing-s);
-}
-
-.common-header__user-name {
-  font-family: 'Roboto', sans-serif;
-  font-size: 1rem; /* Title Medium */
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface);
-}
-
-.common-header__user-role {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.75rem; /* Label Medium */
-  font-weight: 500;
-  color: var(--md-sys-color-primary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.common-header__logout-btn {
+/* Header User Identity Card */
+.common-header__popover-header {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-s);
-  width: 100%;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  border-radius: var(--md-sys-shape-corner-small);
-  color: var(--md-sys-color-error);
-  font-family: 'Roboto', sans-serif;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  gap: 0.85rem;
+  padding: 0.6rem 0.5rem 0.5rem 0.5rem;
 }
 
-.common-header__logout-btn:hover {
-  background: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
+.common-header__popover-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary, #6750a4) 0%,
+    var(--md-sys-color-primary-container, #eaddff) 100%
+  );
+  color: var(--md-sys-color-on-primary, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
+}
+
+.common-header__popover-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.common-header__popover-name {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.common-header__popover-tags {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.common-header__popover-role-badge {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.common-header__popover-dept-badge {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.common-header__popover-divider {
+  height: 1px;
+  background-color: var(--md-sys-color-outline-variant, #cac4d0);
+  margin: 0.35rem 0;
+}
+
+/* Nav & Action Items */
+.common-header__popover-nav,
+.common-header__popover-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.common-header__menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  background: transparent;
+  border: none;
+  border-radius: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  box-sizing: border-box;
+}
+
+.common-header__menu-item:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.common-header__menu-item:active {
+  transform: scale(0.98);
+}
+
+.common-header__menu-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  color: var(--md-sys-color-primary, #6750a4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.common-header__menu-item:hover .common-header__menu-icon-wrap {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.common-header__menu-icon-wrap .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.common-header__menu-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.common-header__menu-title {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.common-header__menu-sub {
+  font-family: 'Roboto', sans-serif;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.common-header__menu-chevron {
+  font-size: 18px;
+  color: var(--md-sys-color-outline, #79747e);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.common-header__menu-item:hover .common-header__menu-chevron {
+  transform: translateX(2px);
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* Logout Item Variation */
+.common-header__menu-item--logout:hover {
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+}
+
+.common-header__menu-icon-wrap--logout {
+  background-color: color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 12%, transparent);
+  color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.common-header__menu-item--logout:hover .common-header__menu-icon-wrap--logout {
+  background-color: var(--md-sys-color-error, #ba1a1a);
+  color: var(--md-sys-color-on-error, #ffffff);
+}
+
+.common-header__menu-item--logout:hover .common-header__menu-title {
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+
+.common-header__menu-item--logout:hover .common-header__menu-sub {
+  color: var(--md-sys-color-on-error-container, #410002);
+  opacity: 0.8;
 }

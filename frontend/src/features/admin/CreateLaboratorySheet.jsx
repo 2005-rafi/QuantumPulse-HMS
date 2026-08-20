@@ -97,7 +97,7 @@ const CreateLaboratorySheet = ({ isOpen, onClose, onSuccess, departments = [], l
           label="Laboratory Name"
           value={formData.name}
           onChange={handleChange}
-          placeholder="e.g. Core Pathology Lab"
+          placeholder="Enter laboratory name"
           error={fieldErrors.name}
         />
 

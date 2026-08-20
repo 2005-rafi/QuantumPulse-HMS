@@ -5,6 +5,7 @@ import { staffAPI } from '../../services/staffAPI';
 import { useToast } from '../../context/ToastContext';
 import { POSITIONS } from '../../core/constants';
 import Md3FileUploader from '../../components/md3/Md3FileUploader';
+import { CURRENCY_SYMBOL } from '../../constants/currency';
 
 // ── Step config ────────────────────────────────────────────────────────────
 const STEPS = [
@@ -612,11 +613,11 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
                   <SectionHeader icon="payments" title="Consultation" />
                   <FieldRow>
                     <Md3Select name="consultationType" label="Consultation Type *" value={formData.consultationType} onChange={handleChange} options={consultTypeOpts} />
-                    <Md3TextField name="consultingFee" label={positionRank === 1 ? "Consultation Fee (Locked for Intern)" : "Consultation Fee (₹)"} type="number" value={positionRank === 1 ? '0' : formData.consultingFee} onChange={handleChange} placeholder="e.g. 500" disabled={positionRank === 1} />
+                    <Md3TextField name="consultingFee" label={positionRank === 1 ? "Consultation Fee (Locked for Intern)" : `Consultation Fee (${CURRENCY_SYMBOL})`} type="number" value={positionRank === 1 ? '0' : formData.consultingFee} onChange={handleChange} placeholder="e.g. 500" disabled={positionRank === 1} />
                   </FieldRow>
                   <div style={{ height: '12px' }} />
                   <FieldRow>
-                    <Md3TextField name="followUpFee"   label={positionRank === 1 ? "Follow-up Fee (Locked for Intern)" : "Follow-up Fee (₹)"}  type="number" value={positionRank === 1 ? '0' : formData.followUpFee}   onChange={handleChange} placeholder="e.g. 200" disabled={positionRank === 1} />
+                    <Md3TextField name="followUpFee"   label={positionRank === 1 ? "Follow-up Fee (Locked for Intern)" : `Follow-up Fee (${CURRENCY_SYMBOL})`}  type="number" value={positionRank === 1 ? '0' : formData.followUpFee}   onChange={handleChange} placeholder="e.g. 200" disabled={positionRank === 1} />
                     <Md3TextField name="previousHospital" label="Previous Hospital" value={formData.previousHospital} onChange={handleChange} placeholder="Optional" />
                   </FieldRow>
                 </>

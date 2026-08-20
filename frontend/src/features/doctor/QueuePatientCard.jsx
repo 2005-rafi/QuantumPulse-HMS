@@ -6,12 +6,23 @@ import { Md3IconButton, Icon, Md3Avatar, Md3Chip } from '../../components/md3/Md
    ============================================================ */
 
 const STATUS_CONFIG = {
-  WAITING_DOCTOR: { label: 'Waiting',     variant: 'primary'   },
-  CALLED:          { label: 'Called',      variant: 'tertiary'  },
-  IN_PROGRESS:     { label: 'In Consultation', variant: 'success'   },
-  WAITING_DOCTOR_REVIEW: { label: 'Review', variant: 'secondary' },
-  COMPLETED:       { label: 'Completed',  variant: 'secondary' },
-  SKIPPED:         { label: 'Skipped',    variant: 'error'     },
+  WAITING_DOCTOR:        { label: 'Waiting',            variant: 'primary'   },
+  CALLED:                { label: 'Called',             variant: 'tertiary'  },
+  IN_PROGRESS:           { label: 'In Consultation',    variant: 'success'   },
+  WAITING_DOCTOR_REVIEW: { label: 'Lab Results Ready',  variant: 'tertiary'  },
+  WAITING_LAB:           { label: 'At Laboratory',      variant: 'secondary' },
+  COMPLETED:             { label: 'Completed',          variant: 'secondary' },
+  SKIPPED:               { label: 'Skipped',            variant: 'error'     },
+};
+
+const decodeHtml = (str) => {
+  if (!str) return '';
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
 };
 
 const QueuePatientCard = ({
@@ -45,7 +56,6 @@ const QueuePatientCard = ({
       onClick={onClick}
       role="button"
       tabIndex={0}
-      style={{ boxSizing: 'border-box' }}
     >
       <div className="queue-card__top">
         <Md3Avatar initials={initials} size="medium" variant="primary" />
@@ -65,16 +75,16 @@ const QueuePatientCard = ({
               </>
             )}
             <span className="queue-card__bullet">&bull;</span>
-            <span className="queue-card__sub" style={{ fontWeight: 600, color: 'var(--md-sys-color-primary)' }}>{tokenDisplay}</span>
+            <span className="queue-card__token-tag">{tokenDisplay}</span>
           </div>
         </div>
         
         {/* Actions inline at the top right if present */}
         {(showCall || showSkip) && (
-          <div className="queue-card__actions" onClick={(e) => e.stopPropagation()} style={{ marginLeft: '8px', display: 'flex', gap: '4px' }}>
+          <div className="queue-card__actions" onClick={(e) => e.stopPropagation()}>
             {showCall && (
               <Md3IconButton 
-                icon={<Icon.PhoneCall size={18} />} 
+                icon={<Icon.PhoneCall size={16} />} 
                 variant="filled" 
                 onClick={(e) => { e.stopPropagation(); onCall?.(visit._id); }} 
                 ariaLabel="Call patient"
@@ -82,7 +92,7 @@ const QueuePatientCard = ({
             )}
             {showSkip && (
               <Md3IconButton 
-                icon={<Icon.SkipForward size={18} />} 
+                icon={<Icon.SkipForward size={16} />} 
                 variant="tonal" 
                 onClick={(e) => { e.stopPropagation(); onSkip?.(visit._id); }} 
                 ariaLabel="Skip patient"
@@ -93,7 +103,7 @@ const QueuePatientCard = ({
       </div>
 
       <div className="queue-card__mrn">
-        MRN: {patient.mrn || 'N/A'}
+        MRN: <strong>{patient.mrn || 'N/A'}</strong>
       </div>
 
       <div className="queue-card__meta">
@@ -104,7 +114,7 @@ const QueuePatientCard = ({
         {visit?.vitals?.chiefComplaint && (
           <div className="queue-card__complaint">
             <Icon.Clipboard />
-            <span>{visit.vitals.chiefComplaint}</span>
+            <span>{decodeHtml(visit.vitals.chiefComplaint)}</span>
           </div>
         )}
       </div>

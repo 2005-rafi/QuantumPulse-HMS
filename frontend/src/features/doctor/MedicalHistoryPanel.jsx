@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Md3Section, Icon, Md3Chip, Md3EmptyState,
+  Icon, Md3Chip,
 } from '../../components/md3/Md3Widgets';
 
 const MedicalHistoryPanel = ({ patient = {} }) => {
@@ -26,88 +26,103 @@ const MedicalHistoryPanel = ({ patient = {} }) => {
   const hasAnyData = allergies.length > 0 || conditions.length > 0 || surgeries.length > 0;
 
   return (
-    <Md3Section
-      title="Medical History & Allergies"
-      subtitle="Critical patient safety warnings and chronic conditions"
-      icon={<Icon.ShieldCheck />}
-      className="medical-history-panel"
-    >
-      {!hasAnyData ? (
-        <div className="medical-history-panel__nkda">
-          <Md3Chip variant="success" icon={<Icon.Check />}>
-            NKDA — No Known Drug Allergies
-          </Md3Chip>
-          <p className="medical-history-panel__nkda-text">
-            No chronic medical conditions or critical drug allergies recorded in patient profile.
-          </p>
-        </div>
-      ) : (
-        <div className="medical-history-panel__content">
-          {/* Allergies Section */}
-          <div className="medical-history-panel__group">
-            <span className="medical-history-panel__group-title">
-              <Icon.Alert />
-              <span>Allergies & Sensitivities</span>
-            </span>
-            <div className="medical-history-panel__chips">
-              {allergies.length > 0 ? (
-                allergies.map((allergy, i) => {
-                  const isSevere = typeof allergy === 'string' && allergy.toLowerCase().includes('severe');
-                  return (
-                    <Md3Chip
-                      key={i}
-                      variant={isSevere ? 'error' : 'warning'}
-                      size="small"
-                      icon={<Icon.Alert />}
-                    >
-                      {typeof allergy === 'string' ? allergy : allergy.name || 'Allergy'}
-                    </Md3Chip>
-                  );
-                })
-              ) : (
-                <Md3Chip variant="success" size="small" icon={<Icon.Check />}>
-                  NKDA (No Known Allergies)
-                </Md3Chip>
-              )}
-            </div>
+    <div className="summary-card">
+      <div className="summary-card__header">
+        <div className="summary-card__title-wrap">
+          <span className="summary-card__icon secondary">
+            <Icon.ShieldCheck size={18} />
+          </span>
+          <div>
+            <h4 className="summary-card__title">Medical History & Allergies</h4>
+            <p className="summary-card__subtitle">Critical safety warnings, allergies and past surgeries</p>
           </div>
-
-          {/* Chronic Conditions */}
-          {conditions.length > 0 && (
-            <div className="medical-history-panel__group">
-              <span className="medical-history-panel__group-title">
-                <Icon.Activity />
-                <span>Chronic Conditions</span>
-              </span>
-              <div className="medical-history-panel__chips">
-                {conditions.map((cond, i) => (
-                  <Md3Chip key={i} variant="secondary" size="small" icon={<Icon.FileText />}>
-                    {typeof cond === 'string' ? cond : cond.name || 'Condition'}
-                  </Md3Chip>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Past Surgeries */}
-          {surgeries.length > 0 && (
-            <div className="medical-history-panel__group">
-              <span className="medical-history-panel__group-title">
-                <Icon.Clock />
-                <span>Past Surgeries / Procedures</span>
-              </span>
-              <div className="medical-history-panel__chips">
-                {surgeries.map((surg, i) => (
-                  <Md3Chip key={i} variant="default" size="small">
-                    {typeof surg === 'string' ? surg : surg.name || 'Surgery'}
-                  </Md3Chip>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
-      )}
-    </Md3Section>
+        {allergies.length > 0 ? (
+          <Md3Chip variant="error" size="small">
+            ⚠️ {allergies.length} Critical Allerg{allergies.length !== 1 ? 'ies' : 'y'}
+          </Md3Chip>
+        ) : (
+          <Md3Chip variant="success" size="small">
+            ✓ NKDA
+          </Md3Chip>
+        )}
+      </div>
+
+      <div className="summary-card__body">
+        {/* ── Allergies & Sensitivities ── */}
+        <div className="summary-history-section">
+          <div className="summary-history-label-row">
+            <span className="summary-history-icon error">
+              <Icon.Alert size={14} />
+            </span>
+            <span className="summary-history-label">Allergies & Sensitivities</span>
+          </div>
+          <div className="summary-chips-wrap">
+            {allergies.length > 0 ? (
+              allergies.map((allergy, i) => {
+                const isSevere = typeof allergy === 'string' && allergy.toLowerCase().includes('severe');
+                return (
+                  <Md3Chip
+                    key={i}
+                    variant={isSevere ? 'error' : 'warning'}
+                    size="small"
+                    icon={<Icon.Alert />}
+                  >
+                    {typeof allergy === 'string' ? allergy : allergy.name || 'Allergy'}
+                  </Md3Chip>
+                );
+              })
+            ) : (
+              <span className="summary-nkda-badge">
+                <Icon.Check size={13} /> NKDA — No Known Drug Allergies
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Chronic Conditions ── */}
+        <div className="summary-history-section">
+          <div className="summary-history-label-row">
+            <span className="summary-history-icon tertiary">
+              <Icon.Activity size={14} />
+            </span>
+            <span className="summary-history-label">Chronic Medical Conditions</span>
+          </div>
+          <div className="summary-chips-wrap">
+            {conditions.length > 0 ? (
+              conditions.map((cond, i) => (
+                <Md3Chip key={i} variant="secondary" size="small" icon={<Icon.FileText />}>
+                  {typeof cond === 'string' ? cond : cond.name || 'Condition'}
+                </Md3Chip>
+              ))
+            ) : (
+              <span className="summary-nil-text">No chronic conditions recorded</span>
+            )}
+          </div>
+        </div>
+
+        {/* ── Past Surgeries / Hospitalizations ── */}
+        <div className="summary-history-section">
+          <div className="summary-history-label-row">
+            <span className="summary-history-icon default">
+              <Icon.Clock size={14} />
+            </span>
+            <span className="summary-history-label">Past Surgeries / Procedures</span>
+          </div>
+          <div className="summary-chips-wrap">
+            {surgeries.length > 0 ? (
+              surgeries.map((surg, i) => (
+                <Md3Chip key={i} variant="default" size="small">
+                  {typeof surg === 'string' ? surg : surg.name || 'Surgery'}
+                </Md3Chip>
+              ))
+            ) : (
+              <span className="summary-nil-text">None documented</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

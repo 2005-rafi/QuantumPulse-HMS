@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { visitAPI } from '../services/visitAPI';
 import { adminAPI } from '../services/adminAPI';
+import { useToast } from '../context/ToastContext';
 
 const DEFAULT_DOSAGE_SCHEDULE = {
   morning:   { count: 1, timing: 'AFTER_FOOD' },
@@ -58,22 +59,15 @@ const mapPrescribedMedication = (med) => {
   };
 };
 
-/**
- * @returns {{
- *   activeTab, setActiveTab, selectedPatient, setSelectedPatient, queue, selectedVisit,
- *   medications, consultationFee, setConsultationFee, labCharges, setLabCharges,
- *   submitting, showPreview, setShowPreview, hospitalInfo, labels, customFields,
- *   fetchQueue, handlePatientSelect, handleDirectPharmacy, selectVisit,
- *   handleAddMedication, handleRemoveMedication, handleMedChange,
- *   handleGeneratePreview, handleFinalize, totalBillAmount
- * }}
- */
 export const usePharmacyDispense = () => {
+  const { showSuccess, showError, showWarning } = useToast();
+
   const [activeTab, setActiveTab] = useState('queue');
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [queue, setQueue] = useState([]);
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [medications, setMedications] = useState([]);
+  const [validationErrors, setValidationErrors] = useState({});
   const [consultationFee, setConsultationFee] = useState(0);
   const [labCharges, setLabCharges] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -127,6 +121,7 @@ export const usePharmacyDispense = () => {
     setSelectedVisit(visit);
     const initialMeds = (visit.prescribedMedications || []).map(mapPrescribedMedication);
     setMedications(initialMeds);
+    setValidationErrors({});
     setConsultationFee(visit.consultation?.doctorId ? 50 : 0);
     setLabCharges((visit.labOrders?.length || 0) > 0 ? 100 : 0);
   }, []);
@@ -152,6 +147,11 @@ export const usePharmacyDispense = () => {
 
   const handleRemoveMedication = useCallback((index) => {
     setMedications((prev) => prev.filter((_, i) => i !== index));
+    setValidationErrors((prev) => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
   }, []);
 
   const handleMedChange = useCallback((index, field, value) => {
@@ -160,21 +160,65 @@ export const usePharmacyDispense = () => {
       next[index] = { ...next[index], [field]: value };
       return next;
     });
+
+    // Dynamically clear validation error on input change
+    setValidationErrors((prev) => {
+      if (!prev[index]?.[field]) return prev;
+      const next = { ...prev };
+      const rowErrors = { ...next[index] };
+      
+      if (field === 'quantity' && value.trim()) {
+        delete rowErrors.quantity;
+      }
+      if (field === 'amount' && value !== '' && !isNaN(Number(value)) && Number(value) >= 0) {
+        delete rowErrors.amount;
+      }
+      
+      if (Object.keys(rowErrors).length === 0) {
+        delete next[index];
+      } else {
+        next[index] = rowErrors;
+      }
+      return next;
+    });
   }, []);
 
   const handleGeneratePreview = useCallback(() => {
-    for (const med of medications) {
-      if (!med.quantity.trim()) {
-        alert(`Please enter quantity for ${med.recommended || 'all medications'}`);
-        return;
+    const errors = {};
+    let hasError = false;
+
+    if (medications.length === 0) {
+      showWarning('No Medications Prescribed', 'Please add at least one medication before generating bill preview.');
+      return;
+    }
+
+    medications.forEach((med, idx) => {
+      const rowErrors = {};
+      if (!med.quantity || !med.quantity.trim()) {
+        rowErrors.quantity = 'Required';
+        hasError = true;
       }
       if (med.amount === '' || isNaN(Number(med.amount)) || Number(med.amount) < 0) {
-        alert(`Please enter a valid amount (price) for ${med.recommended || 'all medications'}`);
-        return;
+        rowErrors.amount = 'Invalid price';
+        hasError = true;
       }
+      if (Object.keys(rowErrors).length > 0) {
+        errors[idx] = rowErrors;
+      }
+    });
+
+    if (hasError) {
+      setValidationErrors(errors);
+      showError(
+        'Validation Error',
+        'Please enter valid quantities and prices for the highlighted medications.'
+      );
+      return;
     }
+
+    setValidationErrors({});
     setShowPreview(true);
-  }, [medications]);
+  }, [medications, showError, showWarning]);
 
   const handleFinalize = useCallback(async () => {
     try {
@@ -191,20 +235,24 @@ export const usePharmacyDispense = () => {
         })),
       };
       await visitAPI.dispenseMedicine(selectedVisit._id, payload);
-      alert('Visit completed and saved successfully!');
+      showSuccess('Dispensation Complete', 'Visit completed and billing recorded successfully.');
       setShowPreview(false);
       setSelectedVisit(null);
       setMedications([]);
+      setValidationErrors({});
       setConsultationFee(0);
       setLabCharges(0);
       fetchQueue();
     } catch (err) {
       console.error('[usePharmacyDispense] handleFinalize error:', err);
-      alert('Failed to dispense medications.');
+      showError(
+        'Dispensation Failed',
+        err.response?.data?.message || 'Failed to complete dispense. Please check connection and try again.'
+      );
     } finally {
       setSubmitting(false);
     }
-  }, [selectedVisit, medications, consultationFee, labCharges, fetchQueue]);
+  }, [selectedVisit, medications, consultationFee, labCharges, fetchQueue, showSuccess, showError]);
 
   const totalBillAmount = useMemo(
     () =>
@@ -224,6 +272,7 @@ export const usePharmacyDispense = () => {
     queue,
     selectedVisit,
     medications,
+    validationErrors,
     consultationFee,
     setConsultationFee,
     labCharges,

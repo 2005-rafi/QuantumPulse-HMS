@@ -59,6 +59,8 @@ export const useReceptionDashboard = () => {
     setSelectedPatient(null);
   }, []);
 
+  const [activeTab, setActiveTab] = useState('patients'); // 'patients' | 'appointments'
+
   const viewKey = useMemo(() => {
     if (printData) return 'print';
     if (selectedPatient) return 'profile';
@@ -66,6 +68,8 @@ export const useReceptionDashboard = () => {
   }, [printData, selectedPatient]);
 
   return {
+    activeTab,
+    setActiveTab,
     selectedPatient,
     isRegSheetOpen,
     setIsRegSheetOpen,

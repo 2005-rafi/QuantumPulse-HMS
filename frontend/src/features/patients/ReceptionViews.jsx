@@ -1,0 +1,131 @@
+import React from 'react';
+import { useOutletContext } from 'react-router-dom';
+import PatientList from './PatientList';
+import PatientRegistrationForm from './PatientRegistrationForm';
+import PatientProfile from './PatientProfile';
+import AppointmentDashboard from '../appointments/AppointmentDashboard';
+import PrintableVisitSlip from '../../components/PrintableVisitSlip';
+import { Md3BottomSheet, Md3Fab, Md3Button } from '../../components/md3/Md3FormComponents';
+import { Icon } from '../../components/md3/Md3Widgets';
+
+/**
+ * ReceptionPatientsView — Handles Walk-in & Patient directory, profile view,
+ * visit slip printing, and patient registration sheet.
+ */
+export const ReceptionPatientsView = () => {
+  const {
+    selectedPatient,
+    isRegSheetOpen,
+    setIsRegSheetOpen,
+    printData,
+    handlePatientSelect,
+    handleVisitCreated,
+    handlePrintDone,
+    viewKey,
+  } = useOutletContext();
+
+  return (
+    <>
+      {viewKey === 'print' && (
+        <div key="print" className="reception-view reception-print-container">
+          <div className="reception-print-header">
+            <div className="reception-print-success-label">
+              <div className="reception-print-success-icon" aria-hidden="true">
+                <Icon.Activity />
+              </div>
+              <div>
+                <h2 className="reception-print-title">Visit Slip Generated</h2>
+                <p className="reception-print-subtitle">
+                  Patient registered &amp; OPD ticket created successfully
+                </p>
+              </div>
+            </div>
+            <Md3Button
+              variant="secondary"
+              onClick={handlePrintDone}
+              style={{ width: 'auto', minWidth: '160px' }}
+            >
+              Done &amp; Return to List
+            </Md3Button>
+          </div>
+          <PrintableVisitSlip patient={printData.patient} visit={printData.visit} />
+        </div>
+      )}
+
+      {viewKey === 'profile' && (
+        <div key="profile" className="reception-view">
+          <div className="profile-view-header">
+            <button
+              type="button"
+              className="profile-view-back-btn"
+              onClick={() => handlePatientSelect(null)}
+              aria-label="Back to patient directory"
+            >
+              <Icon.ChevronLeft />
+              <span>Back</span>
+            </button>
+            <nav className="profile-view-breadcrumb" aria-label="Breadcrumb">
+              <span>Patient Directory</span>
+              <span className="profile-view-breadcrumb-sep">›</span>
+              <span style={{ color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
+                {selectedPatient.firstName} {selectedPatient.lastName}
+              </span>
+            </nav>
+          </div>
+          <PatientProfile
+            patientId={selectedPatient._id || selectedPatient.id}
+            onBack={() => handlePatientSelect(null)}
+            onVisitCreated={handleVisitCreated}
+          />
+        </div>
+      )}
+
+      {viewKey === 'list' && (
+        <div key="patients-list" className="reception-view">
+          <PatientList onSelectPatient={handlePatientSelect} />
+        </div>
+      )}
+
+      {/* ─── FAB: Register Patient (Only when not in print view) ─── */}
+      {viewKey !== 'print' && (
+        <div className="reception-fab-dock">
+          <Md3Fab
+            icon={<Icon.Plus />}
+            label="Register Patient"
+            onClick={() => setIsRegSheetOpen(true)}
+            ariaLabel="Register New Patient"
+          />
+        </div>
+      )}
+
+      {/* ─── BOTTOM SHEET: Registration Form ─── */}
+      <Md3BottomSheet
+        isOpen={isRegSheetOpen}
+        onClose={() => setIsRegSheetOpen(false)}
+        title="Register New Patient"
+        subtitle="Complete the form to register patient & create OPD visit ticket"
+      >
+        <PatientRegistrationForm
+          onSuccess={handleVisitCreated}
+          onCancel={() => setIsRegSheetOpen(false)}
+        />
+      </Md3BottomSheet>
+    </>
+  );
+};
+
+/**
+ * ReceptionAppointmentsView — Handles Reception appointment scheduling & token operations.
+ */
+export const ReceptionAppointmentsView = () => {
+  const { user, handleVisitCreated } = useOutletContext();
+
+  return (
+    <div key="appointments-dashboard" className="reception-view">
+      <AppointmentDashboard
+        user={user}
+        onVisitCreated={handleVisitCreated}
+      />
+    </div>
+  );
+};

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Md3StatCard } from '../md3/Md3Widgets';
+import { Md3StatCard, Icon } from '../md3/Md3Widgets';
 import { formatTodayLabel } from '../../utils/dateFormatting';
 import './DashboardStatsBar.css';
 
@@ -20,7 +20,7 @@ import './DashboardStatsBar.css';
  */
 const DashboardStatsBar = ({ stats = [], showToday = true, className = '' }) => {
   const todayStat = showToday
-    ? { icon: null, label: 'Today', value: formatTodayLabel(), variant: 'primary', key: '__today__' }
+    ? { icon: <Icon.Calendar />, label: 'Today', value: formatTodayLabel(), variant: 'primary', key: '__today__' }
     : null;
 
   const allStats = todayStat ? [todayStat, ...stats] : stats;

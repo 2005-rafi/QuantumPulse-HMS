@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { formatDob, getPatientInitials } from '../../utils/patientFormatters';
+import { useConfig } from '../../contexts/ConfigContext';
 import './PrintablePatientIdCard.css';
 
 /* ── SVG Icons ── */
@@ -72,6 +73,7 @@ const SvgBarcode = () => (
 );
 
 const PrintablePatientIdCard = ({ patient, onClose, inline = false }) => {
+  const config = useConfig();
   if (!patient) return null;
 
   const handlePrint = () => {
@@ -86,7 +88,9 @@ const PrintablePatientIdCard = ({ patient, onClose, inline = false }) => {
           <IconMedicalCross />
         </div>
         <div className="id-card-brand-text">
-          <span className="id-card-hospital-name">HMS CLINICAL CENTER</span>
+          <span className="id-card-hospital-name">
+            {config?.SHORT_NAME ? `${config.SHORT_NAME.toUpperCase()} CLINICAL CENTER` : 'HMS CLINICAL CENTER'}
+          </span>
           <span className="id-card-doc-type">PATIENT IDENTIFICATION CARD</span>
         </div>
       </div>

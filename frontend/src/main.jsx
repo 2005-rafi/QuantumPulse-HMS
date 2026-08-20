@@ -10,13 +10,14 @@ import './styles/style_config.css'
 import './index.css'
 import App from './App.jsx'
 import { ConfigProvider } from './contexts/ConfigContext.jsx'
-
-document.documentElement.classList.add('light')
+import { ThemeProvider } from './context/ThemeContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <ConfigProvider>
-      <App />
-    </ConfigProvider>
+    <ThemeProvider>
+      <ConfigProvider>
+        <App />
+      </ConfigProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

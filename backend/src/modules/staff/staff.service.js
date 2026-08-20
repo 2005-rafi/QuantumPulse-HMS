@@ -1,4 +1,5 @@
 const repo = require('./staff.repository');
+const Staff = require('./staff.model');
 const AppError = require('../../core/errors/AppError');
 const identityService = require('../identity/identity.service');
 const PositionHistory = require('./positionHistory.model');
@@ -9,7 +10,6 @@ const { withTransaction } = require('../../core/database/transaction');
 
 
 const validateSpecialtyDetails = async (roleName, data, staffId = null) => {
-  const Staff = require('./staff.model');
 
   // Pre-emptive duplicate checks to return clean errors
   const checkDuplicate = async (field, value, label) => {
@@ -110,7 +110,26 @@ const getById = async (id) => {
   const staff = await repo.findById(id);
   if (!staff) throw new AppError('NOT_FOUND');
   const identity = await identityService.getByStaffId(id);
-  return { ...staff, username: identity?.username || '' };
+
+  let permissions = [];
+  if (staff.roleId?._id) {
+    const adminRepo = require('../administration/administration.repository');
+    permissions = await adminRepo.getPermissionsForRole(staff.roleId._id);
+  }
+
+  const directReportsCount = await Staff.countDocuments({ reportingTo: id, isDeleted: { $ne: true } });
+
+  return {
+    ...staff,
+    username: identity?.username || '',
+    accountStatus: identity?.accountStatus || staff.status || 'Active',
+    accountCreatedAt: identity?.createdAt || staff.createdAt || null,
+    lastLoginAt: identity?.lastLoginAt || null,
+    passwordChangedAt: identity?.passwordChangedAt || null,
+    failedLoginAttempts: identity?.failedLoginAttempts || 0,
+    permissions: permissions || [],
+    directReportsCount: directReportsCount || 0,
+  };
 };
 
 const generateEmployeeId = async () => {
@@ -164,6 +183,16 @@ const create = async (data, adminStaffId) => {
       session ? { session } : {}
     );
 
+    // If registered directly as Head of Department, sync department headOfDepartment
+    if (data.position === 'Head of Department' && data.departmentId) {
+      const Department = require('../administration/department.model');
+      await Department.findByIdAndUpdate(
+        data.departmentId,
+        { headOfDepartment: newStaffDoc._id },
+        session ? { session } : {}
+      );
+    }
+
     return repo.findById(newStaffDoc._id);
   });
 };
@@ -214,6 +243,15 @@ const update = async (id, data, adminStaffId) => {
 
   const updatedStaff = await repo.update(id, staffData);
   
+  // Sync department headOfDepartment if position is Head of Department
+  if (staffData.position === 'Head of Department' && (staffData.departmentId || existing.departmentId)) {
+    const deptId = staffData.departmentId || existing.departmentId?._id || existing.departmentId;
+    if (deptId) {
+      const Department = require('../administration/department.model');
+      await Department.findByIdAndUpdate(deptId, { headOfDepartment: id });
+    }
+  }
+
   if (username || password) {
     await identityService.updateCredentials(id, { username, password });
   }
@@ -352,6 +390,22 @@ const changePosition = async (staffId, newPosition, reason, adminStaffId) => {
       ],
       session ? { session } : {}
     );
+
+    // If position changed to Head of Department, sync department headOfDepartment
+    if (newPosition === 'Head of Department' && staff.departmentId) {
+      const deptId = staff.departmentId?._id || staff.departmentId;
+      if (deptId) {
+        const Department = require('../administration/department.model');
+        await Department.findByIdAndUpdate(deptId, { headOfDepartment: staffId }, session ? { session } : {});
+      }
+    } else if (previousPosition === 'Head of Department' && newPosition !== 'Head of Department' && staff.departmentId) {
+      // If position demoted/changed from Head of Department, clear department HOD if it was this staff
+      const deptId = staff.departmentId?._id || staff.departmentId;
+      if (deptId) {
+        const Department = require('../administration/department.model');
+        await Department.findOneAndUpdate({ _id: deptId, headOfDepartment: staffId }, { headOfDepartment: null }, session ? { session } : {});
+      }
+    }
 
     return getById(staffId);
   });

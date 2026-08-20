@@ -24,11 +24,83 @@ const CONSULTATION_TAB = {
   icon: null, // Rendered in DoctorDashboard
 };
 
+const APPOINTMENTS_TAB = {
+  id: 'appointments',
+  label: 'Appointments',
+  icon: null,
+};
+
 const DELETION_TAB = {
   id: 'deletionRequests',
   label: 'Deletion Requests',
   icon: null,
 };
+
+const DEFAULT_LABORATORIES = [
+  {
+    _id: 'lab-haematology',
+    name: 'Haematology Laboratory',
+    code: 'HAEM',
+    description: 'Complete blood analysis and haematology investigations',
+    testCatalog: [
+      { name: 'Complete Blood Count (CBC)', testCode: 'CBC', sampleType: 'EDTA Blood (3 mL)' },
+      { name: 'Erythrocyte Sedimentation Rate (ESR)', testCode: 'ESR', sampleType: 'Citrate Blood (1.8 mL)' },
+      { name: 'Peripheral Blood Smear', testCode: 'PBS', sampleType: 'Whole Blood' },
+      { name: 'Coagulation Profile (PT/INR, aPTT)', testCode: 'COAG', sampleType: 'Citrate Plasma' },
+    ],
+  },
+  {
+    _id: 'lab-biochemistry',
+    name: 'Biochemistry Laboratory',
+    code: 'BIOCHEM',
+    description: 'Blood chemistry, metabolic panel, and organ function tests',
+    testCatalog: [
+      { name: 'Liver Function Test (LFT)', testCode: 'LFT', sampleType: 'Serum (5 mL)' },
+      { name: 'Renal Function Test (RFT)', testCode: 'RFT', sampleType: 'Serum (5 mL)' },
+      { name: 'Blood Glucose (Fasting / Random / PP)', testCode: 'GLU', sampleType: 'Fluoride Plasma' },
+      { name: 'Lipid Profile', testCode: 'LIPID', sampleType: 'Serum (3 mL)' },
+      { name: 'Serum Electrolytes (Na, K, Cl)', testCode: 'LYTES', sampleType: 'Serum (2 mL)' },
+      { name: 'HbA1c (Glycated Haemoglobin)', testCode: 'HBA1C', sampleType: 'EDTA Blood (2 mL)' },
+    ],
+  },
+  {
+    _id: 'lab-microbiology',
+    name: 'Microbiology Laboratory',
+    code: 'MICRO',
+    description: 'Cultures, smears, staining, and antibiotic sensitivity testing',
+    testCatalog: [
+      { name: 'Urine Routine & Microscopy', testCode: 'URINE_RM', sampleType: 'Clean-Catch Midstream Urine' },
+      { name: 'Urine Culture & Sensitivity', testCode: 'URINE_CS', sampleType: 'Sterile Urine Container' },
+      { name: 'Blood Culture & Sensitivity', testCode: 'BLOOD_CS', sampleType: 'Blood Culture Bottle' },
+      { name: 'Sputum for AFB / Gram Stain', testCode: 'SPUTUM', sampleType: 'Early Morning Sputum' },
+      { name: 'Stool Routine & Occult Blood', testCode: 'STOOL_RM', sampleType: 'Stool Sample' },
+    ],
+  },
+  {
+    _id: 'lab-radiology',
+    name: 'Radiology & Imaging',
+    code: 'RADIO',
+    description: 'X-Ray, Ultrasound, CT, and MRI diagnostic imaging',
+    testCatalog: [
+      { name: 'Chest X-Ray (PA View)', testCode: 'CXR', sampleType: 'Diagnostic Imaging' },
+      { name: 'Ultrasound Whole Abdomen', testCode: 'USG_ABD', sampleType: 'Diagnostic Imaging' },
+      { name: 'CT Scan Brain (Plain / Contrast)', testCode: 'CT_BRAIN', sampleType: 'Diagnostic Imaging' },
+      { name: 'MRI Lumbar Spine', testCode: 'MRI_LS', sampleType: 'Diagnostic Imaging' },
+      { name: 'ECG (12-Lead Electrocardiogram)', testCode: 'ECG', sampleType: 'Diagnostic Imaging' },
+    ],
+  },
+  {
+    _id: 'lab-histopathology',
+    name: 'Histopathology Laboratory',
+    code: 'HISTO',
+    description: 'Biopsy analysis and surgical pathology specimens',
+    testCatalog: [
+      { name: 'Tissue Biopsy Examination', testCode: 'BIOPSY', sampleType: 'Formalin-Fixed Tissue' },
+      { name: 'Fine Needle Aspiration Cytology (FNAC)', testCode: 'FNAC', sampleType: 'Aspiration Smear' },
+      { name: 'Pap Smear Cervical Cytology', testCode: 'PAP', sampleType: 'Cervical Smear' },
+    ],
+  },
+];
 
 /**
  * @returns {{
@@ -61,6 +133,7 @@ export const useDoctorWorkspace = () => {
 
   const [queue, setQueue] = useState([]);
   const [selectedVisit, setSelectedVisit] = useState(null);
+  const [laboratories, setLaboratories] = useState(DEFAULT_LABORATORIES);
   const [form, setForm] = useState({
     chiefComplaint: '',
     historyOfPresentIllness: '',
@@ -73,10 +146,10 @@ export const useDoctorWorkspace = () => {
     prescribedMedications: [],
     labOrders: [],
   });
-  const [laboratories, setLaboratories] = useState([]);
   const [activeTab, setActiveTab] = useState('consultation');
   const [deletionRequests, setDeletionRequests] = useState([]);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [routingToLab, setRoutingToLab] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -87,8 +160,8 @@ export const useDoctorWorkspace = () => {
 
       const [waitRes, progRes, reviewRes] = await Promise.all([
         visitAPI.getQueue('WAITING_DOCTOR', { departmentId: user.departmentId }),
-        visitAPI.getQueue('IN_PROGRESS', { 'consultation.doctorId': user.staffId }),
-        visitAPI.getQueue('WAITING_DOCTOR_REVIEW', { 'consultation.doctorId': user.staffId }),
+        visitAPI.getQueue('IN_PROGRESS', { departmentId: user.departmentId }),
+        visitAPI.getQueue('WAITING_DOCTOR_REVIEW', { departmentId: user.departmentId }),
       ]);
 
       const combined = [
@@ -98,8 +171,13 @@ export const useDoctorWorkspace = () => {
       ];
       setQueue(combined);
 
-      const delReqRes = await patientAPI.getPendingDeletionRequests();
-      setDeletionRequests(delReqRes.data || []);
+      try {
+        const delReqRes = await patientAPI.getPendingDeletionRequests();
+        setDeletionRequests(delReqRes.data || []);
+      } catch (delErr) {
+        // Auxiliary compliance feature — do not block clinical queue
+        setDeletionRequests([]);
+      }
     } catch (err) {
       console.error('[useDoctorWorkspace] fetchQueue error:', err);
     } finally {
@@ -110,9 +188,15 @@ export const useDoctorWorkspace = () => {
   const fetchLaboratories = useCallback(async () => {
     try {
       const res = await api.get('/laboratory/config');
-      setLaboratories(res.data?.data || []);
+      const data = res.data?.data;
+      if (Array.isArray(data) && data.length > 0) {
+        setLaboratories(data);
+      } else {
+        setLaboratories(DEFAULT_LABORATORIES);
+      }
     } catch (err) {
       console.error('[useDoctorWorkspace] fetchLaboratories error:', err);
+      setLaboratories(DEFAULT_LABORATORIES);
     }
   }, []);
 
@@ -185,6 +269,25 @@ export const useDoctorWorkspace = () => {
     }
   }, [selectedVisit, form, fetchQueue, showSuccess, showError]);
 
+  const handleSendToLab = useCallback(async () => {
+    if (!selectedVisit) return;
+    if (!form.labOrders || form.labOrders.length === 0) {
+      showError('Please add at least one laboratory investigation before routing to laboratory.');
+      return;
+    }
+    setRoutingToLab(true);
+    try {
+      await visitAPI.orderLabsAndRoute(selectedVisit._id, form);
+      setSelectedVisit(null);
+      fetchQueue();
+      showSuccess(`Patient routed to Laboratory for ${form.labOrders.length} test(s)!`);
+    } catch (err) {
+      showError('Failed to route patient to laboratory: ' + (err.response?.data?.message || err.message));
+    } finally {
+      setRoutingToLab(false);
+    }
+  }, [selectedVisit, form, fetchQueue, showSuccess, showError]);
+
   const handleFinalize = useCallback(async () => {
     if (!selectedVisit) return;
     if (!form.diagnosis?.trim() || !form.treatmentPlan?.trim()) {
@@ -222,6 +325,7 @@ export const useDoctorWorkspace = () => {
 
   const headerTabs = useMemo(() => [
     CONSULTATION_TAB,
+    APPOINTMENTS_TAB,
     {
       ...DELETION_TAB,
       label: deletionRequests.length > 0
@@ -239,6 +343,7 @@ export const useDoctorWorkspace = () => {
     setActiveTab,
     deletionRequests,
     savingDraft,
+    routingToLab,
     finalizing,
     isRefreshing,
     fetchQueue,
@@ -248,6 +353,7 @@ export const useDoctorWorkspace = () => {
     handleLabOrdersChange,
     handleNotesChange,
     handleSaveDraft,
+    handleSendToLab,
     handleFinalize,
     canFinalize,
     queueStats,

@@ -1,34 +1,40 @@
 /* ============================================================
-   PatientProfile.css — Refactored with MD3 Responsive Standards
-   All colors from theme.css (--md-sys-color-*)
+   PatientProfile.css — Pure Material Design 3 & Color Theory Standards
+   All colors from theme.css tokens (--md-sys-color-*)
+   - No monolithic color flooding
+   - High-density bento architecture
+   - Compact visual hierarchy
    ============================================================ */
 
 .pp-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 18px;
   width: 100%;
   box-sizing: border-box;
 }
 
 /* ──────────────────────────────────────────────────────
-   Compressed Patient Hero Card (Identity, Stats, Demographics)
+   1. UNIFIED COMPACT PATIENT HERO HEADER
    ────────────────────────────────────────────────────── */
 .pp-hero-card {
   width: 100%;
   box-sizing: border-box;
+  background-color: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-large, 20px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   overflow: hidden;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-large, 16px);
+  display: flex;
+  flex-direction: column;
 }
 
-.pp-hero__top {
+.pp-hero__main-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px;
+  gap: 20px;
+  padding: 18px 24px;
   flex-wrap: wrap;
 }
 
@@ -43,61 +49,77 @@
 .pp-hero__id-details {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
 .pp-hero__name-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   min-width: 0;
 }
 
 .pp-hero__name {
-  font-size: 1.45rem;
+  font-size: 1.35rem;
   font-weight: 800;
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface, #1c1c14);
   margin: 0;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   line-height: 1.2;
+}
+
+.pp-hero__mrn-chip {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: monospace;
+  background: var(--md-sys-color-primary-container, #c2e8ff);
+  color: var(--md-sys-color-on-primary-container, #004d67);
+  padding: 3px 10px;
+  border-radius: 999px;
 }
 
 .pp-hero__meta-row {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.92rem;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+  font-size: 0.85rem;
   font-weight: 500;
   flex-wrap: wrap;
 }
 
 .pp-hero__meta-dot {
-  color: var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-outline-variant, #c9c7b6);
 }
 
-.pp-hero__meta-item--blood {
-  display: flex;
+.pp-hero__blood-chip {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  color: var(--md-sys-color-error);
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-error, #ba1a1a);
   font-weight: 700;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
-.pp-hero__meta-item--blood svg {
-  flex-shrink: 0;
+.pp-hero__blood-chip svg {
+  width: 12px;
+  height: 12px;
 }
 
+/* Stats Pill Group */
 .pp-hero__stats {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  padding: 10px 20px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  border: 1px solid var(--md-sys-color-outline-variant);
+  gap: 14px;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  padding: 8px 16px;
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
   flex-shrink: 0;
 }
 
@@ -105,49 +127,47 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-width: 70px;
+  min-width: 60px;
 }
 
 .pp-hero__stat-value {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary, #196584);
   line-height: 1.1;
 }
 
 .pp-hero__stat-label {
-  font-size: 0.72rem;
-  color: var(--md-sys-color-on-surface-variant);
-  margin-top: 4px;
+  font-size: 0.6875rem;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+  margin-top: 2px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   font-weight: 600;
 }
 
 .pp-hero__stat-sep {
   width: 1px;
-  height: 24px;
-  background-color: var(--md-sys-color-outline-variant);
+  height: 20px;
+  background-color: var(--md-sys-color-outline-variant, #c9c7b6);
 }
 
-.pp-hero__print {
-  flex-shrink: 0;
-}
-
-.pp-hero__bottom {
+/* Bottom Sub-Row: Demographics & Actions */
+.pp-hero__sub-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 16px 24px;
-  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  gap: 16px;
+  padding: 10px 24px;
+  background-color: color-mix(in srgb, var(--md-sys-color-surface-container-high, #ebe8d9) 40%, transparent);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
   flex-wrap: wrap;
 }
 
 .pp-hero__demographics {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
@@ -155,30 +175,33 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.88rem;
+  font-size: 0.8125rem;
 }
 
 .pp-hero__demo-label {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #48473a);
   font-weight: 600;
 }
 
 .pp-hero__demo-val {
-  color: var(--md-sys-color-on-surface);
-  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+  font-weight: 600;
 }
 
 .pp-hero__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 /* ──────────────────────────────────────────────────────
-   Bento Box Adaptive Layout
+   2. BENTO-BOX LAYOUT: SIDEBAR & CONTENT PANE
    ────────────────────────────────────────────────────── */
 .pp-layout {
   display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 24px;
+  grid-template-columns: 320px 1fr;
+  gap: 20px;
   align-items: start;
   width: 100%;
   box-sizing: border-box;
@@ -187,330 +210,364 @@
 .pp-layout__sidebar {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   position: sticky;
-  top: 20px;
+  top: 16px;
 }
 
 .pp-layout__content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
   min-width: 0;
 }
 
-/* Sidebar Containers */
-.pp-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.pp-sidebar-info {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pp-sidebar-vitals {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.pp-sidebar-vitals--empty {
-  padding: 16px 0;
-  text-align: center;
-}
-
-.pp-vitals-empty-text {
-  color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.9rem;
-  font-style: italic;
-}
-
-.pp-vitals-bmi {
-  margin-top: 4px;
-  display: flex;
-}
-
 /* ──────────────────────────────────────────────────────
-   Tab Content Views
+   3. HIGH-DENSITY PATIENT SNAPSHOT SIDEBAR
    ────────────────────────────────────────────────────── */
-.pp-tab-views {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Overview Clinical Note Details */
-.pp-overview-clinical {
+.pp-sidebar-card {
+  background-color: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-large, 18px);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 8px 0;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
 
-.pp-clinical-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pp-clinical-label {
-  font-size: 0.88rem;
+.pp-sidebar-section-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary, #196584);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
 }
 
-.pp-clinical-value {
-  font-size: 1rem;
-  line-height: 1.5;
-  color: var(--md-sys-color-on-surface-variant);
+.pp-sidebar-section-title svg {
+  width: 16px;
+  height: 16px;
 }
 
-.pp-clinical-value--diagnosis {
-  font-weight: 700;
-  color: var(--md-sys-color-on-surface);
-  font-size: 1.1rem;
-}
-
-.pp-clinical-value--notes {
-  white-space: pre-wrap;
-}
-
-.pp-clinical-divider {
-  border-top-color: var(--md-sys-color-outline-variant);
-  opacity: 0.6;
-}
-
-/* Prescription meds styling */
-.pp-prescriptions-section {
-  margin-top: 8px;
-}
-
-.pp-overview-meds {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.pp-med-card {
-  padding: 16px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  border: 1px solid var(--md-sys-color-outline-variant);
+.pp-sidebar-contact-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.pp-med-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.pp-med-title-row {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  color: var(--md-sys-color-primary);
 }
 
-.pp-med-title-row svg {
-  flex-shrink: 0;
-}
-
-.pp-med-name {
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: var(--md-sys-color-on-surface);
-}
-
-.pp-med-details {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 0.9rem;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.pp-med-dot {
-  color: var(--md-sys-color-outline);
-}
-
-.pp-med-instructions {
-  font-size: 0.85rem;
-  padding: 8px 12px;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  color: var(--md-sys-color-on-surface-variant);
-  border-left: 3px solid var(--md-sys-color-tertiary);
-}
-
-/* Lab Results cells */
-.pp-lab-pending {
-  color: var(--md-sys-color-on-surface-variant);
-  font-style: italic;
-  font-size: 0.9rem;
-}
-
-.pp-lab-results-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pp-lab-result-metric {
-  font-size: 0.9rem;
-  color: var(--md-sys-color-on-surface-variant);
-}
-
-.pp-lab-result-metric strong {
-  color: var(--md-sys-color-on-surface);
-}
-
-.pp-lab-notes {
-  font-size: 0.85rem;
-  color: var(--md-sys-color-tertiary);
-  margin-top: 4px;
-}
-
-/* Check-In form errors */
-.pp-form-error {
+.pp-sidebar-contact-item {
   display: flex;
   align-items: flex-start;
-  gap: var(--md-spacing-s, 12px);
-  padding: 12px 16px;
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  background-color: var(--md-sys-color-error-container);
-  color: var(--md-sys-color-on-error-container);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 35%, transparent);
-  font-size: 0.87rem;
-  font-weight: 500;
-  margin-bottom: 16px;
-  animation: ppFadeSlide 0.25s var(--md-sys-motion-easing-standard, cubic-bezier(0.2,0,0,1)) both;
+  gap: 10px;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface, #1c1c14);
 }
 
-.pp-form-error svg {
+.pp-sidebar-contact-item svg {
+  width: 16px;
+  height: 16px;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
   margin-top: 1px;
 }
 
-.pp-checkin-form {
+.pp-sidebar-contact-label {
+  font-size: 0.6875rem;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.pp-sidebar-contact-val {
+  font-weight: 500;
+  word-break: break-word;
+}
+
+/* Clinical Alerts / Allergies Pill */
+.pp-sidebar-alerts {
   display: flex;
   flex-direction: column;
-  gap: var(--md-spacing-m, 16px);
+  gap: 6px;
+  background: color-mix(in srgb, var(--md-sys-color-error-container, #ffdad6) 40%, transparent);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 30%, transparent);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  padding: 10px 12px;
+}
+
+.pp-alert-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.8125rem;
+}
+
+.pp-alert-row svg {
+  width: 16px;
+  height: 16px;
+  color: var(--md-sys-color-error, #ba1a1a);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.pp-alert-label {
+  font-weight: 700;
+  color: var(--md-sys-color-error, #ba1a1a);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+}
+
+.pp-alert-val {
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+/* High-Density Vitals Micro-Grid */
+.pp-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.pp-vital-tile {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-small, 10px);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.15s ease;
+}
+
+.pp-vital-tile:hover {
+  border-color: var(--md-sys-color-primary, #196584);
+  transform: translateY(-1px);
+}
+
+.pp-vital-tile-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.pp-vital-label {
+  font-size: 0.6875rem;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.pp-vital-tile svg {
+  width: 14px;
+  height: 14px;
+  color: var(--md-sys-color-primary, #196584);
+}
+
+.pp-vital-value {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+.pp-vital-bmi-pill {
+  grid-column: span 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--md-sys-color-tertiary-container, #e7e78f);
+  color: var(--md-sys-color-on-tertiary-container, #494900);
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* ──────────────────────────────────────────────────────
+   4. CLINICAL OVERVIEW BENTO GRID
+   ────────────────────────────────────────────────────── */
+.pp-overview-bento {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
-  box-sizing: border-box;
 }
 
-@keyframes ppFadeSlide {
-  from { opacity: 0; transform: translateY(-6px); }
-  to   { opacity: 1; transform: translateY(0); }
+.pp-overview-hero-card {
+  background: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-left: 4px solid var(--md-sys-color-primary, #196584);
+  border-radius: var(--md-sys-shape-corner-large, 18px);
+  padding: 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.pp-overview-meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+}
+
+.pp-overview-doctor-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+.pp-overview-date-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+}
+
+.pp-overview-clinical-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.pp-clinical-bento-tile {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-clinical-bento-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #196584);
+}
+
+.pp-clinical-bento-val {
+  font-size: 0.9375rem;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+  line-height: 1.45;
+}
+
+.pp-clinical-bento-val.diagnosis {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+/* Prescriptions Grid */
+.pp-prescriptions-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pp-prescriptions-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.pp-prescriptions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.pp-rx-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.15s ease;
+}
+
+.pp-rx-card:hover {
+  border-color: var(--md-sys-color-primary, #196584);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.pp-rx-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pp-rx-name {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+.pp-rx-qty-badge {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  background: var(--md-sys-color-secondary-container, #c1e8ff);
+  color: var(--md-sys-color-on-secondary-container, #004d66);
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.pp-rx-badges-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.pp-rx-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container, #f1eee1);
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+}
+
+.pp-rx-instructions {
+  font-size: 0.78125rem;
+  background: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border-left: 3px solid var(--md-sys-color-primary, #196584);
+  padding: 6px 10px;
+  border-radius: 6px;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
 }
 
 /* ──────────────────────────────────────────────────────
-   Responsive Breakpoint: Mobile (max-width: 599px)
+   5. RESPONSIVE BREAKPOINTS
    ────────────────────────────────────────────────────── */
-@media (max-width: 599px) {
-  .pp-page {
-    gap: 16px;
-  }
-
-  .pp-hero__top {
-    padding: 16px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .pp-hero__identity {
-    align-items: flex-start;
-  }
-
-  .pp-hero__name {
-    font-size: 1.25rem;
-  }
-
-  .pp-hero__stats {
-    width: 100%;
-    box-sizing: border-box;
-    justify-content: space-around;
-  }
-
-  .pp-hero__bottom {
-    padding: 16px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-
-  .pp-hero__demographics {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .pp-hero__actions {
-    width: 100%;
-  }
-
-  .pp-hero__actions > * {
-    width: 100%;
-  }
-
+@media (max-width: 900px) {
   .pp-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .pp-layout__sidebar {
-    position: static;
-  }
-
-  .pp-overview-meds {
     grid-template-columns: 1fr;
   }
-}
-
-/* ──────────────────────────────────────────────────────
-   Responsive Breakpoint: Tablet (600px - 1199px)
-   ────────────────────────────────────────────────────── */
-@media (min-width: 600px) and (max-width: 1199px) {
-  .pp-hero__top {
-    padding: 20px 24px;
-  }
-
-  .pp-hero__bottom {
-    padding: 16px 24px;
-  }
-
-  .pp-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-
   .pp-layout__sidebar {
     position: static;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-}
-
-/* ──────────────────────────────────────────────────────
-   Responsive Breakpoint: Desktop (min-width: 1200px)
-   ────────────────────────────────────────────────────── */
-@media (min-width: 1200px) {
-  .pp-page {
-    gap: 24px;
   }
 }

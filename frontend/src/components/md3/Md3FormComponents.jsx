@@ -64,7 +64,8 @@ export const Md3Button = ({
   loadingText = 'Loading...',
   variant = 'primary',
   className = '',
-  style = {}
+  style = {},
+  ...props
 }) => {
   return (
     <button
@@ -73,6 +74,7 @@ export const Md3Button = ({
       onClick={onClick}
       disabled={disabled || loading}
       style={style}
+      {...props}
     >
       {loading ? (
         <>
@@ -111,19 +113,78 @@ export const Md3Select = ({
   label,
   value,
   onChange,
-  options = [],
-  disabled,
+  options,
+  children,
   error,
-  required,
+  disabled,
   leadingIcon,
-  children
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
   const [focusedIndex, setFocusedIndex] = React.useState(-1);
+  const [searchTerm, setSearchTerm] = React.useState('');
+  const [menuStyle, setMenuStyle] = React.useState({});
   const containerRef = React.useRef(null);
+  const menuRef = React.useRef(null);
+  const searchInputRef = React.useRef(null);
   
   const isFilled = value !== '' && value !== null && value !== undefined;
+  
+  // Calculate top-layer floating viewport coordinates
+  const updatePosition = React.useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+    const expectedMenuHeight = 280;
+    const spaceBelow = viewportHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    const placeAbove = spaceBelow < expectedMenuHeight && spaceAbove > spaceBelow;
+    const width = Math.max(rect.width, 220);
+    let left = rect.left;
+    if (left + width > viewportWidth - 12) {
+      left = Math.max(12, viewportWidth - width - 12);
+    }
+
+    const top = placeAbove
+      ? Math.max(12, rect.top - 4)
+      : rect.bottom + 4;
+
+    setMenuStyle({
+      position: 'fixed',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${width}px`,
+      zIndex: 999999,
+      transformOrigin: placeAbove ? 'bottom' : 'top',
+      transform: placeAbove ? 'translateY(-100%)' : 'none',
+    });
+  }, []);
+
+  // Sync position on open, scroll, or window resize
+  React.useEffect(() => {
+    if (isOpen) {
+      updatePosition();
+      window.addEventListener('scroll', updatePosition, true);
+      window.addEventListener('resize', updatePosition);
+      return () => {
+        window.removeEventListener('scroll', updatePosition, true);
+        window.removeEventListener('resize', updatePosition);
+      };
+    }
+  }, [isOpen, updatePosition]);
+
+  // Reset search term when dropdown closes & focus input on open
+  React.useEffect(() => {
+    if (!isOpen) {
+      setSearchTerm('');
+    } else {
+      setTimeout(() => {
+        if (searchInputRef.current) searchInputRef.current.focus();
+      }, 50);
+    }
+  }, [isOpen]);
   
   // Flatten options for easy indexing and keyboard navigation
   const flatOptions = React.useMemo(() => {
@@ -138,6 +199,14 @@ export const Md3Select = ({
     return options || [];
   }, [children, options]);
 
+  // Filter options based on user search term
+  const filteredOptions = React.useMemo(() => {
+    if (!searchTerm.trim()) return flatOptions;
+    return flatOptions.filter(opt => 
+      String(opt.label || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [flatOptions, searchTerm]);
+
   let selectedLabel = '';
   const selectedOption = flatOptions.find(opt => opt.value === value);
   if (selectedOption) {
@@ -150,7 +219,7 @@ export const Md3Select = ({
       setIsOpen(false);
       setIsClosing(false);
       setFocusedIndex(-1);
-    }, 200); // 200ms closing animation matches CSS
+    }, 180);
   }, []);
 
   const toggleOpen = () => {
@@ -158,26 +227,71 @@ export const Md3Select = ({
     if (isOpen) {
       handleClose();
     } else {
+      updatePosition();
       setIsOpen(true);
-      const currentIndex = flatOptions.findIndex(o => o.value === value);
+      const currentIndex = filteredOptions.findIndex(o => o.value === value);
       setFocusedIndex(currentIndex >= 0 ? currentIndex : 0);
     }
   };
 
   const handleSelect = (val) => {
-    // Fake the event target to maintain compatibility with existing forms
     onChange({ target: { name, value: val } });
     handleClose();
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isOpen) {
+        toggleOpen();
+      } else {
+        if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
+          const opt = filteredOptions[focusedIndex];
+          if (!opt.disabled) handleSelect(opt.value);
+        }
+      }
+    } else if (e.key === ' ' && e.target.className !== 'md3-select-search-input') {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleOpen();
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isOpen) {
+        toggleOpen();
+      } else {
+        setFocusedIndex(prev => Math.min(prev + 1, filteredOptions.length - 1));
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isOpen) {
+        toggleOpen();
+      } else {
+        setFocusedIndex(prev => Math.max(prev - 1, 0));
+      }
+    } else if (e.key === 'Escape') {
+      if (isOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleClose();
+      }
+    }
+  };
+
   React.useEffect(() => {
     const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
+      const isInsideContainer = containerRef.current && containerRef.current.contains(event.target);
+      const isInsideMenu = menuRef.current && menuRef.current.contains(event.target);
+      if (!isInsideContainer && !isInsideMenu) {
         if (isOpen && !isClosing) handleClose();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
   }, [isOpen, isClosing, handleClose]);
 
   return (
@@ -194,42 +308,7 @@ export const Md3Select = ({
           aria-expanded={isOpen}
           aria-haspopup="listbox"
           aria-invalid={!!error}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!isOpen) {
-                toggleOpen();
-              } else {
-                if (focusedIndex >= 0 && focusedIndex < flatOptions.length) {
-                  const opt = flatOptions[focusedIndex];
-                  if (!opt.disabled) handleSelect(opt.value);
-                }
-              }
-            } else if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!isOpen) {
-                toggleOpen();
-              } else {
-                setFocusedIndex(prev => Math.min(prev + 1, flatOptions.length - 1));
-              }
-            } else if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              e.stopPropagation();
-              if (!isOpen) {
-                toggleOpen();
-              } else {
-                setFocusedIndex(prev => Math.max(prev - 1, 0));
-              }
-            } else if (e.key === 'Escape') {
-              if (isOpen) {
-                e.preventDefault();
-                e.stopPropagation();
-                handleClose();
-              }
-            }
-          }}
+          onKeyDown={handleKeyDown}
         >
           <span className="md3-select-display-text">{selectedLabel}</span>
         </div>
@@ -242,24 +321,51 @@ export const Md3Select = ({
         </span>
       </div>
 
-      {(isOpen || isClosing) && (
-        <ul className={`md3-select-dropdown-menu ${isClosing ? 'is-closing' : ''}`} role="listbox">
-          {flatOptions.map((opt, index) => (
-            <li 
-              key={opt.value}
-              className={`md3-select-dropdown-item ${opt.value === value ? 'is-selected' : ''} ${opt.disabled ? 'is-disabled' : ''} ${focusedIndex === index ? 'is-focused' : ''}`}
-              onClick={(e) => {
-                e.stopPropagation();
-                if (!opt.disabled) handleSelect(opt.value);
+      {(isOpen || isClosing) && createPortal(
+        <div
+          ref={menuRef}
+          style={menuStyle}
+          className={`md3-select-dropdown-menu ${isClosing ? 'is-closing' : ''}`}
+          role="listbox"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="md3-select-search-wrapper">
+            <input
+              ref={searchInputRef}
+              type="text"
+              className="md3-select-search-input"
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setFocusedIndex(0);
               }}
-              onMouseEnter={() => !opt.disabled && setFocusedIndex(index)}
-              role="option"
-              aria-selected={opt.value === value}
-            >
-              {opt.label}
-            </li>
-          ))}
-        </ul>
+              onKeyDown={handleKeyDown}
+            />
+          </div>
+          <ul className="md3-select-dropdown-list">
+            {filteredOptions.length === 0 ? (
+              <li className="md3-select-dropdown-item is-disabled">No results found</li>
+            ) : (
+              filteredOptions.map((opt, index) => (
+                <li 
+                  key={opt.value}
+                  className={`md3-select-dropdown-item ${opt.value === value ? 'is-selected' : ''} ${opt.disabled ? 'is-disabled' : ''} ${focusedIndex === index ? 'is-focused' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!opt.disabled) handleSelect(opt.value);
+                  }}
+                  onMouseEnter={() => !opt.disabled && setFocusedIndex(index)}
+                  role="option"
+                  aria-selected={opt.value === value}
+                >
+                  {opt.label}
+                </li>
+              ))
+            )}
+          </ul>
+        </div>,
+        document.body
       )}
       {error && <span id={`${id}-error`} className="md3-field-error-text">{error}</span>}
     </div>
@@ -271,6 +377,7 @@ export const Md3BottomSheet = ({
   onClose,
   title,
   subtitle,
+  className = '',
   children
 }) => {
   const [shouldRender, setShouldRender] = React.useState(isOpen);
@@ -320,7 +427,7 @@ export const Md3BottomSheet = ({
       aria-modal="true"
     >
       <div 
-        className={`md3-bottom-sheet-container ${isClosing ? 'is-closing' : ''}`} 
+        className={`md3-bottom-sheet-container ${isClosing ? 'is-closing' : ''} ${className}`} 
         onClick={(e) => e.stopPropagation()}
       >
         <div className="md3-bottom-sheet-handle-bar">

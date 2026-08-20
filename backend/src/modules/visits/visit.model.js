@@ -9,7 +9,7 @@ const visitSchema = new mongoose.Schema({
   tokenSerial: { type: Number, default: null }, // raw integer serial for sorting/analytics
 
   patientId:  { type: mongoose.Schema.Types.ObjectId, ref: 'Patient',    required: true },
-  visitType:  { type: String, enum: ['OPD', 'IPD'], default: 'OPD' },
+  visitType:  { type: String, enum: ['OPD', 'IPD', 'EMERGENCY'], default: 'OPD' },
   reasonForVisit: { type: String },
   departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: false },
 
@@ -34,6 +34,11 @@ const visitSchema = new mongoose.Schema({
   // Timestamps for queue analytics (when was this patient called, skipped, etc.)
   calledAt:   { type: Date, default: null },
   skippedAt:  { type: Date, default: null },
+
+  // Cancellation tracking (when cancelled at reception before triage)
+  cancellationReason: { type: String, trim: true, default: null },
+  cancelledAt:        { type: Date, default: null },
+  cancelledBy:        { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', default: null },
 
   registeredBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
 

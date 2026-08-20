@@ -54,7 +54,9 @@ const storage = multer.diskStorage({
   },
   filename(req, file, cb) {
     const ext = path.extname(file.originalname).toLowerCase();
-    const stored = `${uuidv4()}${ext}`;
+    const patientId = req.patientId || 'unknown_patient';
+    const orderId = req.params.orderId || uuidv4();
+    const stored = `${patientId}-${orderId}${ext}`;
     // Expose for controller use
     req.storedFilename = stored;
     cb(null, stored);

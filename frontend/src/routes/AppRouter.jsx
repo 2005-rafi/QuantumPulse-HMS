@@ -42,7 +42,7 @@ export const ProtectedRoute = ({ children }) => {
 export const RoleRoute = ({ role, children }) => {
   const { user } = useAuth();
 
-  if (user && user.role !== role) {
+  if (user && user.role !== role && user.role !== 'Administrator') {
     const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
     return <Navigate to={correctRoute} replace />;
   }

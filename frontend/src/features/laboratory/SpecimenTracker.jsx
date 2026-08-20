@@ -3,12 +3,12 @@ import {
   Icon,
   Md3Chip,
   Md3Section,
-  Md3Divider,
   Md3Avatar,
   Md3InfoRow,
 } from '../../components/md3/Md3Widgets';
 import { Md3Button } from '../../components/md3/Md3FormComponents';
 import LabStatusChip from './LabStatusChip';
+import './SpecimenTracker.css';
 
 const SAMPLE_STAGE_STYLE = {
   PENDING_SAMPLE: { ring: 'pending' },
@@ -17,6 +17,18 @@ const SAMPLE_STAGE_STYLE = {
   PENDING_REVIEW: { ring: 'processing' },
   COMPLETED: { ring: 'completed' },
   REJECTED: { ring: 'rejected' },
+};
+
+const formatDateTime = (dateStr) => {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  return d.toLocaleString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
 };
 
 const SpecimenTracker = ({
@@ -67,9 +79,6 @@ const SpecimenTracker = ({
           const cfg = SAMPLE_STAGE_STYLE[stage] || SAMPLE_STAGE_STYLE.PENDING_SAMPLE;
           const lab = labNameById[order.laboratoryId] || labNameById[order.labId] || order.labName || order.laboratoryName || 'Laboratory';
           const isCollecting = busyCollecting === `collect:${order._id}` || busyCollecting === `collect:${order._id || order.id}`;
-          const tests = order.tests && Array.isArray(order.tests) ? order.tests.length : 0;
-          const fields = order.fields && Array.isArray(order.fields) ? order.fields.length : 0;
-          const testCount = tests || fields || 'Panel';
           return (
             <li key={order._id || order.id || idx} className="specimen-tracker__item">
               <div className="specimen-tracker__timeline" aria-hidden="true">
@@ -86,97 +95,109 @@ const SpecimenTracker = ({
               </div>
 
               <div className="specimen-tracker__card">
-                <div className="specimen-tracker__row-head">
-                  <div className="specimen-tracker__title-block">
+                <div className="specimen-tracker__grid">
+                  
+                  {/* Column 1: Profile / Laboratory Info */}
+                  <div className="specimen-tracker__col-info">
                     <Md3Avatar
                       initials={String(lab).slice(0, 2).toUpperCase()}
                       size="small"
                       variant="tertiary"
                     />
                     <div className="specimen-tracker__title-text">
+                      <span className="specimen-tracker__patient-name">
+                        {order._patientName || 'Unknown Patient'}
+                        {order._mrn ? ` (${order._mrn})` : ''}
+                      </span>
                       <h4 className="specimen-tracker__title">{lab}</h4>
                       <p className="specimen-tracker__meta">
-                        {typeof testCount === 'number' ? `${testCount} test${testCount === 1 ? '' : 's'} ordered` : `${testCount}`}
-                        {' · '}
                         {order.sampleType || order.specimenType || 'Sample type pending'}
                       </p>
                     </div>
                   </div>
 
-                  <div className="specimen-tracker__actions">
-                    {order.priority ? (
-                      <Md3Chip
-                        variant={
-                          (order.priority || 'ROUTINE').toUpperCase() === 'STAT' ? 'error'
-                            : (order.priority || '').toUpperCase() === 'URGENT' ? 'warning'
-                              : 'secondary'
-                        }
-                        size="small"
-                        icon={(order.priority || 'ROUTINE').toUpperCase() === 'STAT'
-                          ? <Icon.Flag />
-                          : (order.priority || '').toUpperCase() === 'URGENT'
-                            ? <Icon.Alert />
-                            : <Icon.Activity />}
-                      >
-                        {(order.priority || 'ROUTINE').toUpperCase()}
-                      </Md3Chip>
-                    ) : null}
-                    <LabStatusChip status={order.status} />
+                  {/* Column 2: Specific Ordered Tests */}
+                  <div className="specimen-tracker__col-tests">
+                    <h5 className="specimen-tracker__tests-title">Ordered Tests</h5>
+                    {(order.tests?.length || order.fields?.length) ? (
+                      <ul className="specimen-tracker__tests" aria-label={`${lab} tests list`}>
+                        {(order.tests && order.tests.length ? order.tests : (order.fields || []).map((f) => ({ name: f.name, code: f.key }))).map((test, i) => (
+                          <li key={`${order._id || order.id}-${i}`} className="specimen-tracker__test-item">
+                            <Icon.Activity aria-hidden="true" />
+                            <span className="specimen-tracker__test-name">{test.name || test.key || test.code || `Test ${i + 1}`}</span>
+                            {(test.code || test.key) && test.name ? (
+                              <span className="specimen-tracker__test-code">{test.code || test.key}</span>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <span className="specimen-tracker__no-tests">No specific tests listed</span>
+                    )}
                   </div>
-                </div>
 
-                {(order.tests?.length || order.fields?.length) ? (
-                  <ul className="specimen-tracker__tests" aria-label={`${lab} tests list`}>
-                    {(order.tests && order.tests.length ? order.tests : (order.fields || []).map((f) => ({ name: f.name, code: f.key }))).map((test, i) => (
-                      <li key={`${order._id || order.id}-${i}`} className="specimen-tracker__test-item">
-                        <Icon.Activity aria-hidden="true" />
-                        <span className="specimen-tracker__test-name">{test.name || test.key || test.code || `Test ${i + 1}`}</span>
-                        {(test.code || test.key) && test.name ? (
-                          <span className="specimen-tracker__test-code">{test.code || test.key}</span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-
-                <Md3Divider variant="inset" />
-
-                <div className="specimen-tracker__row-foot">
-                  <Md3InfoRow
-                    icon={<Icon.Clipboard />}
-                    label="Ordered by"
-                    value={order.requestedBy || order.orderedBy || 'Attending physician'}
-                    compact
-                  />
-                  {stage === 'PENDING_SAMPLE' || stage === 'PENDING' ? (typeof onCollect === 'function' ? (
-                    <Md3Button
-                      variant="tonal"
-                      size="default"
-                      disabled={isCollecting}
-                      onClick={() => onCollect(order)}
-                      loading={isCollecting}
-                      loadingText="Collecting..."
-                    >
-                      <Icon.Beaker />
-                      <span>Mark collected</span>
-                    </Md3Button>
-                  ) : null) : (
-                    <div className="specimen-tracker__collected-by">
-                      {stage === 'COMPLETED' ? (
-                        <Md3Chip variant="success" size="small" icon={<Icon.CheckCircle />}>
-                          Results published
-                        </Md3Chip>
-                      ) : stage === 'PROCESSING' || stage === 'PENDING_REVIEW' ? (
-                        <Md3Chip variant="tertiary" size="small" icon={<Icon.Activity />}>
-                          Analysis in progress
-                        </Md3Chip>
-                      ) : stage === 'REJECTED' ? (
-                        <Md3Chip variant="error" size="small" icon={<Icon.Alert />}>
-                          Sample rejected — re-collect required
+                  {/* Column 3: Badges, Metadata & Actions */}
+                  <div className="specimen-tracker__col-actions">
+                    <div className="specimen-tracker__meta-badges">
+                      {order.priority ? (
+                        <Md3Chip
+                          variant={
+                            (order.priority || 'ROUTINE').toUpperCase() === 'STAT' ? 'error'
+                              : (order.priority || '').toUpperCase() === 'URGENT' ? 'warning'
+                                : 'secondary'
+                          }
+                          size="small"
+                          icon={(order.priority || 'ROUTINE').toUpperCase() === 'STAT'
+                            ? <Icon.Flag />
+                            : (order.priority || '').toUpperCase() === 'URGENT'
+                              ? <Icon.Alert />
+                              : <Icon.Activity />}
+                        >
+                          {(order.priority || 'ROUTINE').toUpperCase()}
                         </Md3Chip>
                       ) : null}
+                      <LabStatusChip status={order.status} />
                     </div>
-                  )}
+
+                    <div className="specimen-tracker__details">
+                      <Md3InfoRow
+                        icon={<Icon.Clipboard />}
+                        label="Ordered By"
+                        value={order._orderedBy || order.requestedBy || order.orderedBy || 'Attending Physician'}
+                        compact
+                      />
+                      {order.sampleCollectedAt && (
+                        <span className="specimen-tracker__timestamp">
+                          <Icon.Clock />
+                          <span>Collected: {formatDateTime(order.sampleCollectedAt)}</span>
+                        </span>
+                      )}
+                      {order.processedAt && (
+                        <span className="specimen-tracker__timestamp">
+                          <Icon.CheckCircle />
+                          <span>Processed: {formatDateTime(order.processedAt)}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="specimen-tracker__action-container">
+                      {(stage === 'PENDING_SAMPLE' || stage === 'PENDING') && typeof onCollect === 'function' ? (
+                        <Md3Button
+                          variant="tonal"
+                          size="default"
+                          disabled={isCollecting}
+                          onClick={() => onCollect(order)}
+                          loading={isCollecting}
+                          loadingText="Collecting..."
+                        >
+                          <Icon.Beaker />
+                          <span>Mark collected</span>
+                        </Md3Button>
+                      ) : null}
+                    </div>
+
+                  </div>
+
                 </div>
               </div>
             </li>

@@ -11,6 +11,7 @@ import {
   Icon,
 } from '../../components/md3/Md3Widgets';
 import { visitAPI } from '../../services/visitAPI';
+import { formatQueueWaitTime as timeSince } from '../../utils/dateFormatting';
 import './TriageQueue.css';
 
 /* ============================================================
@@ -24,18 +25,6 @@ import './TriageQueue.css';
    Token is the PRIMARY visual identifier per design plan.
    Collision guards: masked phone + DOB below patient name.
    ============================================================ */
-
-const timeSince = (dateString) => {
-  if (!dateString) return '0m';
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(dateString).getTime()) / 1000));
-  const h = Math.floor(seconds / 3600);
-  if (h >= 1) {
-    const m = Math.floor((seconds % 3600) / 60);
-    return `${h}h ${m}m`;
-  }
-  const m = Math.floor(seconds / 60);
-  return `${m}m`;
-};
 
 const urgencyFor = (createdAt) => {
   const mins = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000));

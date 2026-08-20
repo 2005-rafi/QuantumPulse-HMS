@@ -56,6 +56,9 @@ const decryptPatient = (doc) => {
 
   const clone = doc.toObject ? doc.toObject() : { ...doc };
   
+  // Ensure fullName is always populated
+  clone.fullName = `${clone.firstName || ''} ${clone.lastName || ''}`.trim() || clone.name || '';
+
   // Recalculate age dynamically on reads in real-time
   if (clone.dob) {
     const today = new Date();

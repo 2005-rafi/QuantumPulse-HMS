@@ -26,8 +26,10 @@ const ClinicalWorkspace = ({
   onLabOrdersChange,
   onNotesChange,
   onSaveDraft,
+  onSendToLab,
   onFinalize,
   savingDraft,
+  routingToLab,
   finalizing,
   canFinalize,
   queueStats,
@@ -62,6 +64,7 @@ const ClinicalWorkspace = ({
   }
 
   const patient = visit.patientId || {};
+  const labOrdersCount = (form?.labOrders || []).length;
 
   return (
     <div className="clinical-workspace">
@@ -74,7 +77,7 @@ const ClinicalWorkspace = ({
               tabs={[
                 { id: 'summary', label: 'Summary' },
                 { id: 'consultation', label: 'Consultation' },
-                { id: 'orders', label: 'Orders & Results' },
+                { id: 'orders', label: `Orders & Results${labOrdersCount > 0 ? ` (${labOrdersCount})` : ''}` },
                 { id: 'history', label: 'History' }
               ]}
               activeTab={activeTab}
@@ -85,7 +88,7 @@ const ClinicalWorkspace = ({
 
         <div className="clinical-workspace__scroll">
           {activeTab === 'summary' && (
-            <SummaryTab visit={visit} patient={patient} />
+            <SummaryTab visit={visit} patient={patient} form={form} />
           )}
           {activeTab === 'consultation' && (
             <ConsultationTab
@@ -111,9 +114,12 @@ const ClinicalWorkspace = ({
 
         <ConsultationActionBar
           onSaveDraft={onSaveDraft}
+          onSendToLab={onSendToLab}
           onFinalize={onFinalize}
           canFinalize={canFinalize}
+          labOrdersCount={labOrdersCount}
           savingDraft={savingDraft}
+          routingToLab={routingToLab}
           finalizing={finalizing}
         />
       </Md3Card>

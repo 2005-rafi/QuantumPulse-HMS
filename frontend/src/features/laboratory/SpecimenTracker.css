@@ -1,0 +1,383 @@
+/* 🧪 Specimen Tracker Stylesheet (Material 3) 🧪 */
+
+.specimen-tracker {
+  width: 100%;
+}
+
+/* Empty State */
+.specimen-tracker--empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px dashed var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.specimen-tracker__empty-icon {
+  font-size: 36px;
+  color: var(--md-sys-color-primary);
+  margin-bottom: 12px;
+}
+
+.specimen-tracker__empty-text {
+  font: 500 0.875rem/1.4 var(--md-sys-typescale-body-medium-font, Roboto, sans-serif);
+  margin: 0;
+}
+
+/* Timeline List Container */
+.specimen-tracker__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.specimen-tracker__item {
+  display: flex;
+  position: relative;
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* Vertical Timeline Track */
+.specimen-tracker__timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 24px;
+  flex-shrink: 0;
+}
+
+.specimen-tracker__dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface);
+  z-index: 2;
+  margin-top: 24px; /* Align with header of the card */
+  position: relative;
+  transition: all 180ms ease;
+}
+
+/* Timeline Dot Stages matching states */
+.specimen-tracker__dot--pending {
+  border-color: var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.specimen-tracker__dot--processing {
+  border-color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-primary-container);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent);
+}
+
+.specimen-tracker__dot--completed {
+  border-color: var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-outline-variant);
+}
+
+.specimen-tracker__dot--rejected {
+  border-color: var(--md-sys-color-error);
+  background: var(--md-sys-color-error-container);
+}
+
+/* Connector Line */
+.specimen-tracker__connector {
+  width: 2px;
+  position: absolute;
+  top: 36px; /* Below the dot */
+  bottom: -24px; /* Extends to overlap gap to next item */
+  background: var(--md-sys-color-outline-variant);
+  z-index: 1;
+}
+
+.specimen-tracker__connector--processing {
+  background: var(--md-sys-color-primary-container);
+}
+
+.specimen-tracker__connector--completed {
+  background: var(--md-sys-color-outline-variant);
+}
+
+/* Card Styling */
+.specimen-tracker__card {
+  flex: 1;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.specimen-tracker__card:hover {
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 25%, var(--md-sys-color-outline-variant));
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-shadow) 4%, transparent);
+}
+
+/* Grid Layout (Desktop columns: Info, Tests, Status/Action) */
+.specimen-tracker__grid {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr 1.2fr;
+  gap: 24px;
+  align-items: stretch;
+  width: 100%;
+}
+
+/* Column 1: Info block */
+.specimen-tracker__col-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.specimen-tracker__title-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.specimen-tracker__patient-name {
+  font: 700 0.8125rem/1.2 var(--md-sys-typescale-label-large-font, Roboto, sans-serif);
+  color: var(--md-sys-color-primary);
+  margin-bottom: 2px;
+}
+
+.specimen-tracker__title {
+  font: 700 0.9375rem/1.35 var(--md-sys-typescale-title-medium-font, Roboto, sans-serif);
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.specimen-tracker__meta {
+  font: 400 0.75rem/1.4 var(--md-sys-typescale-body-small-font, Roboto, sans-serif);
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+/* Column 2: Test Lists (Inline horizontal flow) */
+.specimen-tracker__col-tests {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.specimen-tracker__tests-title {
+  font: 600 0.6875rem/1.2 var(--md-sys-typescale-label-small-font, Roboto, sans-serif);
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
+
+.specimen-tracker__tests {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.specimen-tracker__test-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font: 500 0.6875rem/1 var(--md-sys-typescale-label-medium-font, Roboto, sans-serif);
+  color: var(--md-sys-color-on-surface);
+  min-width: 0;
+}
+
+.specimen-tracker__test-item svg {
+  width: 12px;
+  height: 12px;
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+.specimen-tracker__test-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.specimen-tracker__test-code {
+  font: 600 0.625rem/1 var(--md-sys-typescale-label-small-font, monospace);
+  color: var(--md-sys-color-primary);
+  opacity: 0.8;
+  background: var(--md-sys-color-surface-container-high);
+  padding: 1px 3px;
+  border-radius: 3px;
+}
+
+.specimen-tracker__no-tests {
+  font: 400 0.75rem/1.4 var(--md-sys-typescale-body-small-font, Roboto, sans-serif);
+  color: var(--md-sys-color-on-surface-variant);
+  font-style: italic;
+}
+
+/* Column 3: Actions / Status details */
+.specimen-tracker__col-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.specimen-tracker__meta-badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.specimen-tracker__details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.specimen-tracker__timestamp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 500 0.6875rem/1.2 var(--md-sys-typescale-body-small-font, Roboto, sans-serif);
+  color: var(--md-sys-color-primary);
+}
+
+.specimen-tracker__timestamp svg {
+  width: 12px;
+  height: 12px;
+  color: var(--md-sys-color-primary);
+}
+
+.specimen-tracker__action-container {
+  display: flex;
+  justify-content: flex-start;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+.specimen-tracker__action-container .md3-btn {
+  width: auto;
+  min-width: 140px;
+  min-height: 40px;
+  padding: 0 20px;
+  gap: 8px;
+}
+
+/* Override InfoRow spacing for cleaner integration in right col */
+.specimen-tracker__col-actions .md3-info-row {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.specimen-tracker__col-actions .md3-info-row__icon {
+  color: var(--md-sys-color-outline);
+}
+
+/* ─── Responsive Media Queries ─── */
+
+/* Tablet view (2 columns, actions wrap below) */
+@media (max-width: 992px) {
+  .specimen-tracker__grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .specimen-tracker__col-actions {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    padding-top: 16px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .specimen-tracker__meta-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .specimen-tracker__details {
+    flex: 1;
+  }
+  .specimen-tracker__action-container {
+    width: auto;
+  }
+}
+
+/* Mobile view (Full stack) */
+@media (max-width: 640px) {
+  .specimen-tracker__item {
+    gap: 8px;
+  }
+  .specimen-tracker__timeline {
+    width: 12px;
+  }
+  .specimen-tracker__dot {
+    width: 10px;
+    height: 10px;
+    margin-top: 20px;
+  }
+  .specimen-tracker__connector {
+    top: 30px;
+    bottom: -20px;
+  }
+  
+  .specimen-tracker__card {
+    padding: 14px;
+  }
+  
+  .specimen-tracker__grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .specimen-tracker__col-info {
+    gap: 8px;
+  }
+  
+  .specimen-tracker__col-actions {
+    grid-column: auto;
+    flex-direction: column;
+    align-items: stretch;
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    padding-top: 12px;
+    gap: 12px;
+  }
+  
+  .specimen-tracker__meta-badges {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .specimen-tracker__action-container {
+    width: 100%;
+  }
+  .specimen-tracker__action-container .md3-btn {
+    max-width: 100%;
+  }
+}

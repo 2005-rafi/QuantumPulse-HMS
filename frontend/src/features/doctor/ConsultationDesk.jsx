@@ -15,8 +15,10 @@ const ConsultationDesk = ({
   onLabOrdersChange,
   onNotesChange,
   onSaveDraft,
+  onSendToLab,
   onFinalize,
   savingDraft,
+  routingToLab,
   finalizing,
   canFinalize,
   queueStats,
@@ -42,8 +44,10 @@ const ConsultationDesk = ({
           onLabOrdersChange={onLabOrdersChange}
           onNotesChange={onNotesChange}
           onSaveDraft={onSaveDraft}
+          onSendToLab={onSendToLab}
           onFinalize={onFinalize}
           savingDraft={savingDraft}
+          routingToLab={routingToLab}
           finalizing={finalizing}
           canFinalize={canFinalize}
           queueStats={queueStats}

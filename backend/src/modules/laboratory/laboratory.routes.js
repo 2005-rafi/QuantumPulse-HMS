@@ -50,7 +50,7 @@ router.post('/orders/:visitId/:orderId/scan',
 
 // List scans for an order
 router.get('/orders/:visitId/:orderId/scans',
-  authenticate, requirePermission('LAB_PROCESS'),
+  authenticate, requirePermission(['LAB_PROCESS', 'PATIENT_VIEW', 'VISIT_VIEW', 'NOTE_UPDATE', 'NOTE_FINALIZE']),
   controller.getScansForOrder);
 
 // Download / stream a scan file (LAB_PROCESS or Clinical Staff)

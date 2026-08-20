@@ -1,16 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Md3Card,
-  Md3CardHeader,
   Md3Chip,
   Md3Avatar,
   Md3Section,
   Md3Grid,
-  Md3GridItem,
-  Md3InfoRow,
-  Md3ActionBar,
   Md3EmptyState,
-  Md3Tabs,
   Icon,
 } from '../../components/md3/Md3Widgets';
 import {
@@ -21,14 +16,11 @@ import {
 } from '../../components/md3/Md3FormComponents';
 import { visitAPI } from '../../services/visitAPI';
 import api from '../../services/api';
+import { CURRENCY_SYMBOL } from '../../constants/currency';
 import './PatientTriageSheet.css';
 
 /* ============================================================
-   PatientTriageSheet — SOLID 6 sub-components
-   SRP: Each sub-component does one triage section.
-   LSP: All accept className / style.
-   IFace Seg: Props are narrow & focused.
-   2-Level Stack: NurseDashboard → PatientTriageSheet → Md3Widgets ✓
+   PatientTriageSheet — Pure Material Design 3 Triage Assessment
    ============================================================ */
 
 const formatAddress = (addr) => {
@@ -40,266 +32,322 @@ const formatAddress = (addr) => {
   return '';
 };
 
-/* ─── 1. TriagePatientIdentity — top header with patient info & compressed details ─── */
+/* ─── 1. TriagePatientIdentity — 2-Way Column Layout Hero Card ─── */
 const TriagePatientIdentity = ({ visit, waitingSince }) => {
   const patient = visit?.patientId || {};
-  const name = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Unnamed';
+  const name = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Unnamed Patient';
   const initials = ((patient.firstName?.charAt?.(0) || '') + (patient.lastName?.charAt?.(0) || '')).toUpperCase() || 'P';
   const ageGender = [
     patient.age ? `${patient.age} yrs` : null,
     patient.gender,
-  ].filter(Boolean).join(' • ');
+  ].filter(Boolean).join(' · ');
 
-  const dobText = patient.dob ? new Date(patient.dob).toLocaleDateString('en-IN') : null;
+  const dobText = patient.dob ? new Date(patient.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
   const addressText = formatAddress(patient.address) || [patient.city, patient.pinCode].filter(Boolean).join(', ');
 
   return (
-    <Md3Card variant="elevated" padding="none" className="pts-identity-card">
-      <div className="pts-identity-card__inner" style={{ padding: '20px' }}>
-        <div className="pts-identity" style={{ padding: 0 }}>
-          <div className="pts-identity__main">
-            <Md3Avatar initials={initials} size="large" variant="primary" />
-            <div className="pts-identity__info">
-              <div className="pts-identity__row-1">
-                <h2 className="pts-identity__name">{name}</h2>
-                <Md3Chip variant="primary" size="small" icon={<Icon.CreditCard />}>
-                  MRN {patient.mrn || '—'}
-                </Md3Chip>
-              </div>
-              <div className="pts-identity__row-2">
-                {ageGender && <Md3Chip variant="tertiary" size="small" icon={<Icon.Person />}>{ageGender}</Md3Chip>}
-                {patient.bloodGroup && <Md3Chip variant="error" size="small" icon={<Icon.Droplet />}>{patient.bloodGroup}</Md3Chip>}
-                {/* Token chip — primary queue identifier */}
-                {visit?.tokenString && (
-                  <Md3Chip variant="primary" size="medium" icon={<Icon.Activity />}>
-                    {visit.tokenString}
-                  </Md3Chip>
-                )}
-                {waitingSince && (
-                  <Md3Chip variant="default" size="small" icon={<Icon.Clock />}>
-                    Waiting {waitingSince}
-                  </Md3Chip>
-                )}
-                {!visit?.tokenString && visit?.visitNumber && (
-                  <Md3Chip variant="default" size="small" icon={<Icon.Activity />}>
-                    {visit.visitNumber}
-                  </Md3Chip>
-                )}
-              </div>
+    <div className="pts-identity-card">
+      {/* ── Left Column: Identity & Primary Status ── */}
+      <div className="pts-identity-card__col pts-identity-card__col--left">
+        <div className="pts-identity-card__avatar">
+          {initials}
+        </div>
+        <div className="pts-identity-card__details">
+          <div className="pts-identity-card__title-row">
+            <h2 className="pts-identity-card__name">{name}</h2>
+            {patient.mrn && (
+              <span className="pts-identity-card__mrn-pill">
+                MRN: {patient.mrn}
+              </span>
+            )}
+          </div>
+          <div className="pts-identity-card__chips-row">
+            {ageGender && (
+              <span className="pts-identity-card__tag">
+                <span className="material-symbols-rounded">person</span>
+                <span>{ageGender}</span>
+              </span>
+            )}
+            {patient.bloodGroup && (
+              <span className="pts-identity-card__tag pts-identity-card__tag--blood">
+                <span className="material-symbols-rounded">water_drop</span>
+                <span>Blood: {patient.bloodGroup}</span>
+              </span>
+            )}
+            {visit?.tokenString && (
+              <span className="pts-identity-card__tag pts-identity-card__tag--token">
+                <span className="material-symbols-rounded">confirmation_number</span>
+                <span>Token {visit.tokenString}</span>
+              </span>
+            )}
+            {waitingSince && (
+              <span className="pts-identity-card__tag pts-identity-card__tag--wait">
+                <span className="material-symbols-rounded">schedule</span>
+                <span>Waiting {waitingSince}</span>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Center Divider ── */}
+      <div className="pts-identity-card__divider" />
+
+      {/* ── Right Column: Structured Key Demographic & Contact Grid ── */}
+      <div className="pts-identity-card__col pts-identity-card__col--right">
+        <div className="pts-identity-card__grid">
+          <div className="pts-identity-card__item">
+            <span className="material-symbols-rounded pts-identity-card__item-icon">cake</span>
+            <div className="pts-identity-card__item-content">
+              <span className="pts-identity-card__item-label">DOB:</span>
+              <span className="pts-identity-card__item-val">{dobText || '—'}</span>
             </div>
           </div>
 
-          {/* Compressed Metadata Grid */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: '12px',
-            marginTop: '16px',
-            paddingTop: '12px',
-            borderTop: '1px solid var(--md-sys-color-outline-variant)',
-            fontSize: '0.82rem',
-            color: 'var(--md-sys-color-on-surface-variant)'
-          }}>
-            {dobText && <div><strong>DOB:</strong> {dobText}</div>}
-            {patient.phone && <div><strong>Mobile:</strong> {patient.phone}</div>}
-            {patient.aadhaar && <div><strong>Aadhaar:</strong> {patient.aadhaar}</div>}
-            {patient.parentsName && <div><strong>Guardian:</strong> {patient.parentsName}</div>}
-            {addressText && <div style={{ gridColumn: '1 / -1' }}><strong>Address:</strong> {addressText}</div>}
+          <div className="pts-identity-card__item">
+            <span className="material-symbols-rounded pts-identity-card__item-icon">call</span>
+            <div className="pts-identity-card__item-content">
+              <span className="pts-identity-card__item-label">Mobile:</span>
+              <span className="pts-identity-card__item-val">{patient.phone || '—'}</span>
+            </div>
           </div>
+
+          <div className="pts-identity-card__item">
+            <span className="material-symbols-rounded pts-identity-card__item-icon">badge</span>
+            <div className="pts-identity-card__item-content">
+              <span className="pts-identity-card__item-label">Aadhaar:</span>
+              <span className="pts-identity-card__item-val">{patient.aadhaar || '—'}</span>
+            </div>
+          </div>
+
+          {patient.parentsName && (
+            <div className="pts-identity-card__item">
+              <span className="material-symbols-rounded pts-identity-card__item-icon">family_restroom</span>
+              <div className="pts-identity-card__item-content">
+                <span className="pts-identity-card__item-label">Guardian:</span>
+                <span className="pts-identity-card__item-val">{patient.parentsName}</span>
+              </div>
+            </div>
+          )}
+
+          {addressText && (
+            <div className="pts-identity-card__item pts-identity-card__item--full">
+              <span className="material-symbols-rounded pts-identity-card__item-icon">location_on</span>
+              <div className="pts-identity-card__item-content">
+                <span className="pts-identity-card__item-label">Address:</span>
+                <span className="pts-identity-card__item-val pts-identity-card__item-val--address" title={addressText}>{addressText}</span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
-    </Md3Card>
+    </div>
   );
 };
 
-/* ─── 3. ChiefComplaintSection — reason / initial description ─── */
+/* ─── 2. ChiefComplaintSection ─── */
 const ChiefComplaintSection = ({ value, onChange, error }) => (
-  <Md3Section variant="highlight" title="Chief Complaint / Reason for Visit" icon={<Icon.Clipboard />}>
-    <Md3TextField
-      label="Describe in detail the patient's presenting complaints, duration, severity, and any relevant history reported"
-      variant="outlined"
-      required
-      multiline
-      rows={3}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder="e.g. Patient presents with severe headache for 3 days, associated with vomiting and mild fever. No history of trauma."
-      error={error}
-      fullWidth
-    />
-  </Md3Section>
-);
-
-/* ─── 4. ClinicalVitalsSection — 6 MD3 text fields in 2-col grid ─── */
-const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
-  const update = (field) => (v) => setVitals((prev) => ({ ...prev, [field]: v }));
-  return (
-    <Md3Section variant="tertiary" title="Clinical Vitals" icon={<Icon.Heart />}>
-      <Md3Grid columns={2}>
-        <Md3TextField
-          label="Blood Pressure (mmHg)"
-          placeholder="120/80"
-          value={vitals.bloodPressure}
-          onChange={(e) => update('bloodPressure')(e.target.value)}
-          leadingIcon={<Icon.Activity />}
-          error={errors.bloodPressure}
-          fullWidth
-        />
-        <Md3TextField
-          label="Temperature (°F)"
-          type="number"
-          step="0.1"
-          placeholder="98.6"
-          value={vitals.temperature}
-          onChange={(e) => update('temperature')(e.target.value)}
-          leadingIcon={<Icon.Thermometer />}
-          error={errors.temperature}
-          fullWidth
-        />
-        <Md3TextField
-          label="Pulse Rate (bpm)"
-          type="number"
-          placeholder="72"
-          value={vitals.pulse}
-          onChange={(e) => update('pulse')(e.target.value)}
-          leadingIcon={<Icon.Heart />}
-          error={errors.pulse}
-          fullWidth
-        />
-        <Md3TextField
-          label="SpO₂ — Oxygen Saturation (%)"
-          type="number"
-          placeholder="98"
-          value={vitals.oxygenSaturation}
-          onChange={(e) => update('oxygenSaturation')(e.target.value)}
-          leadingIcon={<Icon.Droplet />}
-          error={errors.oxygenSaturation}
-          fullWidth
-        />
-        <Md3TextField
-          label="Height (cm)"
-          type="number"
-          placeholder="175"
-          value={vitals.height}
-          onChange={(e) => update('height')(e.target.value)}
-          leadingIcon={<Icon.Ruler />}
-          error={errors.height}
-          fullWidth
-        />
-        <Md3TextField
-          label="Weight (kg)"
-          type="number"
-          placeholder="70"
-          value={vitals.weight}
-          onChange={(e) => update('weight')(e.target.value)}
-          leadingIcon={<Icon.Scale />}
-          error={errors.weight}
-          fullWidth
-        />
-      </Md3Grid>
-      {vitals.height && vitals.weight && !Number.isNaN(Number(vitals.height)) && !Number.isNaN(Number(vitals.weight)) && (
-        <div className="pts-bmi-row" role="status" aria-live="polite">
-          <Md3Chip variant="tertiary" size="small" icon={<Icon.Activity />}>
-            {(() => {
-              const h = Number(vitals.height) / 100;
-              const w = Number(vitals.weight);
-              const bmi = h > 0 && w > 0 ? (w / (h * h)).toFixed(1) : '—';
-              return `BMI ${bmi} · ${Number(bmi) < 18.5 ? 'Underweight' : Number(bmi) < 25 ? 'Normal' : Number(bmi) < 30 ? 'Overweight' : 'Obese'}`;
-            })()}
-          </Md3Chip>
-        </div>
-      )}
-    </Md3Section>
-  );
-};
-
-/* ─── 5. DepartmentVitalsSection — dynamic fields from Department.vitalFields ─── */
-const DepartmentVitalsSection = ({ fields = {}, values = {}, onChange, errors = {} }) => {
-  if (!Array.isArray(fields) || fields.length === 0) return null;
-  const cols = fields.length >= 4 ? 2 : 1;
-  return (
-    <Md3Section variant="highlight" title="Department Specific Vitals" icon={<Icon.Stethoscope />}>
-      <Md3Grid columns={cols}>
-        {fields.map((field) => {
-          const key = field.name || field.label;
-          const req = field.required;
-          const label = field.unit ? `${field.label} (${field.unit})` : field.label;
-          if (field.type === 'boolean' || field.type?.toLowerCase() === 'boolean') {
-            return (
-              <Md3Checkbox
-                key={key}
-                label={label + (req ? ' *' : '')}
-                checked={values[key] === true || values[key] === 'true'}
-                onChange={(checked) => onChange(key, checked)}
-                error={errors[key]}
-              />
-            );
-          }
-          if (field.type === 'select' || field.options?.length) {
-            const options = (field.options || []).map((v) => ({ value: String(v.value ?? v), label: String(v.label ?? v) }));
-            return (
-              <Md3Select
-                key={key}
-                label={label + (req ? ' *' : '')}
-                value={values[key] ?? ''}
-                onChange={(v) => onChange(key, v)}
-                options={[{ value: '', label: 'Select...' }, ...options]}
-                required={req}
-                error={errors[key]}
-                fullWidth
-              />
-            );
-          }
-          return (
-            <Md3TextField
-              key={key}
-              label={label}
-              type={field.type === 'number' ? 'number' : 'text'}
-              required={req}
-              value={values[key] ?? ''}
-              onChange={(e) => onChange(key, e.target.value)}
-              error={errors[key]}
-              placeholder={field.placeholder || ''}
-              fullWidth
-            />
-          );
-        })}
-      </Md3Grid>
-    </Md3Section>
-  );
-};
-
-/* ─── 6. TriageActionsBar — Submit / Cancel / Error ─── */
-const TriageActionsBar = ({ onSubmit, onCancel, submitting, error }) => (
-  <div className="pts-actions">
-    {error && (
-      <div className="pts-form-error" role="alert">
-        <Icon.Alert />
-        <span>{error}</span>
+  <div className="pts-section-card">
+    <div className="pts-section-card__header">
+      <div className="pts-section-card__icon-wrap">
+        <span className="material-symbols-rounded">clinical_notes</span>
       </div>
-    )}
-    <Md3ActionBar alignment="end">
-      <Md3Button
-        variant="secondary"
-        onClick={onCancel}
-        disabled={submitting}
-      >
-        Cancel
-      </Md3Button>
-      <Md3Button
-        variant="primary"
-        onClick={onSubmit}
-        loading={submitting}
-        leadingIcon={<Icon.Send />}
-      >
-        Record Vitals & Route to Doctor
-      </Md3Button>
-    </Md3ActionBar>
+      <div className="pts-section-card__titles">
+        <h3 className="pts-section-card__title">Chief Complaint &amp; Reason for Visit</h3>
+        <p className="pts-section-card__subtitle">Presenting symptoms reported by patient during triage intake</p>
+      </div>
+    </div>
+    <div className="pts-section-card__body">
+      <Md3TextField
+        label="Presenting Complaints & Clinical History"
+        variant="outlined"
+        required
+        multiline
+        rows={3}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Describe patient symptoms, duration, severity, and any relevant clinical history reported..."
+        error={error}
+        fullWidth
+      />
+    </div>
   </div>
 );
 
+/* ─── 3. ClinicalVitalsSection ─── */
+const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
+  const update = (field) => (v) => setVitals((prev) => ({ ...prev, [field]: v }));
+  
+  const bmiInfo = useMemo(() => {
+    const h = Number(vitals.height) / 100;
+    const w = Number(vitals.weight);
+    if (h > 0 && w > 0) {
+      const val = (w / (h * h)).toFixed(1);
+      const num = Number(val);
+      let status = 'Normal';
+      let variant = 'tertiary';
+      if (num < 18.5) { status = 'Underweight'; variant = 'secondary'; }
+      else if (num >= 25 && num < 30) { status = 'Overweight'; variant = 'secondary'; }
+      else if (num >= 30) { status = 'Obese'; variant = 'error'; }
+      return { val, status, variant };
+    }
+    return null;
+  }, [vitals.height, vitals.weight]);
+
+  return (
+    <div className="pts-section-card">
+      <div className="pts-section-card__header">
+        <div className="pts-section-card__icon-wrap">
+          <span className="material-symbols-rounded">vital_signs</span>
+        </div>
+        <div className="pts-section-card__titles">
+          <h3 className="pts-section-card__title">Clinical Vitals Assessment</h3>
+          <p className="pts-section-card__subtitle">Standard physiological baseline measurements</p>
+        </div>
+      </div>
+      <div className="pts-section-card__body">
+        <div className="pts-vitals-grid">
+          <Md3TextField
+            label="Blood Pressure (mmHg)"
+            placeholder="120/80"
+            value={vitals.bloodPressure}
+            onChange={(e) => update('bloodPressure')(e.target.value)}
+            leadingIcon={<span className="material-symbols-rounded">speed</span>}
+            error={errors.bloodPressure}
+            fullWidth
+          />
+          <Md3TextField
+            label="Temperature (°F)"
+            type="number"
+            step="0.1"
+            placeholder="98.6"
+            value={vitals.temperature}
+            onChange={(e) => update('temperature')(e.target.value)}
+            leadingIcon={<span className="material-symbols-rounded">device_thermostat</span>}
+            error={errors.temperature}
+            fullWidth
+          />
+          <Md3TextField
+            label="Pulse Rate (bpm)"
+            type="number"
+            placeholder="72"
+            value={vitals.pulse}
+            onChange={(e) => update('pulse')(e.target.value)}
+            leadingIcon={<span className="material-symbols-rounded">favorite</span>}
+            error={errors.pulse}
+            fullWidth
+          />
+          <Md3TextField
+            label="SpO₂ — Oxygen Saturation (%)"
+            type="number"
+            placeholder="98"
+            value={vitals.oxygenSaturation}
+            onChange={(e) => update('oxygenSaturation')(e.target.value)}
+            leadingIcon={<span className="material-symbols-rounded">air</span>}
+            error={errors.oxygenSaturation}
+            fullWidth
+          />
+          <Md3TextField
+            label="Height (cm)"
+            type="number"
+            placeholder="175"
+            value={vitals.height}
+            onChange={(e) => update('height')(e.target.value)}
+            leadingIcon={<span className="material-symbols-rounded">straighten</span>}
+            error={errors.height}
+            fullWidth
+          />
+          <Md3TextField
+            label="Weight (kg)"
+            type="number"
+            placeholder="70"
+            value={vitals.weight}
+            onChange={(e) => update('weight')(e.target.value)}
+            leadingIcon={<span className="material-symbols-rounded">scale</span>}
+            error={errors.weight}
+            fullWidth
+          />
+        </div>
+
+        {bmiInfo && (
+          <div className="pts-bmi-banner">
+            <span className="material-symbols-rounded">health_metrics</span>
+            <span>Calculated BMI: <strong>{bmiInfo.val} kg/m²</strong> — Status: <strong className={`pts-bmi-status pts-bmi-status--${bmiInfo.variant}`}>{bmiInfo.status}</strong></span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ─── 4. DepartmentVitalsSection ─── */
+const DepartmentVitalsSection = ({ fields = [], values = {}, onChange, errors = {} }) => {
+  if (!Array.isArray(fields) || fields.length === 0) return null;
+  return (
+    <div className="pts-section-card">
+      <div className="pts-section-card__header">
+        <div className="pts-section-card__icon-wrap">
+          <span className="material-symbols-rounded">medical_services</span>
+        </div>
+        <div className="pts-section-card__titles">
+          <h3 className="pts-section-card__title">Department Specific Vitals</h3>
+          <p className="pts-section-card__subtitle">Specialty diagnostic parameters</p>
+        </div>
+      </div>
+      <div className="pts-section-card__body">
+        <div className="pts-vitals-grid">
+          {fields.map((field) => {
+            const key = field.name || field.label;
+            const req = field.required;
+            const label = field.unit ? `${field.label} (${field.unit})` : field.label;
+            if (field.type === 'boolean' || field.type?.toLowerCase() === 'boolean') {
+              return (
+                <Md3Checkbox
+                  key={key}
+                  label={label + (req ? ' *' : '')}
+                  checked={values[key] === true || values[key] === 'true'}
+                  onChange={(checked) => onChange(key, checked)}
+                  error={errors[key]}
+                />
+              );
+            }
+            if (field.type === 'select' || field.options?.length) {
+              const options = (field.options || []).map((v) => ({ value: String(v.value ?? v), label: String(v.label ?? v) }));
+              return (
+                <Md3Select
+                  key={key}
+                  label={label + (req ? ' *' : '')}
+                  value={values[key] ?? ''}
+                  onChange={(v) => onChange(key, v)}
+                  options={[{ value: '', label: 'Select...' }, ...options]}
+                  required={req}
+                  error={errors[key]}
+                  fullWidth
+                />
+              );
+            }
+            return (
+              <Md3TextField
+                key={key}
+                label={label}
+                type={field.type === 'number' ? 'number' : 'text'}
+                required={req}
+                value={values[key] ?? ''}
+                onChange={(e) => onChange(key, e.target.value)}
+                error={errors[key]}
+                placeholder={field.placeholder || ''}
+                fullWidth
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ============================================================
-   Main PatientTriageSheet — wires state + 6 sections above.
+   Main PatientTriageSheet Component
    ============================================================ */
 
 const EMPTY_VITALS = {
@@ -324,6 +372,25 @@ const timeSince = (dateString) => {
   return `${interval}m`;
 };
 
+const getStatusMeta = (status) => {
+  switch (status) {
+    case 'COMPLETED':
+      return { label: 'Completed', bg: 'var(--md-sys-color-primary-container)', fg: 'var(--md-sys-color-on-primary-container)', icon: 'check_circle' };
+    case 'IN_CONSULTATION':
+      return { label: 'In Consultation', bg: 'var(--md-sys-color-tertiary-container)', fg: 'var(--md-sys-color-on-tertiary-container)', icon: 'medical_services' };
+    case 'WAITING_DOCTOR':
+    case 'TRIAGED':
+      return { label: 'Triaged / In Queue', bg: 'var(--md-sys-color-secondary-container)', fg: 'var(--md-sys-color-on-secondary-container)', icon: 'schedule' };
+    case 'WAITING_TRIAGE':
+    case 'CALLED':
+      return { label: 'Waiting Triage', bg: 'var(--md-sys-color-surface-container-high)', fg: 'var(--md-sys-color-on-surface-variant)', icon: 'hourglass_empty' };
+    case 'CANCELLED':
+      return { label: 'Cancelled', bg: 'var(--md-sys-color-error-container)', fg: 'var(--md-sys-color-error)', icon: 'cancel' };
+    default:
+      return { label: status?.replace(/_/g, ' ') || 'Registered', bg: 'var(--md-sys-color-surface-container)', fg: 'var(--md-sys-color-on-surface)', icon: 'info' };
+  }
+};
+
 const PatientTriageSheet = ({
   visit,
   department,
@@ -338,14 +405,38 @@ const PatientTriageSheet = ({
   const [submitError, setSubmitError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // New triage UX & history states
+  // Triage Tabs
   const [triageTab, setTriageTab] = useState('vitals');
   const [allergies, setAllergies] = useState('');
   const [operations, setOperations] = useState('');
   const [pastVisits, setPastVisits] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState('ALL');
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState('');
+
+  const filteredHistoryVisits = useMemo(() => {
+    const sorted = [...pastVisits].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    if (historyFilter === 'COMPLETED') {
+      return sorted.filter((v) => v.status === 'COMPLETED');
+    }
+    if (historyFilter === 'ACTIVE') {
+      return sorted.filter((v) => v.status !== 'COMPLETED' && v.status !== 'CANCELLED');
+    }
+    if (historyFilter === 'CANCELLED') {
+      return sorted.filter((v) => v.status === 'CANCELLED');
+    }
+    return sorted;
+  }, [pastVisits, historyFilter]);
+
+  const historyCounts = useMemo(() => {
+    return {
+      all: pastVisits.length,
+      completed: pastVisits.filter((v) => v.status === 'COMPLETED').length,
+      active: pastVisits.filter((v) => v.status !== 'COMPLETED' && v.status !== 'CANCELLED').length,
+      cancelled: pastVisits.filter((v) => v.status === 'CANCELLED').length,
+    };
+  }, [pastVisits]);
 
   // Reset fields on visit change
   useEffect(() => {
@@ -389,7 +480,6 @@ const PatientTriageSheet = ({
           const docList = res.data?.data?.items || [];
           setDoctors(docList);
           
-          // Pre-select doctor if visit already has one assigned
           const preAssigned = visit?.consultation?.doctorId?._id || visit?.consultation?.doctorId;
           if (preAssigned) {
             setSelectedDoctorId(preAssigned);
@@ -492,7 +582,6 @@ const PatientTriageSheet = ({
       });
       if (Object.keys(dynamicVitals).length > 0) payload.dynamicVitals = dynamicVitals;
       
-      // Inject doctor routing, allergies and operations updates
       payload.doctorId = selectedDoctorId;
       payload.allergies = allergies;
       payload.operations = operations;
@@ -509,43 +598,73 @@ const PatientTriageSheet = ({
 
   if (!visit) {
     return (
-      <Md3Card variant="elevated" padding="large" className={['pts-empty', className].filter(Boolean).join(' ')} style={style}>
-        <Md3EmptyState
-          icon={<Icon.Stethoscope />}
-          title="Select a patient to begin"
-          description="Choose a patient from the waiting queue to start triage assessment, record vitals, and route to the attending doctor."
-        />
-      </Md3Card>
+      <div className={['pts-empty-wrapper', className].filter(Boolean).join(' ')} style={style}>
+        <div className="pts-empty-card">
+          <div className="pts-empty-icon">
+            <span className="material-symbols-rounded">stethoscope</span>
+          </div>
+          <h3 className="pts-empty-title">Select a Patient for Triage</h3>
+          <p className="pts-empty-desc">
+            Choose a patient from the waiting queue on the left to review demographics, record vital signs, and assign an attending doctor.
+          </p>
+        </div>
+      </div>
     );
   }
 
   return (
     <div
       className={['pts-sheet', className].filter(Boolean).join(' ')}
-      style={{ ...style, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}
+      style={style}
     >
-      {/* Header demogs display */}
-      <div style={{ flexShrink: 0 }}>
-        <TriagePatientIdentity visit={visit} waitingSince={waitingSince} />
-        
-        {/* Modern Tab Bar */}
-        <div className="pts-tabs" style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', marginBottom: '16px' }}>
-          <Md3Tabs
-            activeTab={triageTab}
-            onChange={setTriageTab}
-            tabs={[
-              { id: 'vitals', label: 'Vitals & Complaint', icon: <Icon.Heart /> },
-              { id: 'history', label: 'Patient History', icon: <Icon.History /> },
-              { id: 'doctor', label: 'Attending Doctor', icon: <Icon.Stethoscope /> },
-            ]}
-          />
-        </div>
+      {/* ─── 1. Patient Demographics Hero Header ─── */}
+      <TriagePatientIdentity visit={visit} waitingSince={waitingSince} />
+      
+      {/* ─── 2. Material 3 Secondary Navigation Tabs ─── */}
+      <div className="pts-tabs-bar" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={triageTab === 'vitals'}
+          className={`pts-tab-item ${triageTab === 'vitals' ? 'pts-tab-item--active' : ''}`}
+          onClick={() => setTriageTab('vitals')}
+        >
+          <span className="material-symbols-rounded">vital_signs</span>
+          <span>Vitals &amp; Assessment</span>
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={triageTab === 'history'}
+          className={`pts-tab-item ${triageTab === 'history' ? 'pts-tab-item--active' : ''}`}
+          onClick={() => setTriageTab('history')}
+        >
+          <span className="material-symbols-rounded">history_edu</span>
+          <span>Medical History</span>
+          {pastVisits.length > 0 && (
+            <span className="pts-tab-badge">{pastVisits.length}</span>
+          )}
+        </button>
+
+        <button
+          type="button"
+          role="tab"
+          aria-selected={triageTab === 'doctor'}
+          className={`pts-tab-item ${triageTab === 'doctor' ? 'pts-tab-item--active' : ''}`}
+          onClick={() => setTriageTab('doctor')}
+        >
+          <span className="material-symbols-rounded">stethoscope</span>
+          <span>Attending Doctor</span>
+          {selectedDoctorId && <span className="pts-tab-check material-symbols-rounded">check</span>}
+        </button>
       </div>
 
-      {/* Tab Panels with Scrollable Content Pane */}
-      <div style={{ flexGrow: 1, overflowY: 'auto', paddingRight: '4px', marginBottom: '16px' }}>
+      {/* ─── 3. Scrollable Tab Panel Area ─── */}
+      <div className="pts-content-area">
+        {/* Tab 1: Vitals & Complaint */}
         {triageTab === 'vitals' && (
-          <div className="pts-panel animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="pts-tab-panel">
             <ChiefComplaintSection
               value={vitals.chiefComplaint}
               onChange={(v) => setVitals((p) => ({ ...p, chiefComplaint: v }))}
@@ -567,161 +686,322 @@ const PatientTriageSheet = ({
           </div>
         )}
 
+        {/* Tab 2: Patient History */}
         {triageTab === 'history' && (
-          <div className="pts-panel animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <Md3Section title="Allergies & Operations / Surgeries" icon={<Icon.Alert />} variant="error">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '8px' }}>
-                <Md3TextField
-                  label="Allergies"
-                  placeholder="Specify drug, food, or contact allergies..."
-                  multiline
-                  rows={2}
-                  value={allergies}
-                  onChange={(e) => setAllergies(e.target.value)}
-                  fullWidth
-                />
-                <Md3TextField
-                  label="Previous Operations / Surgical History"
-                  placeholder="List any past operations, surgeries, and dates..."
-                  multiline
-                  rows={2}
-                  value={operations}
-                  onChange={(e) => setOperations(e.target.value)}
-                  fullWidth
-                />
+          <div className="pts-tab-panel">
+            <div className="pts-section-card">
+              <div className="pts-section-card__header">
+                <div className="pts-section-card__icon-wrap">
+                  <span className="material-symbols-rounded">medical_information</span>
+                </div>
+                <div className="pts-section-card__titles">
+                  <h3 className="pts-section-card__title">Allergies &amp; Surgical Background</h3>
+                  <p className="pts-section-card__subtitle">Record contraindications, known drug reactions, and past procedures</p>
+                </div>
               </div>
-            </Md3Section>
+              <div className="pts-section-card__body">
+                <div className="pts-history-grid">
+                  <Md3TextField
+                    label="Known Drug & Food Allergies"
+                    placeholder="Specify any active allergies (e.g. Penicillin, Peanuts, Latex)..."
+                    multiline
+                    rows={2}
+                    value={allergies}
+                    onChange={(e) => setAllergies(e.target.value)}
+                    fullWidth
+                  />
+                  <Md3TextField
+                    label="Past Surgeries & Major Operations"
+                    placeholder="List any past operations, approximate dates, or surgical notes..."
+                    multiline
+                    rows={2}
+                    value={operations}
+                    onChange={(e) => setOperations(e.target.value)}
+                    fullWidth
+                  />
+                </div>
+              </div>
+            </div>
 
-            <Md3Section title="Past Visits Timeline" icon={<Icon.History />} variant="default">
-              {loadingHistory ? (
-                <div style={{ padding: '24px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                  Loading clinical history...
+            <div className="pts-section-card">
+              <div className="pts-section-card__header">
+                <div className="pts-section-card__icon-wrap">
+                  <span className="material-symbols-rounded">manage_history</span>
                 </div>
-              ) : pastVisits.filter(v => v.status === 'COMPLETED').length === 0 ? (
-                <div style={{ padding: '24px', textAlign: 'center', background: 'var(--md-sys-color-surface-container-low)', borderRadius: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.9rem' }}>
-                  New Patient — No previous clinical history on record.
+                <div className="pts-section-card__titles">
+                  <h3 className="pts-section-card__title">Encounter History &amp; Previous Diagnoses</h3>
+                  <p className="pts-section-card__subtitle">Chronological record of past hospital consultations</p>
                 </div>
-              ) : (
-                <div className="pts-timeline" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '8px' }}>
-                  {pastVisits
-                    .filter(v => v.status === 'COMPLETED')
-                    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-                    .map((pv) => (
-                      <div key={pv._id} style={{ display: 'flex', gap: '12px', padding: '12px', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)', background: 'var(--md-sys-color-surface-container-low)' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: '80px', borderRight: '1px solid var(--md-sys-color-outline-variant)', paddingRight: '12px' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--md-sys-color-primary)' }}>
-                            {new Date(pv.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                            {new Date(pv.createdAt).getFullYear()}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', padding: '2px 6px', background: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)', borderRadius: '4px', marginTop: '6px', fontWeight: 'bold' }}>
-                            {pv.departmentId?.code || 'GEN'}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', flexGrow: 1 }}>
-                          <div style={{ fontSize: '0.85rem' }}>
-                            <strong>Complaint:</strong> {pv.vitals?.chiefComplaint || 'No symptoms noted'}
+              </div>
+              <div className="pts-section-card__body">
+                {/* Encounter Filter Bar */}
+                {pastVisits.length > 0 && (
+                  <div className="pts-history-filter-bar">
+                    <button
+                      type="button"
+                      className={`pts-history-filter-chip ${historyFilter === 'ALL' ? 'is-active' : ''}`}
+                      onClick={() => setHistoryFilter('ALL')}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>list_alt</span>
+                      <span>All Records ({historyCounts.all})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`pts-history-filter-chip ${historyFilter === 'COMPLETED' ? 'is-active' : ''}`}
+                      onClick={() => setHistoryFilter('COMPLETED')}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>check_circle</span>
+                      <span>Completed ({historyCounts.completed})</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`pts-history-filter-chip ${historyFilter === 'ACTIVE' ? 'is-active' : ''}`}
+                      onClick={() => setHistoryFilter('ACTIVE')}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>pending_actions</span>
+                      <span>Active / Queue ({historyCounts.active})</span>
+                    </button>
+
+                    {historyCounts.cancelled > 0 && (
+                      <button
+                        type="button"
+                        className={`pts-history-filter-chip ${historyFilter === 'CANCELLED' ? 'is-active' : ''}`}
+                        onClick={() => setHistoryFilter('CANCELLED')}
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>cancel</span>
+                        <span>Cancelled ({historyCounts.cancelled})</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {loadingHistory ? (
+                  <div className="pts-loading-history">
+                    <span className="pts-spinner" />
+                    <span>Loading patient encounter records...</span>
+                  </div>
+                ) : filteredHistoryVisits.length === 0 ? (
+                  <div className="pts-empty-history">
+                    <span className="material-symbols-rounded">inventory_2</span>
+                    <p>
+                      {pastVisits.length === 0
+                        ? 'New Patient — No previous consultation history on record.'
+                        : `No ${historyFilter.toLowerCase()} encounters found for this patient.`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="pts-timeline">
+                    {filteredHistoryVisits.map((pv) => {
+                      const statusMeta = getStatusMeta(pv.status);
+                      const isCurrent = pv._id === (visit?._id || visit?.id);
+
+                      return (
+                        <div
+                          key={pv._id}
+                          className={`pts-timeline-item ${isCurrent ? 'is-current' : ''}`}
+                        >
+                          <div className="pts-timeline-date">
+                            <span className="pts-timeline-day">
+                              {new Date(pv.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                            </span>
+                            <span className="pts-timeline-year">
+                              {new Date(pv.createdAt).getFullYear()}
+                            </span>
+                            <span className="pts-timeline-dept">
+                              {pv.departmentId?.code || pv.departmentId?.name || 'GEN'}
+                            </span>
                           </div>
-                          {pv.consultation?.diagnosis && (
-                            <div style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-primary)' }}>
-                              <strong>Diagnosis:</strong> {pv.consultation.diagnosis}
+
+                          <div className="pts-timeline-content">
+                            {/* Header row: Token + Status badge + Current visit marker */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', marginBottom: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontWeight: 700, fontSize: '0.875rem', color: 'var(--md-sys-color-on-surface)' }}>
+                                  {pv.tokenString || pv.visitNumber}
+                                </span>
+                                {isCurrent && (
+                                  <span style={{
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    letterSpacing: '0.04em',
+                                    textTransform: 'uppercase',
+                                    padding: '2px 8px',
+                                    borderRadius: '6px',
+                                    background: 'var(--md-sys-color-primary)',
+                                    color: 'var(--md-sys-color-on-primary)'
+                                  }}>
+                                    Current Intake
+                                  </span>
+                                )}
+                              </div>
+
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                padding: '2px 8px',
+                                borderRadius: '6px',
+                                background: statusMeta.bg,
+                                color: statusMeta.fg
+                              }}>
+                                <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>{statusMeta.icon}</span>
+                                <span>{statusMeta.label}</span>
+                              </span>
                             </div>
-                          )}
-                          {pv.consultation?.treatmentPlan && (
-                            <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface-variant)', fontStyle: 'italic' }}>
-                              <strong>Plan:</strong> {pv.consultation.treatmentPlan}
+
+                            {/* Chief Complaint / Reason */}
+                            <div className="pts-timeline-complaint">
+                              <strong>Chief Complaint:</strong> {pv.vitals?.chiefComplaint || pv.reasonForVisit || 'Routine Consultation'}
                             </div>
-                          )}
+
+                            {/* Recorded Vitals Summary Pill */}
+                            {pv.vitals && (pv.vitals.bloodPressure || pv.vitals.pulse || pv.vitals.temperature || pv.vitals.oxygenSaturation) && (
+                              <div style={{
+                                display: 'flex',
+                                gap: '8px',
+                                flexWrap: 'wrap',
+                                fontSize: '0.75rem',
+                                padding: '4px 8px',
+                                background: 'var(--md-sys-color-surface-container-high)',
+                                borderRadius: '6px',
+                                color: 'var(--md-sys-color-on-surface-variant)',
+                                margin: '2px 0'
+                              }}>
+                                {pv.vitals.bloodPressure && <span>BP: <strong>{pv.vitals.bloodPressure}</strong></span>}
+                                {pv.vitals.pulse && <span>· Pulse: <strong>{pv.vitals.pulse} bpm</strong></span>}
+                                {pv.vitals.temperature && <span>· Temp: <strong>{pv.vitals.temperature}°F</strong></span>}
+                                {pv.vitals.oxygenSaturation && <span>· SpO₂: <strong>{pv.vitals.oxygenSaturation}%</strong></span>}
+                                {pv.vitals.bmi && <span>· BMI: <strong>{pv.vitals.bmi}</strong></span>}
+                              </div>
+                            )}
+
+                            {/* Doctor Consultation Diagnosis & Plan */}
+                            {pv.consultation?.diagnosis && (
+                              <div className="pts-timeline-diagnosis">
+                                <strong>Diagnosis:</strong> {pv.consultation.diagnosis}
+                              </div>
+                            )}
+                            {pv.consultation?.treatmentPlan && (
+                              <div className="pts-timeline-plan">
+                                <strong>Plan:</strong> {pv.consultation.treatmentPlan}
+                              </div>
+                            )}
+
+                            {/* Attending Physician */}
+                            {(pv.consultation?.doctorId?.fullName || pv.consultation?.doctorId?.name || pv.doctorId?.fullName || pv.doctorId?.name) && (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                                Attending: <strong>{pv.consultation?.doctorId?.fullName || pv.consultation?.doctorId?.name || pv.doctorId?.fullName || pv.doctorId?.name}</strong>
+                              </div>
+                            )}
+
+                            {/* Cancellation Details */}
+                            {pv.status === 'CANCELLED' && pv.cancellationReason && (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-error)', fontStyle: 'italic', marginTop: '2px' }}>
+                                Cancellation Reason: {pv.cancellationReason}
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                </div>
-              )}
-            </Md3Section>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
+        {/* Tab 3: Attending Doctor */}
         {triageTab === 'doctor' && (
-          <div className="pts-panel animate-fade-in">
-            <Md3Section title="Assign Attending Doctor" icon={<Icon.Stethoscope />}>
-              {doctors.length === 0 ? (
-                <div style={{ padding: '24px', textAlign: 'center', background: 'var(--md-sys-color-surface-container-low)', borderRadius: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                  No active doctors available in {department?.name || 'General Medicine'}.
+          <div className="pts-tab-panel">
+            <div className="pts-section-card">
+              <div className="pts-section-card__header">
+                <div className="pts-section-card__icon-wrap">
+                  <span className="material-symbols-rounded">stethoscope</span>
                 </div>
-              ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px', marginTop: '12px' }}>
-                  {doctors.map((doc) => {
-                    const isSelected = doc._id === selectedDoctorId;
-                    return (
-                      <div
-                        key={doc._id}
-                        onClick={() => setSelectedDoctorId(doc._id)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '12px',
-                          padding: '16px',
-                          borderRadius: '16px',
-                          border: isSelected ? '2px solid var(--md-sys-color-primary)' : '1px solid var(--md-sys-color-outline-variant)',
-                          background: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-low)',
-                          cursor: 'pointer',
-                          position: 'relative',
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '20px',
-                          background: isSelected ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)',
-                          color: isSelected ? 'var(--md-sys-color-on-primary)' : 'var(--md-sys-color-on-surface)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 'bold',
-                        }}>
-                          {doc.fullName?.charAt(0) || 'D'}
-                        </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                          <span style={{ fontWeight: '600', fontSize: '0.9rem', color: isSelected ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)' }}>
-                            Dr. {doc.fullName}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                            {doc.primarySpecialization || doc.position || 'Physician'}
-                          </span>
-                          <span style={{ fontSize: '0.75rem', fontWeight: '500', color: 'var(--md-sys-color-secondary)' }}>
-                            Fee: ₹{doc.consultingFee || 0}
-                          </span>
-                        </div>
-                        {isSelected && (
-                          <div style={{
-                            position: 'absolute',
-                            top: '8px',
-                            right: '8px',
-                            color: 'var(--md-sys-color-primary)',
-                          }}>
-                            <Icon.Check />
+                <div className="pts-section-card__titles">
+                  <h3 className="pts-section-card__title">Assign Attending Physician</h3>
+                  <p className="pts-section-card__subtitle">Select doctor on-duty for clinical consultation</p>
+                </div>
+              </div>
+              <div className="pts-section-card__body">
+                {doctors.length === 0 ? (
+                  <div className="pts-empty-history">
+                    <span className="material-symbols-rounded">person_off</span>
+                    <p>No active doctors available in {department?.name || 'this department'}.</p>
+                  </div>
+                ) : (
+                  <div className="pts-doctors-grid">
+                    {doctors.map((doc) => {
+                      const isSelected = doc._id === selectedDoctorId;
+                      return (
+                        <div
+                          key={doc._id}
+                          className={`pts-doctor-card ${isSelected ? 'pts-doctor-card--selected' : ''}`}
+                          onClick={() => setSelectedDoctorId(doc._id)}
+                          role="button"
+                          tabIndex={0}
+                        >
+                          <div className="pts-doctor-avatar">
+                            {doc.fullName?.charAt(0) || 'D'}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </Md3Section>
+                          <div className="pts-doctor-info">
+                            <span className="pts-doctor-name">
+                              Dr. {doc.fullName}
+                            </span>
+                            <span className="pts-doctor-spec">
+                              {doc.primarySpecialization || doc.position || 'Physician'}
+                            </span>
+                            <span className="pts-doctor-fee">
+                              Fee: {CURRENCY_SYMBOL}{doc.consultingFee || 0}
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <div className="pts-doctor-check">
+                              <span className="material-symbols-rounded">check_circle</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Fixed Actions strip at bottom */}
-      <div style={{ flexShrink: 0, borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: '12px' }}>
-        <TriageActionsBar
-          onSubmit={handleSubmit}
-          onCancel={onCancel}
-          submitting={submitting}
-          error={submitError}
-        />
+      {/* ─── 4. Fixed Actions Bar at Bottom ─── */}
+      <div className="pts-footer-bar">
+        {submitError && (
+          <div className="pts-form-error" role="alert">
+            <span className="material-symbols-rounded">error</span>
+            <span>{submitError}</span>
+          </div>
+        )}
+        <div className="pts-footer-actions">
+          <Md3Button
+            variant="secondary"
+            onClick={onCancel}
+            disabled={submitting}
+          >
+            Cancel Assessment
+          </Md3Button>
+          <Md3Button
+            variant="primary"
+            onClick={handleSubmit}
+            loading={submitting}
+            leadingIcon={<span className="material-symbols-rounded">send</span>}
+          >
+            Record Vitals &amp; Route to Doctor
+          </Md3Button>
+        </div>
       </div>
     </div>
   );

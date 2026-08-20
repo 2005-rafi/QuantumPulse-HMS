@@ -266,12 +266,14 @@ npm run dev
 
 **Terminal 1 (Backend Node server):**
 ```bash
+cls
 cd backend
 npm run dev
 ```
 
 **Terminal 2 (Frontend Vite client):**
 ```bash
+cls
 cd frontend
 npm run dev
 ```

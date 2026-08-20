@@ -14,14 +14,15 @@ class VisitController {
   // ── CREATE ──────────────────────────────────────────────────────────────────
 
   createVisit = catchAsync(async (req, res) => {
-    const visit = await visitService.createVisit(req.body, req.user.staffId);
+    const registeredBy = req.user.staffId || req.user.userId || req.user.id;
+    const visit = await visitService.createVisit(req.body, registeredBy);
 
     auditService.logEvent(
-      req.user.staffId || req.user.userId,
+      registeredBy,
       req.user.role,
       'VISIT_CREATE',
       visit._id,
-      { mrn: visit.visitNumber, patientId: visit.patientId },
+      { mrn: visit.visitNumber, patientId: visit.patientId, tokenString: visit.tokenString },
       req.ip
     );
 
@@ -43,6 +44,28 @@ class VisitController {
   requeueVisit = catchAsync(async (req, res) => {
     const visit = await visitService.requeueVisit(req.params.id);
     return success(res, visit, 'Patient re-queued successfully', 200);
+  });
+
+  cancelVisit = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const reason = req.body.cancellationReason || req.body.reason || 'Cancelled at reception';
+    const staffId = req.user.staffId || req.user.userId || req.user.id;
+    const cancelled = await visitService.cancelVisit(id, reason, staffId);
+
+    auditService.logEvent(
+      staffId,
+      req.user.role,
+      'VISIT_CANCELLED',
+      cancelled._id,
+      { 
+        tokenString: cancelled.tokenString, 
+        departmentId: cancelled.departmentId,
+        reason 
+      },
+      req.ip
+    );
+
+    return success(res, cancelled, 'Visit cancelled and queue token revoked successfully', 200);
   });
 
   // ── QUEUE VIEW ───────────────────────────────────────────────────────────────
@@ -100,6 +123,22 @@ class VisitController {
     );
 
     return success(res, visit, 'Consultation draft saved successfully', 200);
+  });
+
+  routeToLaboratory = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const visit = await visitService.routeToLaboratory(id, req.body, req.user.staffId);
+
+    auditService.logEvent(
+      req.user.staffId || req.user.userId,
+      req.user.role,
+      'CONSULTATION_ROUTED_TO_LAB',
+      visit._id,
+      { ordersCount: visit.labOrders?.length || 0 },
+      req.ip
+    );
+
+    return success(res, visit, 'Patient routed to laboratory successfully', 200);
   });
 
   finalizeConsultation = catchAsync(async (req, res) => {

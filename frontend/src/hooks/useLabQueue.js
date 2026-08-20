@@ -158,20 +158,41 @@ export const useLabQueue = () => {
 
   const handleFileUpload = useCallback(async (visitId, orderId, file) => {
     if (!file) return;
-    if (file.size > 25 * 1024 * 1024) {
-      showWarning('File Too Large', 'Scan file size exceeds 25 MB limit.');
+    const MIN_SIZE = 5 * 1024; // 5 KB
+    const MAX_SIZE = 20 * 1024 * 1024; // 20 MB
+    if (file.size < MIN_SIZE) {
+      showWarning('File Too Small', 'Scan file must be at least 5 KB in size.');
       return;
     }
+    if (file.size > MAX_SIZE) {
+      showWarning('File Too Large', 'Scan file size exceeds safety limit of 20 MB.');
+      return;
+    }
+
     const formData = new FormData();
-    formData.append('scan', file);
+    formData.append('file', file); // Align field key with backend!
+
     try {
       setBusyAction(`upload:${orderId}`);
-      await authAPI.uploadFile(visitId, orderId, formData);
-      showSuccess('Scan Uploaded', ' radiological report successfully uploaded and linked to order.');
+      
+      const uploadWithRetry = async (vId, oId, data, retries = 3, delay = 1000) => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            return await authAPI.uploadFile(vId, oId, data);
+          } catch (err) {
+            if (attempt === retries) throw err;
+            await new Promise((res) => setTimeout(res, delay * attempt));
+          }
+        }
+      };
+
+      await uploadWithRetry(visitId, orderId, formData);
+      showSuccess('Scan Uploaded', 'Laboratory scan successfully uploaded and registered.');
       await fetchQueue();
     } catch (err) {
       console.error('[useLabQueue] handleFileUpload error:', err);
       showError('Scan Upload Failed', err.response?.data?.message || err.message);
+      throw err;
     } finally {
       setBusyAction('');
     }
@@ -241,21 +262,29 @@ export const useLabQueue = () => {
   }, [queue, priorityFilter, user?.departmentId]);
 
   const flatAllOrders = useMemo(() => {
+    const labNameMap = {};
+    (laboratories || []).forEach((l) => {
+      labNameMap[l._id] = l.name;
+    });
+
     const out = [];
     queue.forEach((visit) => {
       const patient = visit.patientId || {};
       (visit.labOrders || []).forEach((order) => {
+        const labName = labNameMap[order.laboratoryId] || order.labName || 'Laboratory';
         out.push({
           ...order,
           _visitId: visit._id,
           _patientName: [patient.firstName, patient.lastName].filter(Boolean).join(' ') || 'Unknown patient',
           _mrn: patient.mrn || '—',
           _visitCreatedAt: visit.createdAt,
+          _orderedBy: visit.consultation?.doctorId?.fullName || 'Attending Physician',
+          _laboratoryName: labName,
         });
       });
     });
     return out;
-  }, [queue]);
+  }, [queue, laboratories]);
 
   const allCompletedOrders = useMemo(
     () => flatAllOrders.filter((o) => (o.status || '').toUpperCase() === 'COMPLETED'),

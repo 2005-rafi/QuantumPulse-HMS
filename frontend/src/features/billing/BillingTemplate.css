@@ -146,23 +146,77 @@
   font-style: italic;
 }
 
-/* Print specific styles */
+/* ── Screen & Print Styles ────────────────────────────────── */
+.billing-template-screen-card {
+  background: white;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  overflow: hidden;
+  max-width: 850px;
+  margin: 0 auto;
+}
+
 @media print {
   @page {
-    margin: 10mm;
-    size: auto;
+    margin: 12mm 15mm;
+    size: A4 portrait;
   }
   
-  body {
-    background: white;
+  html, body {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  
-  .billing-template-container {
-    padding: 0;
-    max-width: 100%;
-    margin: 0;
+
+  /* Reveal bill in print portal */
+  .print-only-document .billing-template-container {
+    padding: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
   }
-  
+
+  .print-only-document .hospital-name {
+    color: black !important;
+    font-size: 24pt !important;
+  }
+
+  .print-only-document .billing-title h2 {
+    color: black !important;
+    font-size: 16pt !important;
+  }
+
+  .print-only-document .patient-info {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-only-document .billing-table th {
+    background: #f1f5f9 !important;
+    color: black !important;
+    border-bottom: 2px solid #94a3b8 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-only-document .billing-table td {
+    border-bottom: 1px solid #cbd5e1 !important;
+    color: black !important;
+  }
+
+  .print-only-document .total-amount {
+    color: #047857 !important;
+    font-size: 16pt !important;
+    font-weight: 800 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   /* Ensure colors print correctly */
   * {
     -webkit-print-color-adjust: exact !important;
@@ -171,15 +225,17 @@
 
   /* Prevent page breaks inside table rows, signature block, and headers */
   .billing-table tr {
-    page-break-inside: avoid;
-    break-inside: avoid;
-  }
-  .signature-area {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
-  /* Hide scrollbars or any extra UI if they leak in */
+  .signature-area {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 50px !important;
+  }
+
+  /* Hide scrollbars */
   ::-webkit-scrollbar {
     display: none;
   }

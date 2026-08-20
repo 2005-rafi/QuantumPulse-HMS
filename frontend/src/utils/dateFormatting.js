@@ -7,21 +7,81 @@
  */
 
 /**
- * Returns a human-readable relative time string from a date string.
- * e.g. "2h 5m", "15m", "0m"
+ * Returns a human-readable, clinically logical relative wait time or arrival timestamp.
+ * - For visits today: "15m wait", "45m wait", "1h 20m wait"
+ * - For visits from yesterday: "Yesterday · 4:15 PM"
+ * - For visits from older days: "10 Aug · 2:30 PM" (or date of prescription)
+ * Prevents absurd counters like "193h 35m".
+ *
+ * @param {string|Date} dateString - ISO date string or Date object
+ * @returns {string}
+ */
+export const formatQueueWaitTime = (dateString) => {
+  if (!dateString) return '—';
+  const date = new Date(dateString);
+  const now = new Date();
+
+  if (isNaN(date.getTime())) return '—';
+
+  const isToday = date.toDateString() === now.toDateString();
+  const diffMs = now.getTime() - date.getTime();
+
+  if (isToday) {
+    const totalMinutes = Math.max(1, Math.floor(diffMs / 60000));
+    if (totalMinutes < 60) {
+      return `${totalMinutes}m wait`;
+    }
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return m > 0 ? `${h}h ${m}m wait` : `${h}h wait`;
+  }
+
+  // Check if yesterday
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) {
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return `Yesterday · ${timeStr}`;
+  }
+
+  // Prior session / date
+  const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+  const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  return `${dateStr} · ${timeStr}`;
+};
+
+/**
+ * Returns a concise wait time string (backward compatible for short badge views).
+ * Caps hours at today or displays formatted date for previous days.
  * @param {string} dateString - ISO date string
  * @returns {string}
  */
 export const timeSince = (dateString) => {
   if (!dateString) return '—';
-  const seconds = Math.max(0, Math.floor((Date.now() - new Date(dateString).getTime()) / 1000));
-  const h = Math.floor(seconds / 3600);
-  if (h >= 1) {
-    const m = Math.floor((seconds % 3600) / 60);
+  const date = new Date(dateString);
+  const now = new Date();
+  if (isNaN(date.getTime())) return '—';
+
+  const isToday = date.toDateString() === now.toDateString();
+  const diffMs = now.getTime() - date.getTime();
+
+  if (isToday) {
+    const totalMinutes = Math.max(1, Math.floor(diffMs / 60000));
+    if (totalMinutes < 60) {
+      return `${totalMinutes}m`;
+    }
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
     return m > 0 ? `${h}h ${m}m` : `${h}h`;
   }
-  const m = Math.floor(seconds / 60);
-  return `${Math.max(m, 1)}m`;
+
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  if (date.toDateString() === yesterday.toDateString()) {
+    return 'Yesterday';
+  }
+
+  return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 };
 
 /**
@@ -30,6 +90,7 @@ export const timeSince = (dateString) => {
  * @returns {'error'|'secondary'|'default'}
  */
 export const waitUrgencyVariant = (createdAt) => {
+  if (!createdAt) return 'default';
   const mins = Math.max(0, Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000));
   if (mins >= 60) return 'error';
   if (mins >= 30) return 'secondary';

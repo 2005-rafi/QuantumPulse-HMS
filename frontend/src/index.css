@@ -20,4 +20,11 @@ body {
   min-height: 100vh;
 }
 
-/* Remove Vite defaults */
+/* Smooth theme transition */
+html.theme-transitioning,
+html.theme-transitioning *,
+html.theme-transitioning *::before,
+html.theme-transitioning *::after {
+  transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+  transition-delay: 0s !important;
+}

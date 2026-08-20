@@ -1,36 +1,35 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDoctorWorkspace } from '../hooks/useDoctorWorkspace';
 import CommonHeader from '../components/shell/CommonHeader';
-import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
-import ConsultationDesk from '../features/doctor/ConsultationDesk';
-import DeletionRequestsView from '../features/doctor/DeletionRequestsView';
+import { Md3Tabs } from '../components/md3/Md3Widgets';
+import { useConfig } from '../contexts/ConfigContext';
 import '../components/shell/shell.css';
 import './DoctorDashboard.css';
 
 /**
- * DoctorDashboard — Pure Presentation Component
+ * DoctorDashboard — Layout & Navigation Shell Component
  *
  * SOLID:
- *   SRP  — Renders UI only. All queue fetching, form state, consultation logic
- *           lives in useDoctorWorkspace hook.
- *   OCP  — New tabs or views extend via hook configuration, not this file.
- *   DIP  — Depends on useDoctorWorkspace abstraction, not raw API services.
+ *   SRP  — Renders top shell and child view outlet.
+ *   OCP  — New tabs or views extend via child routes.
+ *   DIP  — Depends on useDoctorWorkspace abstraction.
  */
 const DoctorDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const config = useConfig();
 
   const {
     queue,
     selectedVisit,
     form,
     laboratories,
-    activeTab,
-    setActiveTab,
     deletionRequests,
     savingDraft,
+    routingToLab,
     finalizing,
     isRefreshing,
     fetchQueue,
@@ -40,6 +39,7 @@ const DoctorDashboard = () => {
     handleLabOrdersChange,
     handleNotesChange,
     handleSaveDraft,
+    handleSendToLab,
     handleFinalize,
     canFinalize,
     queueStats,
@@ -51,52 +51,62 @@ const DoctorDashboard = () => {
     navigate('/login', { replace: true });
   };
 
+  // Derive active tab directly from URL path
+  const activeTab = location.pathname.includes('/deletion-requests')
+    ? 'deletionRequests'
+    : location.pathname.includes('/appointments')
+    ? 'appointments'
+    : 'consultation';
+
+  const handleTabChange = (tabId) => {
+    const routeName = tabId === 'deletionRequests' ? 'deletion-requests' : tabId;
+    navigate(`/dashboard/doctor/${routeName}`);
+  };
+
   return (
     <div className="doctor-page">
-
       {/* ─── TOP APP BAR with Tabs ─── */}
       <CommonHeader
-        brandIcon={<Icon.Hospital />}
-        brandTitle="Doctor Portal"
+        brandTitle={`${config?.SHORT_NAME || 'CareOne-QPT'} Doctor Portal`}
         brandSubtitle={user?.department || 'Department'}
         centerSlot={
-          <Md3Tabs tabs={headerTabs} activeTab={activeTab} onChange={setActiveTab} />
+          <Md3Tabs tabs={headerTabs} activeTab={activeTab} onChange={handleTabChange} />
         }
         user={user}
         onLogout={handleLogout}
       />
 
-      {/* ─── MAIN WORKSPACE ─── */}
+      {/* ─── MAIN WORKSPACE ROUTED VIEWS ─── */}
       <main className="doctor-main">
-        {activeTab === 'deletionRequests' ? (
-          <DeletionRequestsView
-            deletionRequests={deletionRequests}
-            onRefresh={fetchQueue}
-          />
-        ) : (
-          <ConsultationDesk
-            queue={queue}
-            selectedVisit={selectedVisit}
-            onSelectVisit={handleSelectVisit}
-            onRefreshQueue={fetchQueue}
-            user={user}
-            form={form}
-            onFormChange={handleFormChange}
-            laboratories={laboratories}
-            onMedicationsChange={handleMedicationsChange}
-            onLabOrdersChange={handleLabOrdersChange}
-            onNotesChange={handleNotesChange}
-            onSaveDraft={handleSaveDraft}
-            onFinalize={handleFinalize}
-            savingDraft={savingDraft}
-            finalizing={finalizing}
-            canFinalize={canFinalize}
-            queueStats={queueStats}
-          />
-        )}
+        <Outlet
+          context={{
+            user,
+            queue,
+            selectedVisit,
+            form,
+            laboratories,
+            deletionRequests,
+            savingDraft,
+            routingToLab,
+            finalizing,
+            isRefreshing,
+            fetchQueue,
+            handleSelectVisit,
+            handleFormChange,
+            handleMedicationsChange,
+            handleLabOrdersChange,
+            handleNotesChange,
+            handleSaveDraft,
+            handleSendToLab,
+            handleFinalize,
+            canFinalize,
+            queueStats,
+          }}
+        />
       </main>
     </div>
   );
 };
 
 export default DoctorDashboard;
+

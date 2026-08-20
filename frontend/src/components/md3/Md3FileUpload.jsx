@@ -1,10 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Md3Button } from './Md3FormComponents';
 import { Icon } from './Md3Widgets';
 import './Md3FileUpload.css';
 
-const MAX_FILE_SIZE_MB = 25;
+const MAX_FILE_SIZE_MB = 20;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+const MIN_FILE_SIZE_BYTES = 5 * 1024; // 5 KB
 
 const Md3FileUpload = ({ visit, onUpload, disabled }) => {
   const [selectedOrderId, setSelectedOrderId] = useState('');
@@ -13,6 +14,7 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
   const fileInputRef = useRef(null);
 
   const labOrders = visit?.labOrders || [];
@@ -22,9 +24,26 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
   );
   const targetOrders = availableOrders.length > 0 ? availableOrders : labOrders;
 
+  // Clean up preview object URL to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl && previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleFileChange = (incomingFile) => {
     setError('');
+    setIsVerified(false);
     if (!incomingFile) return;
+
+    if (incomingFile.size < MIN_FILE_SIZE_BYTES) {
+      setError(`File size is too small (${(incomingFile.size / 1024).toFixed(1)} KB). Minimum required size is 5 KB.`);
+      setFile(null);
+      setPreviewUrl(null);
+      return;
+    }
 
     if (incomingFile.size > MAX_FILE_SIZE_BYTES) {
       setError(`File size exceeds maximum limit of ${MAX_FILE_SIZE_MB} MB`);
@@ -33,11 +52,15 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
       return;
     }
 
+    // Revoke previous URL if selecting another file
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
     setFile(incomingFile);
-    if (incomingFile.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = (e) => setPreviewUrl(e.target.result);
-      reader.readAsDataURL(incomingFile);
+    if (incomingFile.type.startsWith('image/') || incomingFile.type === 'application/pdf') {
+      const objectUrl = URL.createObjectURL(incomingFile);
+      setPreviewUrl(objectUrl);
     } else {
       setPreviewUrl(null);
     }
@@ -73,16 +96,17 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
       setError('Please select or drop a file to upload');
       return;
     }
+    if (!isVerified) {
+      setError('Please verify the document preview before uploading');
+      return;
+    }
 
     try {
       setUploading(true);
       setError('');
       await onUpload(visit._id, orderIdToUse, file);
       // Reset state on success
-      setFile(null);
-      setPreviewUrl(null);
-      setSelectedOrderId('');
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      handleRemoveFile();
     } catch (err) {
       setError(err.message || 'Failed to upload file');
     } finally {
@@ -91,9 +115,14 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
   };
 
   const handleRemoveFile = () => {
+    if (previewUrl && previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setFile(null);
     setPreviewUrl(null);
+    setIsVerified(false);
     setError('');
+    setSelectedOrderId('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -134,24 +163,25 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
           </div>
         )}
 
-        <div
-          className={`md3-file-upload-dropzone ${dragActive ? 'is-drag-active' : ''} ${file ? 'has-file' : ''}`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-          onClick={() => !file && fileInputRef.current?.click()}
-        >
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="md3-file-upload-input"
-            accept="image/*,application/pdf,.dcm"
-            onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
-            disabled={disabled || uploading}
-          />
+        {/* File Dropzone */}
+        {!file && (
+          <div
+            className={`md3-file-upload-dropzone ${dragActive ? 'is-drag-active' : ''}`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="md3-file-upload-input"
+              accept="image/*,application/pdf,.dcm"
+              onChange={(e) => e.target.files && handleFileChange(e.target.files[0])}
+              disabled={disabled || uploading}
+            />
 
-          {!file ? (
             <div className="md3-file-upload-dropzone__placeholder">
               <div className="md3-file-upload-dropzone__icon">
                 <Icon.Upload />
@@ -160,39 +190,72 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
                 <strong>Click to browse</strong> or drag & drop scan file here
               </p>
               <span className="md3-file-upload-dropzone__hint">
-                Supports DICOM, PDF reports, radiological images
+                Supports DICOM, PDF reports, radiological images (Min 5 KB, Max {MAX_FILE_SIZE_MB} MB)
               </span>
             </div>
-          ) : (
-            <div className="md3-file-upload-preview">
-              {previewUrl ? (
-                <img src={previewUrl} alt="Scan preview" className="md3-file-upload-preview__img" />
-              ) : (
-                <div className="md3-file-upload-preview__icon">
-                  <Icon.FileSearch />
-                </div>
-              )}
-              <div className="md3-file-upload-preview__info">
-                <span className="md3-file-upload-preview__filename">{file.name}</span>
-                <span className="md3-file-upload-preview__filesize">
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </span>
-              </div>
+          </div>
+        )}
+
+        {/* Live Staging Preview Panel */}
+        {file && (
+          <div className="md3-file-upload-preview-pane">
+            <div className="md3-file-upload-preview-pane__header">
+              <span className="md3-file-upload-preview-pane__title">Document Preview (Staged)</span>
               <button
                 type="button"
-                className="md3-file-upload-preview__remove"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleRemoveFile();
-                }}
-                disabled={disabled || uploading}
-                aria-label="Remove file"
+                className="md3-file-upload-preview-pane__remove"
+                onClick={handleRemoveFile}
+                disabled={uploading}
+                aria-label="Remove staged file"
               >
-                ✕
+                <Icon.Clear aria-hidden="true" />
+                <span>Remove</span>
               </button>
             </div>
-          )}
-        </div>
+
+            <div className="md3-file-upload-preview-pane__viewport">
+              {file.type.startsWith('image/') && previewUrl ? (
+                <img src={previewUrl} alt="Staged scan preview" className="md3-file-upload-preview-pane__img" />
+              ) : file.type === 'application/pdf' && previewUrl ? (
+                <iframe
+                  src={previewUrl}
+                  title="Staged PDF report preview"
+                  className="md3-file-upload-preview-pane__iframe"
+                />
+              ) : (
+                <div className="md3-file-upload-preview-pane__generic">
+                  <Icon.FileSearch className="md3-file-upload-preview-pane__generic-icon" />
+                  <span className="md3-file-upload-preview-pane__generic-name">{file.name}</span>
+                  <span className="md3-file-upload-preview-pane__generic-hint">
+                    No visual preview available for this format (DICOM / raw data).
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="md3-file-upload-preview-pane__meta">
+              <span className="md3-file-upload-preview-pane__filename">{file.name}</span>
+              <span className="md3-file-upload-preview-pane__filesize">
+                {(file.size / (1024 * 1024)).toFixed(3)} MB
+              </span>
+            </div>
+
+            <div className="md3-file-upload-preview-pane__verify">
+              <label className="md3-file-upload-preview-pane__verify-label">
+                <input
+                  type="checkbox"
+                  className="md3-file-upload-preview-pane__checkbox"
+                  checked={isVerified}
+                  onChange={(e) => setIsVerified(e.target.checked)}
+                  disabled={uploading}
+                />
+                <span className="md3-file-upload-preview-pane__verify-text">
+                  I have previewed this document and verify that it matches the correct patient record.
+                </span>
+              </label>
+            </div>
+          </div>
+        )}
 
         {error && <div className="md3-file-upload-error">{error}</div>}
 
@@ -200,11 +263,11 @@ const Md3FileUpload = ({ visit, onUpload, disabled }) => {
           <Md3Button
             type="submit"
             variant="primary"
-            disabled={!file || disabled || uploading}
+            disabled={!file || !isVerified || disabled || uploading}
             loading={uploading}
-            loadingText="Uploading Scan..."
+            loadingText="Finalizing Upload..."
           >
-            Upload Scan
+            Finalize Upload
           </Md3Button>
         </div>
       </form>

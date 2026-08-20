@@ -1,5 +1,7 @@
 const { verifyAccessToken } = require('../../modules/auth/token.service');
 const identityService = require('../../modules/identity/identity.service');
+const staffService = require('../../modules/staff/staff.service');
+const administrationService = require('../../modules/administration/administration.service');
 const { error: sendError } = require('../responses');
 const logger = require('../logger');
 
@@ -34,7 +36,26 @@ const authenticate = async (req, res, next) => {
       return sendError(res, errorCode, errorMessage, null, 401);
     }
 
-    req.user = payload;
+    // Resolve real-time role permissions from database
+    let permissions = payload.permissions;
+    if (identity.staffId) {
+      try {
+        const staff = await staffService.getById(identity.staffId.toString());
+        if (staff && staff.roleId) {
+          const livePerms = await administrationService.getPermissionCodesForRole(staff.roleId._id || staff.roleId);
+          if (Array.isArray(livePerms) && livePerms.length > 0) {
+            permissions = livePerms;
+          }
+        }
+      } catch (err) {
+        // Fallback to token permissions on non-critical error
+      }
+    }
+
+    req.user = {
+      ...payload,
+      permissions: permissions || [],
+    };
     return next();
   } catch (err) {
     logger.warn('Token verification failed', { error: err.message, requestId: req.requestId });

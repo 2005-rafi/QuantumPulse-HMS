@@ -1,74 +1,50 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Md3Card, Md3CardHeader, Icon, Md3EmptyState, Md3IconButton, Md3Tabs, Md3Section,
+  Icon, Md3EmptyState, Md3IconButton, Md3Section,
 } from '../../components/md3/Md3Widgets';
 import { Md3TextField } from '../../components/md3/Md3FormComponents';
 import QueuePatientCard from './QueuePatientCard';
 import { visitAPI } from '../../services/visitAPI';
+import { formatQueueWaitTime as timeSince } from '../../utils/dateFormatting';
 
 /* ============================================================
    PatientQueue — Doctor's patient queue panel.
-
-   SOLID:
-     SRP — Renders queue; delegates API calls to visitAPI.
-     OCP — Filtering / sorting logic extended via useMemo only.
-     DIP — Depends on visitAPI abstraction, not raw fetch.
-
-   FIFO guarantee: backend already sorts createdAt ASC.
-   Frontend adds a defensive createdAt sort as a safety net.
+   Unified 2x3 Matrix Component for combined stats & filtering.
    ============================================================ */
 
-const timeSince = (dateString) => {
-  if (!dateString) return '—';
-  const seconds = Math.floor((Date.now() - new Date(dateString).getTime()) / 1000);
-  const h = Math.floor(seconds / 3600);
-  if (h >= 1) {
-    const m = Math.floor((seconds % 3600) / 60);
-    return m > 0 ? `${h}h ${m}m` : `${h}h`;
-  }
-  const m = Math.floor(seconds / 60);
-  return `${Math.max(m, 1)}m`;
-};
-
-const FILTER_TABS = [
-  { id: 'all',                   label: 'All'      },
-  { id: 'CALLED',                label: 'Called'   },
-  { id: 'IN_PROGRESS',           label: 'In Consultation'   },
-  { id: 'WAITING_DOCTOR_REVIEW', label: 'Review'   },
-  { id: 'WAITING_DOCTOR',        label: 'Waiting'  },
-  { id: 'COMPLETED',             label: 'Completed' },
+const MATRIX_FILTERS = [
+  { id: 'all',                   label: 'All',             icon: <Icon.Users size={14} /> },
+  { id: 'WAITING_DOCTOR',        label: 'Waiting',         icon: <Icon.Clock size={14} /> },
+  { id: 'CALLED',                label: 'Called',          icon: <Icon.Volume2 size={14} /> },
+  { id: 'IN_PROGRESS',           label: 'In Consultation', icon: <Icon.Activity size={14} /> },
+  { id: 'WAITING_DOCTOR_REVIEW', label: 'Review',          icon: <Icon.Clipboard size={14} /> },
+  { id: 'COMPLETED',             label: 'Completed',       icon: <Icon.CheckCircle size={14} /> },
 ];
 
-/* ─── Mini stats strip ────────────────────────────────────── */
-const QueueMiniStats = ({ queue }) => {
-  const counts = useMemo(() => {
-    const c = { CALLED: 0, IN_PROGRESS: 0, WAITING_DOCTOR_REVIEW: 0, WAITING_DOCTOR: 0, COMPLETED: 0 };
-    queue.forEach((v) => { if (c[v.status] !== undefined) c[v.status]++; });
-    return c;
-  }, [queue]);
-
+/* ─── Unified 2x3 Queue Filter Matrix ─────────────────────── */
+const QueueFilterMatrix = ({ counts, filterStatus, onSelectFilter }) => {
   return (
-    <div className="queue-mini-stats" role="status" aria-label="Queue summary">
-      <div className="queue-mini-stat queue-mini-stat--tertiary">
-        <Icon.Volume2 size={13} />
-        <span className="queue-mini-stat__label">Called</span>
-        <span className="queue-mini-stat__value">{counts.CALLED}</span>
-      </div>
-      <div className="queue-mini-stat queue-mini-stat--default">
-        <Icon.Activity size={13} />
-        <span className="queue-mini-stat__label">Active</span>
-        <span className="queue-mini-stat__value">{counts.IN_PROGRESS}</span>
-      </div>
-      <div className="queue-mini-stat queue-mini-stat--secondary">
-        <Icon.Clipboard size={13} />
-        <span className="queue-mini-stat__label">Review</span>
-        <span className="queue-mini-stat__value">{counts.WAITING_DOCTOR_REVIEW}</span>
-      </div>
-      <div className="queue-mini-stat">
-        <Icon.Clock size={13} />
-        <span className="queue-mini-stat__label">Waiting</span>
-        <span className="queue-mini-stat__value">{counts.WAITING_DOCTOR}</span>
-      </div>
+    <div className="queue-filter-matrix" role="tablist" aria-label="Queue Filters">
+      {MATRIX_FILTERS.map((item) => {
+        const isSelected = filterStatus === item.id;
+        const count = counts[item.id] ?? 0;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            role="tab"
+            aria-selected={isSelected}
+            className={`queue-matrix-tile ${isSelected ? 'queue-matrix-tile--active' : ''}`}
+            onClick={() => onSelectFilter(item.id)}
+          >
+            <div className="matrix-tile-header">
+              <span className="matrix-tile-icon">{item.icon}</span>
+              <span className="matrix-tile-count">{count}</span>
+            </div>
+            <span className="matrix-tile-label">{item.label}</span>
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -94,6 +70,22 @@ const PatientQueue = ({
     activeQueue:  sortedQueue.filter((v) => v.status !== 'SKIPPED'),
     skippedQueue: sortedQueue.filter((v) => v.status === 'SKIPPED'),
   }), [sortedQueue]);
+
+  // ── Live counts for the 2x3 filter matrix
+  const matrixCounts = useMemo(() => {
+    const c = {
+      all: activeQueue.length,
+      WAITING_DOCTOR: 0,
+      CALLED: 0,
+      IN_PROGRESS: 0,
+      WAITING_DOCTOR_REVIEW: 0,
+      COMPLETED: 0,
+    };
+    sortedQueue.forEach((v) => {
+      if (c[v.status] !== undefined) c[v.status]++;
+    });
+    return c;
+  }, [activeQueue, sortedQueue]);
 
   const filteredActive = useMemo(() => {
     let list = activeQueue;
@@ -155,21 +147,15 @@ const PatientQueue = ({
   return (
     <div className="patient-queue">
       <div className="patient-queue__card">
-        <div style={{ padding: 'var(--md-spacing-m) var(--md-spacing-m) var(--md-spacing-xs) var(--md-spacing-m)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--md-spacing-s)' }}>
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: '36px', height: '36px',
-              borderRadius: 'var(--md-sys-shape-corner-small, 8px)',
-              backgroundColor: 'var(--md-sys-color-primary-container)',
-              color: 'var(--md-sys-color-on-primary-container)',
-              flexShrink: 0,
-            }}>
+        {/* Header Title & Refresh */}
+        <div className="patient-queue__header">
+          <div className="patient-queue__header-left">
+            <span className="patient-queue__header-icon">
               <Icon.Users size={18} />
             </span>
             <div>
-              <h3 style={{ margin: 0, font: 'var(--md-sys-typescale-title-small-font)', fontWeight: '700', color: 'var(--md-sys-color-on-surface)' }}>My Queue</h3>
-              <span style={{ font: 'var(--md-sys-typescale-body-small-font)', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              <h3 className="patient-queue__header-title">My Queue</h3>
+              <span className="patient-queue__header-subtitle">
                 {activeQueue.length} patient{activeQueue.length !== 1 ? 's' : ''} in queue
               </span>
             </div>
@@ -183,9 +169,17 @@ const PatientQueue = ({
           />
         </div>
 
-        <QueueMiniStats queue={queue} />
+        {/* ── Singular 2x3 Matrix Filter & Stat Component ── */}
+        <div className="patient-queue__matrix-container">
+          <QueueFilterMatrix
+            counts={matrixCounts}
+            filterStatus={filterStatus}
+            onSelectFilter={setFilterStatus}
+          />
+        </div>
 
-        <div className="patient-queue__controls">
+        {/* ── Search Bar ── */}
+        <div className="patient-queue__search-wrap">
           <Md3TextField
             id="doctor-queue-search"
             label="Search by name, MRN, or token"
@@ -196,33 +190,18 @@ const PatientQueue = ({
             onTrailingIconClick={() => setSearchQuery('')}
             trailingIconAriaLabel="Clear search"
           />
-          <div className="patient-queue__filter-scroll">
-            {FILTER_TABS.map((tab) => {
-              const isActive = filterStatus === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setFilterStatus(tab.id)}
-                  className={['queue-filter-chip', isActive ? 'queue-filter-chip--active' : ''].filter(Boolean).join(' ')}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
         </div>
 
-        {/* ── Active Queue ── */}
+        {/* ── Active Queue List ── */}
         <div className="patient-queue__list" role="list">
           {filteredActive.length === 0 ? (
             <Md3EmptyState
               icon={<Icon.Inbox />}
-              title={searchQuery ? 'No matching patients' : 'No patients in queue'}
+              title={searchQuery ? 'No matching patients' : 'No patients in this filter'}
               subtitle={
                 searchQuery
                   ? 'Try adjusting your search or filter.'
-                  : 'The waiting area is currently empty.'
+                  : 'There are currently no patients under this status.'
               }
             />
           ) : (
@@ -259,7 +238,7 @@ const PatientQueue = ({
                     isSelected={selectedVisitId === visit._id}
                     onClick={() => onSelectVisit?.(visit)}
                     waitTime={timeSince(visit.createdAt)}
-                    onCall={handleRequeue} // Re-queue uses the call button slot
+                    onCall={handleRequeue}
                     onSkip={null}
                   />
                 ))}

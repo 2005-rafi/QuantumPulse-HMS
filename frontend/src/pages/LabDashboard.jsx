@@ -1,17 +1,10 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../contexts/ConfigContext';
 import { useLabQueue } from '../hooks/useLabQueue';
 import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
-import { Md3Button } from '../components/md3/Md3FormComponents';
 import CommonHeader from '../components/shell/CommonHeader';
-import LabWorkQueue from '../features/laboratory/LabWorkQueue';
-import LabResultWorksheet from '../features/laboratory/LabResultWorksheet';
-import Md3FileUpload from '../components/md3/Md3FileUpload';
-import LabPriorityBar from '../features/laboratory/LabPriorityBar';
-import SpecimenTracker from '../features/laboratory/SpecimenTracker';
-import ResultsGrid from '../features/laboratory/ResultsGrid';
 import './LabDashboard.css';
 
 /**
@@ -24,20 +17,18 @@ const TABS = {
 };
 
 /**
- * LabDashboard — Pure Presentation Component
+ * LabDashboard — Layout & Navigation Shell Component
  *
  * SOLID:
- *   SRP  — Renders UI only. All queue management, result submission, and file upload
- *           logic lives in useLabQueue hook.
- *   OCP  — New lab views extend via TABS config or hook, not this component.
- *   DIP  — Depends on useLabQueue abstraction, not raw api calls.
- *
- * Removes: HmsBrandIcon, UserProfileButton (both replaced by CommonHeader).
+ *   SRP  — Renders top shell, dynamic count tabs, and child view outlet.
+ *   OCP  — Extend by adding child routes, not modifying this layout.
+ *   DIP  — Depends on useLabQueue abstraction.
  */
 const LabDashboard = () => {
   const { user, logout } = useAuth();
   const config = useConfig();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     queue,
@@ -49,8 +40,6 @@ const LabDashboard = () => {
     busyAction,
     resultsForm,
     notesForm,
-    activeTab,
-    setActiveTab,
     priorityFilter,
     setPriorityFilter,
     searchValue,
@@ -93,125 +82,69 @@ const LabDashboard = () => {
     },
   ]), [allPendingOrders.length, allCompletedOrders.length]);
 
-  /* ─── Queue Pane ─── */
-  const queuePane = (
-    <LabWorkQueue
-      visits={filteredQueue}
-      selectedVisitId={selectedVisit?._id}
-      onSelectVisit={handleSelectVisit}
-      loading={!hasLoadedQueue || isRefreshing}
-      error={queueError}
-      onRefresh={fetchQueue}
-      isRefreshing={isRefreshing}
-      searchValue={searchValue}
-      onSearchChange={setSearchValue}
-      priorityBar={(
-        <LabPriorityBar
-          counts={priorityCounts}
-          activeFilter={priorityFilter}
-          onFilterChange={setPriorityFilter}
-          statusCounts={statusCounts}
-        />
-      )}
-    />
-  );
+  // Derive active tab directly from URL path
+  const activeTab = location.pathname.includes('/specimens')
+    ? 'specimens'
+    : location.pathname.includes('/reported')
+    ? 'reported'
+    : 'processing';
 
-  /* ─── Workspace Pane ─── */
-  const workspacePane = (
-    <LabResultWorksheet
-      visit={selectedVisit}
-      orderLabs={laboratories}
-      tabMode={
-        activeTab === TABS.REPORTED.id  ? 'REPORTED'
-        : activeTab === TABS.SPECIMENS.id ? 'SPECIMENS'
-        : 'PROCESSING'
-      }
-      onCollectSample={handleCollectSample}
-      onSubmitResult={handleSubmitResult}
-      onChangeField={handleResultFieldChange}
-      onChangeNotes={handleNotesChange}
-      disabled={Boolean(busyAction)}
-      dirtyCount={dirtyCount}
-      resultsForm={resultsForm}
-      notesForm={notesForm}
-      specimenTrackerSlot={selectedVisit ? (
-        <SpecimenTracker
-          orders={selectedVisit.labOrders || []}
-          laboratories={laboratories}
-          onCollect={handleCollectSample}
-          busyCollecting={busyAction}
-        />
-      ) : null}
-      resultsGridSlot={selectedVisit ? (
-        <ResultsGrid
-          completedOrders={(selectedVisit.labOrders || []).filter(
-            (o) => (o.status || '').toUpperCase() === 'COMPLETED'
-          )}
-          laboratories={laboratories}
-        />
-      ) : null}
-    />
-  );
-
-  /* ─── Main Content Renderer ─── */
-  const renderMain = () => {
-    if (activeTab === TABS.SPECIMENS.id) {
-      return (
-        <div className="lab-dashboard__single-view lab-dashboard__specimens-view">
-          <SpecimenTracker
-            orders={flatAllOrders}
-            laboratories={laboratories}
-            onCollect={handleCollectSample}
-            busyCollecting={busyAction}
-          />
-        </div>
-      );
-    }
-    if (activeTab === TABS.REPORTED.id) {
-      return (
-        <div className="lab-dashboard__single-view lab-dashboard__reported-view">
-          <ResultsGrid
-            completedOrders={allCompletedOrders}
-            laboratories={laboratories}
-          />
-        </div>
-      );
-    }
-    return (
-      <div className="lab-dashboard__desk" role="region" aria-label="Laboratory workspace and queue">
-        <aside className="lab-dashboard__queue-pane" aria-label="Laboratory patient queue">
-          {queuePane}
-        </aside>
-        <section className="lab-dashboard__workspace-pane" aria-label="Laboratory result workspace">
-          {workspacePane}
-          {selectedVisit && (
-            <Md3FileUpload
-              visit={selectedVisit}
-              onUpload={handleFileUpload}
-            />
-          )}
-        </section>
-      </div>
-    );
+  const handleTabChange = (tabId) => {
+    navigate(`/dashboard/laboratory/${tabId}`);
   };
 
   return (
     <div className="lab-dashboard">
-
-      {/* ─── TOP APP BAR with Tabs ─── */}
+      {/* ─── Top App Bar with Tabs ─── */}
       <CommonHeader
         brandTitle={`${config?.SHORT_NAME || 'HMS'} Laboratory`}
         brandSubtitle={departmentName}
         centerSlot={
-          <Md3Tabs tabs={headerTabs} activeTab={activeTab} onChange={setActiveTab} />
+          <Md3Tabs
+            tabs={headerTabs}
+            activeTab={activeTab}
+            onChange={handleTabChange}
+          />
         }
         user={user}
         onLogout={handleLogout}
       />
 
-      {/* ─── MAIN WORKSPACE ─── */}
+      {/* ─── Main Workspace Routed Views ─── */}
       <main className="lab-dashboard__main" role="main">
-        {renderMain()}
+        <Outlet
+          context={{
+            user,
+            queue,
+            selectedVisit,
+            laboratories,
+            isRefreshing,
+            hasLoadedQueue,
+            queueError,
+            busyAction,
+            resultsForm,
+            notesForm,
+            priorityFilter,
+            setPriorityFilter,
+            searchValue,
+            setSearchValue,
+            fetchQueue,
+            handleSelectVisit,
+            handleCollectSample,
+            handleSubmitResult,
+            handleFileUpload,
+            handleResultFieldChange,
+            handleNotesChange,
+            filteredQueue,
+            allCompletedOrders,
+            allPendingOrders,
+            flatAllOrders,
+            statusCounts,
+            priorityCounts,
+            dirtyCount,
+            departmentName,
+          }}
+        />
       </main>
     </div>
   );

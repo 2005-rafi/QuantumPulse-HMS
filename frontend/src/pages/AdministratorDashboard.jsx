@@ -49,16 +49,30 @@ const AdministratorDashboard = () => {
   const closeConfirm = () => setConfirmDialog((d) => ({ ...d, isOpen: false, loading: false, onConfirm: null }));
   const setConfirmLoading = (v) => setConfirmDialog((d) => ({ ...d, loading: v }));
 
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [isRefreshingStats, setIsRefreshingStats] = useState(false);
+
   useEffect(() => {
     fetchData();
+
+    // Live background polling for command center queue stats every 15s
+    const interval = setInterval(() => {
+      fetchStats(true);
+    }, 15000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchStats = async () => {
+  const fetchStats = async (isBackground = false) => {
+    if (!isBackground) setIsRefreshingStats(true);
     try {
       const res = await api.get('/visits/stats');
       setStats(res.data.data || { patientIn: 0, patientOut: 0, pendingLab: 0, pendingPharmacy: 0 });
+      setLastUpdated(new Date());
     } catch (err) {
       console.error('Failed to fetch stats:', err);
+    } finally {
+      if (!isBackground) setIsRefreshingStats(false);
     }
   };
 
@@ -162,6 +176,7 @@ const AdministratorDashboard = () => {
   const NAV_ITEMS = [
     { id: 'analytics', icon: 'monitoring', label: 'Analytics' },
     { id: 'patients', icon: 'groups', label: 'Patients' },
+    { id: 'appointments', icon: 'calendar_month', label: 'Appointments' },
     { id: 'staff', icon: 'badge', label: 'Manage Staff' },
     { id: 'departments', icon: 'corporate_fare', label: 'Manage Departments' },
     { id: 'laboratories', icon: 'science', label: 'Manage Laboratories' },
@@ -187,6 +202,8 @@ const AdministratorDashboard = () => {
         <main className="dashboard-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
           <Outlet context={{
             stats,
+            lastUpdated,
+            isRefreshingStats,
             departments,
             laboratories,
             roles,

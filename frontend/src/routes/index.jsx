@@ -34,6 +34,11 @@ import LabDashboard from '../pages/LabDashboard';
 import PharmacyDashboard from '../pages/PharmacyDashboard';
 import AdministratorDashboard from '../pages/AdministratorDashboard';
 import UserProfilePage from '../pages/UserProfilePage';
+// Child Views for Named Routing
+import { ReceptionPatientsView, ReceptionAppointmentsView } from '../features/patients/ReceptionViews';
+import { DoctorConsultationView, DoctorAppointmentsView, DoctorDeletionRequestsView } from '../features/doctor/DoctorViews';
+import { LabProcessingView, LabSpecimensView, LabReportedView } from '../features/laboratory/LabViews';
+
 import AdminAnalytics from '../features/admin/AdminAnalytics';
 import AdminPatientManager from '../features/admin/AdminPatientManager';
 import AdminStaffManager from '../features/admin/AdminStaffManager';
@@ -41,6 +46,13 @@ import AdminDepartmentManager from '../features/admin/AdminDepartmentManager';
 import AdminLabManager from '../features/admin/AdminLabManager';
 import AdminSettings from '../features/admin/AdminSettings';
 import AdminAuditLogs from '../features/admin/AdminAuditLogs';
+import AppointmentDashboard from '../features/appointments/AppointmentDashboard';
+import { useAuth } from '../context/AuthContext';
+
+const AdminAppointmentsWrapper = () => {
+  const { user } = useAuth();
+  return <AppointmentDashboard user={user} />;
+};
 
 /**
  * ProtectedLayout — Wraps all dashboard routes in ProtectedRoute.
@@ -72,7 +84,7 @@ export const router = createBrowserRouter([
       // Default /dashboard → redirect to login (role redirect handled by AppRouter)
       { index: true, element: <Navigate to="/login" replace /> },
 
-      // Reception
+      // Reception — Named tab routing: /patients, /appointments
       {
         path: 'reception',
         element: (
@@ -80,6 +92,11 @@ export const router = createBrowserRouter([
             <ReceptionDashboard />
           </RoleRoute>
         ),
+        children: [
+          { index: true, element: <Navigate to="patients" replace /> },
+          { path: 'patients', element: <ReceptionPatientsView /> },
+          { path: 'appointments', element: <ReceptionAppointmentsView /> },
+        ],
       },
 
       // Nurse
@@ -92,7 +109,7 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Doctor — nested patient workspace routes for deep-linking
+      // Doctor — Named tab routing: /consultation, /appointments, /deletion-requests
       {
         path: 'doctor',
         element: (
@@ -100,9 +117,15 @@ export const router = createBrowserRouter([
             <DoctorDashboard />
           </RoleRoute>
         ),
+        children: [
+          { index: true, element: <Navigate to="consultation" replace /> },
+          { path: 'consultation', element: <DoctorConsultationView /> },
+          { path: 'appointments', element: <DoctorAppointmentsView /> },
+          { path: 'deletion-requests', element: <DoctorDeletionRequestsView /> },
+        ],
       },
 
-      // Laboratory
+      // Laboratory — Named tab routing: /processing, /specimens, /reported
       {
         path: 'laboratory',
         element: (
@@ -110,6 +133,12 @@ export const router = createBrowserRouter([
             <LabDashboard />
           </RoleRoute>
         ),
+        children: [
+          { index: true, element: <Navigate to="processing" replace /> },
+          { path: 'processing', element: <LabProcessingView /> },
+          { path: 'specimens', element: <LabSpecimensView /> },
+          { path: 'reported', element: <LabReportedView /> },
+        ],
       },
 
       // Pharmacy
@@ -139,6 +168,7 @@ export const router = createBrowserRouter([
           { path: 'laboratories', element: <AdminLabManager /> },
           { path: 'settings', element: <AdminSettings /> },
           { path: 'audit', element: <AdminAuditLogs /> },
+          { path: 'appointments', element: <AdminAppointmentsWrapper /> },
         ]
       },
       // Profile (Accessible by all authenticated roles)

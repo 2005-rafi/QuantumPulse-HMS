@@ -138,6 +138,43 @@ class VisitService {
     });
   }
 
+  /**
+   * Cancel a visit and revoke its queue token.
+   * Business rule: Allowed ONLY before nursing triage (status WAITING_TRIAGE or CALLED before vitals recorded).
+   */
+  async cancelVisit(visitId, reason, staffId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      if (visit.status === 'CANCELLED') {
+        throw new AppError('BUSINESS_002', 'Visit is already cancelled');
+      }
+
+      // Rule: Visits can ONLY be cancelled before nursing triage.
+      const cancellableStatuses = ['WAITING_TRIAGE', 'CALLED', 'SKIPPED'];
+      const hasCompletedTriage = Boolean(visit.vitals?.recordedAt || visit.vitals?.chiefComplaint);
+
+      if (!cancellableStatuses.includes(visit.status) || (hasCompletedTriage && visit.status !== 'SKIPPED')) {
+        throw new AppError(
+          'BUSINESS_003',
+          `Cannot cancel visit in status '${visit.status}'. Reception can only cancel a visit before nursing triage. Once triage assessment or doctor consultation has begun, cancellation is restricted.`
+        );
+      }
+
+      return visitRepository.updateById(
+        visitId,
+        {
+          status: 'CANCELLED',
+          cancellationReason: reason || 'Cancelled at reception before nursing triage',
+          cancelledAt: new Date(),
+          cancelledBy: staffId,
+        },
+        { session }
+      );
+    });
+  }
+
   // ── VITALS & CONSULTATION ────────────────────────────────────────────────────
 
   async recordVitals(visitId, vitalsData, nurseId) {
@@ -211,23 +248,46 @@ class VisitService {
     });
   }
 
-  async _populateLabOrders(labOrders) {
+  async _populateLabOrders(labOrders, visitDeptId) {
     if (!labOrders || labOrders.length === 0) return labOrders;
     try {
+      const mongoose = require('mongoose');
       const Laboratory = require('../laboratory/laboratory.model');
-      const labIds = labOrders.map(o => o.laboratoryId);
-      const labs = await Laboratory.find({ _id: { $in: labIds } }).lean();
-      const labMap = labs.reduce((acc, lab) => {
-        acc[lab._id.toString()] = lab;
-        return acc;
-      }, {});
+      
+      const validObjectIds = labOrders
+        .map(o => o.laboratoryId)
+        .filter(id => id && mongoose.Types.ObjectId.isValid(id));
+      
+      const labsById = validObjectIds.length > 0
+        ? await Laboratory.find({ _id: { $in: validObjectIds } }).lean()
+        : [];
+      
+      const allActiveLabs = await Laboratory.find({ isActive: true }).lean();
+
+      const labMap = {};
+      labsById.forEach(lab => {
+        labMap[lab._id.toString()] = lab;
+      });
 
       return labOrders.map(order => {
-        const lab = labMap[order.laboratoryId?.toString()];
+        let lab = order.laboratoryId ? labMap[order.laboratoryId.toString()] : null;
+        if (!lab && order.labName) {
+          lab = allActiveLabs.find(l => l.name.toLowerCase() === order.labName.toLowerCase());
+        }
+        if (!lab && allActiveLabs.length > 0) {
+          lab = allActiveLabs.find(l => l.testCatalog?.some(t => t.name === order.testName)) || allActiveLabs[0];
+        }
+
+        const resolvedLabId = lab ? lab._id : (mongoose.Types.ObjectId.isValid(order.laboratoryId) ? order.laboratoryId : (allActiveLabs[0]?._id || undefined));
+        const resolvedDeptId = order.labDepartmentId || (lab ? lab.departmentId : undefined) || visitDeptId;
+        const resolvedLabName = order.labName || (lab ? lab.name : 'Clinical Laboratory');
+
         return {
           ...order,
-          labDepartmentId: order.labDepartmentId || (lab ? lab.departmentId : undefined),
-          labName: order.labName || (lab ? lab.name : ''),
+          ...(resolvedLabId ? { laboratoryId: resolvedLabId } : {}),
+          ...(resolvedDeptId ? { labDepartmentId: resolvedDeptId } : {}),
+          labName: resolvedLabName,
+          status: order.status || 'PENDING_SAMPLE',
         };
       });
     } catch (err) {
@@ -250,7 +310,8 @@ class VisitService {
       }
 
       const { prescribedMedications, labOrders, ...consultationData } = data;
-      const populatedLabOrders = labOrders ? await this._populateLabOrders(labOrders) : undefined;
+      const visitDeptId = visit.departmentId?._id || visit.departmentId;
+      const populatedLabOrders = labOrders ? await this._populateLabOrders(labOrders, visitDeptId) : undefined;
 
       const updatedData = {
         status: 'IN_PROGRESS',
@@ -264,6 +325,41 @@ class VisitService {
       };
       if (prescribedMedications) updatedData.prescribedMedications = prescribedMedications;
       if (populatedLabOrders) updatedData.labOrders = populatedLabOrders;
+
+      return visitRepository.updateById(visitId, updatedData, { session });
+    });
+  }
+
+  async routeToLaboratory(visitId, data, doctorId) {
+    return withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) throw new AppError('NOT_FOUND', 'Visit not found');
+
+      const allowedStatuses = ['WAITING_DOCTOR', 'CALLED', 'IN_PROGRESS', 'WAITING_DOCTOR_REVIEW'];
+      if (!allowedStatuses.includes(visit.status)) {
+        throw new AppError('BUSINESS_002', `Cannot route to laboratory in current status: ${visit.status}`);
+      }
+
+      const { prescribedMedications, labOrders, ...consultationData } = data;
+      const visitDeptId = visit.departmentId?._id || visit.departmentId;
+      const populatedLabOrders = labOrders ? await this._populateLabOrders(labOrders, visitDeptId) : undefined;
+
+      if (!populatedLabOrders || populatedLabOrders.length === 0) {
+        throw new AppError('BUSINESS_002', 'Cannot route to laboratory without any diagnostic orders.');
+      }
+
+      const updatedData = {
+        status: 'WAITING_LAB',
+        consultation: {
+          ...visit.consultation?.toObject?.() ?? visit.consultation ?? {},
+          ...consultationData,
+          doctorId,
+          status: 'DRAFT',
+          recordedAt: new Date(),
+        },
+        labOrders: populatedLabOrders,
+      };
+      if (prescribedMedications) updatedData.prescribedMedications = prescribedMedications;
 
       return visitRepository.updateById(visitId, updatedData, { session });
     });
@@ -283,7 +379,8 @@ class VisitService {
       }
 
       const { prescribedMedications, labOrders, ...consultationData } = data;
-      const populatedLabOrders = labOrders ? await this._populateLabOrders(labOrders) : undefined;
+      const visitDeptId = visit.departmentId?._id || visit.departmentId;
+      const populatedLabOrders = labOrders ? await this._populateLabOrders(labOrders, visitDeptId) : undefined;
 
       let nextStatus = 'COMPLETED';
       const hasPendingLabs = populatedLabOrders?.some(order => order.status !== 'COMPLETED');
@@ -299,7 +396,7 @@ class VisitService {
           ...visit.consultation?.toObject?.() ?? visit.consultation ?? {},
           ...consultationData,
           doctorId,
-          status: 'FINALIZED',
+          status: hasPendingLabs ? 'DRAFT' : 'FINALIZED',
           recordedAt: new Date(),
         },
       };
@@ -339,8 +436,10 @@ class VisitService {
       visitRepository.getPendingLabPressures(),
     ]);
 
-    let patientIn = rawStats.totalToday;
-    let patientOut = 0;
+    let patientIn = rawStats.totalToday || 0;
+    let patientOut = rawStats.completedToday || 0;
+    let totalCompleted = rawStats.totalCompleted || 0;
+    let totalVisits = rawStats.totalAll || 0;
     let pendingLab = 0;
     let pendingPharmacy = 0;
     let waitingTriage = 0;
@@ -349,13 +448,12 @@ class VisitService {
     let skipped = 0;
 
     rawStats.byStatus.forEach((stat) => {
-      if (stat._id === 'COMPLETED')         patientOut      += stat.count;
-      if (stat._id === 'WAITING_LAB')       pendingLab      += stat.count;
-      if (stat._id === 'WAITING_PHARMACY')  pendingPharmacy += stat.count;
-      if (stat._id === 'WAITING_TRIAGE')    waitingTriage   += stat.count;
-      if (stat._id === 'WAITING_DOCTOR')    waitingDoctor   += stat.count;
-      if (stat._id === 'IN_PROGRESS')       inProgress      += stat.count;
-      if (stat._id === 'SKIPPED')           skipped         += stat.count;
+      if (stat._id === 'WAITING_LAB')                                            pendingLab      += stat.count;
+      if (stat._id === 'WAITING_PHARMACY')                                       pendingPharmacy += stat.count;
+      if (stat._id === 'WAITING_TRIAGE' || stat._id === 'CALLED')                 waitingTriage   += stat.count;
+      if (stat._id === 'WAITING_DOCTOR' || stat._id === 'WAITING_DOCTOR_REVIEW') waitingDoctor   += stat.count;
+      if (stat._id === 'IN_PROGRESS')                                            inProgress      += stat.count;
+      if (stat._id === 'SKIPPED')                                                skipped         += stat.count;
     });
 
     const departmentLoads = activeDepts.reduce((acc, curr) => {
@@ -371,6 +469,8 @@ class VisitService {
     return { 
       patientIn, 
       patientOut, 
+      totalCompleted,
+      totalVisits,
       pendingLab, 
       pendingPharmacy,
       waitingTriage,

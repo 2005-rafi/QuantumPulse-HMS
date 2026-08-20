@@ -44,11 +44,12 @@ const StaffAnalyticsDialog = ({ isOpen, onClose, staffList = [], departments = [
       onClose={onClose}
       title="Staff Directory Analytics"
       subtitle="Overview of hospital staffing levels, active departments, and role distribution"
+      className="staff-analytics-sheet"
     >
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '24px', maxHeight: '70vh', overflowY: 'auto' }}>
+      <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px', maxHeight: '75vh', overflowY: 'auto' }}>
         
         {/* KPI Aggregates Row */}
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
           <div className="staff-stat-chip chip-total">
             <span className="material-symbols-rounded">groups</span>
             <div className="stat-text-group">
@@ -74,38 +75,9 @@ const StaffAnalyticsDialog = ({ isOpen, onClose, staffList = [], departments = [
           </div>
         </div>
 
-        {/* Department Breakdowns (Scale-friendly scrollable container) */}
+        {/* Role Breakdowns (Moved above Department Staffing) */}
         <div>
-          <h4 style={{ margin: '0 0 12px 0', color: '#1a3b5c', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Department staffing ({departments.length} units)
-          </h4>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '240px', overflowY: 'auto', paddingRight: '4px' }}>
-            {departmentStats.map(dept => {
-              const maxTotal = Math.max(...departmentStats.map(d => d.total), 1);
-              return (
-                <div key={dept._id} className="dept-stat-row">
-                  <div style={{ display: 'flex', justifycontent: 'space-between', marginBottom: '4px', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="dept-bullet" style={{ background: dept.type === 'DIAGNOSTIC' ? '#e65100' : '#1565c0' }} />
-                      <span style={{ fontSize: '13px', fontWeight: '600', color: '#333' }}>{dept.name}</span>
-                    </div>
-                    <span style={{ fontSize: '12px', fontWeight: '700', color: '#555' }}>
-                      {dept.active} active / {dept.total} total
-                    </span>
-                  </div>
-                  <div style={{ height: '8px', background: '#eee', borderRadius: '4px', overflow: 'hidden', display: 'flex' }}>
-                    <div style={{ width: `${(dept.active / maxTotal) * 100}%`, background: '#2e7d32', height: '100%' }} />
-                    <div style={{ width: `${(dept.disabled / maxTotal) * 100}%`, background: '#c62828', height: '100%' }} />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Role Breakdowns */}
-        <div>
-          <h4 style={{ margin: '0 0 12px 0', color: '#1a3b5c', fontSize: '14px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          <h4 style={{ margin: '0 0 12px 0', color: 'var(--md-sys-color-primary)', fontSize: '0.875rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Role allocation
           </h4>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -118,6 +90,43 @@ const StaffAnalyticsDialog = ({ isOpen, onClose, staffList = [], departments = [
                 )}
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Department Breakdowns (Scale-friendly scrollable container) */}
+        <div>
+          <h4 style={{ margin: '0 0 12px 0', color: 'var(--md-sys-color-primary)', fontSize: '0.875rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+            Department staffing ({departments.length} units)
+          </h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '280px', overflowY: 'auto', paddingRight: '6px' }}>
+            {departmentStats.map(dept => {
+              const deptTotal = Math.max(dept.total, 1);
+              return (
+                <div key={dept._id} className="dept-stat-row">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span 
+                        className="dept-bullet" 
+                        style={{ 
+                          background: dept.type === 'DIAGNOSTIC' ? 'var(--md-sys-color-tertiary)' : 'var(--md-sys-color-primary)',
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%'
+                        }} 
+                      />
+                      <span style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--md-sys-color-on-surface)' }}>{dept.name}</span>
+                    </div>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                      {dept.active} active / {dept.total} total
+                    </span>
+                  </div>
+                  <div style={{ height: '10px', background: 'var(--md-sys-color-surface-container-highest)', borderRadius: '9999px', overflow: 'hidden', display: 'flex' }}>
+                    <div style={{ width: `${(dept.active / deptTotal) * 100}%`, background: 'var(--md-sys-color-primary)', height: '100%', borderRadius: '9999px' }} />
+                    <div style={{ width: `${(dept.disabled / deptTotal) * 100}%`, background: 'var(--md-sys-color-error)', height: '100%', borderRadius: '9999px' }} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 

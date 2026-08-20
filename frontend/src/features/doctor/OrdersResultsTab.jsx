@@ -1,5 +1,4 @@
 import React from 'react';
-import { BentoGrid, BentoGridItem } from '../../components/md3/BentoGrid';
 import LabOrdersManager from './LabOrdersManager';
 import LabResultsPanel from './LabResultsPanel';
 
@@ -10,19 +9,24 @@ const OrdersResultsTab = ({
   onLabOrdersChange
 }) => {
   return (
-    <BentoGrid columns={3} gap="large">
-      <BentoGridItem colSpan={2}>
+    <div className="orders-results-layout">
+      {/* ── Order Composer & Requisitions ── */}
+      <section className="orders-results-section">
         <LabOrdersManager
           labOrders={form?.labOrders || []}
           laboratories={laboratories}
           onLabOrdersChange={onLabOrdersChange}
         />
-      </BentoGridItem>
+      </section>
 
-      <BentoGridItem colSpan={1}>
-        <LabResultsPanel labOrders={visit?.labOrders || []} />
-      </BentoGridItem>
-    </BentoGrid>
+      {/* ── Results Inspection & Workflow Tracker ── */}
+      <section className="orders-results-section">
+        <LabResultsPanel
+          labOrders={visit?.labOrders || []}
+          patient={visit?.patientId || {}}
+        />
+      </section>
+    </div>
   );
 };
 

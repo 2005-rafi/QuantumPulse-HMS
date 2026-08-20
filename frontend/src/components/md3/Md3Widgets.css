@@ -219,22 +219,22 @@
 .md3-stat-card {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-m);
-  padding: var(--md-spacing-l);
-  background-color: var(--md-sys-color-surface-container-low);
-  border: 1px solid var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-large, 16px);
-  transition: background-color var(--md-sys-motion-duration-short) ease;
+  gap: 12px;
+  padding: 10px 16px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 14px;
+  transition: background-color var(--md-sys-motion-duration-short) ease, transform 0.15s ease;
 }
 
 .md3-stat-card:hover {
-  background-color: var(--md-sys-color-surface-container);
+  background-color: var(--md-sys-color-surface-container, #ece6f0);
 }
 
 .md3-stat-card__icon {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background-color: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
   display: flex;
@@ -261,25 +261,25 @@
 .md3-stat-card__content {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   flex: 1;
 }
 
 .md3-stat-card__label {
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   color: var(--md-sys-color-on-surface-variant);
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 .md3-stat-card__value {
-  font-size: 1.45rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--md-sys-color-on-surface);
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
 }
 
 .md3-stat-card__trend {
@@ -309,33 +309,51 @@
 }
 
 .md3-section--highlight {
-  background-color: var(--md-sys-color-secondary-container);
-  border-color: color-mix(in srgb, var(--md-sys-color-secondary) 28%, transparent);
+  background-color: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 35%, transparent);
+  border-left: 4px solid var(--md-sys-color-primary);
 }
 .md3-section--highlight .md3-section__title {
-  color: var(--md-sys-color-on-secondary-container);
+  color: var(--md-sys-color-on-surface);
 }
 .md3-section--highlight .md3-section__subtitle {
-  color: color-mix(in srgb, var(--md-sys-color-on-secondary-container) 75%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
 }
 .md3-section--highlight .md3-section__icon {
-  background-color: var(--md-sys-color-secondary-fixed-dim);
-  color: var(--md-sys-color-on-secondary-fixed);
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
 }
 
 .md3-section--tertiary {
-  background-color: var(--md-sys-color-tertiary-container);
-  border-color: color-mix(in srgb, var(--md-sys-color-tertiary) 28%, transparent);
+  background-color: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border-color: color-mix(in srgb, var(--md-sys-color-tertiary) 35%, transparent);
+  border-left: 4px solid var(--md-sys-color-tertiary);
 }
 .md3-section--tertiary .md3-section__title {
-  color: var(--md-sys-color-on-tertiary-container);
+  color: var(--md-sys-color-on-surface);
 }
 .md3-section--tertiary .md3-section__subtitle {
-  color: color-mix(in srgb, var(--md-sys-color-on-tertiary-container) 75%, transparent);
+  color: var(--md-sys-color-on-surface-variant);
 }
 .md3-section--tertiary .md3-section__icon {
-  background-color: var(--md-sys-color-tertiary-fixed-dim);
-  color: var(--md-sys-color-on-tertiary-fixed);
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.md3-section--error {
+  background-color: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 35%, transparent);
+  border-left: 4px solid var(--md-sys-color-error);
+}
+.md3-section--error .md3-section__title {
+  color: var(--md-sys-color-on-surface);
+}
+.md3-section--error .md3-section__subtitle {
+  color: var(--md-sys-color-on-surface-variant);
+}
+.md3-section--error .md3-section__icon {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-error);
 }
 
 .md3-section__header {

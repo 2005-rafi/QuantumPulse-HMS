@@ -7,6 +7,7 @@ import PositionProgressionDialog from './PositionProgressionDialog';
 import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { StaffFilterSideSheet } from '../../components/md3/StaffFilterSideSheet';
 import { Md3SearchBar } from '../../components/md3/AdminControls';
+import { CURRENCY_SYMBOL } from '../../constants/currency';
 
 const AdminStaffManager = () => {
   const { 
@@ -238,7 +239,7 @@ const AdminStaffManager = () => {
                       {staff.consultingFee !== undefined && staff.consultingFee > 0 && (
                         <div className="md3-card-meta-item">
                           <span className="md3-card-meta-label">Consulting Fee</span>
-                          <span className="md3-card-meta-value">₹{staff.consultingFee}</span>
+                          <span className="md3-card-meta-value">{CURRENCY_SYMBOL}{staff.consultingFee}</span>
                         </div>
                       )}
                       {staff.nursingLicenseNumber && (

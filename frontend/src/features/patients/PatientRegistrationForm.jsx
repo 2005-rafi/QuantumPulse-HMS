@@ -4,6 +4,7 @@ import { visitAPI } from '../../services/visitAPI';
 import { staffAPI } from '../../services/staffAPI';
 import api from '../../services/api';
 import { Md3TextField, Md3Select, Md3Button } from '../../components/md3/Md3FormComponents';
+import { CURRENCY_SYMBOL } from '../../constants/currency';
 import './PatientRegistrationForm.css';
 
 const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
@@ -656,7 +657,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
             id="registrationFee"
             name="registrationFee"
             type="number"
-            label="Registration Fee (₹)"
+            label={`Registration Fee (${CURRENCY_SYMBOL})`}
             value={form.registrationFee}
             onChange={handleChange}
             disabled={loading}
@@ -665,7 +666,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
             id="consultationFee"
             name="consultationFee"
             type="number"
-            label="Consultation Fee (₹)"
+            label={`Consultation Fee (${CURRENCY_SYMBOL})`}
             value={form.consultationFee}
             onChange={handleChange}
             disabled={loading}
