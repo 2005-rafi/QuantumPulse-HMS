@@ -261,18 +261,8 @@ const AdminAnalytics = () => {
           <div 
             onClick={() => setActiveDetailType('triage_queue')}
             title="Click to view Triage Queue patients"
-            style={{ 
-              flex: 1, minWidth: '120px', 
-              background: 'var(--md-sys-color-primary-container)', 
-              padding: '14px 12px', borderRadius: '14px', 
-              textAlign: 'center', 
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)',
-              transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)'; }}
+            className="pipeline-stage-card"
+            style={{ background: 'var(--md-sys-color-primary-container)' }}
           >
             <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-primary-container)' }}>{stats?.waitingTriage ?? 0}</div>
             <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-primary-container)', marginTop: '4px' }}>Triage Queue</div>
@@ -285,18 +275,8 @@ const AdminAnalytics = () => {
           <div 
             onClick={() => setActiveDetailType('doctor_queue')}
             title="Click to view Doctor Queue patients"
-            style={{ 
-              flex: 1, minWidth: '120px', 
-              background: 'var(--md-sys-color-tertiary-container)', 
-              padding: '14px 12px', borderRadius: '14px', 
-              textAlign: 'center', 
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)',
-              transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)'; }}
+            className="pipeline-stage-card"
+            style={{ background: 'var(--md-sys-color-tertiary-container)' }}
           >
             <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-tertiary-container)' }}>{stats?.waitingDoctor ?? 0}</div>
             <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-tertiary-container)', marginTop: '4px' }}>Doctor Queue</div>
@@ -309,18 +289,8 @@ const AdminAnalytics = () => {
           <div 
             onClick={() => setActiveDetailType('in_consultation')}
             title="Click to view In-Consultation patients"
-            style={{ 
-              flex: 1, minWidth: '120px', 
-              background: 'var(--md-sys-color-secondary-container)', 
-              padding: '14px 12px', borderRadius: '14px', 
-              textAlign: 'center', 
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)',
-              transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)'; }}
+            className="pipeline-stage-card"
+            style={{ background: 'var(--md-sys-color-secondary-container)' }}
           >
             <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-secondary-container)' }}>{stats?.inProgress ?? 0}</div>
             <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-secondary-container)', marginTop: '4px' }}>In Consultation</div>
@@ -333,18 +303,8 @@ const AdminAnalytics = () => {
           <div 
             onClick={() => setActiveDetailType('pending_lab')}
             title="Click to view Pending Lab patients"
-            style={{ 
-              flex: 1, minWidth: '120px', 
-              background: 'var(--md-sys-color-error-container)', 
-              padding: '14px 12px', borderRadius: '14px', 
-              textAlign: 'center', 
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)',
-              transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)'; }}
+            className="pipeline-stage-card"
+            style={{ background: 'var(--md-sys-color-error-container)' }}
           >
             <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-error-container)' }}>{stats?.pendingLab ?? 0}</div>
             <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-error-container)', marginTop: '4px' }}>Lab Diagnostics</div>
@@ -357,18 +317,8 @@ const AdminAnalytics = () => {
           <div 
             onClick={() => setActiveDetailType('pending_pharmacy')}
             title="Click to view Pharmacy Queue patients"
-            style={{ 
-              flex: 1, minWidth: '120px', 
-              background: 'var(--md-sys-color-surface-container-high)', 
-              padding: '14px 12px', borderRadius: '14px', 
-              textAlign: 'center', 
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)',
-              transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)'; }}
+            className="pipeline-stage-card"
+            style={{ background: 'var(--md-sys-color-surface-container-high)' }}
           >
             <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-primary)' }}>{stats?.pendingPharmacy ?? 0}</div>
             <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px' }}>Pharmacy Queue</div>
@@ -381,18 +331,8 @@ const AdminAnalytics = () => {
           <div 
             onClick={() => setActiveDetailType('skipped')}
             title="Click to view Skipped Calls"
-            style={{ 
-              flex: 1, minWidth: '120px', 
-              background: 'var(--md-sys-color-surface-container)', 
-              padding: '14px 12px', borderRadius: '14px', 
-              textAlign: 'center', 
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              cursor: 'pointer',
-              boxShadow: '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)',
-              transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)'
-            }}
-            onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent)'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = '0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent)'; }}
+            className="pipeline-stage-card"
+            style={{ background: 'var(--md-sys-color-surface-container)' }}
           >
             <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-surface-variant)' }}>{stats?.skipped ?? 0}</div>
             <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px' }}>Skipped Calls</div>

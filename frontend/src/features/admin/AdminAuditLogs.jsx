@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { auditAPI } from '../../services/auditAPI';
 import { Icon } from '../../components/md3/Md3Widgets';
+import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 
 const AdminAuditLogs = () => {
   const [auditLogs, setAuditLogs] = useState([]);
@@ -29,9 +30,13 @@ const AdminAuditLogs = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className="md3-data-grid" style={{ flex: 1, paddingBottom: '32px' }}>
             {auditLogs.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--md-sys-color-on-surface-variant)', gridColumn: '1 / -1', minHeight: '50vh' }}>
-                <Icon.History style={{ width: '48px', height: '48px', marginBottom: '16px', opacity: 0.5 }} />
-                <h3 style={{ margin: 0, fontWeight: 500, color: 'var(--md-sys-color-on-surface-variant)' }}>No audit logs found</h3>
+              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
+                <Md3EmptyState
+                  icon="history"
+                  title="No audit events recorded"
+                  description="System activity and security events will appear here chronologically as actions are performed."
+                  variant="card"
+                />
               </div>
             ) : (
               auditLogs.map(log => (

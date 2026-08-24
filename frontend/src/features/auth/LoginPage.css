@@ -216,23 +216,17 @@
 }
 
 .brand-logo-container {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: var(--md-spacing-m);
+  margin-bottom: var(--md-spacing-l, 20px);
+  width: 100%;
+  min-height: 48px;
   transition: transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
 }
 
 .brand-logo-container:hover {
-  transform: scale(1.06);
-}
-
-.brand-logo-img {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--md-sys-shape-corner-medium);
-  object-fit: cover;
-  box-shadow: 0 4px 16px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+  transform: scale(1.02);
 }
 
 .card-title {

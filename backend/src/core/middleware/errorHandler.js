@@ -79,16 +79,20 @@ const errorHandler = (err, req, res, next) => { // eslint-disable-line no-unused
     message: err.message || message,
     requestId,
     httpStatus,
+    method: req.method,
+    url: req.originalUrl || req.url,
+    ip: req.ip,
+    user: req.user?.username || req.user?.staffId || 'anonymous',
     isOperational,
     retryable,
     severity,
-    stack: !isOperational ? err.stack : undefined,
+    stack: !isOperational || httpStatus >= 500 ? err.stack : undefined,
   };
 
   if (severity === 'CRITICAL' || severity === 'ERROR' || !isOperational || httpStatus >= 500) {
-    logger.error(`Exception triggered: ${message}`, logContext);
+    logger.error(`[${req.method}] ${req.originalUrl || req.url} -> ${errorCode} (${httpStatus}): ${message}`, logContext);
   } else {
-    logger.warn(`Operational warning: ${message}`, logContext);
+    logger.warn(`[${req.method}] ${req.originalUrl || req.url} -> ${errorCode} (${httpStatus}): ${message}`, logContext);
   }
 
   return sendError(res, errorCode, message, details, httpStatus, req);

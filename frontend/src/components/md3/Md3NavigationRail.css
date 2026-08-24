@@ -1,19 +1,27 @@
+/* ============================================================
+   Md3NavigationRail.css — Pure Material Design 3 Navigation Rail
+   Flat Zero Elevation, Ergonomic Width, Fluid State Layers
+   ============================================================ */
+
 .md3-nav-rail {
-  width: 80px;
+  width: 100px;
   background-color: var(--md-sys-color-surface);
   border-right: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--md-spacing-m) 0;
+  padding: var(--md-spacing-m, 16px) 0;
   height: 100%;
   flex-shrink: 0;
   z-index: 2;
-  transition: width 0.2s var(--md-sys-motion-easing-standard);
+  transition: width 0.25s var(--md-sys-motion-easing-emphasized, cubic-bezier(0.2, 0, 0, 1));
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: none; /* Firefox */
+  user-select: none;
 }
+
 .md3-nav-rail::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
 }
@@ -21,10 +29,14 @@
 .md3-nav-rail__items {
   display: flex;
   flex-direction: column;
-  gap: var(--md-spacing-s);
+  gap: 10px;
   width: 100%;
   align-items: center;
 }
+
+/* ──────────────────────────────────────────────────────────
+   1. NAVIGATION ITEM STATE LAYERS (Idle, Hover, Active, On-Tap)
+   ────────────────────────────────────────────────────────── */
 
 .md3-nav-rail__item {
   display: flex;
@@ -32,50 +44,90 @@
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 56px;
+  min-height: 60px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--md-sys-color-on-surface-variant);
-  padding: 0 4px;
-  transition: color 0.2s var(--md-sys-motion-easing-standard);
+  padding: 4px 6px;
+  box-sizing: border-box;
+  outline: none;
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+              color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
+/* On-Tap / Active Press State */
+.md3-nav-rail__item:active {
+  transform: scale(0.94);
+}
+
+/* Focus Visible for Accessibility */
+.md3-nav-rail__item:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* Hover State */
 .md3-nav-rail__item:hover {
   color: var(--md-sys-color-on-surface);
 }
+
+.md3-nav-rail__item:hover .md3-nav-rail__item-indicator {
+  background-color: var(--md-sys-color-surface-container-highest, rgba(0, 0, 0, 0.06));
+}
+
+.md3-nav-rail__item:hover .md3-nav-rail__icon {
+  transform: scale(1.08);
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. MD3 ACTIVE INDICATOR PILL
+   ────────────────────────────────────────────────────────── */
 
 .md3-nav-rail__item-indicator {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
+  width: 64px;
   height: 32px;
-  border-radius: var(--md-sys-shape-corner-full);
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
   margin-bottom: 4px;
-  transition: background-color 0.2s var(--md-sys-motion-easing-standard);
-}
-
-.md3-nav-rail__item:hover .md3-nav-rail__item-indicator {
-  background-color: rgba(var(--md-sys-color-on-surface-rgb), 0.08);
+  background-color: transparent;
+  transition: background-color 0.22s cubic-bezier(0.2, 0, 0, 1),
+              color 0.22s cubic-bezier(0.2, 0, 0, 1),
+              transform 0.18s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .md3-nav-rail__icon {
   font-size: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+              font-variation-settings 0.2s ease,
+              color 0.2s ease;
 }
 
+/* Label Typography */
 .md3-nav-rail__label {
-  font-family: 'Roboto Flex', sans-serif;
-  font-size: 12px; /* Label Medium */
+  font-family: var(--md-sys-typescale-label-medium-font, 'Roboto', sans-serif);
+  font-size: 11.5px;
   font-weight: 500;
-  line-height: 1.33;
-  letter-spacing: 0.01em;
+  line-height: 1.25;
+  letter-spacing: 0.015em;
   text-align: center;
-  word-wrap: break-word;
-  max-width: 100%;
+  max-width: 90px;
+  padding: 0 2px;
+  word-break: normal;
+  text-wrap: balance;
+  transition: color 0.2s ease, font-weight 0.2s ease;
 }
 
-/* Active State */
+/* ──────────────────────────────────────────────────────────
+   3. ACTIVE / SELECTED STATE
+   ────────────────────────────────────────────────────────── */
+
 .md3-nav-rail__item--active {
   color: var(--md-sys-color-on-surface);
 }
@@ -85,15 +137,26 @@
   color: var(--md-sys-color-on-secondary-container);
 }
 
+.md3-nav-rail__item--active .md3-nav-rail__icon {
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.md3-nav-rail__item--active .md3-nav-rail__label {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
 .md3-nav-rail__item--active:hover .md3-nav-rail__item-indicator {
   background-color: var(--md-sys-color-secondary-container);
 }
 
-/* Responsive Bottom Nav for Mobile */
-@media (max-width: 560px) {
+/* ──────────────────────────────────────────────────────────
+   4. RESPONSIVE BOTTOM NAV FOR MOBILE
+   ────────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
   .md3-nav-rail {
     width: 100%;
-    height: 80px;
+    height: 72px;
     border-right: none;
     border-top: 1px solid var(--md-sys-color-outline-variant);
     flex-direction: row;
@@ -102,7 +165,8 @@
     position: fixed;
     bottom: 0;
     left: 0;
-    background-color: var(--md-sys-color-surface-container);
+    background-color: var(--md-sys-color-surface);
+    box-shadow: none;
   }
 
   .md3-nav-rail__items {
@@ -116,5 +180,18 @@
     width: auto;
     flex: 1;
     max-width: 80px;
+    min-height: 100%;
+    padding: 2px;
+  }
+
+  .md3-nav-rail__item-indicator {
+    width: 56px;
+    height: 28px;
+  }
+
+  .md3-nav-rail__label {
+    font-size: 10px;
+    max-width: 64px;
   }
 }
+

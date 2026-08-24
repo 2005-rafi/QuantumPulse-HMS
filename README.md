@@ -1,7 +1,7 @@
 # Hospital Management System (HMS) - OPD Module
 
 A comprehensive, role-based Hospital Management System focused on Outpatient Department (OPD) workflows. The system provides a seamless, state-driven lifecycle for patients, ensuring efficient routing between hospital departments from registration to billing.
-
+<!--  -->
 ---
 
 ## 🏗️ System Architecture
@@ -232,12 +232,14 @@ To launch the project on Windows, open two separate shell instances:
 
 **Terminal 1 (Backend Node server):**
 ```powershell
+cls
 cd backend
 npm run dev
 ```
 
 **Terminal 2 (Frontend Vite client):**
 ```powershell
+cls
 cd frontend
 npm run dev
 ```

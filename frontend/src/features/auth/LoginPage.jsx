@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useConfig } from '../../contexts/ConfigContext';
+import { useTheme } from '../../context/ThemeContext';
+import { BrandLogo } from '../../components/brand/BrandLogo';
 import { Md3TextField, Md3Button, Md3Checkbox } from '../../components/md3/Md3FormComponents';
 import './LoginPage.css';
 
@@ -23,6 +25,7 @@ const DefaultMedicalLogo = ({ width = 44, height = 44, rx = 10 }) => (
 );
 
 const LoginPage = () => {
+  const { isDark } = useTheme();
   const [form, setForm] = useState({ username: '', password: '' });
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -125,18 +128,9 @@ const LoginPage = () => {
       {/* Left Column — Medical Product Hero Showcase Panel */}
       <div className="login-hero-panel">
         <div className="hero-brand">
-          {config.LOGO_URL && !heroLogoFailed ? (
-            <img 
-              src={config.LOGO_URL} 
-              alt="Logo" 
-              className="hero-logo-img" 
-              onError={() => setHeroLogoFailed(true)}
-            />
-          ) : (
-            <DefaultMedicalLogo width={46} height={46} rx={12} />
-          )}
+          <BrandLogo variant="hero" maxHeight={48} />
           <div className="hero-brand-text">
-            <h2>{config.HOSPITAL_NAME || 'Hospital Management System'}</h2>
+            <h2>{config.HOSPITAL_NAME || 'Quantum CareOne'}</h2>
             <p>OPD CLINICAL PORTAL</p>
           </div>
         </div>
@@ -191,19 +185,10 @@ const LoginPage = () => {
         <div className="login-card-wrapper">
           <div className="card-header">
             <div className="brand-logo-container">
-              {config.LOGO_URL && !cardLogoFailed ? (
-                <img 
-                  src={config.LOGO_URL} 
-                  alt="Logo" 
-                  className="brand-logo-img" 
-                  onError={() => setCardLogoFailed(true)}
-                />
-              ) : (
-                <DefaultMedicalLogo width={56} height={56} rx={14} />
-              )}
+              <BrandLogo variant="card" maxHeight={52} maxWidth={260} />
             </div>
             <h2 className="card-title">Welcome Back</h2>
-            <p className="card-subtitle">Sign in to continue to {config.SHORT_NAME || 'HMS'} Portal</p>
+            <p className="card-subtitle">Sign in to continue to {config.SHORT_NAME || 'Quantum CareOne'} Portal</p>
           </div>
 
           {globalError && (

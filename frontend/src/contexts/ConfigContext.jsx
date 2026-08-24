@@ -4,7 +4,7 @@ const DEFAULT_CONFIG = {
   HOSPITAL_NAME: 'CareOne-QPT Hospital Management System',
   SHORT_NAME: 'CareOne-QPT',
   DESCRIPTION: 'CareOne-QPT HMS · Secure Login',
-  LOGO_URL: 'http://localhost:5000/assets/logo/logo.jpg'
+  LOGO_URL: '/logo.svg'
 };
 
 // Check for window.__APP_CONFIG__ populated by /config.js

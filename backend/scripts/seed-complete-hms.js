@@ -317,7 +317,7 @@ const seedAll = async () => {
         username: 'doctor',
         email: 'doctor@hospital.local',
         extra: {
-          medicalLicenseNumber: 'MCI-TN-45211',
+          medicalLicenseNumber: 'MCI-TN-45210',
           medicalCouncil: 'Tamil Nadu Medical Council',
           consultingFee: 500,
           followUpFee: 250,
@@ -1151,7 +1151,7 @@ const seedAll = async () => {
           recordedAt: new Date()
         },
         consultation: {
-          doctorId: staffMap.cardio_doc._id,
+          doctorId: staffMap.hod_car?._id || staffMap.doctor._id,
           chiefComplaint: 'Chest tightness during cardio exercises',
           historyOfPresentIllness: 'Symptoms started 3 weeks ago.',
           status: 'DRAFT',

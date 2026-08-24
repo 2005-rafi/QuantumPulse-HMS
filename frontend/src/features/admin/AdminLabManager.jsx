@@ -5,6 +5,7 @@ import CreateLaboratorySheet from './CreateLaboratorySheet';
 import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { Md3TestCatalogConfigurator } from '../../components/md3/Md3TestCatalogConfigurator';
 import { Md3SearchBar, Md3SegmentedFilter } from '../../components/md3/AdminControls';
+import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 
 const AdminLabManager = () => {
   const { 
@@ -108,10 +109,13 @@ const AdminLabManager = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className="md3-data-grid" style={{ flex: 1, paddingBottom: '80px' }}>
             {filteredLaboratories.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--md-sys-color-on-surface-variant)', gridColumn: '1 / -1', minHeight: '50vh', opacity: 0.8 }}>
-                <Icon.Microscope style={{ width: '48px', height: '48px', marginBottom: '16px', opacity: 0.5, color: 'var(--md-sys-color-on-surface-variant)' }} />
-                <h3 style={{ margin: 0, fontWeight: 500, color: 'var(--md-sys-color-on-surface)' }}>No laboratories found</h3>
-                <p style={{ marginTop: '8px', fontSize: '14px' }}>There are currently no laboratories configured matching the filters.</p>
+              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
+                <Md3EmptyState
+                  icon="science"
+                  title="No laboratories found"
+                  description="There are currently no diagnostic or clinical laboratories configured matching the search criteria or filter."
+                  variant="card"
+                />
               </div>
             ) : (
               filteredLaboratories.map(lab => (

@@ -1,0 +1,284 @@
+/* ── Material Design 3 Clinical Patient List Table View ── */
+.md3-patient-list-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.md3-patient-list-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+.md3-patient-list-table thead {
+  background: var(--md-sys-color-surface-container-high, #ede8dc);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.md3-patient-list-table th {
+  padding: 14px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-on-surface-variant, #4a4539);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  white-space: nowrap;
+}
+
+.md3-patient-list-table td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, rgba(231, 224, 211, 0.6));
+  transition: background-color 0.15s ease;
+}
+
+.md3-patient-list-row {
+  cursor: pointer;
+}
+
+.md3-patient-list-row:last-child td {
+  border-bottom: none;
+}
+
+.md3-patient-list-row:hover td {
+  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
+}
+
+.md3-patient-list-row:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary, #6b5f19);
+  outline-offset: -2px;
+}
+
+/* ── Columns Width & Alignment ── */
+.col-patient {
+  min-width: 200px;
+}
+.col-age {
+  min-width: 110px;
+}
+.col-phone {
+  min-width: 140px;
+}
+.col-location {
+  min-width: 130px;
+}
+.col-last-visit {
+  min-width: 140px;
+}
+.col-appointment {
+  min-width: 160px;
+}
+.col-actions {
+  min-width: 90px;
+  width: 90px;
+}
+.text-right {
+  text-align: right;
+}
+
+/* ── Cell: Patient Profile & MRN ── */
+.md3-patient-cell-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.md3-patient-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container, #e8e2d0);
+  color: var(--md-sys-color-on-secondary-container, #1e1b11);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-patient-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md3-patient-name {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  font-size: 14px;
+}
+
+.md3-patient-mrn {
+  font-size: 11.5px;
+  font-family: monospace;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.md3-patient-mrn .material-symbols-rounded {
+  font-size: 13px;
+}
+
+/* ── Cell: Age & Gender ── */
+.md3-age-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md3-age-val {
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+.md3-gender-val {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+}
+
+/* ── Cell: Phone Badge ── */
+.md3-phone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+.md3-phone-badge .material-symbols-rounded {
+  font-size: 15px;
+  color: var(--md-sys-color-primary, #6b5f19);
+}
+
+/* ── Cell: Location (City alone) ── */
+.md3-location-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+.md3-location-cell .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--md-sys-color-secondary, #615f40);
+}
+
+.md3-city-text {
+  font-weight: 500;
+}
+
+/* ── Cell: Last Visit Date ── */
+.md3-visit-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-visit-cell .material-symbols-rounded {
+  font-size: 15px;
+  color: var(--md-sys-color-tertiary, #3e6653);
+}
+
+.md3-visit-date {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+.md3-visit-type-chip {
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-size: 10.5px;
+  font-weight: 600;
+  background: var(--md-sys-color-surface-container, #f3eee3);
+  color: var(--md-sys-color-on-surface-variant, #4a4539);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+}
+
+/* ── Cell: Latest Appointment ── */
+.md3-appointment-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.md3-appt-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+.md3-appt-top .material-symbols-rounded {
+  font-size: 15px;
+  color: var(--md-sys-color-primary, #6b5f19);
+}
+
+.md3-appt-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+  padding-left: 21px;
+}
+
+.md3-appt-time .material-symbols-rounded {
+  font-size: 13px;
+}
+
+/* ── Fallback Badge None ── */
+.md3-badge-none {
+  display: inline-block;
+  font-size: 11.5px;
+  color: var(--md-sys-color-outline, #797667);
+  font-style: italic;
+}
+
+.md3-text-muted {
+  color: var(--md-sys-color-outline, #797667);
+}
+
+/* ── Action Button ── */
+.md3-btn-view-profile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  background: var(--md-sys-color-surface-container-low, #f7f3e8);
+  color: var(--md-sys-color-primary, #6b5f19);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md3-btn-view-profile:hover {
+  background: var(--md-sys-color-primary, #6b5f19);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: var(--md-sys-color-primary, #6b5f19);
+}
+
+.md3-btn-view-profile .material-symbols-rounded {
+  font-size: 16px;
+}

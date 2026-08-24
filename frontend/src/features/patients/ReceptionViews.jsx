@@ -54,24 +54,6 @@ export const ReceptionPatientsView = () => {
 
       {viewKey === 'profile' && (
         <div key="profile" className="reception-view">
-          <div className="profile-view-header">
-            <button
-              type="button"
-              className="profile-view-back-btn"
-              onClick={() => handlePatientSelect(null)}
-              aria-label="Back to patient directory"
-            >
-              <Icon.ChevronLeft />
-              <span>Back</span>
-            </button>
-            <nav className="profile-view-breadcrumb" aria-label="Breadcrumb">
-              <span>Patient Directory</span>
-              <span className="profile-view-breadcrumb-sep">›</span>
-              <span style={{ color: 'var(--md-sys-color-on-surface)', fontWeight: 600 }}>
-                {selectedPatient.firstName} {selectedPatient.lastName}
-              </span>
-            </nav>
-          </div>
           <PatientProfile
             patientId={selectedPatient._id || selectedPatient.id}
             onBack={() => handlePatientSelect(null)}

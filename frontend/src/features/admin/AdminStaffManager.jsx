@@ -7,6 +7,7 @@ import PositionProgressionDialog from './PositionProgressionDialog';
 import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { StaffFilterSideSheet } from '../../components/md3/StaffFilterSideSheet';
 import { Md3SearchBar } from '../../components/md3/AdminControls';
+import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
 
 const AdminStaffManager = () => {
@@ -198,10 +199,13 @@ const AdminStaffManager = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className="md3-data-grid" style={{ flex: 1, paddingBottom: '80px' }}>
             {filteredStaff.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--md-sys-color-on-surface-variant)', gridColumn: '1 / -1', minHeight: '50vh', opacity: 0.8 }}>
-                <Icon.Users style={{ width: '48px', height: '48px', marginBottom: '16px', opacity: 0.5, color: 'var(--md-sys-color-on-surface-variant)' }} />
-                <h3 style={{ margin: 0, fontWeight: 500, color: 'var(--md-sys-color-on-surface)' }}>No staff found</h3>
-                <p style={{ marginTop: '8px', fontSize: '14px' }}>There are no staff members matching the selected filters.</p>
+              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
+                <Md3EmptyState
+                  icon="badge"
+                  title="No staff members found"
+                  description="There are no staff members matching the selected filters. Try searching with a different keyword or resetting filters."
+                  variant="card"
+                />
               </div>
             ) : (
               filteredStaff.map(staff => (

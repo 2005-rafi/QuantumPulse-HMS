@@ -39,6 +39,63 @@ const getByMrn = async (mrn) => {
   return patient;
 };
 
+const Visit = require('../visits/visit.model');
+const Appointment = require('../appointments/appointment.model');
+
+const enrichPatientsWithHistory = async (items) => {
+  if (!items || items.length === 0) return items;
+  const patientIds = items.map(p => p._id).filter(Boolean);
+  if (patientIds.length === 0) return items;
+
+  try {
+    const [latestVisits, latestAppointments] = await Promise.all([
+      Visit.aggregate([
+        { $match: { patientId: { $in: patientIds } } },
+        { $sort: { createdAt: -1 } },
+        { $group: {
+            _id: '$patientId',
+            lastVisitDate: { $first: '$createdAt' },
+            lastVisitStatus: { $first: '$status' },
+            lastVisitType: { $first: '$visitType' }
+        }}
+      ]),
+      Appointment.aggregate([
+        { $match: { patientId: { $in: patientIds } } },
+        { $sort: { appointmentDate: -1, startTime: -1 } },
+        { $group: {
+            _id: '$patientId',
+            appointmentDate: { $first: '$appointmentDate' },
+            startTime: { $first: '$startTime' },
+            endTime: { $first: '$endTime' },
+            status: { $first: '$status' }
+        }}
+      ])
+    ]);
+
+    const visitMap = new Map(latestVisits.map(v => [String(v._id), v]));
+    const apptMap = new Map(latestAppointments.map(a => [String(a._id), a]));
+
+    return items.map(p => {
+      const v = visitMap.get(String(p._id));
+      const a = apptMap.get(String(p._id));
+      return {
+        ...p,
+        lastVisitDate: v ? v.lastVisitDate : (p.lastVisitDate || null),
+        lastVisitStatus: v ? v.lastVisitStatus : null,
+        lastVisitType: v ? v.lastVisitType : null,
+        latestAppointment: a ? {
+          date: a.appointmentDate,
+          startTime: a.startTime,
+          endTime: a.endTime,
+          status: a.status
+        } : null
+      };
+    });
+  } catch (err) {
+    return items;
+  }
+};
+
 const search = async ({ q, page = 1, limit = 20, visitType, startDate, endDate, departmentId, doctorId, sortBy } = {}) => {
   const filter = {};
   
@@ -182,8 +239,9 @@ const search = async ({ q, page = 1, limit = 20, visitType, startDate, endDate, 
     });
 
     const result = await repo.aggregateSearch(pipeline);
+    const enrichedItems = await enrichPatientsWithHistory(result.items);
     return {
-      items: result.items,
+      items: enrichedItems,
       total: result.total,
       page,
       limit,
@@ -191,11 +249,12 @@ const search = async ({ q, page = 1, limit = 20, visitType, startDate, endDate, 
     };
   } else {
     // Normal query path
-    const [items, total] = await Promise.all([
+    const [rawItems, total] = await Promise.all([
       repo.search(filter, page, limit, sort),
       repo.countDocuments(filter)
     ]);
-    return { items, total, page, limit, pages: Math.ceil(total / limit) };
+    const enrichedItems = await enrichPatientsWithHistory(rawItems);
+    return { items: enrichedItems, total, page, limit, pages: Math.ceil(total / limit) };
   }
 };
 

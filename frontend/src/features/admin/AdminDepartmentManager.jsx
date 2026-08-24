@@ -5,6 +5,7 @@ import CreateDepartmentSheet from './CreateDepartmentSheet';
 import CreateLaboratorySheet from './CreateLaboratorySheet';
 import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { Md3SearchBar } from '../../components/md3/AdminControls';
+import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import { Md3Select, Md3Checkbox } from '../../components/md3/Md3FormComponents';
 import { Md3TestCatalogConfigurator } from '../../components/md3/Md3TestCatalogConfigurator';
 import { Md3DynamicVitalsConfigurator } from '../../components/md3/Md3DynamicVitalsConfigurator';
@@ -235,10 +236,13 @@ const AdminDepartmentManager = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
           <div className="md3-data-grid" style={{ flex: 1, paddingBottom: '80px' }}>
             {filteredDepts.length === 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--md-sys-color-on-surface-variant)', gridColumn: '1 / -1', minHeight: '40vh', opacity: 0.8 }}>
-                <Icon.Hospital style={{ width: '48px', height: '48px', marginBottom: '16px', opacity: 0.5 }} />
-                <h3 style={{ margin: 0, fontWeight: 500 }}>No departments found</h3>
-                <p style={{ marginTop: '8px', fontSize: '14px' }}>Try adjusting your search or filters.</p>
+              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
+                <Md3EmptyState
+                  icon="corporate_fare"
+                  title="No departments found"
+                  description="There are no departments matching your search criteria or filter selection."
+                  variant="card"
+                />
               </div>
             ) : (
               filteredDepts.map((dept) => {

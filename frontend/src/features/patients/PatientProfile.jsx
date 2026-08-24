@@ -941,7 +941,7 @@ const CancelVisitDialog = ({ visit, isOpen, onClose, onConfirm, loading, error }
 /* ============================================================
    Main PatientProfile Component
    ============================================================ */
-const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated }) => {
+const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, headerActions }) => {
   const { user } = useAuth();
   const [patient, setPatient] = useState(null);
   const [visits, setVisits] = useState([]);
@@ -1094,6 +1094,36 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated })
 
   return (
     <div className="pp-page">
+      {/* ─── Top Navigation & Breadcrumbs (when onBack or headerActions is provided) ─── */}
+      {(onBack || headerActions) && (
+        <div className="pp-top-nav-bar">
+          <div className="pp-top-nav-left">
+            {onBack && (
+              <button
+                type="button"
+                className="pp-back-btn"
+                onClick={onBack}
+                aria-label="Back to Patient Directory"
+              >
+                <span className="material-symbols-rounded">arrow_back</span>
+                <span>Back to Patients</span>
+              </button>
+            )}
+            <div className="pp-breadcrumb-trail">
+              <span className="pp-breadcrumb-parent">Patient Directory</span>
+              <span className="pp-breadcrumb-separator">›</span>
+              <span className="pp-breadcrumb-current">{patient.firstName} {patient.lastName}</span>
+              {patient.mrn && <span className="pp-breadcrumb-mrn">({patient.mrn})</span>}
+            </div>
+          </div>
+          {headerActions && (
+            <div className="pp-top-nav-right">
+              {headerActions}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ─── Compressed Patient Hero Card ─── */}
       <PatientHero
         patient={patient}

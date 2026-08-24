@@ -1,0 +1,115 @@
+/* ============================================================
+   Md3EmptyState.css — Pure Material Design 3 Empty States
+   Expressive Iconography, Flat Surface Layering, Balanced Types
+   ============================================================ */
+
+.md3-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 48px 24px;
+  width: 100%;
+  box-sizing: border-box;
+  user-select: none;
+  animation: md3EmptyFadeIn 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes md3EmptyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.md3-empty-state__icon-box {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--md-sys-shape-corner-large, 20px);
+  background-color: var(--md-sys-color-surface-container-high, #e8e8e8);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), background-color 0.2s ease;
+}
+
+.md3-empty-state:hover .md3-empty-state__icon-box {
+  transform: scale(1.05);
+  background-color: var(--md-sys-color-surface-container-highest, #dedede);
+}
+
+.md3-empty-state__icon {
+  font-size: 32px;
+  color: var(--md-sys-color-primary);
+}
+
+.md3-empty-state__title {
+  font-family: var(--md-sys-typescale-title-medium-font, 'Roboto', sans-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
+}
+
+.md3-empty-state__description {
+  font-family: var(--md-sys-typescale-body-medium-font, 'Roboto', sans-serif);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  max-width: 400px;
+  margin: 0 0 20px 0;
+}
+
+.md3-empty-state__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Variants
+   ────────────────────────────────────────────────────────── */
+
+/* Compact Variant (e.g. inside small cards or sidebars) */
+.md3-empty-state--compact {
+  padding: 24px 16px;
+}
+
+.md3-empty-state--compact .md3-empty-state__icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  margin-bottom: 10px;
+}
+
+.md3-empty-state--compact .md3-empty-state__icon {
+  font-size: 24px;
+}
+
+.md3-empty-state--compact .md3-empty-state__title {
+  font-size: 0.98rem;
+}
+
+.md3-empty-state--compact .md3-empty-state__description {
+  font-size: 0.82rem;
+  margin-bottom: 12px;
+}
+
+/* Card Variant (Wrapped in a surface container card) */
+.md3-empty-state--card {
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-extra-large, 24px);
+  padding: 40px 24px;
+  box-shadow: none;
+}

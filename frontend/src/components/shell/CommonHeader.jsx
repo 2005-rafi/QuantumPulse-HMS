@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon, Md3Avatar } from '../md3/Md3Widgets';
 import { useConfig } from '../../contexts/ConfigContext';
+import { useTheme } from '../../context/ThemeContext';
 import './CommonHeader.css';
 
 /**
@@ -19,16 +20,17 @@ import './CommonHeader.css';
  * @param {Array} [props.extraMenuItems] - Optional array of scalable extra actions [{ icon, label, subtitle, onClick, path }].
  */
 const CommonHeader = ({
-  brandTitle = 'HMS',
+  brandTitle = 'CareOne-QPT Hospital System',
   brandSubtitle,
-  brandIcon = <Icon.Hospital />,
+  brandIcon,
   centerSlot,
   user,
   onLogout,
-  extraMenuItems = [],
+  extraMenuItems = []
 }) => {
   const navigate = useNavigate();
   const config = useConfig();
+  const { isDark } = useTheme();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const popoverRef = useRef(null);
   const triggerRef = useRef(null);
@@ -36,12 +38,14 @@ const CommonHeader = ({
 
   const togglePopover = () => setIsPopoverOpen(prev => !prev);
 
+  const logoUrl = config?.LOGO_URL || '/logo.svg';
+
   const resolvedLogo = useMemo(() => {
     const isDefaultIcon = !brandIcon || (React.isValidElement(brandIcon) && brandIcon.type === Icon.Hospital);
-    if (isDefaultIcon && config?.LOGO_URL && !logoFailed) {
+    if (isDefaultIcon && logoUrl && !logoFailed) {
       return (
         <img 
-          src={config.LOGO_URL} 
+          src={logoUrl} 
           alt="Brand Logo" 
           className="common-header__brand-logo"
           onError={() => setLogoFailed(true)}
@@ -49,9 +53,9 @@ const CommonHeader = ({
       );
     }
     return brandIcon || <Icon.Hospital />;
-  }, [brandIcon, config?.LOGO_URL, logoFailed]);
+  }, [brandIcon, logoUrl, logoFailed]);
 
-  const hasLogo = !!(config?.LOGO_URL && !logoFailed);
+  const hasLogo = !!(logoUrl && !logoFailed);
 
   // Close popover when clicking outside
   useEffect(() => {

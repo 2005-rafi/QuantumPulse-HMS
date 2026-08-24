@@ -22,7 +22,28 @@
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 6%, transparent);
+  box-shadow: none;
+}
+
+/* ── Butter-Smooth Tab Content Animation ── */
+@keyframes md3TabFadeSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.admin-tab-content-fade {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  animation: md3TabFadeSlideIn 0.24s cubic-bezier(0.2, 0, 0, 1) forwards;
+  will-change: opacity, transform;
 }
 
 .dashboard-brand {
@@ -489,25 +510,27 @@
 .kpi-card {
   background: var(--md-sys-color-surface-container-lowest, #ffffff);
   border-radius: var(--md-sys-shape-corner-large, 16px);
-  padding: 16px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
   border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
-  box-shadow: 0px 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent);
-  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+  box-shadow: none;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+              background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
   cursor: default;
   color: var(--md-sys-color-on-surface, #1c1c14);
 }
 
 .kpi-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0px 4px 12px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent);
+  background: var(--md-sys-color-surface-container-low);
+  border-color: color-mix(in srgb, var(--md-sys-color-outline-variant) 60%, var(--md-sys-color-primary) 40%);
 }
 
 .kpi-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-bottom: 12px;
 }
 
@@ -540,16 +563,22 @@
 }
  
 .clickable-card {
-  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms ease;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+              background-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
+
 .clickable-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0px 8px 24px color-mix(in srgb, var(--md-sys-color-shadow, #000) 12%, transparent);
+  transform: translateY(-2px);
+  background: var(--md-sys-color-surface-container-low);
   border-color: var(--md-sys-color-primary, #196584);
 }
+
 .clickable-card:active {
-  transform: translateY(-1px) scale(0.99);
-  box-shadow: 0px 2px 8px color-mix(in srgb, var(--md-sys-color-shadow, #000) 8%, transparent);
+  transform: scale(0.975);
+  background: var(--md-sys-color-surface-container-high);
 }
 
 /* Series Colors mapping to M3 dynamic palette values */
@@ -607,8 +636,34 @@
   border-radius: var(--md-sys-shape-corner-large, 20px);
   padding: 22px;
   border: 1px solid var(--md-sys-color-outline-variant);
-  box-shadow: 0px 2px 8px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent);
+  box-shadow: none;
   color: var(--md-sys-color-on-surface);
+}
+
+.pipeline-stage-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 14px 12px;
+  border-radius: 14px;
+  text-align: center;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  cursor: pointer;
+  box-shadow: none;
+  user-select: none;
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+              border-color 0.2s cubic-bezier(0.2, 0, 0, 1),
+              filter 0.2s ease;
+}
+
+.pipeline-stage-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--md-sys-color-primary);
+  filter: brightness(0.97);
+}
+
+.pipeline-stage-card:active {
+  transform: scale(0.96);
+  filter: brightness(0.93);
 }
 
 .insights-card-title {

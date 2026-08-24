@@ -1,0 +1,115 @@
+/* ============================================================
+   BrandLogo.css — Dynamic Fluid SVG Brand Logo Architecture
+   Material Design 3 Proportions, Aspect Ratio & Color Theory
+   ============================================================ */
+
+.brand-logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), opacity 0.2s ease;
+  user-select: none;
+}
+
+.brand-logo-img-dynamic {
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.04));
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), filter 0.25s ease;
+}
+
+.brand-logo-wrap:hover .brand-logo-img-dynamic {
+  transform: scale(1.02);
+}
+
+/* ──────────────────────────────────────────────────────────
+   1. CONTEXTUAL VARIANTS (Fluid Dimensions with Minimum Strictness)
+   ────────────────────────────────────────────────────────── */
+
+/* Card Variant (e.g. Login Form Card Header, Dialogs) */
+.brand-logo-wrap--card {
+  height: 56px;
+  width: auto;
+  max-width: 140px;
+  margin: 0 auto;
+  padding: 2px 4px;
+}
+
+/* Hero Variant (e.g. Login Showcase Hero Banner) */
+.brand-logo-wrap--hero {
+  height: 48px;
+  width: auto;
+  max-width: 100px;
+}
+
+/* Header Variant (e.g. Top Navigation Bar Shell) */
+.brand-logo-wrap--header {
+  height: 38px;
+  width: auto;
+  max-width: 60px;
+}
+
+/* Compact Variant (e.g. Sidebars, Badges) */
+.brand-logo-wrap--compact {
+  height: 28px;
+  width: auto;
+  max-width: 40px;
+}
+
+/* Full / Fluid Banner Variant */
+.brand-logo-wrap--full {
+  height: 64px;
+  width: auto;
+  max-width: 180px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   2. SIZE SCALES
+   ────────────────────────────────────────────────────────── */
+.brand-logo-wrap--size-sm {
+  height: 28px;
+  max-width: 140px;
+}
+
+.brand-logo-wrap--size-md {
+  height: 38px;
+  max-width: 200px;
+}
+
+.brand-logo-wrap--size-lg {
+  height: 48px;
+  max-width: 260px;
+}
+
+.brand-logo-wrap--size-xl {
+  height: 60px;
+  max-width: 320px;
+}
+
+/* ──────────────────────────────────────────────────────────
+   3. VECTOR FALLBACK COMPONENT
+   ────────────────────────────────────────────────────────── */
+.brand-logo-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  overflow: hidden;
+}
+
+.brand-logo-fallback--sm { width: 28px; height: 28px; }
+.brand-logo-fallback--md { width: 38px; height: 38px; }
+.brand-logo-fallback--lg { width: 48px; height: 48px; }
+.brand-logo-fallback--xl { width: 56px; height: 56px; }
+
+.brand-logo-fallback__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}

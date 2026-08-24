@@ -200,31 +200,33 @@ const AdministratorDashboard = () => {
         />
 
         <main className="dashboard-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
-          <Outlet context={{
-            stats,
-            lastUpdated,
-            isRefreshingStats,
-            departments,
-            laboratories,
-            roles,
-            staffList,
-            recentAuditLogs,
-            billingSettings,
-            setBillingSettings,
-            fetchData,
-            fetchStats,
-            fetchDepts,
-            fetchLabs,
-            fetchRoles,
-            fetchStaff,
-            fetchBilling,
-            fetchRecentAudits,
-            openConfirm,
-            closeConfirm,
-            setConfirmLoading,
-            showSuccess,
-            showError
-          }} />
+          <div key={activeTab} className="admin-tab-content-fade">
+            <Outlet context={{
+              stats,
+              lastUpdated,
+              isRefreshingStats,
+              departments,
+              laboratories,
+              roles,
+              staffList,
+              recentAuditLogs,
+              billingSettings,
+              setBillingSettings,
+              fetchData,
+              fetchStats,
+              fetchDepts,
+              fetchLabs,
+              fetchRoles,
+              fetchStaff,
+              fetchBilling,
+              fetchRecentAudits,
+              openConfirm,
+              closeConfirm,
+              setConfirmLoading,
+              showSuccess,
+              showError
+            }} />
+          </div>
         </main>
       </div>
 

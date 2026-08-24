@@ -6,6 +6,7 @@ import api from '../services/api';
 import CommonHeader from '../components/shell/CommonHeader';
 import { CURRENCY_SYMBOL } from '../constants/currency';
 import ThemePreferences from '../components/theme/ThemePreferences';
+import { usePatientLayoutPreference } from '../hooks/usePatientLayoutPreference';
 import './UserProfilePage.css';
 
 // Permission module groupings for human-readable Access tab display
@@ -92,7 +93,8 @@ const PERMISSION_MODULES = [
 
 const UserProfilePage = () => {
   const { user, logout } = useAuth();
-  const { showError } = useToast();
+  const { showError, showSuccess } = useToast();
+  const { layout: patientLayout, isListView: isPatientList, isCardView: isPatientCards, setLayout: setPatientLayout } = usePatientLayoutPreference();
   const navigate = useNavigate();
 
   const [staffDetails, setStaffDetails] = useState(null);
@@ -986,6 +988,128 @@ const UserProfilePage = () => {
                   <ThemePreferences />
 
                   <div className="profile-settings-grid">
+                    {/* Patient Directory Layout Design (Administrator & Pharmacy only) */}
+                    {(roleName === 'Administrator' || roleName === 'Pharmacy' || user?.role === 'Administrator' || user?.role === 'Pharmacy') && (
+                      <div className="profile-md3-card" style={{ gridColumn: '1 / -1' }}>
+                        <div className="profile-md3-card-header">
+                          <span className="material-symbols-rounded">view_quilt</span>
+                          <h2>Patient Directory Layout Design</h2>
+                        </div>
+                        <div className="profile-layout-pref-body" style={{ padding: '20px' }}>
+                          <p style={{ margin: '0 0 16px 0', fontSize: '13.5px', color: 'var(--md-sys-color-on-surface-variant, #4a4539)' }}>
+                            Configure your preferred layout for browsing patient records in the directory. Selection is automatically synchronized and saved.
+                          </p>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                            
+                            {/* Option 1: Card Grid View */}
+                            <div
+                              onClick={() => {
+                                setPatientLayout('cards');
+                                showSuccess('Patient directory layout set to Card Grid View.');
+                              }}
+                              style={{
+                                border: `2px solid ${isPatientCards ? 'var(--md-sys-color-primary, #6b5f19)' : 'var(--md-sys-color-outline-variant, #e7e0d3)'}`,
+                                borderRadius: '16px',
+                                padding: '16px',
+                                background: isPatientCards ? 'var(--md-sys-color-surface-container-high, #ede8dc)' : 'var(--md-sys-color-surface, #ffffff)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '14px',
+                                transition: 'all 0.2s ease',
+                                boxShadow: isPatientCards ? '0 2px 8px rgba(107, 95, 25, 0.12)' : 'none'
+                              }}
+                            >
+                              <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
+                                background: isPatientCards ? 'var(--md-sys-color-primary, #6b5f19)' : 'var(--md-sys-color-surface-container, #f3eee3)',
+                                color: isPatientCards ? 'var(--md-sys-color-on-primary, #ffffff)' : 'var(--md-sys-color-on-surface-variant, #4a4539)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}>
+                                <span className="material-symbols-rounded">grid_view</span>
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                  <strong style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface, #1d1b16)' }}>Card Grid View</strong>
+                                  {isPatientCards && (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: '700',
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      background: 'var(--md-sys-color-primary, #6b5f19)',
+                                      color: '#ffffff'
+                                    }}>ACTIVE</span>
+                                  )}
+                                </div>
+                                <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--md-sys-color-on-surface-variant, #797667)', lineHeight: 1.4 }}>
+                                  Multi-column responsive patient cards displaying contact badges, DOB, MRN, and OPD tag.
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Option 2: Tabular List View */}
+                            <div
+                              onClick={() => {
+                                setPatientLayout('list');
+                                showSuccess('Patient directory layout set to Tabular List View.');
+                              }}
+                              style={{
+                                border: `2px solid ${isPatientList ? 'var(--md-sys-color-primary, #6b5f19)' : 'var(--md-sys-color-outline-variant, #e7e0d3)'}`,
+                                borderRadius: '16px',
+                                padding: '16px',
+                                background: isPatientList ? 'var(--md-sys-color-surface-container-high, #ede8dc)' : 'var(--md-sys-color-surface, #ffffff)',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '14px',
+                                transition: 'all 0.2s ease',
+                                boxShadow: isPatientList ? '0 2px 8px rgba(107, 95, 25, 0.12)' : 'none'
+                              }}
+                            >
+                              <div style={{
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '10px',
+                                background: isPatientList ? 'var(--md-sys-color-primary, #6b5f19)' : 'var(--md-sys-color-surface-container, #f3eee3)',
+                                color: isPatientList ? 'var(--md-sys-color-on-primary, #ffffff)' : 'var(--md-sys-color-on-surface-variant, #4a4539)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                flexShrink: 0
+                              }}>
+                                <span className="material-symbols-rounded">view_list</span>
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                                  <strong style={{ fontSize: '14px', color: 'var(--md-sys-color-on-surface, #1d1b16)' }}>Tabular List View</strong>
+                                  {isPatientList && (
+                                    <span style={{
+                                      fontSize: '11px',
+                                      fontWeight: '700',
+                                      padding: '2px 8px',
+                                      borderRadius: '12px',
+                                      background: 'var(--md-sys-color-primary, #6b5f19)',
+                                      color: '#ffffff'
+                                    }}>ACTIVE</span>
+                                  )}
+                                </div>
+                                <p style={{ margin: 0, fontSize: '12.5px', color: 'var(--md-sys-color-on-surface-variant, #797667)', lineHeight: 1.4 }}>
+                                  Structured clinical table showing Name, Age, Mobile No, City location, Last Visit Date, and Latest Appointment time.
+                                </p>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {/* Regional & Monetary Localization */}
                     <div className="profile-md3-card">
                       <div className="profile-md3-card-header">

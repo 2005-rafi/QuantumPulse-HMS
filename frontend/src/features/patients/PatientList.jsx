@@ -4,6 +4,8 @@ import { staffAPI } from '../../services/staffAPI';
 import api from '../../services/api';
 import { SearchSortFilterPanel } from '../../components/md3/SearchSortFilterPanel';
 import PatientCard from '../../components/patients/PatientCard';
+import PatientListView from '../../components/patients/PatientListView';
+import { usePatientLayoutPreference } from '../../hooks/usePatientLayoutPreference';
 import { Icon } from '../../components/md3/Md3Widgets';
 import './PatientList.css';
 
@@ -63,6 +65,7 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const { isListView, isCardView, setLayout } = usePatientLayoutPreference();
   const limit = 50;
 
   // Fetch filters metadata on mount
@@ -157,6 +160,30 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
               {loading ? 'Loading records…' : `${totalItems.toLocaleString()} patient${totalItems !== 1 ? 's' : ''} registered`}
             </p>
           </div>
+          <div className="patient-list-header-actions">
+            <div className="md3-view-toggle-group" role="group" aria-label="Directory layout view mode">
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isCardView ? 'active' : ''}`}
+                onClick={() => setLayout('cards')}
+                title="Card Grid View"
+                aria-pressed={isCardView}
+              >
+                <span className="material-symbols-rounded">grid_view</span>
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isListView ? 'active' : ''}`}
+                onClick={() => setLayout('list')}
+                title="Tabular List View"
+                aria-pressed={isListView}
+              >
+                <span className="material-symbols-rounded">view_list</span>
+                <span>List</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Controls Layer */}
@@ -175,6 +202,11 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
             <PatientLoadingState />
           ) : patients.length === 0 ? (
             <PatientEmptyState isSearching={!!query || Object.values(filters).some(Boolean)} />
+          ) : isListView ? (
+            <PatientListView
+              patients={patients}
+              onSelectPatient={onSelectPatient}
+            />
           ) : (
             <div className="patient-card-list" role="list">
               {patients.map((p) => (
