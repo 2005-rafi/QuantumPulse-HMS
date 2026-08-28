@@ -132,18 +132,23 @@ export const AppointmentList = ({
           <div className="appt-row-actions" onClick={(e) => e.stopPropagation()}>
             {isScheduled && (
               <>
-                <Md3Button
-                  size="small"
-                  variant="filled"
-                  onClick={() => onCheckIn && onCheckIn(row)}
+                <button
+                  type="button"
+                  className="appt-action-btn checkin"
+                  title="Check In Patient"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCheckIn && onCheckIn(row);
+                  }}
                 >
-                  Check In
-                </Md3Button>
+                  <Icon.Check />
+                  <span>Check In</span>
+                </button>
 
                 <button
                   type="button"
-                  className="appt-action-btn"
-                  title="Reschedule"
+                  className="appt-action-btn secondary"
+                  title="Reschedule Appointment"
                   onClick={(e) => {
                     e.stopPropagation();
                     onReschedule && onReschedule(row);
@@ -156,7 +161,7 @@ export const AppointmentList = ({
                 <button
                   type="button"
                   className="appt-action-btn danger"
-                  title="Cancel"
+                  title="Cancel Appointment"
                   onClick={(e) => {
                     e.stopPropagation();
                     onCancel && onCancel(row);
