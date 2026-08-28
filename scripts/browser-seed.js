@@ -1,6 +1,6 @@
 // Run this in the browser console after logging in as admin
 
-const API_BASE = 'http://localhost:5000/api/v1';
+const API_BASE = 'http://localhost:7722/api/v1';
 
 async function fetchAPI(endpoint, method = 'GET', body = null) {
   const token = localStorage.getItem('token');

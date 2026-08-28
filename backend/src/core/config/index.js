@@ -1,10 +1,18 @@
-require('dotenv').config({ path: require('path').resolve(__dirname, '../../../../secrets/backend.env') });
+const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../../../../secrets/backend.env') });
+
+let centralPorts = {};
+try {
+  centralPorts = require('../../../../config/ports.config.json');
+} catch (err) {
+  // Graceful fallback if config file is absent
+}
 
 const config = {
   env: process.env.NODE_ENV || 'development',
-  port: parseInt(process.env.PORT, 10) || 5000,
+  port: parseInt(process.env.PORT, 10) || centralPorts.BACKEND?.PORT || 7722,
   mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/quantum_careone',
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  corsOrigin: process.env.CORS_ORIGIN || centralPorts.FRONTEND?.URL || 'http://localhost:7123',
   rateLimit: {
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000, // 15 mins
     max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100, // Limit each IP to 100 requests per window

@@ -174,14 +174,14 @@ Follow these steps to deploy and run the MERN system locally on your development
 The backend reads environment configuration files from the `/secrets` folder in the project root. Create a file at `secrets/backend.env` with the following variables:
 
 ```env
-PORT=5000
-MONGO_URI=mongodb://localhost:27017/hms_opd
-JWT_SECRET=your_super_secret_jwt_access_key_here
+PORT=7722
+CORS_ORIGIN=http://localhost:7123
+MONGO_URI=mongodb://localhost:27017/quantum_careone
+JWT_ACCESS_SECRET=your_super_secret_jwt_access_key_here
 JWT_REFRESH_SECRET=your_super_secret_jwt_refresh_key_here
-JWT_EXPIRY=15m
-JWT_REFRESH_EXPIRY=7d
-ENCRYPTION_KEY=64_character_hexadecimal_symmetric_key_here
-BCRYPT_ROUNDS=10
+JWT_ACCESS_EXPIRES=15m
+JWT_REFRESH_EXPIRES=7d
+BCRYPT_ROUNDS=12
 ```
 
 > [!NOTE]
@@ -280,5 +280,5 @@ cd frontend
 npm run dev
 ```
 
-*Frontend client launches locally at:* `http://localhost:5173/`  
-*Backend API gateway runs locally at:* `http://localhost:5000/api/v1/`
+*Frontend client launches locally at:* `http://localhost:7123/`  
+*Backend API gateway runs locally at:* `http://localhost:7722/api/v1/`

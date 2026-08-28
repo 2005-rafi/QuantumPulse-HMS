@@ -1,0 +1,16 @@
+{
+  "SYSTEM_NAME": "QuantumPulse HMS",
+  "ENVIRONMENT": "production_grade_unified",
+  "FRONTEND": {
+    "PORT": 7123,
+    "HOST": "localhost",
+    "URL": "http://localhost:7123"
+  },
+  "BACKEND": {
+    "PORT": 7722,
+    "HOST": "localhost",
+    "API_PREFIX": "/api/v1",
+    "URL": "http://localhost:7722",
+    "API_URL": "http://localhost:7722/api/v1"
+  }
+}

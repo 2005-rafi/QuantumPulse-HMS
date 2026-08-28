@@ -1,10 +1,11 @@
 const http = require('http');
+const PORT = process.env.PORT || 7722;
 
 function req(method, path, body, token) {
   return new Promise((res, rej) => {
     const data = body ? JSON.stringify(body) : null;
     const opts = {
-      hostname: 'localhost', port: 5000, path: '/api/v1' + path, method,
+      hostname: 'localhost', port: PORT, path: '/api/v1' + path, method,
       headers: {
         'Content-Type': 'application/json',
         ...(token ? { Authorization: 'Bearer ' + token } : {}),
@@ -147,7 +148,7 @@ async function audit() {
   // ── SECTION 4: CORS ────────────────────────────────────────────────────
   console.log('\n=== SECTION 4: CORS Policy ===');
   const corsR = await new Promise((res, rej) => {
-    const opts = { hostname: 'localhost', port: 5000, path: '/api/v1/health', method: 'GET',
+    const opts = { hostname: 'localhost', port: PORT, path: '/api/v1/health', method: 'GET',
       headers: { 'Origin': 'http://evil.com', 'Content-Type': 'application/json' } };
     http.request(opts, resp => {
       let d = ''; resp.on('data', c => d += c);
@@ -156,7 +157,7 @@ async function audit() {
   });
   const ao = corsR.headers['access-control-allow-origin'];
   ao === 'http://evil.com' ? FAIL('CORS: evil.com origin allowed - CRITICAL') :
-    ao === 'http://localhost:5173' ? PASS('CORS: only localhost:5173 allowed') :
+    ao === 'http://localhost:7123' ? PASS('CORS: only localhost:7123 allowed') :
     INFO('CORS: access-control-allow-origin = ' + (ao || 'not set (not echoed)'));
 
   // ── SECTION 5: Input Validation ────────────────────────────────────────
