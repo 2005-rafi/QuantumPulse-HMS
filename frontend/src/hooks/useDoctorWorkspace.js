@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { visitAPI } from '../services/visitAPI';
 import { patientAPI } from '../services/patientAPI';
+import { appointmentAPI } from '../services/appointmentAPI';
 import api from '../services/api';
 import { Icon } from '../components/md3/Md3Widgets';
 
@@ -210,34 +211,135 @@ export const useDoctorWorkspace = () => {
     return () => clearInterval(iv);
   }, [fetchQueue]);
 
-  const handleSelectVisit = useCallback(async (visit) => {
-    let activeVisit = visit;
-    if (visit.status === 'WAITING_DOCTOR') {
-      try {
-        const res = await visitAPI.startConsultation(visit._id);
-        activeVisit = res.data?.data || res.data;
-        fetchQueue();
-      } catch (err) {
-        showError('Failed to start consultation');
-        return;
-      }
-    }
+  const handleSelectVisit = useCallback(async (target) => {
+    if (!target) return;
+    try {
+      let resolvedItem = target;
 
-    setSelectedVisit(activeVisit);
-    const existingConsult = activeVisit.consultation || {};
-    setForm({
-      chiefComplaint: existingConsult.chiefComplaint || activeVisit.vitals?.chiefComplaint || '',
-      historyOfPresentIllness: existingConsult.historyOfPresentIllness || '',
-      physicalExamination: existingConsult.physicalExamination || '',
-      differentials: existingConsult.differentials || '',
-      prognosis: existingConsult.prognosis || '',
-      diagnosis: existingConsult.diagnosis || '',
-      treatmentPlan: existingConsult.treatmentPlan || '',
-      notes: existingConsult.notes || '',
-      prescribedMedications: activeVisit.prescribedMedications || [],
-      labOrders: activeVisit.labOrders || [],
-    });
-  }, [fetchQueue, showError]);
+      // 1. If string ID passed
+      if (typeof target === 'string') {
+        const fromQueue = queue.find((v) => v._id === target || v.id === target);
+        if (fromQueue) {
+          resolvedItem = fromQueue;
+        } else {
+          try {
+            const res = await visitAPI.getById(target);
+            resolvedItem = res.data?.data || res.data || target;
+          } catch (vErr) {
+            try {
+              const aRes = await appointmentAPI.getById(target);
+              resolvedItem = aRes.data?.data || aRes.data || target;
+            } catch (aErr) {
+              console.warn('[useDoctorWorkspace] Could not resolve ID:', target);
+            }
+          }
+        }
+      }
+
+      // 2. If it's a standard queue visit in WAITING_DOCTOR status, trigger startConsultation
+      if (resolvedItem.status === 'WAITING_DOCTOR' && resolvedItem._id && !resolvedItem.appointmentNumber) {
+        try {
+          const res = await visitAPI.startConsultation(resolvedItem._id);
+          resolvedItem = res.data?.data || res.data || resolvedItem;
+          fetchQueue();
+        } catch (err) {
+          showError('Failed to start consultation');
+          return;
+        }
+      }
+
+      // 3. If it's an appointment with linked visit (visitId)
+      if (resolvedItem.appointmentNumber && resolvedItem.visitId) {
+        const appointmentPatient = resolvedItem.patientId;
+        let linkedVisit = resolvedItem.visitId;
+        if (typeof linkedVisit === 'string') {
+          try {
+            const vRes = await visitAPI.getById(linkedVisit);
+            linkedVisit = vRes.data?.data || vRes.data;
+          } catch (e) {
+            console.warn('[useDoctorWorkspace] Could not fetch linked visitId:', linkedVisit);
+          }
+        }
+        if (typeof linkedVisit === 'object' && linkedVisit !== null) {
+          const finalPatient = (linkedVisit.patientId && typeof linkedVisit.patientId === 'object' && (linkedVisit.patientId.firstName || linkedVisit.patientId.mrn))
+            ? linkedVisit.patientId
+            : (appointmentPatient && typeof appointmentPatient === 'object' && (appointmentPatient.firstName || appointmentPatient.mrn))
+            ? appointmentPatient
+            : linkedVisit.patientId || appointmentPatient;
+
+          resolvedItem = {
+            ...linkedVisit,
+            patientId: finalPatient,
+            appointmentId: resolvedItem._id,
+            appointmentNumber: resolvedItem.appointmentNumber,
+            appointmentDate: resolvedItem.appointmentDate,
+            startTime: resolvedItem.startTime,
+            endTime: resolvedItem.endTime,
+            appointmentType: resolvedItem.appointmentType || linkedVisit.visitType,
+            reason: linkedVisit.vitals?.chiefComplaint || resolvedItem.reason || linkedVisit.reason || '',
+          };
+        }
+      }
+
+      // 4. If it's a pre-booked / future appointment without a linked visit
+      if (resolvedItem.appointmentNumber && !resolvedItem.visitNumber) {
+        let patientObj = resolvedItem.patientId;
+        if (typeof patientObj === 'string') {
+          try {
+            const pRes = await patientAPI.getById(patientObj);
+            patientObj = pRes.data?.data || pRes.data;
+          } catch (e) {
+            console.warn('[useDoctorWorkspace] Could not fetch patient details:', patientObj);
+          }
+        }
+        resolvedItem = {
+          ...resolvedItem,
+          isAppointment: true,
+          patientId: patientObj || {},
+          status: resolvedItem.status || 'SCHEDULED',
+          tokenString: resolvedItem.tokenString || '—',
+          visitNumber: 'Pending Check-In',
+          vitals: resolvedItem.vitals || {},
+          consultation: resolvedItem.consultation || {},
+          prescribedMedications: resolvedItem.prescribedMedications || [],
+          labOrders: resolvedItem.labOrders || [],
+        };
+      }
+
+      // 5. If patientId is a string reference or partially populated without name
+      if (typeof resolvedItem.patientId === 'string' || (resolvedItem.patientId && !resolvedItem.patientId.firstName && !resolvedItem.patientId.lastName && !resolvedItem.patientId.mrn && resolvedItem.patientId._id)) {
+        const pId = typeof resolvedItem.patientId === 'string' ? resolvedItem.patientId : resolvedItem.patientId._id;
+        try {
+          const pRes = await patientAPI.getById(pId);
+          const pData = pRes.data?.data || pRes.data;
+          if (pData) {
+            resolvedItem.patientId = pData;
+          }
+        } catch (e) {
+          console.warn('[useDoctorWorkspace] Could not fetch patient:', pId);
+        }
+      }
+
+      setSelectedVisit(resolvedItem);
+
+      const existingConsult = resolvedItem.consultation || {};
+      setForm({
+        chiefComplaint: existingConsult.chiefComplaint || resolvedItem.vitals?.chiefComplaint || resolvedItem.reason || '',
+        historyOfPresentIllness: existingConsult.historyOfPresentIllness || '',
+        physicalExamination: existingConsult.physicalExamination || '',
+        differentials: existingConsult.differentials || '',
+        prognosis: existingConsult.prognosis || '',
+        diagnosis: existingConsult.diagnosis || '',
+        treatmentPlan: existingConsult.treatmentPlan || '',
+        notes: existingConsult.notes || '',
+        prescribedMedications: resolvedItem.prescribedMedications || [],
+        labOrders: resolvedItem.labOrders || [],
+      });
+    } catch (err) {
+      console.error('[useDoctorWorkspace] handleSelectVisit error:', err);
+      showError('Unable to open patient record');
+    }
+  }, [queue, fetchQueue, showError]);
 
   const handleFormChange = useCallback((newForm) => {
     setForm((prev) => ({ ...prev, ...newForm }));

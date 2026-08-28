@@ -81,8 +81,41 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
   };
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-      <div style={{ background: 'var(--md-sys-color-surface-container-low, #f7f2fa)', color: 'var(--md-sys-color-on-surface)', padding: '24px', borderRadius: '28px', maxWidth: '640px', width: '90%', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--md-sys-color-outline-variant)', boxShadow: '0 8px 32px rgba(0,0,0,0.12)', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(3px)',
+        WebkitBackdropFilter: 'blur(3px)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        overflowY: 'auto',
+        zIndex: 2000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
+          color: 'var(--md-sys-color-on-surface)',
+          padding: '24px',
+          borderRadius: '28px',
+          maxWidth: '640px',
+          width: '90%',
+          maxHeight: 'calc(100vh - 48px)',
+          margin: '0 auto',
+          overflowY: 'auto',
+          border: '1px solid var(--md-sys-color-outline-variant)',
+          boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '20px',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', paddingBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

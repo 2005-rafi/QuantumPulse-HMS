@@ -1,15 +1,15 @@
 /* DashboardStatsBar.css
  * Shared stats bar layout for all role dashboards.
- * Uses CSS grid that adapts based on --stats-count custom property.
+ * Uses centralized MD3 design tokens from style_config.css
  */
 
 .dashboard-stats-bar {
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  padding: 10px 20px;
+  padding: var(--md-comp-stats-bar-padding, 6px 16px);
   display: grid;
   grid-template-columns: repeat(var(--stats-count, 4), 1fr);
-  gap: 10px;
+  gap: var(--md-comp-stats-bar-gap, 8px);
   flex-shrink: 0;
   box-sizing: border-box;
 }
@@ -17,25 +17,25 @@
 /* Responsive: Medium */
 @media (min-width: 600px) and (max-width: 1199px) {
   .dashboard-stats-bar {
-    padding: 10px 16px;
+    padding: var(--md-comp-stats-bar-padding, 6px 12px);
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: var(--md-comp-stats-bar-gap, 8px);
   }
 }
 
 /* Responsive: Compact */
 @media (max-width: 599px) {
   .dashboard-stats-bar {
-    padding: 8px 12px;
+    padding: var(--md-spacing-xs, 4px) var(--md-spacing-s, 8px);
     grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
+    gap: var(--md-spacing-xs, 4px);
   }
 }
 
 /* Responsive: Desktop */
 @media (min-width: 1200px) {
   .dashboard-stats-bar {
-    padding: 10px 24px;
-    gap: 12px;
+    padding: var(--md-comp-stats-bar-padding, 6px 16px);
+    gap: var(--md-comp-stats-bar-gap, 8px);
   }
 }

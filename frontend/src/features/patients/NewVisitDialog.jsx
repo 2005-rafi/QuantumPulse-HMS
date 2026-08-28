@@ -4,6 +4,7 @@ import { Md3Button, Md3TextField, Md3Select } from '../../components/md3/Md3Form
 import { Icon, Md3Avatar, Md3Divider } from '../../components/md3/Md3Widgets';
 import { visitAPI } from '../../services/visitAPI';
 import { staffAPI } from '../../services/staffAPI';
+import { tariffAPI } from '../../services/tariffAPI';
 import api from '../../services/api';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
 import '../appointments/AppointmentDashboard.css';
@@ -141,6 +142,47 @@ export const NewVisitDialog = ({
       }
     }
   }, [visitForm.departmentId, availableDoctors]);
+
+  // Auto-resolve authoritative tariff pricing for Registration and Doctor Consultation
+  useEffect(() => {
+    if (!isOpen) return;
+
+    let isMounted = true;
+    const resolveTariffs = async () => {
+      try {
+        // 1. Resolve Registration Fee
+        const regRes = await tariffAPI.resolvePrice({
+          category: 'REGISTRATION',
+          visitType: visitForm.visitType || 'OPD',
+        });
+        const resolvedRegFee = regRes.data?.data?.amount ?? regRes.data?.amount ?? 100;
+
+        // 2. Resolve Consultation Fee based on Department & Doctor
+        const consRes = await tariffAPI.resolvePrice({
+          category: 'CONSULTATION',
+          departmentId: visitForm.departmentId || undefined,
+          staffId: visitForm.doctorId || undefined,
+          visitType: visitForm.visitType || 'OPD',
+        });
+        const resolvedConsFee = consRes.data?.data?.amount ?? consRes.data?.amount ?? 500;
+
+        if (isMounted) {
+          setVisitForm((prev) => ({
+            ...prev,
+            registrationFee: resolvedRegFee,
+            consultationFee: resolvedConsFee,
+          }));
+        }
+      } catch (err) {
+        console.warn('[NewVisitDialog] Tariff resolution fallback', err);
+      }
+    };
+
+    resolveTariffs();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, visitForm.visitType, visitForm.departmentId, visitForm.doctorId]);
 
   const selectedDeptObj = departments.find((d) => d._id === visitForm.departmentId);
 

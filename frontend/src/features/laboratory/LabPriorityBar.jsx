@@ -20,10 +20,10 @@ const LabPriorityBar = ({
     : (counts[id] || 0));
 
   const statusChips = [
-    { key: 'visits', label: 'Active visits', value: statusCounts.visits ?? 0, icon: <Icon.Users />, variant: 'default' },
-    { key: 'tests', label: 'Pending tests', value: statusCounts.tests ?? 0, icon: <Icon.Microscope />, variant: 'primary' },
-    { key: 'samples', label: 'Awaiting sample', value: statusCounts.samples ?? 0, icon: <Icon.Beaker />, variant: 'secondary' },
-    { key: 'processing', label: 'In analysis', value: statusCounts.processing ?? 0, icon: <Icon.Activity />, variant: 'tertiary' },
+    { filterKey: 'visits', label: 'Active visits', value: statusCounts.visits ?? 0, icon: <Icon.Users />, variant: 'default' },
+    { filterKey: 'tests', label: 'Pending tests', value: statusCounts.tests ?? 0, icon: <Icon.Microscope />, variant: 'primary' },
+    { filterKey: 'PENDING_SAMPLE', label: 'Awaiting sample', value: statusCounts.samples ?? 0, icon: <Icon.Beaker />, variant: 'secondary' },
+    { filterKey: 'PROCESSING', label: 'In analysis', value: statusCounts.processing ?? 0, icon: <Icon.Activity />, variant: 'tertiary' },
   ];
 
   return (
@@ -62,21 +62,33 @@ const LabPriorityBar = ({
         })}
       </div>
 
-      <div className="lab-priority-bar__status-grid" role="group" aria-label="Queue status counters">
-        {statusChips.map((s) => (
-          <div
-            key={s.key}
-            className={`lab-priority-bar__status-card lab-priority-bar__status-card--${s.variant}`}
-          >
-            <span className="lab-priority-bar__status-icon" aria-hidden="true">
-              {s.icon}
-            </span>
-            <div className="lab-priority-bar__status-info">
-              <span className="lab-priority-bar__status-value">{String(s.value)}</span>
-              <span className="lab-priority-bar__status-label">{s.label}</span>
-            </div>
-          </div>
-        ))}
+      <div className="lab-priority-bar__status-grid" role="tablist" aria-label="Queue status metric filters">
+        {statusChips.map((s) => {
+          const isActive = activeFilter === s.filterKey;
+          return (
+            <button
+              key={s.filterKey}
+              type="button"
+              role="tab"
+              aria-selected={isActive}
+              aria-label={`Filter queue by ${s.label}: ${s.value} items`}
+              onClick={() => typeof onFilterChange === 'function' && onFilterChange(s.filterKey)}
+              className={[
+                'lab-priority-bar__status-card',
+                `lab-priority-bar__status-card--${s.variant}`,
+                isActive ? 'lab-priority-bar__status-card--active' : '',
+              ].filter(Boolean).join(' ')}
+            >
+              <span className="lab-priority-bar__status-icon" aria-hidden="true">
+                {s.icon}
+              </span>
+              <div className="lab-priority-bar__status-info">
+                <span className="lab-priority-bar__status-value">{String(s.value)}</span>
+                <span className="lab-priority-bar__status-label">{s.label}</span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

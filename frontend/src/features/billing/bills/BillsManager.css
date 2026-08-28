@@ -1,0 +1,230 @@
+/* ==========================================================================
+   BillsManager.css — High-Density Clinical Ledger with Linear KPI Strip
+   ========================================================================== */
+
+.bills-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* ─── LINEAR HORIZONTAL KPI STAT STRIP ─── */
+.bills-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.bills-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-sizing: border-box;
+  min-height: 52px;
+  transition: all 150ms ease;
+}
+
+.bills-kpi-card:hover {
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.bills-kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.bills-kpi-icon .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.bills-kpi-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  line-height: 1.1;
+}
+
+.bills-kpi-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin-top: 1px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+/* ─── FILTER ROW ─── */
+.bills-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 4px 0;
+}
+
+.bills-toggle-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 150ms ease;
+  user-select: none;
+}
+
+.bills-toggle-chip:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.bills-toggle-chip--active {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  border-color: var(--md-sys-color-error, #ba1a1a);
+  font-weight: 700;
+}
+
+/* ─── HIGH-DENSITY LEDGER TABLE ─── */
+.bills-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+}
+
+.bills-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.bills-table thead tr {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  text-align: left;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.bills-table th {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+}
+
+.bills-row {
+  cursor: pointer;
+  transition: background-color 120ms ease;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.bills-row:hover {
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+.bills-row td {
+  padding: 10px 14px;
+  vertical-align: middle;
+}
+
+/* Status Chips */
+.bills-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.bills-status-chip--open {
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.bills-status-chip--finalized {
+  background: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+}
+
+.bills-status-chip--cancelled {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+
+/* Action Buttons */
+.bills-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.bills-action-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.bills-action-btn--pay {
+  background: var(--md-sys-color-primary, #6750a4);
+  color: #ffffff;
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.bills-action-btn--pay:hover {
+  background: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 88%, white 12%);
+  color: #ffffff;
+}
+
+.bills-action-btn .material-symbols-rounded {
+  font-size: 16px !important;
+}
+
+/* ─── RESPONSIVE BREAKPOINT ─── */
+@media (max-width: 900px) {
+  .bills-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .bills-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

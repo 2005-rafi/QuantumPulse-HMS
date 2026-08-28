@@ -34,6 +34,7 @@ export const useLabQueue = () => {
   const { showSuccess, showError, showWarning } = useToast();
 
   const [queue, setQueue] = useState([]);
+  const [reportedVisits, setReportedVisits] = useState([]);
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [laboratories, setLaboratories] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -49,13 +50,23 @@ export const useLabQueue = () => {
   const fetchQueue = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const response = await api.get('/laboratory/pending');
-      const nextQueue = response.data?.data || [];
+      const [pendingRes, reportedRes] = await Promise.allSettled([
+        api.get('/laboratory/pending'),
+        api.get('/laboratory/reported'),
+      ]);
+
+      const nextQueue = pendingRes.status === 'fulfilled' ? (pendingRes.value.data?.data || []) : [];
+      const nextReported = reportedRes.status === 'fulfilled' ? (reportedRes.value.data?.data || []) : [];
+
       setQueueError('');
       setQueue(nextQueue);
+      setReportedVisits(nextReported);
+
       setSelectedVisit((current) => {
         if (!current?._id) return current;
-        return nextQueue.find((v) => v._id === current._id) || null;
+        return nextQueue.find((v) => v._id === current._id)
+          || nextReported.find((v) => v._id === current._id)
+          || null;
       });
     } catch (err) {
       console.error('[useLabQueue] fetchQueue error:', err);
@@ -102,7 +113,7 @@ export const useLabQueue = () => {
   const handleCollectSample = useCallback(async (arg) => {
     const order = typeof arg === 'object' && arg ? arg : null;
     const orderId = order ? (order._id || order.id) : arg;
-    const visitId = selectedVisit?._id || order?._visitId;
+    const visitId = selectedVisit?._id || order?._visitId || order?.visitId || order?.visit;
     if (!visitId || !orderId) return;
     try {
       setBusyAction(`collect:${orderId}`);
@@ -244,21 +255,61 @@ export const useLabQueue = () => {
   }, [queue]);
 
   const filteredQueue = useMemo(() => {
-    const activeVisits = queue.filter((visit) =>
-      (visit.labOrders || []).some(
-        (o) =>
-          (o.status || '').toUpperCase() !== 'COMPLETED' &&
-          (!user?.departmentId || !o.labDepartmentId || o.labDepartmentId === user.departmentId)
-      )
-    );
-    if (priorityFilter === 'all') return activeVisits;
-    return activeVisits.filter((visit) =>
-      (visit.labOrders || []).some(
-        (o) =>
-          (o.priority || 'ROUTINE').toUpperCase() === priorityFilter &&
-          (o.status || '').toUpperCase() !== 'COMPLETED'
-      )
-    );
+    const userDeptId = typeof user?.departmentId === 'object' ? user?.departmentId?._id : user?.departmentId;
+
+    const activeVisits = queue.filter((visit) => {
+      const orders = visit.labOrders || [];
+      if (orders.length === 0) return false;
+      return orders.some((o) => {
+        const isCompleted = (o.status || '').toUpperCase() === 'COMPLETED';
+        if (isCompleted) return false;
+        if (!userDeptId) return true;
+        const orderDeptId = typeof o.labDepartmentId === 'object' ? o.labDepartmentId?._id : o.labDepartmentId;
+        if (!orderDeptId) return true;
+        return String(orderDeptId) === String(userDeptId);
+      });
+    });
+
+    // Fallback: If department ID filter produced empty list but queue has non-completed lab orders, retain queue visits
+    const baseList = activeVisits.length > 0
+      ? activeVisits
+      : queue.filter((visit) => (visit.labOrders || []).some((o) => (o.status || '').toUpperCase() !== 'COMPLETED'));
+
+    if (!priorityFilter || priorityFilter === 'all' || priorityFilter === 'visits') return baseList;
+
+    const filterKey = String(priorityFilter).toUpperCase();
+
+    // Priority filter (STAT, URGENT, ROUTINE)
+    if (['STAT', 'URGENT', 'ROUTINE'].includes(filterKey)) {
+      return baseList.filter((visit) =>
+        (visit.labOrders || []).some(
+          (o) =>
+            (o.priority || 'ROUTINE').toUpperCase() === filterKey &&
+            (o.status || '').toUpperCase() !== 'COMPLETED'
+        )
+      );
+    }
+
+    // Status metric filter (PENDING_SAMPLE, PROCESSING, PENDING_TESTS)
+    if (filterKey === 'PENDING_SAMPLE' || filterKey === 'SAMPLES') {
+      return baseList.filter((visit) =>
+        (visit.labOrders || []).some((o) => (o.status || '').toUpperCase() === 'PENDING_SAMPLE')
+      );
+    }
+
+    if (filterKey === 'PROCESSING') {
+      return baseList.filter((visit) =>
+        (visit.labOrders || []).some((o) => (o.status || '').toUpperCase() === 'PROCESSING')
+      );
+    }
+
+    if (filterKey === 'TESTS' || filterKey === 'PENDING') {
+      return baseList.filter((visit) =>
+        (visit.labOrders || []).some((o) => (o.status || '').toUpperCase() !== 'COMPLETED')
+      );
+    }
+
+    return baseList;
   }, [queue, priorityFilter, user?.departmentId]);
 
   const flatAllOrders = useMemo(() => {
@@ -270,6 +321,11 @@ export const useLabQueue = () => {
     const out = [];
     queue.forEach((visit) => {
       const patient = visit.patientId || {};
+      const doctor = visit.consultation?.doctorId;
+      const doctorName = doctor
+        ? `${doctor.firstName || ''} ${doctor.lastName || ''}`.trim() || doctor.name || 'Attending Physician'
+        : 'Attending Physician';
+
       (visit.labOrders || []).forEach((order) => {
         const labName = labNameMap[order.laboratoryId] || order.labName || 'Laboratory';
         out.push({
@@ -277,8 +333,12 @@ export const useLabQueue = () => {
           _visitId: visit._id,
           _patientName: [patient.firstName, patient.lastName].filter(Boolean).join(' ') || 'Unknown patient',
           _mrn: patient.mrn || '—',
+          _gender: patient.gender || '—',
+          _bloodGroup: patient.bloodGroup || '',
+          _tokenString: visit.tokenString || '',
+          _departmentName: visit.departmentId?.name || '',
           _visitCreatedAt: visit.createdAt,
-          _orderedBy: visit.consultation?.doctorId?.fullName || 'Attending Physician',
+          _orderedBy: doctorName,
           _laboratoryName: labName,
         });
       });
@@ -286,10 +346,52 @@ export const useLabQueue = () => {
     return out;
   }, [queue, laboratories]);
 
-  const allCompletedOrders = useMemo(
-    () => flatAllOrders.filter((o) => (o.status || '').toUpperCase() === 'COMPLETED'),
-    [flatAllOrders]
-  );
+  const allCompletedOrders = useMemo(() => {
+    const labNameMap = {};
+    (laboratories || []).forEach((l) => {
+      labNameMap[l._id] = l.name;
+    });
+
+    const seenOrderIds = new Set();
+    const out = [];
+
+    const processVisit = (visit) => {
+      const patient = visit.patientId || {};
+      const doctor = visit.consultation?.doctorId;
+      const doctorName = doctor
+        ? `${doctor.firstName || ''} ${doctor.lastName || ''}`.trim() || doctor.name || 'Attending Physician'
+        : 'Attending Physician';
+
+      (visit.labOrders || []).forEach((order) => {
+        const orderId = String(order._id || order.id || '');
+        if (!orderId || seenOrderIds.has(orderId)) return;
+        if ((order.status || '').toUpperCase() !== 'COMPLETED') return;
+
+        seenOrderIds.add(orderId);
+        const labName = labNameMap[order.laboratoryId] || order.labName || 'Laboratory';
+
+        out.push({
+          ...order,
+          _visitId: visit._id,
+          _patientName: [patient.firstName, patient.lastName].filter(Boolean).join(' ') || 'Unknown patient',
+          _mrn: patient.mrn || '—',
+          _gender: patient.gender || '—',
+          _bloodGroup: patient.bloodGroup || '',
+          _tokenString: visit.tokenString || '',
+          _departmentName: visit.departmentId?.name || '',
+          _visitCreatedAt: visit.createdAt,
+          _orderedBy: doctorName,
+          _laboratoryName: labName,
+        });
+      });
+    };
+
+    (reportedVisits || []).forEach(processVisit);
+    (queue || []).forEach(processVisit);
+
+    return out;
+  }, [reportedVisits, queue, laboratories]);
+
   const allPendingOrders = useMemo(
     () => flatAllOrders.filter((o) => (o.status || '').toUpperCase() !== 'COMPLETED'),
     [flatAllOrders]

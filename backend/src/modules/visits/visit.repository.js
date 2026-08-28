@@ -63,15 +63,16 @@ class VisitRepository {
       .populate('patientId')
       .populate('departmentId')
       .populate('consultation.doctorId')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1, _id: -1 });
     return decryptPopulatedVisit(docs);
   }
 
-  async find(filters) {
+  async find(filters, sort = { createdAt: -1, _id: -1 }) {
     const docs = await Visit.find(filters)
       .populate('patientId')
       .populate('departmentId')
-      .populate('consultation.doctorId');
+      .populate('consultation.doctorId')
+      .sort(sort);
     return decryptPopulatedVisit(docs);
   }
 
@@ -134,9 +135,70 @@ class VisitRepository {
   async getPendingLabPressures() {
     return await Visit.aggregate([
       { $unwind: '$labOrders' },
-      { $match: { 'labOrders.status': { $ne: 'COMPLETED' } } },
+      { $match: { 'labOrders.status': { $in: ['PENDING_SAMPLE', 'PENDING', 'PROCESSING'] } } },
       { $group: { _id: '$labOrders.laboratoryId', count: { $sum: 1 } } }
     ]);
+  }
+
+  async findPendingLabOrders() {
+    const docs = await Visit.find({
+      'labOrders.0': { $exists: true },
+      labOrders: {
+        $elemMatch: {
+          status: { $in: ['PENDING_SAMPLE', 'PENDING', 'PROCESSING'] }
+        }
+      }
+    })
+      .populate('patientId')
+      .populate('departmentId')
+      .populate('consultation.doctorId')
+      .sort({ createdAt: -1, _id: -1 });
+    return decryptPopulatedVisit(docs);
+  }
+
+  async findPendingLabOrdersByDepartment(departmentId) {
+    if (!departmentId) return this.findPendingLabOrders();
+    const docs = await Visit.find({
+      'labOrders.0': { $exists: true },
+      labOrders: {
+        $elemMatch: {
+          status: { $in: ['PENDING_SAMPLE', 'PENDING', 'PROCESSING'] }
+        }
+      },
+      $or: [
+        { 'labOrders.labDepartmentId': departmentId },
+        { departmentId: departmentId },
+      ],
+    })
+      .populate('patientId')
+      .populate('departmentId')
+      .populate('consultation.doctorId')
+      .sort({ createdAt: -1, _id: -1 });
+    return decryptPopulatedVisit(docs);
+  }
+
+  async findReportedLabOrders(filter = {}) {
+    const query = {
+      'labOrders.0': { $exists: true },
+      labOrders: {
+        $elemMatch: {
+          status: 'COMPLETED',
+        },
+      },
+    };
+    if (filter.departmentId) {
+      query.$or = [
+        { 'labOrders.labDepartmentId': filter.departmentId },
+        { departmentId: filter.departmentId },
+      ];
+    }
+    const docs = await Visit.find(query)
+      .populate('patientId')
+      .populate('departmentId')
+      .populate('consultation.doctorId')
+      .sort({ updatedAt: -1, createdAt: -1 })
+      .limit(filter.limit ? Number(filter.limit) : 100);
+    return decryptPopulatedVisit(docs);
   }
 }
 

@@ -28,6 +28,9 @@ const patientSchema = new mongoose.Schema(
       street: { type: String, trim: true },
       city: { type: String, trim: true },
       state: { type: String, trim: true },
+      stateCode: { type: String, trim: true, default: '' },
+      country: { type: String, trim: true, default: 'India' },
+      countryCode: { type: String, trim: true, default: 'IN' },
       pinCode: { type: String, trim: true }
     },
     emergencyContact: {
@@ -50,8 +53,12 @@ patientSchema.virtual('fullName').get(function () {
 });
 
 patientSchema.index({ firstName: 1, lastName: 1, phone: 1 });
+patientSchema.index({ firstName: 1, lastName: 1, createdAt: -1 });
 patientSchema.index({ phone: 1 });
-patientSchema.index({ createdAt: -1 });
+patientSchema.index({ createdAt: -1, _id: -1 });
+patientSchema.index({ 'address.state': 1, createdAt: -1 });
+patientSchema.index({ 'address.city': 1, createdAt: -1 });
+patientSchema.index({ 'address.country': 1 });
 
 
 patientSchema.pre('save', function () {

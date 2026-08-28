@@ -27,6 +27,12 @@ const auditLogSchema = new mongoose.Schema({
   timestamps: { createdAt: 'timestamp', updatedAt: false } 
 });
 
+// Indexes for high-frequency search, filter, and chronological cursor pagination
+auditLogSchema.index({ timestamp: -1, _id: -1 });
+auditLogSchema.index({ actorId: 1, timestamp: -1, _id: -1 });
+auditLogSchema.index({ action: 1, timestamp: -1, _id: -1 });
+auditLogSchema.index({ targetId: 1, timestamp: -1 });
+
 // Prevent any modifications (append-only)
 auditLogSchema.pre('updateOne', function() {
   throw new Error('Audit logs are immutable');

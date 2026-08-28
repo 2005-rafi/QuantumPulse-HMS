@@ -29,6 +29,7 @@ const ReceptionDashboard = () => {
     printData,
     totalPatients,
     todaysVisits,
+    todaysAppointments,
     handlePatientSelect,
     handleVisitCreated,
     handlePrintDone,
@@ -64,6 +65,12 @@ const ReceptionDashboard = () => {
       label: "Today's Visits",
       value: todaysVisits > 0 ? String(todaysVisits) : '0',
       variant: 'tertiary',
+    },
+    {
+      icon: <Icon.Calendar />,
+      label: "Today's Appointments",
+      value: todaysAppointments > 0 ? String(todaysAppointments) : '0',
+      variant: 'primary',
     },
     {
       icon: <Icon.Activity />,

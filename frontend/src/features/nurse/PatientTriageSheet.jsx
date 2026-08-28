@@ -57,7 +57,7 @@ const TriagePatientIdentity = ({ visit, waitingSince }) => {
             <h2 className="pts-identity-card__name">{name}</h2>
             {patient.mrn && (
               <span className="pts-identity-card__mrn-pill">
-                MRN: {patient.mrn}
+                {patient.mrn.startsWith('MRN') ? patient.mrn : `MRN: ${patient.mrn}`}
               </span>
             )}
           </div>
@@ -163,7 +163,7 @@ const ChiefComplaintSection = ({ value, onChange, error }) => (
         variant="outlined"
         required
         multiline
-        rows={3}
+        rows={2}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Describe patient symptoms, duration, severity, and any relevant clinical history reported..."
@@ -295,7 +295,7 @@ const DepartmentVitalsSection = ({ fields = [], values = {}, onChange, errors = 
         </div>
       </div>
       <div className="pts-section-card__body">
-        <div className="pts-vitals-grid">
+        <div className="pts-vitals-grid pts-vitals-grid--dept">
           {fields.map((field) => {
             const key = field.name || field.label;
             const req = field.required;

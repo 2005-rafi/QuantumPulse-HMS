@@ -3,16 +3,20 @@ import { CURRENCY_SYMBOL } from '../../constants/currency';
 import './BillingTemplate.css';
 
 const BillingTemplate = React.forwardRef(({
-  hospitalInfo,
-  labels,
+  hospitalInfo = {},
+  labels = {},
+  fieldVisibility = {},
   customFields = [],
   visit,
-  medications,
-  consultationFee,
-  labCharges,
+  medications = [],
+  consultationFee = 0,
+  labCharges = 0,
   total,
   currency = CURRENCY_SYMBOL,
 }, ref) => {
+  // Helper for visibility (default is true unless explicitly false)
+  const isVisible = (fieldKey) => fieldVisibility[fieldKey] !== false;
+
   const getDynamicValue = (fieldPath) => {
     if (!fieldPath) return '';
     if (fieldPath === 'patient.phone') return visit?.patientId?.phone || 'N/A';
@@ -30,34 +34,49 @@ const BillingTemplate = React.forwardRef(({
     );
   };
 
+  const showPharmacistSig = isVisible('pharmacistSignature') && Boolean(labels.pharmacistSignature);
+  const showHospitalSeal = isVisible('hospitalSeal') && Boolean(labels.hospitalSeal);
+  const showSignatures = showPharmacistSig || showHospitalSeal;
+
+  const showFooterNote = isVisible('footerNote') && Boolean(labels.footerNote);
+  const footerCustomFields = customFields.filter(f => f.position === 'footer');
+
   return (
     <div ref={ref} className="billing-template-container">
       {/* HEADER */}
       <div className="billing-header">
-        <h1 className="hospital-name">{hospitalInfo.name}</h1>
-        <p className="hospital-address">{hospitalInfo.address}</p>
-        <p className="hospital-contact">{hospitalInfo.contact}</p>
+        <h1 className="hospital-name">{hospitalInfo.name || 'HOSPITAL INVOICE'}</h1>
+        {isVisible('hospitalAddress') && hospitalInfo.address && (
+          <p className="hospital-address">{hospitalInfo.address}</p>
+        )}
+        {isVisible('hospitalContact') && hospitalInfo.contact && (
+          <p className="hospital-contact">{hospitalInfo.contact}</p>
+        )}
       </div>
 
       <hr className="divider" />
 
       {/* BILL INFO */}
       <div className="billing-title">
-        <h2>{labels.title}</h2>
-        <p><strong>{labels.date}:</strong> {new Date().toLocaleDateString()}</p>
-        <p><strong>{labels.billNo}:</strong> {visit?._id ? visit._id.substring(visit._id.length - 6).toUpperCase() : 'N/A'}</p>
+        <h2>{labels.title || 'OFFICIAL MEDICAL BILL'}</h2>
+        <p><strong>{labels.date || 'Date'}:</strong> {new Date().toLocaleDateString()}</p>
+        <p><strong>{labels.billNo || 'Bill No'}:</strong> {visit?._id ? visit._id.substring(visit._id.length - 6).toUpperCase() : 'N/A'}</p>
       </div>
 
       {/* PATIENT INFO */}
       <div className="patient-info">
         <div className="info-column">
-          <p><strong>{labels.patientName}:</strong> {visit?.patientId?.firstName} {visit?.patientId?.lastName}</p>
-          <p><strong>{labels.mrn}:</strong> {visit?.patientId?.mrn}</p>
+          <p><strong>{labels.patientName || 'Patient Name'}:</strong> {visit?.patientId?.firstName || ''} {visit?.patientId?.lastName || ''}</p>
+          <p><strong>{labels.mrn || 'MRN'}:</strong> {visit?.patientId?.mrn || 'N/A'}</p>
           {customFields.filter(f => f.position === 'patientInfo').filter((_, idx) => idx % 2 === 0).map(field => renderField(field))}
         </div>
         <div className="info-column">
-          <p><strong>{labels.ageGender}:</strong> {visit?.patientId?.age} / {visit?.patientId?.gender}</p>
-          <p><strong>{labels.doctor}:</strong> {visit?.consultation?.doctorId ? (typeof visit.consultation.doctorId === 'object' ? `Dr. ${visit.consultation.doctorId.firstName || ''} ${visit.consultation.doctorId.lastName || ''}`.trim() : 'Dr. ' + visit.consultation.doctorId) : 'N/A (Direct Sales)'}</p>
+          {isVisible('ageGender') && labels.ageGender && (
+            <p><strong>{labels.ageGender}:</strong> {visit?.patientId?.age || '—'} / {visit?.patientId?.gender || '—'}</p>
+          )}
+          {isVisible('doctor') && labels.doctor && (
+            <p><strong>{labels.doctor}:</strong> {visit?.consultation?.doctorId ? (typeof visit.consultation.doctorId === 'object' ? `Dr. ${visit.consultation.doctorId.firstName || ''} ${visit.consultation.doctorId.lastName || ''}`.trim() : 'Dr. ' + visit.consultation.doctorId) : 'N/A (Direct Sales)'}</p>
+          )}
           {customFields.filter(f => f.position === 'patientInfo').filter((_, idx) => idx % 2 !== 0).map(field => renderField(field))}
         </div>
       </div>
@@ -66,31 +85,40 @@ const BillingTemplate = React.forwardRef(({
       <table className="billing-table">
         <thead>
           <tr>
-            <th>{labels.description}</th>
-            <th>{labels.quantity}</th>
-            <th className="amount-col">{labels.amount}</th>
+            <th>{labels.description || 'Description'}</th>
+            <th>{labels.quantity || 'Qty'}</th>
+            <th className="amount-col">{labels.amount || 'Amount'}</th>
           </tr>
         </thead>
         <tbody>
           {/* Consultation */}
-          {Number(consultationFee) > 0 && (
+          {isVisible('consultationFee') && Number(consultationFee) > 0 && (
             <tr>
-              <td>{labels.consultationFee}</td>
+              <td>{labels.consultationFee || 'Doctor Consultation Fee'}</td>
               <td>1</td>
               <td className="amount-col">{currency}{Number(consultationFee).toFixed(2)}</td>
             </tr>
           )}
           
           {/* Lab */}
-          {Number(labCharges) > 0 && (
+          {isVisible('labCharges') && Number(labCharges) > 0 && (
             <tr>
-              <td>{labels.labCharges}</td>
+              <td>{labels.labCharges || 'Laboratory Charges'}</td>
               <td>1</td>
               <td className="amount-col">{currency}{Number(labCharges).toFixed(2)}</td>
             </tr>
           )}
 
-          {/* Medications */}
+          {/* Nil Charges / Clinical Review Fallback */}
+          {Number(consultationFee) === 0 && Number(labCharges) === 0 && (!medications || medications.length === 0) && (
+            <tr>
+              <td>Clinical Consultation &amp; Review (Nil Charges)</td>
+              <td>1</td>
+              <td className="amount-col">{currency}0.00</td>
+            </tr>
+          )}
+
+          {/* Medications (Pharmacy Billing - Always immune to label removal) */}
           {medications && medications.length > 0 && medications.map((med, idx) => {
             const ds = med.dosageSchedule;
             const formatSchedule = (data) => {
@@ -125,8 +153,8 @@ const BillingTemplate = React.forwardRef(({
                 total !== undefined && total !== null && !isNaN(Number(total))
                   ? Number(total)
                   : (
-                      Number(consultationFee || 0) +
-                      Number(labCharges || 0) +
+                      (isVisible('consultationFee') ? Number(consultationFee || 0) : 0) +
+                      (isVisible('labCharges') ? Number(labCharges || 0) : 0) +
                       (medications || []).reduce((acc, m) => acc + (Number(m.amount) || 0), 0)
                     )
               ).toFixed(2)}
@@ -135,22 +163,31 @@ const BillingTemplate = React.forwardRef(({
         </tfoot>
       </table>
 
-      {/* SIGNATURE AREA */}
-      <div className="signature-area">
-        <div className="signature-block">
-          <div className="signature-line"></div>
-          <p>{labels.pharmacistSignature}</p>
+      {/* SIGNATURE AREA (Only rendered if enabled) */}
+      {showSignatures && (
+        <div className="signature-area">
+          {showPharmacistSig && (
+            <div className="signature-block">
+              <div className="signature-line"></div>
+              <p>{labels.pharmacistSignature}</p>
+            </div>
+          )}
+          {showHospitalSeal && (
+            <div className="signature-block">
+              <div className="signature-line"></div>
+              <p>{labels.hospitalSeal}</p>
+            </div>
+          )}
         </div>
-        <div className="signature-block">
-          <div className="signature-line"></div>
-          <p>{labels.hospitalSeal}</p>
-        </div>
-      </div>
+      )}
 
-      <div className="footer-note">
-        <p>{labels.footerNote}</p>
-        {customFields.filter(f => f.position === 'footer').map(field => renderField(field))}
-      </div>
+      {/* FOOTER NOTE (Only rendered if enabled or custom fields present) */}
+      {(showFooterNote || footerCustomFields.length > 0) && (
+        <div className="footer-note">
+          {showFooterNote && <p>{labels.footerNote}</p>}
+          {footerCustomFields.map(field => renderField(field))}
+        </div>
+      )}
     </div>
   );
 });

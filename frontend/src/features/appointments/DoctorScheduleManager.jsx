@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Md3Button, Md3Select, Md3TextField } from '../../components/md3/Md3FormComponents';
 import { Icon } from '../../components/md3/Md3Widgets';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import { appointmentAPI } from '../../services/appointmentAPI';
 import api from '../../services/api';
 import './AppointmentDashboard.css';
@@ -126,7 +127,7 @@ export const DoctorScheduleManager = ({ onClose }) => {
               value={selectedDoctorId}
               options={doctors.map((d) => ({
                 value: d._id || d.id,
-                label: `Dr. ${d.fullName} (${d.primarySpecialization || d.position || 'General'})`,
+                label: `${formatDoctorName(d.fullName)} (${d.primarySpecialization || d.position || 'General'})`,
               }))}
               onChange={(e) => setSelectedDoctorId(e.target.value)}
             />

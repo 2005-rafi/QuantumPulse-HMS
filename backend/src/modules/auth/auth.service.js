@@ -144,17 +144,18 @@ const me = async (userId) => {
   const identity = await identityService.getById(userId);
   if (!identity) throw new AppError('NOT_FOUND');
 
-  const staff = await staffService.getById(identity.staffId.toString());
-  const permissions = await administrationService.getPermissionCodesForRole(staff.roleId._id || staff.roleId);
+  const staff = identity.staffId ? await staffService.getById(identity.staffId.toString()) : null;
+  const roleId = staff?.roleId?._id || staff?.roleId;
+  const permissions = roleId ? await administrationService.getPermissionCodesForRole(roleId) : [];
 
   return {
     id: userId,
-    staffId: staff._id.toString(),
-    fullName: staff.fullName,
-    employeeId: staff.employeeId,
-    role: staff.roleId.name,
-    department: staff.departmentId.name,
-    departmentId: staff.departmentId._id ? staff.departmentId._id.toString() : staff.departmentId.toString(),
+    staffId: staff?._id ? staff._id.toString() : '',
+    fullName: staff?.fullName || 'Authenticated User',
+    employeeId: staff?.employeeId || '',
+    role: staff?.roleId?.name || staff?.role || 'Staff',
+    department: staff?.departmentId?.name || staff?.department || 'General',
+    departmentId: staff?.departmentId?._id ? staff.departmentId._id.toString() : (staff?.departmentId?.toString() || ''),
     permissions,
     accountStatus: identity.accountStatus,
   };

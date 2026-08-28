@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Country, State, City } from 'country-state-city';
 import { patientAPI } from '../../services/patientAPI';
 import { visitAPI } from '../../services/visitAPI';
 import { staffAPI } from '../../services/staffAPI';
@@ -24,10 +25,13 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     emergencyContactName: '',
     emergencyContactRelation: '',
     emergencyContactPhone: '',
-    // Address
-    street: '',
-    city: '',
+    // Address (Default India)
+    country: 'India',
+    countryCode: 'IN',
     state: '',
+    stateCode: '',
+    city: '',
+    street: '',
     pinCode: '',
     // Visit & Payment
     visitType: 'OPD',
@@ -71,28 +75,85 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     fetchDropdowns();
   }, []);
 
+  // Memoized Country, State, City lists
+  const allCountries = useMemo(() => {
+    return Country.getAllCountries().map(c => ({
+      value: c.isoCode,
+      label: `${c.flag || ''} ${c.name} (+${c.phonecode})`.trim(),
+      name: c.name,
+      isoCode: c.isoCode,
+      phonecode: c.phonecode
+    }));
+  }, []);
+
+  const availableStates = useMemo(() => {
+    const code = form.countryCode || 'IN';
+    return State.getStatesOfCountry(code).map(s => ({
+      value: s.name,
+      label: s.name,
+      isoCode: s.isoCode,
+      name: s.name
+    }));
+  }, [form.countryCode]);
+
+  const availableCities = useMemo(() => {
+    if (!form.countryCode || !form.stateCode) return [];
+    return City.getCitiesOfState(form.countryCode, form.stateCode).map(c => ({
+      value: c.name,
+      label: c.name
+    }));
+  }, [form.countryCode, form.stateCode]);
+
+  const handleCountryChange = (e) => {
+    const iso = e.target.value;
+    const countryObj = allCountries.find(c => c.isoCode === iso);
+    setForm(prev => ({
+      ...prev,
+      countryCode: iso,
+      country: countryObj ? countryObj.name : iso,
+      state: '',
+      stateCode: '',
+      city: '',
+      pinCode: '',
+    }));
+    setFieldErrors(prev => ({ ...prev, phone: null, pinCode: null, aadhaar: null }));
+  };
+
+  const handleStateChange = (e) => {
+    const val = e.target.value;
+    const stObj = availableStates.find(s => s.name === val || s.isoCode === val);
+    setForm(prev => ({
+      ...prev,
+      state: stObj ? stObj.name : val,
+      stateCode: stObj ? stObj.isoCode : '',
+      city: '',
+    }));
+  };
+
   const handleChange = (e) => {
     let { name, value } = e.target;
+    const isIndia = form.countryCode === 'IN';
     
-    // Strict input guards to block invalid characters and restrict length
+    // Strict input guards
     if (name === 'firstName' || name === 'lastName' || name === 'emergencyContactName') {
       value = value.replace(/[^a-zA-Z\s'-]/g, '');
     } else if (name === 'phone' || name === 'whatsapp' || name === 'emergencyContactPhone') {
-      value = value.replace(/\D/g, '').slice(0, 10);
+      value = isIndia ? value.replace(/\D/g, '').slice(0, 10) : value.replace(/[^\d+]/g, '').slice(0, 16);
     } else if (name === 'aadhaar') {
-      value = value.replace(/\D/g, '').slice(0, 12);
+      value = isIndia ? value.replace(/\D/g, '').slice(0, 12) : value.slice(0, 20);
     } else if (name === 'pinCode') {
-      value = value.replace(/\D/g, '').slice(0, 6);
+      value = isIndia ? value.replace(/\D/g, '').slice(0, 6) : value.slice(0, 10);
     }
 
     setForm((prev) => ({ ...prev, [name]: value }));
-    // Clear specific field error when user starts typing
     setFieldErrors((prev) => ({ ...prev, [name]: null }));
     setError(null);
   };
 
   const validateForm = () => {
     const errors = {};
+    const isIndia = form.countryCode === 'IN';
+
     if (!form.firstName.trim()) {
       errors.firstName = 'First name is required';
     } else if (!/^[a-zA-Z]/.test(form.firstName.trim())) {
@@ -109,24 +170,30 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     if (!form.gender) errors.gender = 'Gender is required';
     
     if (!form.phone.trim()) {
-      errors.phone = 'Mobile phone is required';
-    } else if (form.phone.trim().length !== 10) {
-      errors.phone = 'Mobile phone must be exactly 10 digits';
+      errors.phone = 'Contact phone number is required';
+    } else if (isIndia && form.phone.trim().length !== 10) {
+      errors.phone = 'Indian mobile phone must be exactly 10 digits';
+    } else if (!isIndia && (form.phone.trim().length < 7 || form.phone.trim().length > 15)) {
+      errors.phone = 'International phone number must be 7-15 digits';
     }
 
-    if (form.whatsapp.trim() && form.whatsapp.trim().length !== 10) {
-      errors.whatsapp = 'WhatsApp number must be exactly 10 digits';
+    if (form.whatsapp.trim()) {
+      if (isIndia && form.whatsapp.trim().length !== 10) {
+        errors.whatsapp = 'WhatsApp number must be exactly 10 digits';
+      }
     }
 
-    if (form.emergencyContactPhone.trim() && form.emergencyContactPhone.trim().length !== 10) {
-      errors.emergencyContactPhone = 'Emergency contact phone must be exactly 10 digits';
+    if (form.emergencyContactPhone.trim()) {
+      if (isIndia && form.emergencyContactPhone.trim().length !== 10) {
+        errors.emergencyContactPhone = 'Emergency contact phone must be exactly 10 digits';
+      }
     }
 
-    if (form.aadhaar.trim() && form.aadhaar.trim().length !== 12) {
+    if (isIndia && form.aadhaar.trim() && form.aadhaar.trim().length !== 12) {
       errors.aadhaar = 'Aadhaar number must be exactly 12 digits';
     }
 
-    if (form.pinCode.trim() && form.pinCode.trim().length !== 6) {
+    if (isIndia && form.pinCode.trim() && form.pinCode.trim().length !== 6) {
       errors.pinCode = 'PIN code must be exactly 6 digits';
     }
 
@@ -211,6 +278,9 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           street: form.street.trim(),
           city: form.city.trim(),
           state: form.state.trim(),
+          stateCode: form.stateCode || '',
+          country: form.country || 'India',
+          countryCode: form.countryCode || 'IN',
           pinCode: form.pinCode.trim()
         },
         emergencyContact: {
@@ -538,6 +608,59 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
 
         <div className="reg-grid-2">
           <div className="col-span-2">
+            <Md3Select
+              id="country"
+              name="countryCode"
+              label="Country *"
+              value={form.countryCode}
+              onChange={handleCountryChange}
+              disabled={loading}
+              options={allCountries}
+            />
+          </div>
+          {availableStates.length > 0 ? (
+            <Md3Select
+              id="state"
+              name="state"
+              label="State / Province *"
+              value={form.state}
+              onChange={handleStateChange}
+              disabled={loading}
+              options={[{ value: '', label: 'Select State / Province' }, ...availableStates]}
+            />
+          ) : (
+            <Md3TextField
+              id="state"
+              name="state"
+              label="State / Province"
+              value={form.state}
+              onChange={handleChange}
+              placeholder="e.g. State / Region"
+              disabled={loading}
+            />
+          )}
+          {availableCities.length > 0 ? (
+            <Md3Select
+              id="city"
+              name="city"
+              label="City"
+              value={form.city}
+              onChange={(e) => setForm(prev => ({ ...prev, city: e.target.value }))}
+              disabled={loading}
+              options={[{ value: '', label: 'Select City' }, ...availableCities]}
+            />
+          ) : (
+            <Md3TextField
+              id="city"
+              name="city"
+              label="City"
+              value={form.city}
+              onChange={handleChange}
+              placeholder="e.g. City / Town"
+              disabled={loading}
+            />
+          )}
+          <div className="col-span-2">
             <Md3TextField
               id="street"
               name="street"
@@ -548,32 +671,14 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               disabled={loading}
             />
           </div>
-          <Md3TextField
-            id="city"
-            name="city"
-            label="City"
-            value={form.city}
-            onChange={handleChange}
-            placeholder="e.g. Mumbai"
-            disabled={loading}
-          />
-          <Md3TextField
-            id="state"
-            name="state"
-            label="State"
-            value={form.state}
-            onChange={handleChange}
-            placeholder="e.g. Maharashtra"
-            disabled={loading}
-          />
           <div className="col-span-2">
             <Md3TextField
               id="pinCode"
               name="pinCode"
-              label="PIN Code"
+              label={form.countryCode === 'IN' ? 'PIN Code (6 digits)' : 'Postal / ZIP Code'}
               value={form.pinCode}
               onChange={handleChange}
-              placeholder="6-digit postal code"
+              placeholder={form.countryCode === 'IN' ? '6-digit PIN code' : 'Postal code'}
               disabled={loading}
               error={fieldErrors.pinCode}
             />

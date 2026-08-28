@@ -10,6 +10,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { visitAPI } from '../services/visitAPI';
 import { adminAPI } from '../services/adminAPI';
+import { medicinePriceAPI } from '../services/medicinePriceAPI';
 import { useToast } from '../context/ToastContext';
 
 const DEFAULT_DOSAGE_SCHEDULE = {
@@ -74,7 +75,22 @@ export const usePharmacyDispense = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [hospitalInfo, setHospitalInfo] = useState(DEFAULT_HOSPITAL_INFO);
   const [labels, setLabels] = useState(DEFAULT_LABELS);
+  const [fieldVisibility, setFieldVisibility] = useState({});
   const [customFields, setCustomFields] = useState([]);
+  const [directDispenseOpen, setDirectDispenseOpen] = useState(false);
+  const [catalogMedicines, setCatalogMedicines] = useState([]);
+
+  const fetchCatalogMedicines = useCallback(async (query = '') => {
+    try {
+      const res = await medicinePriceAPI.list({ search: query || undefined, status: 'ACTIVE' });
+      const items = res.data?.data?.items || res.data?.items || [];
+      setCatalogMedicines(items);
+      return items;
+    } catch (err) {
+      console.error('[usePharmacyDispense] fetchCatalogMedicines error:', err);
+      return [];
+    }
+  }, []);
 
   const fetchQueue = useCallback(async () => {
     try {
@@ -82,6 +98,7 @@ export const usePharmacyDispense = () => {
       setQueue(res.data?.data || []);
     } catch (err) {
       console.error('[usePharmacyDispense] fetchQueue error:', err);
+      setQueue([]);
     }
   }, []);
 
@@ -98,6 +115,7 @@ export const usePharmacyDispense = () => {
           );
         }
         setLabels(fetchedLabels || DEFAULT_LABELS);
+        setFieldVisibility(res.data.data.fieldVisibility || {});
         setCustomFields(res.data.data.customFields || []);
       }
     } catch (err) {
@@ -108,22 +126,45 @@ export const usePharmacyDispense = () => {
   useEffect(() => {
     fetchQueue();
     fetchSettings();
+    fetchCatalogMedicines();
     const interval = setInterval(fetchQueue, 30000);
     return () => clearInterval(interval);
-  }, [fetchQueue, fetchSettings]);
+  }, [fetchQueue, fetchSettings, fetchCatalogMedicines]);
 
   const handlePatientSelect = useCallback((patient) => {
     setSelectedPatient(patient);
     setActiveTab('profile');
   }, []);
 
-  const selectVisit = useCallback((visit) => {
+  const selectVisit = useCallback(async (visit) => {
     setSelectedVisit(visit);
     const initialMeds = (visit.prescribedMedications || []).map(mapPrescribedMedication);
     setMedications(initialMeds);
     setValidationErrors({});
     setConsultationFee(visit.consultation?.doctorId ? 50 : 0);
     setLabCharges((visit.labOrders?.length || 0) > 0 ? 100 : 0);
+
+    // Auto-lookup prices for prescribed medications from catalog
+    if (initialMeds.length > 0) {
+      const updatedMeds = [...initialMeds];
+      for (let i = 0; i < updatedMeds.length; i++) {
+        const medName = updatedMeds[i].recommended;
+        if (medName) {
+          try {
+            const priceRes = await medicinePriceAPI.getByName(medName);
+            const priceData = priceRes.data?.data || priceRes.data;
+            if (priceData && priceData.unitPrice) {
+              const qty = Number(updatedMeds[i].quantity) || 10;
+              if (!updatedMeds[i].quantity) updatedMeds[i].quantity = '10';
+              updatedMeds[i].amount = String((priceData.unitPrice * qty) + (priceData.dispensingFee || 0));
+            }
+          } catch (e) {
+            // silent fallback
+          }
+        }
+      }
+      setMedications(updatedMeds);
+    }
   }, []);
 
   const handleDirectPharmacy = useCallback((visit) => {
@@ -132,14 +173,29 @@ export const usePharmacyDispense = () => {
     selectVisit(visit);
   }, [fetchQueue, selectVisit]);
 
-  const handleAddMedication = useCallback(() => {
+  const handleStartDirectDispenseForPatient = useCallback(async (patientId) => {
+    try {
+      const res = await visitAPI.create({ patientId, isDirectPharmacy: true });
+      const createdVisit = res.data?.data || res.data;
+      showSuccess('Direct Cart Created', 'Patient added to pharmacy queue.');
+      setDirectDispenseOpen(false);
+      await fetchQueue();
+      setActiveTab('queue');
+      selectVisit(createdVisit);
+    } catch (err) {
+      console.error('Failed to create direct pharmacy visit:', err);
+      showError('Error', err.response?.data?.message || 'Failed to start direct dispensing session');
+    }
+  }, [fetchQueue, selectVisit, showSuccess, showError]);
+
+  const handleAddMedication = useCallback((medData = null) => {
     setMedications((prev) => [
       ...prev,
       {
-        recommended: '',
+        recommended: medData?.medicineName || '',
         alternativeGiven: '',
-        quantity: '',
-        amount: '',
+        quantity: medData ? '1' : '',
+        amount: medData ? String(medData.unitPrice + (medData.dispensingFee || 0)) : '',
         dosageSchedule: DEFAULT_DOSAGE_SCHEDULE,
       },
     ]);
@@ -161,6 +217,26 @@ export const usePharmacyDispense = () => {
       return next;
     });
 
+    // Auto-calculate amount if medicine name or quantity changes
+    if (field === 'recommended' || field === 'alternativeGiven' || field === 'quantity') {
+      const targetMedName = field === 'alternativeGiven' && value ? value : (field === 'recommended' ? value : (medications[index]?.alternativeGiven || medications[index]?.recommended));
+      if (targetMedName && targetMedName.length >= 3) {
+        medicinePriceAPI.getByName(targetMedName).then((res) => {
+          const priceData = res.data?.data || res.data;
+          if (priceData && priceData.unitPrice) {
+            setMedications((prev) => {
+              const next = [...prev];
+              if (!next[index]) return prev;
+              const qty = Number(field === 'quantity' ? value : next[index].quantity) || 1;
+              const totalAmount = (priceData.unitPrice * qty) + (priceData.dispensingFee || 0);
+              next[index] = { ...next[index], amount: String(totalAmount) };
+              return next;
+            });
+          }
+        }).catch(() => {});
+      }
+    }
+
     // Dynamically clear validation error on input change
     setValidationErrors((prev) => {
       if (!prev[index]?.[field]) return prev;
@@ -181,31 +257,29 @@ export const usePharmacyDispense = () => {
       }
       return next;
     });
-  }, []);
+  }, [medications]);
 
   const handleGeneratePreview = useCallback(() => {
     const errors = {};
     let hasError = false;
 
-    if (medications.length === 0) {
-      showWarning('No Medications Prescribed', 'Please add at least one medication before generating bill preview.');
-      return;
+    // Validate medication rows only if there are medication rows entered
+    if (medications.length > 0) {
+      medications.forEach((med, idx) => {
+        const rowErrors = {};
+        if (!med.quantity || !med.quantity.trim()) {
+          rowErrors.quantity = 'Required';
+          hasError = true;
+        }
+        if (med.amount === '' || isNaN(Number(med.amount)) || Number(med.amount) < 0) {
+          rowErrors.amount = 'Invalid price';
+          hasError = true;
+        }
+        if (Object.keys(rowErrors).length > 0) {
+          errors[idx] = rowErrors;
+        }
+      });
     }
-
-    medications.forEach((med, idx) => {
-      const rowErrors = {};
-      if (!med.quantity || !med.quantity.trim()) {
-        rowErrors.quantity = 'Required';
-        hasError = true;
-      }
-      if (med.amount === '' || isNaN(Number(med.amount)) || Number(med.amount) < 0) {
-        rowErrors.amount = 'Invalid price';
-        hasError = true;
-      }
-      if (Object.keys(rowErrors).length > 0) {
-        errors[idx] = rowErrors;
-      }
-    });
 
     if (hasError) {
       setValidationErrors(errors);
@@ -218,7 +292,7 @@ export const usePharmacyDispense = () => {
 
     setValidationErrors({});
     setShowPreview(true);
-  }, [medications, showError, showWarning]);
+  }, [medications, showError]);
 
   const handleFinalize = useCallback(async () => {
     try {
@@ -282,16 +356,22 @@ export const usePharmacyDispense = () => {
     setShowPreview,
     hospitalInfo,
     labels,
+    fieldVisibility,
     customFields,
+    totalBillAmount,
     fetchQueue,
     handlePatientSelect,
-    handleDirectPharmacy,
     selectVisit,
+    handleDirectPharmacy,
     handleAddMedication,
     handleRemoveMedication,
     handleMedChange,
     handleGeneratePreview,
     handleFinalize,
-    totalBillAmount,
+    directDispenseOpen,
+    setDirectDispenseOpen,
+    catalogMedicines,
+    fetchCatalogMedicines,
+    handleStartDirectDispenseForPatient,
   };
 };

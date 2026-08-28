@@ -1,11 +1,12 @@
 /* ============================================================
    SearchSortFilterPanel.css — Reusable Filter Bar styles
+   Uses centralized MD3 design tokens from style_config.css
    ============================================================ */
 
 .md3-ssf-panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--md-spacing-s, 8px);
   width: 100%;
   box-sizing: border-box;
 }
@@ -13,7 +14,7 @@
 .md3-ssf-main-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--md-spacing-s, 8px);
   width: 100%;
   box-sizing: border-box;
 }
@@ -23,11 +24,76 @@
   min-width: 0;
 }
 
+/* Compact Search Text Field */
+.md3-ssf-panel .md3-text-field-container {
+  gap: 0;
+}
+
+.md3-ssf-panel .md3-field-input {
+  min-height: var(--md-comp-search-bar-height, 38px);
+  height: var(--md-comp-search-bar-height, 38px);
+  padding: var(--md-comp-search-input-padding, 6px 12px);
+  font-size: var(--md-comp-search-input-font-size, 0.84rem);
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  transition: all 0.15s ease;
+}
+
+.md3-ssf-panel .md3-field-input.has-leading {
+  padding-left: 36px;
+}
+
+.md3-ssf-panel .md3-field-input.has-trailing {
+  padding-right: 34px;
+}
+
+.md3-ssf-panel .md3-field-leading-icon {
+  left: 10px;
+  width: var(--md-comp-search-icon-size, 17px);
+  height: var(--md-comp-search-icon-size, 17px);
+}
+
+.md3-ssf-panel .md3-field-leading-icon svg {
+  width: var(--md-comp-search-icon-size, 17px);
+  height: var(--md-comp-search-icon-size, 17px);
+}
+
+.md3-ssf-panel .md3-field-trailing-icon {
+  right: 8px;
+}
+
+.md3-ssf-panel .md3-field-trailing-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
 .md3-ssf-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--md-spacing-xs, 6px);
   flex-shrink: 0;
+}
+
+.md3-ssf-actions .md3-button {
+  height: var(--md-comp-filter-btn-height, 36px);
+  padding: var(--md-comp-filter-btn-padding, 4px 14px);
+  font-size: var(--md-comp-btn-font-size-md, 0.82rem);
+  border-radius: var(--md-comp-btn-border-radius, 999px);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.md3-ssf-filter-btn {
+  min-width: var(--md-comp-filter-btn-min-width, 96px);
+}
+
+.md3-ssf-reset-btn {
+  min-width: 60px;
+  padding: 4px 10px !important;
 }
 
 /* Responsive adjustment */
@@ -35,7 +101,7 @@
   .md3-ssf-main-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: var(--md-spacing-xs, 6px);
   }
   .md3-ssf-actions {
     justify-content: flex-end;

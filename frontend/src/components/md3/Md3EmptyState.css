@@ -51,7 +51,7 @@
 }
 
 .md3-empty-state__title {
-  font-family: var(--md-sys-typescale-title-medium-font, 'Roboto', sans-serif);
+  font-family: var(--md-sys-typescale-title-medium-font, 'Inter', sans-serif);
   font-size: 1.15rem;
   font-weight: 700;
   line-height: 1.35;
@@ -61,7 +61,7 @@
 }
 
 .md3-empty-state__description {
-  font-family: var(--md-sys-typescale-body-medium-font, 'Roboto', sans-serif);
+  font-family: var(--md-sys-typescale-body-medium-font, 'Inter', sans-serif);
   font-size: 0.88rem;
   line-height: 1.5;
   color: var(--md-sys-color-on-surface-variant, #49454f);
@@ -113,3 +113,33 @@
   padding: 40px 24px;
   box-shadow: none;
 }
+
+/* Mini/Inline Variant for high-density slots */
+.md3-empty-state--mini {
+  padding: 12px 16px;
+  flex-direction: row;
+  gap: 10px;
+}
+
+.md3-empty-state--mini .md3-empty-state__icon-box {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.md3-empty-state--mini .md3-empty-state__icon {
+  font-size: 16px;
+}
+
+.md3-empty-state--mini .md3-empty-state__title {
+  font-size: 0.82rem;
+  margin: 0;
+}
+
+.md3-empty-state--mini .md3-empty-state__description {
+  font-size: 0.72rem;
+  margin: 0;
+}
+

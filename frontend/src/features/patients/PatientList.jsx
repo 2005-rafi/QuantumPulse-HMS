@@ -7,6 +7,7 @@ import PatientCard from '../../components/patients/PatientCard';
 import PatientListView from '../../components/patients/PatientListView';
 import { usePatientLayoutPreference } from '../../hooks/usePatientLayoutPreference';
 import { Icon } from '../../components/md3/Md3Widgets';
+import Md3Pagination from '../../components/md3/Md3Pagination';
 import './PatientList.css';
 
 /* ── Icons ── */
@@ -66,7 +67,7 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const { isListView, isCardView, setLayout } = usePatientLayoutPreference();
-  const limit = 50;
+  const [limit, setLimit] = useState(50);
 
   // Fetch filters metadata on mount
   useEffect(() => {
@@ -103,6 +104,15 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
       }
       if (Array.isArray(apiFilters.doctorId)) {
         apiFilters.doctorId = apiFilters.doctorId.join(',');
+      }
+      if (Array.isArray(apiFilters.city)) {
+        apiFilters.city = apiFilters.city.join(',');
+      }
+      if (Array.isArray(apiFilters.cities)) {
+        apiFilters.cities = apiFilters.cities.join(',');
+      }
+      if (Array.isArray(apiFilters.state)) {
+        apiFilters.state = apiFilters.state.join(',');
       }
 
       const result = await patientAPI.search(searchQuery, currentPage, limit, apiFilters);
@@ -196,6 +206,22 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
           />
         </div>
 
+        {/* Top Pagination (rendered when total records exceed 20) */}
+        {totalItems > 20 && (
+          <Md3Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            pageSize={limit}
+            onPageChange={setPage}
+            onPageSizeChange={(newSize) => {
+              setLimit(newSize);
+              setPage(1);
+            }}
+            itemLabel="patients"
+            position="top"
+          />
+        )}
+
         {/* Table / Card List Area */}
         <div className="patient-table-wrapper">
           {loading ? (
@@ -208,19 +234,12 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
               onSelectPatient={onSelectPatient}
             />
           ) : (
-            <div className="patient-card-list" role="list">
+            <div className="patient-card-grid" role="list">
               {patients.map((p) => (
                 <PatientCard
                   key={p._id || p.id}
                   patient={p}
                   typeIndicator="OPD"
-                  metadata={[
-                    p.phone && { icon: <Icon.Phone />, text: p.phone },
-                    (p.address?.city || p.city || formatDob(p.dob)) && {
-                      icon: <Icon.Location />,
-                      text: p.address?.city || p.city || formatDob(p.dob)
-                    }
-                  ].filter(Boolean)}
                   onClick={onSelectPatient}
                 />
               ))}
@@ -228,38 +247,20 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
           )}
         </div>
 
-        {/* Pagination Footer */}
-        {totalPages > 1 && (
-          <div className="patient-pagination-footer">
-            <span className="pagination-info">
-              Page {page} of {totalPages} · {totalItems.toLocaleString()} records
-            </span>
-            <div className="pagination-controls">
-              <button
-                type="button"
-                className="pagination-btn"
-                disabled={page <= 1 || loading}
-                onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                aria-label="Previous page"
-              >
-                <IconChevronLeft />
-                Prev
-              </button>
-              <span className="pagination-page-indicator" aria-current="page">
-                {page} / {totalPages}
-              </span>
-              <button
-                type="button"
-                className="pagination-btn"
-                disabled={page >= totalPages || loading}
-                onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                aria-label="Next page"
-              >
-                Next
-                <IconChevronRight />
-              </button>
-            </div>
-          </div>
+        {/* Bottom Pagination */}
+        {totalItems > 0 && (
+          <Md3Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            pageSize={limit}
+            onPageChange={setPage}
+            onPageSizeChange={(newSize) => {
+              setLimit(newSize);
+              setPage(1);
+            }}
+            itemLabel="patients"
+            position="bottom"
+          />
         )}
       </div>
     </div>

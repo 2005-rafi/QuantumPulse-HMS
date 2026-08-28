@@ -51,6 +51,8 @@ const ConsultationDesk = ({
           finalizing={finalizing}
           canFinalize={canFinalize}
           queueStats={queueStats}
+          queue={queue}
+          onSelectVisit={onSelectVisit}
         />
       </div>
     </div>

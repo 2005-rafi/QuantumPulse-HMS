@@ -9,6 +9,8 @@ import { StaffFilterSideSheet } from '../../components/md3/StaffFilterSideSheet'
 import { Md3SearchBar } from '../../components/md3/AdminControls';
 import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import Md3Pagination from '../../components/md3/Md3Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const AdminStaffManager = () => {
   const { 
@@ -40,10 +42,18 @@ const AdminStaffManager = () => {
 
   useEffect(() => {
     if (location.state?.statusFilter) {
-      setFilters(prev => ({
-        ...prev,
-        statuses: [location.state.statusFilter]
-      }));
+      const sf = location.state.statusFilter;
+      if (sf.toLowerCase() === 'all') {
+        setFilters(prev => ({
+          ...prev,
+          statuses: []
+        }));
+      } else {
+        setFilters(prev => ({
+          ...prev,
+          statuses: [sf]
+        }));
+      }
     }
   }, [location.state]);
 
@@ -101,7 +111,20 @@ const AdminStaffManager = () => {
 
   const filteredStaff = staffList.filter(s => {
     const matchesRole = filters.roles.length === 0 || filters.roles.includes(s.roleId?.name);
-    const matchesStatus = filters.statuses.length === 0 || filters.statuses.includes(s.status);
+    
+    // Status filter: empty array or 'All' matches all staff
+    const matchesStatus = 
+      filters.statuses.length === 0 ||
+      filters.statuses.some(st => st.toLowerCase() === 'all') ||
+      filters.statuses.some(st => {
+        const normalizedFilter = st.toLowerCase();
+        const staffStatus = (s.status || 'Active').toLowerCase();
+        if (normalizedFilter === 'inactive' || normalizedFilter === 'disabled') {
+          return staffStatus === 'inactive' || staffStatus === 'disabled';
+        }
+        return staffStatus === normalizedFilter;
+      });
+
     const matchesDept = filters.departments.length === 0 || filters.departments.includes(s.departmentId?._id);
     const matchesPosition = filters.positions.length === 0 || filters.positions.includes(s.position);
     const matchesSearch = searchQuery.trim() === '' || 
@@ -110,10 +133,20 @@ const AdminStaffManager = () => {
   });
 
   const activeFiltersCount = 
-    filters.statuses.length + 
+    filters.statuses.filter(s => s.toLowerCase() !== 'all').length + 
     filters.roles.length + 
     filters.departments.length + 
     filters.positions.length;
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    paginatedItems: paginatedStaff,
+    showTopPagination,
+  } = usePagination(filteredStaff, 50, [searchQuery, filters]);
 
   return (
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -159,26 +192,25 @@ const AdminStaffManager = () => {
                 alignItems: 'center', 
                 gap: '8px', 
                 padding: '8px 16px', 
-                background: activeFiltersCount > 0 ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high)', 
-                color: activeFiltersCount > 0 ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)', 
-                border: 'none', 
+                background: activeFiltersCount > 0 ? 'var(--md-sys-color-primary-container, #eaddff)' : 'var(--md-sys-color-surface-container-high, #ece6f0)', 
+                color: activeFiltersCount > 0 ? 'var(--md-sys-color-on-primary-container, #21005d)' : 'var(--md-sys-color-on-surface, #1d1b20)', 
+                border: activeFiltersCount > 0 ? '1px solid var(--md-sys-color-primary, #6750a4)' : '1px solid var(--md-sys-color-outline-variant, #cac4d0)', 
                 borderRadius: '100px', 
                 cursor: 'pointer', 
                 fontSize: '13px', 
                 fontWeight: 'bold',
-                transition: 'background 200ms ease',
-                height: '44px',
-                position: 'relative',
-                boxSizing: 'border-box'
+                transition: 'all 200ms ease',
+                height: '44px'
               }}
+              className="staff-filter-btn"
             >
-              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>filter_list</span>
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>tune</span>
               Filters
               {activeFiltersCount > 0 && (
-                <span style={{
-                  background: 'var(--md-sys-color-primary)',
-                  color: 'var(--md-sys-color-on-primary)',
-                  borderRadius: '50%',
+                <span style={{ 
+                  background: 'var(--md-sys-color-primary, #6750a4)', 
+                  color: 'var(--md-sys-color-on-primary, #ffffff)', 
+                  borderRadius: '50%', 
                   minWidth: '20px',
                   height: '20px',
                   display: 'flex',
@@ -196,9 +228,22 @@ const AdminStaffManager = () => {
           </div>
         </div>
         
+        {/* Top Pagination (rendered when total records exceed 20) */}
+        {showTopPagination && (
+          <Md3Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="staff"
+            position="top"
+          />
+        )}
+        
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="md3-data-grid" style={{ flex: 1, paddingBottom: '80px' }}>
-            {filteredStaff.length === 0 ? (
+          <div className="md3-data-grid md3-paginated-content-fade" key={page} style={{ flex: 1, paddingBottom: '20px' }}>
+            {paginatedStaff.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', width: '100%' }}>
                 <Md3EmptyState
                   icon="badge"
@@ -208,7 +253,7 @@ const AdminStaffManager = () => {
                 />
               </div>
             ) : (
-              filteredStaff.map(staff => (
+              paginatedStaff.map(staff => (
                 <div key={staff._id} className="md3-data-card">
                   <div className="md3-data-card-header">
                     <h3 className="md3-data-card-title">{staff.fullName}</h3>
@@ -302,6 +347,19 @@ const AdminStaffManager = () => {
               ))
             )}
           </div>
+
+          {/* Bottom Pagination */}
+          {totalItems > 0 && (
+            <Md3Pagination
+              currentPage={page}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="staff"
+              position="bottom"
+            />
+          )}
         </div>
       </section>
       

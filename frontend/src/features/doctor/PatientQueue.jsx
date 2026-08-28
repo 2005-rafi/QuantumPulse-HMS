@@ -1,30 +1,28 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import {
-  Icon, Md3EmptyState, Md3IconButton, Md3Section,
-} from '../../components/md3/Md3Widgets';
-import { Md3TextField } from '../../components/md3/Md3FormComponents';
 import QueuePatientCard from './QueuePatientCard';
 import { visitAPI } from '../../services/visitAPI';
 import { formatQueueWaitTime as timeSince } from '../../utils/dateFormatting';
+import { ClinicalQueueSearchIndex } from '../../utils/dsaSearchFilter';
+import { Md3SearchBar } from '../../components/md3/Md3SearchBar';
 
 /* ============================================================
-   PatientQueue — Doctor's patient queue panel.
-   Unified 2x3 Matrix Component for combined stats & filtering.
+   PatientQueue — Doctor's Patient Queue Sidebar
+   Path: frontend/src/features/doctor/PatientQueue.jsx
    ============================================================ */
 
 const MATRIX_FILTERS = [
-  { id: 'all',                   label: 'All',             icon: <Icon.Users size={14} /> },
-  { id: 'WAITING_DOCTOR',        label: 'Waiting',         icon: <Icon.Clock size={14} /> },
-  { id: 'CALLED',                label: 'Called',          icon: <Icon.Volume2 size={14} /> },
-  { id: 'IN_PROGRESS',           label: 'In Consultation', icon: <Icon.Activity size={14} /> },
-  { id: 'WAITING_DOCTOR_REVIEW', label: 'Review',          icon: <Icon.Clipboard size={14} /> },
-  { id: 'COMPLETED',             label: 'Completed',       icon: <Icon.CheckCircle size={14} /> },
+  { id: 'all',                   label: 'All',             icon: 'group' },
+  { id: 'WAITING_DOCTOR',        label: 'Waiting',         icon: 'schedule' },
+  { id: 'CALLED',                label: 'Called',          icon: 'volume_up' },
+  { id: 'IN_PROGRESS',           label: 'In Consult',      icon: 'stethoscope' },
+  { id: 'WAITING_DOCTOR_REVIEW', label: 'Review',          icon: 'biotech' },
+  { id: 'COMPLETED',             label: 'Done',            icon: 'check_circle' },
 ];
 
-/* ─── Unified 2x3 Queue Filter Matrix ─────────────────────── */
+/* ─── Compact 2x3 Queue Filter Matrix ─────────────────────── */
 const QueueFilterMatrix = ({ counts, filterStatus, onSelectFilter }) => {
   return (
-    <div className="queue-filter-matrix" role="tablist" aria-label="Queue Filters">
+    <div className="doc-filter-matrix" role="tablist" aria-label="Doctor Queue Filters">
       {MATRIX_FILTERS.map((item) => {
         const isSelected = filterStatus === item.id;
         const count = counts[item.id] ?? 0;
@@ -34,14 +32,14 @@ const QueueFilterMatrix = ({ counts, filterStatus, onSelectFilter }) => {
             type="button"
             role="tab"
             aria-selected={isSelected}
-            className={`queue-matrix-tile ${isSelected ? 'queue-matrix-tile--active' : ''}`}
+            className={`doc-matrix-tile ${isSelected ? 'doc-matrix-tile--active' : ''}`}
             onClick={() => onSelectFilter(item.id)}
           >
-            <div className="matrix-tile-header">
-              <span className="matrix-tile-icon">{item.icon}</span>
-              <span className="matrix-tile-count">{count}</span>
+            <div className="doc-matrix-tile__top">
+              <span className="material-symbols-rounded doc-matrix-tile__icon">{item.icon}</span>
+              <span className="doc-matrix-tile__count">{count}</span>
             </div>
-            <span className="matrix-tile-label">{item.label}</span>
+            <span className="doc-matrix-tile__label">{item.label}</span>
           </button>
         );
       })}
@@ -49,29 +47,29 @@ const QueueFilterMatrix = ({ counts, filterStatus, onSelectFilter }) => {
   );
 };
 
-/* ─── Main PatientQueue ───────────────────────────────────── */
+/* ─── Main PatientQueue Component ─────────────────────────── */
 const PatientQueue = ({
   queue = [],
   selectedVisitId,
   onSelectVisit,
   onRefresh,
 }) => {
-  const [searchQuery, setSearchQuery]   = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [actionLoading, setActionLoading] = useState(null); // visitId being acted on
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // ── FIFO defensive sort (backend also sorts ASC, this is a safety net)
+  // FIFO defensive sort (oldest first)
   const sortedQueue = useMemo(() =>
     [...queue].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
   [queue]);
 
-  // ── Split skipped from active
+  // Split skipped from active
   const { activeQueue, skippedQueue } = useMemo(() => ({
-    activeQueue:  sortedQueue.filter((v) => v.status !== 'SKIPPED'),
+    activeQueue: sortedQueue.filter((v) => v.status !== 'SKIPPED'),
     skippedQueue: sortedQueue.filter((v) => v.status === 'SKIPPED'),
   }), [sortedQueue]);
 
-  // ── Live counts for the 2x3 filter matrix
+  // Live counts for the 2x3 filter matrix
   const matrixCounts = useMemo(() => {
     const c = {
       all: activeQueue.length,
@@ -87,125 +85,121 @@ const PatientQueue = ({
     return c;
   }, [activeQueue, sortedQueue]);
 
-  const filteredActive = useMemo(() => {
-    let list = activeQueue;
-    if (filterStatus !== 'all') {
-      list = list.filter((v) => v.status === filterStatus);
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      list = list.filter((v) => {
-        const p = v.patientId || {};
-        return (
-          `${p.firstName || ''} ${p.lastName || ''}`.toLowerCase().includes(q) ||
-          (p.mrn || '').toLowerCase().includes(q) ||
-          (v.tokenString || '').toLowerCase().includes(q) ||
-          (v.vitals?.chiefComplaint || '').toLowerCase().includes(q)
-        );
-      });
-    }
-    return list;
-  }, [activeQueue, searchQuery, filterStatus]);
+  // ── Pluggable DSA Multi-Field Prefix Trie & Relevance Search ──
+  const searchIndex = useMemo(() => new ClinicalQueueSearchIndex(activeQueue), [activeQueue]);
 
-  // ── Queue action handlers (call / skip / requeue)
+  const filteredActive = useMemo(() => {
+    return searchIndex.search(searchQuery, filterStatus);
+  }, [searchIndex, searchQuery, filterStatus]);
+
+  const handleRefreshClick = async () => {
+    setIsRefreshing(true);
+    try {
+      if (onRefresh) await onRefresh();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 400);
+    }
+  };
+
+  // Queue action handlers (call / skip / requeue)
   const handleCall = useCallback(async (visitId) => {
-    setActionLoading(visitId);
     try {
       await visitAPI.callPatient(visitId);
       onRefresh?.();
     } catch (err) {
-      console.error('[PatientQueue] callPatient error:', err?.response?.data?.message || err.message);
-    } finally {
-      setActionLoading(null);
+      console.error('[PatientQueue] call error:', err?.response?.data?.message || err.message);
     }
   }, [onRefresh]);
 
   const handleSkip = useCallback(async (visitId) => {
-    setActionLoading(visitId);
     try {
       await visitAPI.skipVisit(visitId);
       onRefresh?.();
     } catch (err) {
-      console.error('[PatientQueue] skipVisit error:', err?.response?.data?.message || err.message);
-    } finally {
-      setActionLoading(null);
+      console.error('[PatientQueue] skip error:', err?.response?.data?.message || err.message);
     }
   }, [onRefresh]);
 
   const handleRequeue = useCallback(async (visitId) => {
-    setActionLoading(visitId);
     try {
       await visitAPI.requeueVisit(visitId);
       onRefresh?.();
     } catch (err) {
-      console.error('[PatientQueue] requeueVisit error:', err?.response?.data?.message || err.message);
-    } finally {
-      setActionLoading(null);
+      console.error('[PatientQueue] requeue error:', err?.response?.data?.message || err.message);
     }
   }, [onRefresh]);
 
   return (
-    <div className="patient-queue">
-      <div className="patient-queue__card">
-        {/* Header Title & Refresh */}
-        <div className="patient-queue__header">
-          <div className="patient-queue__header-left">
-            <span className="patient-queue__header-icon">
-              <Icon.Users size={18} />
-            </span>
-            <div>
-              <h3 className="patient-queue__header-title">My Queue</h3>
-              <span className="patient-queue__header-subtitle">
-                {activeQueue.length} patient{activeQueue.length !== 1 ? 's' : ''} in queue
-              </span>
-            </div>
+    <div className="doc-queue-panel">
+      {/* ─── 1. Compact Header Bar ─── */}
+      <div className="doc-queue__header">
+        <div className="doc-queue__header-left">
+          <div className="doc-queue__header-icon">
+            <span className="material-symbols-rounded">group</span>
           </div>
-          <Md3IconButton
-            icon={<Icon.Refresh />}
-            onClick={onRefresh}
-            variant="tonal"
-            size="small"
-            ariaLabel="Refresh queue"
-          />
+          <div className="doc-queue__header-titles">
+            <div className="doc-queue__header-title-row">
+              <h3 className="doc-queue__header-title">My Queue</h3>
+              <span className="doc-queue__count-badge">{activeQueue.length}</span>
+            </div>
+            <p className="doc-queue__header-sub">
+              {activeQueue.length === 1 ? '1 patient waiting' : `${activeQueue.length} patients in queue`}
+            </p>
+          </div>
         </div>
 
-        {/* ── Singular 2x3 Matrix Filter & Stat Component ── */}
-        <div className="patient-queue__matrix-container">
-          <QueueFilterMatrix
-            counts={matrixCounts}
-            filterStatus={filterStatus}
-            onSelectFilter={setFilterStatus}
-          />
+        <div className="doc-queue__header-actions">
+          <button
+            type="button"
+            className={`doc-queue__refresh-btn ${isRefreshing ? 'is-loading' : ''}`}
+            onClick={handleRefreshClick}
+            title="Refresh Doctor Queue"
+            aria-label="Refresh Queue"
+          >
+            <span className="material-symbols-rounded">refresh</span>
+          </button>
         </div>
+      </div>
 
-        {/* ── Search Bar ── */}
-        <div className="patient-queue__search-wrap">
-          <Md3TextField
-            id="doctor-queue-search"
-            label="Search by name, MRN, or token"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            leadingIcon={<Icon.Search />}
-            trailingIcon={searchQuery ? <Icon.Clear /> : null}
-            onTrailingIconClick={() => setSearchQuery('')}
-            trailingIconAriaLabel="Clear search"
-          />
-        </div>
+      {/* ─── 2. Compact 2x3 Matrix Filter & Status Badges ─── */}
+      <div className="doc-queue__filter-wrap">
+        <QueueFilterMatrix
+          counts={matrixCounts}
+          filterStatus={filterStatus}
+          onSelectFilter={setFilterStatus}
+        />
+      </div>
 
-        {/* ── Active Queue List ── */}
-        <div className="patient-queue__list" role="list">
-          {filteredActive.length === 0 ? (
-            <Md3EmptyState
-              icon={<Icon.Inbox />}
-              title={searchQuery ? 'No matching patients' : 'No patients in this filter'}
-              subtitle={
-                searchQuery
-                  ? 'Try adjusting your search or filter.'
-                  : 'There are currently no patients under this status.'
-              }
-            />
-          ) : (
-            filteredActive.map((visit) => (
+      {/* ─── 3. Pure Material 3 Search Component with DSA Index ─── */}
+      <div className="doc-queue__search-wrap">
+        <Md3SearchBar
+          value={searchQuery}
+          onChange={setSearchQuery}
+          placeholder="Search by name, MRN, token, reason..."
+          matchCount={searchQuery ? filteredActive.length : undefined}
+          compact
+        />
+      </div>
+
+      {/* ─── 4. Active Queue List ─── */}
+      <div className="doc-queue__body">
+        {filteredActive.length === 0 ? (
+          <div className="doc-queue__empty-state">
+            <div className="doc-queue__empty-icon">
+              <span className="material-symbols-rounded">inbox</span>
+            </div>
+            <h4 className="doc-queue__empty-title">
+              {searchQuery ? 'No matching patients' : 'No patients in this view'}
+            </h4>
+            <p className="doc-queue__empty-desc">
+              {searchQuery
+                ? 'Check spelling or clear the search query.'
+                : 'Patients will appear here once checked in or triaged.'}
+            </p>
+          </div>
+        ) : (
+          <div className="doc-queue__list">
+            {filteredActive.map((visit) => (
               <QueuePatientCard
                 key={visit._id}
                 visit={visit}
@@ -215,35 +209,30 @@ const PatientQueue = ({
                 onCall={handleCall}
                 onSkip={handleSkip}
               />
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
 
-        {/* ── Skipped Section (collapsible) ── */}
+        {/* ─── 5. Skipped Section (If any) ─── */}
         {skippedQueue.length > 0 && (
-          <div className="patient-queue__skipped">
-            <Md3Section
-              title={`Skipped · ${skippedQueue.length}`}
-              subtitle="No-shows — click Re-queue to restore their token"
-              icon={<Icon.SkipForward />}
-              variant="error"
-              collapsible
-              defaultCollapsed
-            >
-              <div className="patient-queue__skipped-list" role="list">
-                {skippedQueue.map((visit) => (
-                  <QueuePatientCard
-                    key={visit._id}
-                    visit={visit}
-                    isSelected={selectedVisitId === visit._id}
-                    onClick={() => onSelectVisit?.(visit)}
-                    waitTime={timeSince(visit.createdAt)}
-                    onCall={handleRequeue}
-                    onSkip={null}
-                  />
-                ))}
-              </div>
-            </Md3Section>
+          <div className="doc-queue__skipped-section">
+            <div className="doc-queue__skipped-header">
+              <span className="material-symbols-rounded">forward_media</span>
+              <span>Skipped ({skippedQueue.length})</span>
+            </div>
+            <div className="doc-queue__list">
+              {skippedQueue.map((visit) => (
+                <QueuePatientCard
+                  key={visit._id}
+                  visit={visit}
+                  isSelected={selectedVisitId === visit._id}
+                  onClick={() => onSelectVisit?.(visit)}
+                  waitTime={timeSince(visit.createdAt)}
+                  onCall={handleRequeue}
+                  onSkip={null}
+                />
+              ))}
+            </div>
           </div>
         )}
       </div>

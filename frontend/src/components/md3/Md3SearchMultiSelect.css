@@ -1,0 +1,392 @@
+/* ==========================================================================
+   Md3SearchMultiSelect.css — Pure Material Design 3 Searchable Multi-Select
+   Reusable component styling for multi-select dropdowns with chips & search
+   ========================================================================== */
+
+.md3-sms {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 16px);
+  padding: 14px 16px;
+  box-sizing: border-box;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+  position: relative;
+}
+
+.md3-sms:focus-within {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary, #6750a4);
+}
+
+/* ─── 1. COMPONENT TITLE & HEADER ─── */
+.md3-sms__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.md3-sms__title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.md3-sms__icon {
+  font-size: 18px !important;
+  color: var(--md-sys-color-primary, #6750a4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-sms__title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.md3-sms__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-sms__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+}
+
+.md3-sms__clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-error, #ba1a1a);
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: background-color 150ms ease;
+}
+
+.md3-sms__clear-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-error-container, #ffdad6) 50%, transparent);
+}
+
+/* ─── 2. SEARCHABLE TRIGGER BOX ─── */
+.md3-sms__trigger-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 12px;
+  padding: 6px 12px;
+  gap: 8px;
+  transition: all 150ms ease;
+  cursor: text;
+}
+
+.md3-sms__trigger-box:hover {
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.md3-sms__trigger-box.is-focused,
+.md3-sms__trigger-box.is-open {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+.md3-sms__search-icon {
+  font-size: 18px !important;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  flex-shrink: 0;
+}
+
+.md3-sms__input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.8rem;
+  font-family: inherit;
+  outline: none;
+  padding: 0;
+  width: 100%;
+}
+
+.md3-sms__input::placeholder {
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+  font-size: 0.78rem;
+}
+
+.md3-sms__trigger-suffix {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.md3-sms__reset-search-btn {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-sms__reset-search-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.md3-sms__chevron-btn {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding: 2px;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 180ms ease;
+}
+
+.md3-sms__chevron-btn.is-rotated {
+  transform: rotate(180deg);
+}
+
+/* ─── 3. ANCHORED DROPDOWN POPOVER MENU ─── */
+.md3-sms__popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background-color: var(--md-sys-color-surface-container-highest, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 14px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.18);
+  z-index: 2500;
+  max-height: 260px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: md3SmsPopoverIn 160ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes md3SmsPopoverIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.md3-sms__popover-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background-color: var(--md-sys-color-surface-container-high, #e6e0e9);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-sms__popover-quick-btn {
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-primary, #6750a4);
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md3-sms__popover-quick-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary-container, #eaddff) 60%, transparent);
+}
+
+.md3-sms__options-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md3-sms__option-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  transition: background-color 120ms ease;
+  box-sizing: border-box;
+}
+
+.md3-sms__option-row:hover {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.md3-sms__option-row.is-selected {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  font-weight: 600;
+}
+
+.md3-sms__option-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.md3-sms__checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--md-sys-color-outline, #79747e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 120ms ease;
+  background-color: var(--md-sys-color-surface, #ffffff);
+}
+
+.md3-sms__option-row.is-selected .md3-sms__checkbox {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+}
+
+.md3-sms__option-label {
+  font-size: 0.78rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-sms__option-badge {
+  font-size: 0.65rem;
+  padding: 1px 6px;
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  border-radius: 4px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  flex-shrink: 0;
+}
+
+.md3-sms__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 24px 12px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.md3-sms__empty-icon {
+  font-size: 24px !important;
+  color: var(--md-sys-color-outline, #79747e);
+}
+
+/* ─── 4. SELECTED ITEMS CHIPS DECK (NEARBY INSIDE COMPONENT) ─── */
+.md3-sms__chips-deck {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.md3-sms__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 4px 10px;
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-secondary, #625b71) 25%, transparent);
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1;
+  animation: md3ChipPopIn 140ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes md3ChipPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.md3-sms__chip-remove-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  transition: background-color 120ms ease;
+}
+
+.md3-sms__chip-remove-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-on-secondary-container, #1d192b) 20%, transparent);
+}
+
+.md3-sms__chip-remove-icon {
+  font-size: 12px !important;
+}
+
+.md3-sms__placeholder-text {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+  font-style: italic;
+  padding: 2px 4px;
+}

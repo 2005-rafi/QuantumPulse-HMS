@@ -26,8 +26,8 @@
 }
 
 .md3-patient-list-table th {
-  padding: 14px 16px;
-  font-size: 12px;
+  padding: var(--md-comp-table-header-padding, 8px 14px);
+  font-size: var(--md-comp-table-header-font-size, 0.72rem);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -37,7 +37,7 @@
 }
 
 .md3-patient-list-table td {
-  padding: 12px 16px;
+  padding: var(--md-comp-table-cell-padding, 8px 14px);
   vertical-align: middle;
   border-bottom: 1px solid var(--md-sys-color-outline-variant, rgba(231, 224, 211, 0.6));
   transition: background-color 0.15s ease;
@@ -262,14 +262,17 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  min-height: var(--md-comp-action-btn-height, 28px);
+  height: var(--md-comp-action-btn-height, 28px);
+  padding: var(--md-comp-action-btn-padding, 2px 10px);
+  border-radius: var(--md-comp-action-corner, 8px);
   border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
-  background: var(--md-sys-color-surface-container-low, #f7f3e8);
+  background: var(--md-sys-color-surface-container-high, #ede8dc);
   color: var(--md-sys-color-primary, #6b5f19);
-  font-size: 12.5px;
+  font-size: var(--md-comp-action-font-size, 0.76rem);
   font-weight: 600;
   cursor: pointer;
+  box-sizing: border-box;
   transition: all 0.15s ease;
 }
 
@@ -277,8 +280,13 @@
   background: var(--md-sys-color-primary, #6b5f19);
   color: var(--md-sys-color-on-primary, #ffffff);
   border-color: var(--md-sys-color-primary, #6b5f19);
+  transform: translateY(-1px);
+}
+
+.md3-btn-view-profile:active {
+  transform: scale(0.96) translateY(0);
 }
 
 .md3-btn-view-profile .material-symbols-rounded {
-  font-size: 16px;
+  font-size: var(--md-comp-action-icon-size, 14px);
 }

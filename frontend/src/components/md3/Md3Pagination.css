@@ -1,0 +1,232 @@
+/* ==========================================================================
+   Md3Pagination.css — Material Design 3 Expressive Pagination Controls
+   Pure clinical styling with range indicators, page buttons, & transitions
+   ========================================================================== */
+
+.md3-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  box-sizing: border-box;
+  font-family: inherit;
+  user-select: none;
+  flex-wrap: wrap;
+  transition: all 180ms ease;
+}
+
+.md3-pagination--top {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  margin-bottom: 4px;
+  padding: 8px 16px;
+}
+
+.md3-pagination--bottom {
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-bottom-left-radius: 16px;
+  border-bottom-right-radius: 16px;
+  margin-top: 8px;
+}
+
+/* ─── 1. LEFT METRICS & RANGE INDICATOR ─── */
+.md3-pagination__summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-pagination__range-text {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-pagination__total-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ─── 2. PAGE SIZE SELECTOR ─── */
+.md3-pagination__size-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-pagination__size-options {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  padding: 2px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-pagination__size-btn {
+  background: transparent;
+  border: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 140ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-pagination__size-btn:hover:not(.is-active) {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-pagination__size-btn.is-active {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* ─── 3. NAVIGATION CONTROLS (BUTTONS & PILLS) ─── */
+.md3-pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.md3-pagination__nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.2, 0, 0, 1);
+  padding: 0;
+}
+
+.md3-pagination__nav-btn:hover:not(:disabled) {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-color: var(--md-sys-color-outline, #79747e);
+  color: var(--md-sys-color-primary, #6750a4);
+  transform: translateY(-1px);
+}
+
+.md3-pagination__nav-btn:active:not(:disabled) {
+  transform: translateY(0) scale(0.96);
+}
+
+.md3-pagination__nav-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.md3-pagination__nav-icon {
+  font-size: 18px !important;
+}
+
+/* Numbered Page Buttons */
+.md3-pagination__pages-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.md3-pagination__page-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-pagination__page-btn:hover:not(.is-active) {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-color: var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-pagination__page-btn.is-active {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(103, 80, 164, 0.3);
+}
+
+.md3-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 32px;
+  color: var(--md-sys-color-outline, #79747e);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* ─── 4. ANIMATION TRANSITION FOR PAGINATED LISTS ─── */
+.md3-paginated-content-fade {
+  animation: md3PaginatedFade 200ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes md3PaginatedFade {
+  from {
+    opacity: 0.4;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── 5. RESPONSIVE BREAKPOINTS ─── */
+@media (max-width: 768px) {
+  .md3-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .md3-pagination__controls {
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .md3-pagination__summary {
+    justify-content: space-between;
+  }
+
+  .md3-pagination__nav-btn.is-edge {
+    display: none;
+  }
+}

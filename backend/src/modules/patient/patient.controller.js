@@ -20,25 +20,14 @@ const create = catchAsync(async (req, res) => {
 });
 
 const search = catchAsync(async (req, res) => {
-  const { q, page, limit, visitType, startDate, endDate, departmentId, doctorId, sortBy } = req.query;
-  const result = await service.search({
-    q,
-    page: +page || 1,
-    limit: +limit || 20,
-    visitType,
-    startDate,
-    endDate,
-    departmentId,
-    doctorId,
-    sortBy
-  });
+  const result = await service.search(req.query);
 
   auditService.logEvent(
     req.user.staffId || req.user.userId,
     req.user.role,
     'PATIENT_SEARCH',
     null,
-    { query: q, resultsCount: result.total },
+    { query: req.query.q || '', resultsCount: result.total },
     req.ip
   );
 

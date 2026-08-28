@@ -125,20 +125,39 @@ export const Md3TestCatalogConfigurator = ({ lab, onClose, onSave }) => {
   };
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-      <div style={{
-        background: 'var(--md-sys-color-surface-container-high, #f7f2fa)',
-        color: 'var(--md-sys-color-on-surface)',
-        borderRadius: '24px',
-        maxWidth: '1000px',
-        width: '95%',
-        maxHeight: '92vh',
-        overflow: 'hidden',
-        border: '1px solid var(--md-sys-color-outline-variant)',
-        boxShadow: '0 12px 48px rgba(0,0,0,0.15)',
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(3px)',
+        WebkitBackdropFilter: 'blur(3px)',
         display: 'flex',
-        flexDirection: 'column'
-      }}>
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        overflowY: 'auto',
+        zIndex: 2000,
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--md-sys-color-surface-container-high, #f7f2fa)',
+          color: 'var(--md-sys-color-on-surface)',
+          borderRadius: '24px',
+          maxWidth: '1000px',
+          width: '95%',
+          maxHeight: 'calc(100vh - 48px)',
+          margin: '0 auto',
+          overflow: 'hidden',
+          border: '1px solid var(--md-sys-color-outline-variant)',
+          boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header Block */}
         <div style={{

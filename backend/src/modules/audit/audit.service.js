@@ -53,36 +53,20 @@ class AuditService {
   }
 
   async getLogs(filters = {}, page = 1, limit = 50) {
-    const skip = (page - 1) * limit;
-    
-    // Build query
-    const query = {};
-    if (filters.action) query.action = filters.action;
-    if (filters.actorId) query.actorId = filters.actorId;
-    if (filters.targetId) query.targetId = filters.targetId;
-    
-    if (filters.startDate || filters.endDate) {
-      query.timestamp = {};
-      if (filters.startDate) query.timestamp.$gte = new Date(filters.startDate);
-      if (filters.endDate) query.timestamp.$lte = new Date(filters.endDate);
-    }
+    const { QueryContext, QueryBuilder, AuditQueryConfig } = require('../../core/query');
 
-    const items = await AuditLog.find(query)
-      .populate('actorId', 'fullName username')
-      .sort({ timestamp: -1 })
-      .skip(skip)
-      .limit(limit)
-      .lean();
-
-    const total = await AuditLog.countDocuments(query);
-
-    return {
-      items,
-      total,
+    const queryContext = new QueryContext({
+      filters,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
-    };
+      cursor: filters.cursor,
+      sortBy: filters.sortBy || 'timestamp',
+      sortOrder: filters.sortOrder || 'desc',
+    });
+
+    return await QueryBuilder.execute(AuditLog, queryContext, AuditQueryConfig, {
+      populate: { path: 'actorId', select: 'fullName username' },
+    });
   }
 }
 

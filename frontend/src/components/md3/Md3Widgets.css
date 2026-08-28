@@ -214,17 +214,19 @@
 }
 
 /* ──────────────────────────────────────────────────────
-   Md3StatCard — metric display card
+   Md3StatCard — metric display card (Compact Clinical Density)
    ────────────────────────────────────────────────────── */
 .md3-stat-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
+  gap: var(--md-comp-stats-bar-gap, 8px);
+  padding: var(--md-comp-stat-card-padding, 6px 12px);
+  min-height: var(--md-comp-stat-card-min-height, 48px);
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: 14px;
+  border-radius: var(--md-comp-stat-card-border-radius, 10px);
   transition: background-color var(--md-sys-motion-duration-short) ease, transform 0.15s ease;
+  box-sizing: border-box;
 }
 
 .md3-stat-card:hover {
@@ -232,15 +234,20 @@
 }
 
 .md3-stat-card__icon {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: var(--md-comp-stat-icon-box-size, 28px);
+  height: var(--md-comp-stat-icon-box-size, 28px);
+  border-radius: var(--md-sys-shape-corner-small, 8px);
   background-color: var(--md-sys-color-primary-container);
   color: var(--md-sys-color-on-primary-container);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+.md3-stat-card__icon svg {
+  width: var(--md-comp-stat-icon-size, 15px);
+  height: var(--md-comp-stat-icon-size, 15px);
 }
 
 .md3-stat-card--secondary .md3-stat-card__icon {
@@ -267,16 +274,17 @@
 }
 
 .md3-stat-card__label {
-  font-size: 0.7rem;
+  font-size: var(--md-comp-stat-label-size, 0.68rem);
   color: var(--md-sys-color-on-surface-variant);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+  line-height: 1.1;
 }
 
 .md3-stat-card__value {
-  font-size: 1.15rem;
-  font-weight: 800;
+  font-size: var(--md-comp-stat-value-size, 0.95rem);
+  font-weight: 700;
   color: var(--md-sys-color-on-surface);
   letter-spacing: -0.01em;
   line-height: 1.15;
@@ -354,6 +362,33 @@
 .md3-section--error .md3-section__icon {
   background-color: var(--md-sys-color-error-container);
   color: var(--md-sys-color-error);
+}
+
+.md3-section--compact {
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+}
+.md3-section--compact .md3-section__header {
+  padding: var(--md-lab-section-header-padding, 6px 10px);
+  gap: var(--md-spacing-xs, 8px);
+}
+.md3-section--compact .md3-section__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+}
+.md3-section--compact .md3-section__icon svg {
+  width: 14px;
+  height: 14px;
+}
+.md3-section--compact .md3-section__title {
+  font-size: 0.82rem;
+}
+.md3-section--compact .md3-section__subtitle {
+  font-size: 0.70rem;
+}
+.md3-section--compact .md3-section__body {
+  padding: var(--md-spacing-xs, 8px) var(--md-spacing-s, 10px);
+  gap: var(--md-spacing-xs, 8px);
 }
 
 .md3-section__header {
@@ -757,6 +792,9 @@
 /* ──────────────────────────────────────────────────────
    Md3Tabs — primary tab bar (Segmented Control)
    ────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────
+   Md3Tabs — primary tab bar (Segmented Control / Compact Density)
+   ────────────────────────────────────────────────────── */
 .md3-tabs {
   display: grid;
   grid-auto-flow: column;
@@ -768,18 +806,21 @@
   border: 1px solid var(--md-sys-color-outline-variant);
   width: fit-content;
   box-sizing: border-box;
+  height: var(--md-comp-tab-height, 34px);
+  align-items: center;
 }
 
 .md3-tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--md-spacing-xxs);
-  padding: 10px 16px;
+  gap: var(--md-spacing-xs, 4px);
+  padding: var(--md-comp-tab-padding, 4px 14px);
+  height: 100%;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--md-comp-tab-font-size, 0.8rem);
   font-weight: 600;
   color: var(--md-sys-color-on-surface-variant);
   border-radius: var(--md-sys-shape-corner-full, 9999px);
@@ -802,8 +843,8 @@
 }
 
 .md3-tab__icon svg {
-  width: 16px;
-  height: 16px;
+  width: var(--md-comp-tab-icon-size, 15px);
+  height: var(--md-comp-tab-icon-size, 15px);
 }
 
 .md3-tabs__indicator {
@@ -820,10 +861,10 @@
 .md3-tabs__indicator::after {
   content: '';
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  right: 4px;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  right: 3px;
   background-color: var(--md-sys-color-secondary-container);
   border-radius: var(--md-sys-shape-corner-full, 9999px);
 }

@@ -4,11 +4,31 @@ import {
 } from '../../components/md3/Md3Widgets';
 
 const MedicalHistoryPanel = ({ patient = {} }) => {
+  const isNoneOrNkda = (text) => {
+    if (!text) return true;
+    if (typeof text === 'string') {
+      const clean = text.trim().toUpperCase();
+      return (
+        clean === '' ||
+        clean === 'NONE' ||
+        clean === 'NIL' ||
+        clean === 'NO' ||
+        clean === 'NKDA' ||
+        clean === 'NO KNOWN ALLERGIES' ||
+        clean === 'NO KNOWN DRUG ALLERGIES' ||
+        clean === 'N/A' ||
+        clean === 'NULL' ||
+        clean === 'UNDEFINED'
+      );
+    }
+    return false;
+  };
+
   const parseCommaString = (val) => {
     if (!val) return [];
-    if (Array.isArray(val)) return val;
+    if (Array.isArray(val)) return val.filter(s => !isNoneOrNkda(s));
     if (typeof val === 'string') {
-      return val.split(',').map(s => s.trim()).filter(Boolean);
+      return val.split(',').map(s => s.trim()).filter(s => !isNoneOrNkda(s));
     }
     return [];
   };
@@ -16,11 +36,11 @@ const MedicalHistoryPanel = ({ patient = {} }) => {
   const allergies = parseCommaString(patient.allergies);
   const surgeries = parseCommaString(patient.operations);
   const conditions = Array.isArray(patient.chronicConditions)
-    ? patient.chronicConditions
+    ? patient.chronicConditions.filter(s => !isNoneOrNkda(s))
     : (typeof patient.chronicConditions === 'string'
         ? parseCommaString(patient.chronicConditions)
         : (Array.isArray(patient.medicalHistory)
-            ? patient.medicalHistory.map(item => item.condition || item.name || '').filter(Boolean)
+            ? patient.medicalHistory.map(item => item.condition || item.name || '').filter(s => !isNoneOrNkda(s))
             : []));
 
   const hasAnyData = allergies.length > 0 || conditions.length > 0 || surgeries.length > 0;
@@ -38,12 +58,12 @@ const MedicalHistoryPanel = ({ patient = {} }) => {
           </div>
         </div>
         {allergies.length > 0 ? (
-          <Md3Chip variant="error" size="small">
-            ⚠️ {allergies.length} Critical Allerg{allergies.length !== 1 ? 'ies' : 'y'}
+          <Md3Chip variant="error" size="small" icon={<Icon.Alert />}>
+            {allergies.length} Critical Allerg{allergies.length !== 1 ? 'ies' : 'y'}
           </Md3Chip>
         ) : (
-          <Md3Chip variant="success" size="small">
-            ✓ NKDA
+          <Md3Chip variant="success" size="small" icon={<Icon.Check />}>
+            NKDA
           </Md3Chip>
         )}
       </div>

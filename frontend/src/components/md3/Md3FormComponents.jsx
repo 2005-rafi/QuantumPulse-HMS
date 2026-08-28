@@ -65,6 +65,9 @@ export const Md3Button = ({
   variant = 'primary',
   className = '',
   style = {},
+  leadingIcon,
+  trailingIcon,
+  icon,
   ...props
 }) => {
   return (
@@ -82,7 +85,12 @@ export const Md3Button = ({
           <span>{loadingText}</span>
         </>
       ) : (
-        children
+        <>
+          {leadingIcon && <span className="md3-btn-leading-icon">{leadingIcon}</span>}
+          {icon && <span className="md3-btn-icon">{icon}</span>}
+          {children}
+          {trailingIcon && <span className="md3-btn-trailing-icon">{trailingIcon}</span>}
+        </>
       )}
     </button>
   );

@@ -1,79 +1,95 @@
+/* ============================================================
+   Md3FileUpload.css — Compact Clinical File Upload
+   Centralized Tokens from style_config.css
+   ============================================================ */
+
 .md3-file-upload-card {
-  margin-top: 1.25rem;
-  padding: 1.25rem;
+  margin-top: var(--md-lab-workbench-gap, 8px);
+  padding: var(--md-lab-specimen-card-padding, 8px 12px);
   background: var(--md-sys-color-surface-container-low, #f8f9fa);
   border: 1px solid var(--md-sys-color-outline-variant, #e0e0e0);
-  border-radius: 16px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: background-color 0.2s ease, border-color 0.2s ease;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  transition: background-color var(--md-sys-motion-duration-short, 150ms) ease, border-color var(--md-sys-motion-duration-short, 150ms) ease;
 }
 
 .md3-file-upload-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1rem;
+  margin-bottom: var(--md-spacing-xs, 6px);
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: var(--md-spacing-xs, 6px);
 }
 
 .md3-file-upload-card__title {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
+  gap: 6px;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface, #1f1f1f);
 }
 
+.md3-file-upload-card__title svg {
+  width: 15px;
+  height: 15px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
 .md3-file-upload-card__subtitle {
-  font-size: 0.75rem;
+  font-size: 0.70rem;
   color: var(--md-sys-color-on-surface-variant, #757575);
 }
 
 .md3-file-upload-card__body {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
+  gap: var(--md-spacing-xs, 6px);
 }
 
 .md3-file-upload-card__select-group {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 2px;
 }
 
 .md3-file-upload-card__label {
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .md3-file-upload-card__select {
-  padding: 0.625rem 0.875rem;
-  border-radius: 8px;
-  border: 1px solid var(--md-sys-color-outline, #79747e);
+  padding: 4px 8px;
+  border-radius: var(--md-sys-shape-corner-extra-small, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant, #79747e);
   background: var(--md-sys-color-surface, #ffffff);
   color: var(--md-sys-color-on-surface, #1d1b20);
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color var(--md-sys-motion-duration-short, 150ms) ease;
 }
 
 .md3-file-upload-card__select:focus {
   border-color: var(--md-sys-color-primary, #6750a4);
-  box-shadow: 0 0 0 2px rgba(103, 80, 164, 0.15);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary, #6750a4);
 }
 
 .md3-file-upload-dropzone {
   position: relative;
-  border: 2px dashed var(--md-sys-color-outline-variant, #c4c7c5);
-  border-radius: 12px;
-  padding: 1.5rem 1rem;
+  border: 1px dashed var(--md-sys-color-outline-variant, #c4c7c5);
+  border-radius: var(--md-sys-shape-corner-extra-small, 6px);
+  padding: var(--md-lab-upload-dropzone-padding, 8px 12px);
   text-align: center;
   background: var(--md-sys-color-surface, #ffffff);
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  min-height: var(--md-lab-upload-dropzone-min-height, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color var(--md-sys-motion-duration-short, 150ms) ease, background-color var(--md-sys-motion-duration-short, 150ms) ease;
 }
 
 .md3-file-upload-dropzone:hover,
@@ -82,127 +98,64 @@
   background: var(--md-sys-color-primary-container, #eaddff);
 }
 
-.md3-file-upload-dropzone.has-file {
-  cursor: default;
-  border-style: solid;
-}
-
 .md3-file-upload-input {
   display: none;
 }
 
 .md3-file-upload-dropzone__placeholder {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.375rem;
+  justify-content: center;
+  gap: var(--md-spacing-s, 8px);
+  flex-wrap: wrap;
 }
 
 .md3-file-upload-dropzone__icon {
-  font-size: 2rem;
+  font-size: 1.15rem;
   color: var(--md-sys-color-primary, #6750a4);
-  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.md3-file-upload-dropzone__icon svg {
+  width: 16px;
+  height: 16px;
 }
 
 .md3-file-upload-dropzone__text {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .md3-file-upload-dropzone__hint {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.md3-file-upload-preview {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 0.5rem;
-}
-
-.md3-file-upload-preview__img {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
-}
-
-.md3-file-upload-preview__icon {
-  width: 56px;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-  border-radius: 8px;
-  font-size: 1.5rem;
-}
-
-.md3-file-upload-preview__info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  flex: 1;
-  overflow: hidden;
-}
-
-.md3-file-upload-preview__filename {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface, #1d1b20);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.md3-file-upload-preview__filesize {
-  font-size: 0.75rem;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-}
-
-.md3-file-upload-preview__remove {
-  background: transparent;
-  border: none;
-  color: var(--md-sys-color-error, #b3261e);
-  font-size: 1.125rem;
-  cursor: pointer;
-  padding: 0.35rem 0.5rem;
-  border-radius: 50%;
-  transition: background-color 0.2s ease;
-}
-
-.md3-file-upload-preview__remove:hover {
-  background: rgba(179, 38, 30, 0.1);
 }
 
 .md3-file-upload-error {
-  font-size: 0.8125rem;
+  font-size: 0.72rem;
   color: var(--md-sys-color-error, #b3261e);
-  padding: 0.375rem 0.5rem;
+  padding: 3px 6px;
   background: var(--md-sys-color-error-container, #f9dedc);
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .md3-file-upload-card__actions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 0.25rem;
+  margin-top: 2px;
 }
 
 /* Staged Preview Panel */
 .md3-file-upload-preview-pane {
   background: var(--md-sys-color-surface-container, #eceff1);
   border: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
-  border-radius: 12px;
-  padding: 1rem;
+  border-radius: var(--md-sys-shape-corner-extra-small, 6px);
+  padding: var(--md-spacing-xs, 6px);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 4px;
 }
 
 .md3-file-upload-preview-pane__header {
@@ -212,7 +165,7 @@
 }
 
 .md3-file-upload-preview-pane__title {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
@@ -221,13 +174,13 @@
   background: transparent;
   border: none;
   color: var(--md-sys-color-error, #ba1a1a);
-  font-size: 0.75rem;
+  font-size: 0.70rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 8px;
+  gap: 3px;
+  padding: 2px 6px;
   border-radius: 4px;
 }
 
@@ -238,28 +191,28 @@
 .md3-file-upload-preview-pane__viewport {
   background: var(--md-sys-color-surface-container-lowest, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
-  border-radius: 8px;
-  min-height: 200px;
-  max-height: 380px;
+  border-radius: 6px;
+  min-height: 80px;
+  max-height: var(--md-lab-upload-preview-max-height, 180px);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: auto;
-  padding: 0.5rem;
+  padding: 4px;
 }
 
 .md3-file-upload-preview-pane__img {
   max-width: 100%;
-  max-height: 360px;
+  max-height: 160px;
   object-fit: contain;
   border-radius: 4px;
 }
 
 .md3-file-upload-preview-pane__iframe {
   width: 100%;
-  height: 350px;
+  height: 160px;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
 }
 
 .md3-file-upload-preview-pane__generic {
@@ -267,25 +220,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 4px;
   text-align: center;
-  padding: 2rem 1rem;
-}
-
-.md3-file-upload-preview-pane__generic-icon {
-  font-size: 3rem;
-  color: var(--md-sys-color-outline, #79747e);
+  padding: 1rem 0.5rem;
 }
 
 .md3-file-upload-preview-pane__generic-name {
-  font-size: 0.875rem;
+  font-size: 0.78rem;
   font-weight: 500;
   color: var(--md-sys-color-on-surface, #1d1b20);
   word-break: break-all;
 }
 
 .md3-file-upload-preview-pane__generic-hint {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
@@ -293,15 +241,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 0.75rem;
+  font-size: 0.70rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 .md3-file-upload-preview-pane__filename {
   font-weight: 500;
   word-break: break-all;
-  margin-right: 12px;
+  margin-right: 8px;
 }
 
 .md3-file-upload-preview-pane__filesize {
@@ -309,28 +257,28 @@
 }
 
 .md3-file-upload-preview-pane__verify {
-  padding: 0.5rem;
+  padding: 4px 6px;
   background: var(--md-sys-color-surface-container-high, #eceff1);
-  border-radius: 8px;
-  border-left: 3px solid var(--md-sys-color-primary, #6750a4);
+  border-radius: 4px;
+  border-left: 2px solid var(--md-sys-color-primary, #6750a4);
 }
 
 .md3-file-upload-preview-pane__verify-label {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
 }
 
 .md3-file-upload-preview-pane__checkbox {
-  margin-top: 3px;
   cursor: pointer;
 }
 
 .md3-file-upload-preview-pane__verify-text {
-  font-size: 0.75rem;
+  font-size: 0.70rem;
   font-weight: 500;
   color: var(--md-sys-color-on-surface, #1d1b20);
-  line-height: 1.4;
+  line-height: 1.3;
 }
+
 

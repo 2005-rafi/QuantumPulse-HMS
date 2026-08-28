@@ -19,6 +19,8 @@ export const SearchSortFilterPanel = ({
     departmentId: [],
     doctorId: [],
     roleId: [],
+    state: '',
+    city: '',
     startDate: '',
     endDate: '',
     sortBy: 'newest',
@@ -41,6 +43,8 @@ export const SearchSortFilterPanel = ({
       departmentId: [],
       doctorId: [],
       roleId: [],
+      state: '',
+      city: '',
       startDate: '',
       endDate: '',
       sortBy: 'newest',
@@ -54,6 +58,8 @@ export const SearchSortFilterPanel = ({
     filters.departmentId?.length || 0,
     filters.doctorId?.length || 0,
     filters.roleId?.length || 0,
+    filters.state ? 1 : 0,
+    filters.city ? 1 : 0,
     filters.startDate ? 1 : 0,
     filters.endDate ? 1 : 0,
     filters.sortBy !== 'newest' ? 1 : 0
@@ -91,9 +97,9 @@ export const SearchSortFilterPanel = ({
           <Md3Button
             variant={activeFiltersCount > 0 ? 'filled' : 'outlined'}
             onClick={() => setIsSheetOpen(true)}
-            style={{ width: 'auto', minWidth: '120px' }}
+            className="md3-ssf-filter-btn"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" style={{ marginRight: '8px' }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" style={{ marginRight: '6px' }}>
               <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
             </svg>
             Filters {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
@@ -102,7 +108,7 @@ export const SearchSortFilterPanel = ({
             <Md3Button
               variant="text"
               onClick={handleReset}
-              style={{ width: 'auto', minWidth: '80px' }}
+              className="md3-ssf-reset-btn"
             >
               Reset
             </Md3Button>

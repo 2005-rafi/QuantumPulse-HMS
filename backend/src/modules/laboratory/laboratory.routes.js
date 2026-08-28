@@ -25,24 +25,28 @@ router.post(  '/config/:id/tests',             authenticate, requirePermission('
 router.put(   '/config/:id/tests/:testId',     authenticate, requirePermission('LAB_MANAGE'), validate(updateTestSchema), controller.updateTest);
 router.delete('/config/:id/tests/:testId',     authenticate, requirePermission('LAB_MANAGE'), controller.removeTest);
 
-// ── Workflow Routes (Technician — LAB_PROCESS) ──────────────────────────────────
+// ── Workflow Routes (Technician / Admin — LAB_PROCESS / LAB_MANAGE) ─────────────
 router.get('/pending',
-  authenticate, requirePermission('LAB_PROCESS'),
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY', 'VISIT_VIEW']),
   controller.getPendingVisits);
 
+router.get('/reported',
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY', 'VISIT_VIEW']),
+  controller.getReportedVisits);
+
 router.patch('/orders/:visitId/:orderId/collect',
-  authenticate, requirePermission('LAB_PROCESS'),
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY']),
   controller.collectSample);
 
 router.patch('/orders/:visitId/:orderId/results',
-  authenticate, requirePermission('LAB_PROCESS'),
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY']),
   validate(uploadResultsSchema),
   controller.uploadResults);
 
 // ── Scan File Routes (Technician — LAB_PROCESS / LAB_VERIFY) ────────────────────
 // Upload: inject dept code → multer → multer error handler → controller
 router.post('/orders/:visitId/:orderId/scan',
-  authenticate, requirePermission('LAB_PROCESS'),
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY']),
   controller.constructor.injectDeptCode,
   upload.single('file'),
   handleUploadError,

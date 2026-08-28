@@ -7,6 +7,7 @@ import { appointmentAPI } from '../../services/appointmentAPI';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import PrintablePatientIdCard from '../../components/patients/PrintablePatientIdCard';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import { Md3Button, Md3TextField, Md3Select, Md3BottomSheet } from '../../components/md3/Md3FormComponents';
 import { AppointmentForm } from '../appointments/AppointmentForm';
 import { AppointmentStatusBadge } from '../appointments/AppointmentStatusBadge';
@@ -378,7 +379,7 @@ const OverviewTabContent = ({ visits, userRole, onCancelVisit }) => {
                         {v.departmentId?.name || 'General OPD'}
                       </div>
                       <div style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '2px' }}>
-                        {v.consultation?.doctorId?.fullName ? `Dr. ${v.consultation.doctorId.fullName}` : 'Any Available Doctor'} · Registered {new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {v.consultation?.doctorId?.fullName ? formatDoctorName(v.consultation.doctorId.fullName) : 'Any Available Doctor'} · Registered {new Date(v.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
                   </div>
@@ -753,7 +754,7 @@ const PatientAppointmentsSection = ({
     {
       key: 'doctor',
       header: 'Doctor',
-      render: (row) => (row.doctorId?.fullName ? `Dr. ${row.doctorId.fullName}` : 'Any Available'),
+      render: (row) => (row.doctorId?.fullName ? formatDoctorName(row.doctorId.fullName) : 'Any Available'),
     },
     {
       key: 'status',

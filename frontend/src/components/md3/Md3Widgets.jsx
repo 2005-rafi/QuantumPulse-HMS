@@ -780,6 +780,7 @@ export const Md3DataTable = ({
   emptyState,
   loading,
   className = '',
+  onRowClick,
 }) => (
   <div className={`md3-data-table-wrap ${className}`}>
     <table className="md3-data-table">
@@ -792,7 +793,7 @@ export const Md3DataTable = ({
                 scope="col"
                 style={col.align ? { textAlign: col.align } : undefined}
               >
-                {col.header}
+                {col.header || col.label}
               </th>
             ))}
           </tr>
@@ -810,7 +811,12 @@ export const Md3DataTable = ({
           </tr>
         ) : rows && rows.length > 0 ? (
           rows.map((row, rowIdx) => (
-            <tr key={row._id || row.id || rowIdx}>
+            <tr 
+              key={row._id || row.id || rowIdx}
+              onClick={onRowClick ? () => onRowClick(row) : undefined}
+              className={onRowClick ? 'md3-data-table-row--clickable' : undefined}
+              style={onRowClick ? { cursor: 'pointer' } : undefined}
+            >
               {columns.map((col, colIdx) => (
                 <td
                   key={col.key || colIdx}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Md3Select, Md3DatePicker, Md3Button } from '../../components/md3/Md3FormComponents';
 import { Icon } from '../../components/md3/Md3Widgets';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import { adminAPI } from '../../services/adminAPI';
 import { appointmentAPI } from '../../services/appointmentAPI';
 import api from '../../services/api';
@@ -64,7 +65,7 @@ export const AppointmentFilters = ({
     { value: '', label: 'All Doctors' },
     ...doctors.map((doc) => ({
       value: doc._id || doc.id,
-      label: `Dr. ${doc.fullName} (${doc.primarySpecialization || doc.position || 'General'})`,
+      label: `${formatDoctorName(doc.fullName)} (${doc.primarySpecialization || doc.position || 'General'})`,
     })),
   ];
 
@@ -142,17 +143,21 @@ export const AppointmentFilters = ({
         </div>
       </div>
 
-      {/* Action Buttons */}
+      {/* Action Buttons — Pushed to Right End with Minimal Sizing */}
       <div className="appt-filters-actions">
-        <Md3Button variant="text" onClick={onReset} className="appt-filter-btn">
+        <Md3Button 
+          variant="outlined" 
+          onClick={onReset} 
+          className="appt-filter-btn appt-filter-btn--reset"
+        >
           <Icon.X />
           <span>Reset</span>
         </Md3Button>
         <Md3Button
-          variant="secondary"
+          variant="tonal"
           onClick={onRefresh}
           loading={loading}
-          className="appt-filter-btn"
+          className="appt-filter-btn appt-filter-btn--refresh"
         >
           <Icon.Refresh />
           <span>Refresh</span>

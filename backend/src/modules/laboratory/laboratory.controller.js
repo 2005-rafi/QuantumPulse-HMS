@@ -60,6 +60,11 @@ class LaboratoryController {
     return success(res, visits, 'Pending lab visits retrieved successfully');
   });
 
+  getReportedVisits = catchAsync(async (req, res) => {
+    const visits = await laboratoryService.getReportedVisits(req.user.departmentId, req.query);
+    return success(res, visits, 'Reported lab visits retrieved successfully');
+  });
+
   collectSample = catchAsync(async (req, res) => {
     const { visitId, orderId } = req.params;
     const visit = await laboratoryService.collectSample(visitId, orderId, req.user.departmentId);

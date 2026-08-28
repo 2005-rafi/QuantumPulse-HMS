@@ -14,7 +14,7 @@ const HistoryTab = ({ patient = {} }) => {
           <div className="summary-card__header">
             <div className="summary-card__title-wrap">
               <span className="summary-card__icon default">
-                <Icon.User size={18} />
+                <Icon.Person />
               </span>
               <div>
                 <h4 className="summary-card__title">Demographics & Emergency Contact</h4>

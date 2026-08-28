@@ -15,127 +15,141 @@
   width: 100%;
 }
 
-/* Outlined Input Box */
+/* Outlined Input Box (Compact Clinical Scale) */
 .md3-field-input {
   width: 100%;
-  min-height: 56px; /* MD3 standard outlined text field height */
-  padding: 16px var(--md-spacing-m, 16px);
+  min-height: 38px;
+  height: 38px;
+  padding: 8px 12px;
   font: var(--md-sys-typescale-body-large-font);
-  font-size: var(--md-sys-typescale-body-large-size);
+  font-size: 0.82rem;
   border-radius: var(--md-sys-shape-corner-small, 8px);
-  border: 1px solid var(--md-sys-color-outline);
-  background-color: transparent;
-  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
   outline: none;
+  box-sizing: border-box;
   transition: border-color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-              box-shadow var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
+              box-shadow var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
+              background-color var(--md-sys-motion-duration-short) ease;
+}
+
+textarea.md3-field-input {
+  height: auto;
+  min-height: 56px;
+  resize: vertical;
 }
 
 .md3-field-input.has-leading {
-  padding-left: 48px;
+  padding-left: 34px;
 }
 
 .md3-field-input.has-trailing {
-  padding-right: 48px;
+  padding-right: 34px;
 }
 
 /* Hover outline */
 .md3-field-input:hover:not(:focus):not(:disabled) {
-  border-color: var(--md-sys-color-on-surface);
+  border-color: var(--md-sys-color-on-surface-variant, #49454f);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
 }
 
 /* Focus outline */
 .md3-field-input:focus {
-  border: 2px solid var(--md-sys-color-primary);
-  padding: 15px var(--md-spacing-m, 16px); /* adjust padding to prevent border jumping */
+  border: 2px solid var(--md-sys-color-primary, #6750a4);
+  padding: 7px 11px;
 }
 .md3-field-input.has-leading:focus {
-  padding-left: 47px;
+  padding-left: 33px;
 }
 .md3-field-input.has-trailing:focus {
-  padding-right: 47px;
+  padding-right: 33px;
 }
 
 /* Floating Label */
 .md3-field-label {
   position: absolute;
-  left: var(--md-spacing-m, 16px);
+  left: 12px;
   top: 50%;
   transform: translateY(-50%);
-  color: var(--md-sys-color-on-surface-variant);
-  font: var(--md-sys-typescale-body-large-font);
-  font-size: var(--md-sys-typescale-body-large-size);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.80rem;
+  font-weight: 500;
   pointer-events: none;
-  transition: transform var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-              top var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-              left var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-              font-size var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard),
-              color var(--md-sys-motion-duration-short) var(--md-sys-motion-easing-standard);
-  background-color: var(--md-sys-color-surface); /* covers the border line */
-  padding: 0 6px;
+  transition: transform 0.15s var(--md-sys-motion-easing-standard),
+              top 0.15s var(--md-sys-motion-easing-standard),
+              left 0.15s var(--md-sys-motion-easing-standard),
+              font-size 0.15s var(--md-sys-motion-easing-standard),
+              color 0.15s var(--md-sys-motion-easing-standard);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  padding: 0 4px;
   line-height: 1;
+  border-radius: 2px;
 }
 
 .md3-field-input.has-leading ~ .md3-field-label {
-  left: 48px;
+  left: 34px;
 }
 
 /* Floating Label on Focus/Populated */
 .md3-field-input:focus ~ .md3-field-label,
-.md3-field-input:not(:placeholder-shown) ~ .md3-field-label {
+.md3-field-input:not(:placeholder-shown) ~ .md3-field-label,
+.md3-field-input.is-filled ~ .md3-field-label {
   top: 0;
-  left: var(--md-spacing-s, 12px);
+  left: 8px;
   transform: translateY(-50%);
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--md-sys-color-primary);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #6750a4);
 }
 
 /* Error States */
 .md3-error .md3-field-input {
-  border-color: var(--md-sys-color-error);
+  border-color: var(--md-sys-color-error, #ba1a1a);
 }
 .md3-error .md3-field-input:focus {
-  border-color: var(--md-sys-color-error);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-error) 15%, transparent);
+  border-color: var(--md-sys-color-error, #ba1a1a);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 20%, transparent);
 }
 .md3-error .md3-field-input:focus ~ .md3-field-label,
 .md3-error .md3-field-input:not(:placeholder-shown) ~ .md3-field-label {
-  color: var(--md-sys-color-error);
+  color: var(--md-sys-color-error, #ba1a1a);
 }
 
 /* Disabled States */
 .md3-disabled {
-  opacity: 0.38;
+  opacity: 0.42;
   pointer-events: none;
 }
 
 /* Icons */
 .md3-field-leading-icon {
   position: absolute;
-  left: var(--md-spacing-m, 16px);
+  left: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   pointer-events: none;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
 }
 
+.md3-field-leading-icon .material-symbols-rounded,
 .md3-field-leading-icon svg {
-  width: 20px;
-  height: 20px;
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
 }
 
 .md3-field-trailing-icon {
   position: absolute;
-  right: var(--md-spacing-s, 12px);
+  right: 6px;
   background: none;
   border: none;
-  padding: var(--md-spacing-xs, 8px);
+  padding: 4px;
   cursor: pointer;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -149,114 +163,145 @@
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface) 8%, transparent);
 }
 
-/* Error helper text styling */
-.md3-field-error-text {
-  font-size: 0.75rem;
-  color: var(--md-sys-color-error);
-  font-weight: 500;
-  padding-left: var(--md-spacing-m, 16px);
-  margin-top: 2px;
-  animation: md3NoticeSlide 0.25s var(--md-sys-motion-easing-standard) forwards;
+.md3-field-trailing-icon .material-symbols-rounded,
+.md3-field-trailing-icon svg {
+  font-size: 15px;
+  width: 15px;
+  height: 15px;
 }
 
-/* Button */
+/* Error helper text styling */
+.md3-field-error-text {
+  font-size: 0.70rem;
+  color: var(--md-sys-color-error, #ba1a1a);
+  font-weight: 600;
+  padding-left: 10px;
+  margin-top: 1px;
+  animation: md3NoticeSlide 0.2s var(--md-sys-motion-easing-standard) forwards;
+}
+
+/* ── MD3 ACTION BUTTON (Centralized Minimal Sizing & Color Theory) ── */
 .md3-btn {
-  width: 100%;
-  min-height: 48px;
-  padding: var(--md-spacing-s, 12px) var(--md-spacing-l, 24px);
-  border: none;
-  border-radius: var(--md-sys-shape-corner-full);
+  width: auto;
+  min-height: var(--md-comp-btn-height-md, 32px);
+  height: var(--md-comp-btn-height-md, 32px);
+  padding: var(--md-comp-btn-padding-md, 3px 12px);
+  border: 1px solid transparent;
+  border-radius: var(--md-comp-btn-border-radius, 9999px);
   font: var(--md-sys-typescale-label-large-font);
-  font-size: var(--md-sys-typescale-label-large-size);
-  font-weight: var(--md-sys-typescale-label-large-weight);
+  font-size: var(--md-comp-btn-font-size-md, 0.8rem);
+  font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--md-spacing-s, 12px);
+  gap: 6px;
+  box-sizing: border-box;
+  white-space: nowrap;
+  user-select: none;
   transition: background-color var(--md-sys-motion-duration-short) ease, 
+              border-color var(--md-sys-motion-duration-short) ease,
+              color var(--md-sys-motion-duration-short) ease,
               transform 0.15s var(--md-sys-motion-easing-standard), 
               box-shadow var(--md-sys-motion-duration-short) ease;
 }
 
-.md3-btn-primary {
-  background-color: var(--md-sys-color-primary);
-  color: var(--md-sys-color-on-primary);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--md-sys-color-primary) 28%, transparent);
+.md3-btn svg {
+  width: var(--md-comp-btn-icon-size-md, 15px);
+  height: var(--md-comp-btn-icon-size-md, 15px);
+  flex-shrink: 0;
 }
 
-.md3-btn-primary:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 80%, black 20%);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--md-sys-color-primary) 38%, transparent);
+.md3-btn-block {
+  width: 100%;
+}
+
+/* Primary / Filled State */
+.md3-btn-primary,
+.md3-btn-filled {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.md3-btn-primary:hover:not(:disabled),
+.md3-btn-filled:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 88%, white 12%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transform: translateY(-1px);
 }
 
-.md3-btn-primary:active:not(:disabled) {
-  transform: scale(0.985) translateY(0);
+.md3-btn-primary:active:not(:disabled),
+.md3-btn-filled:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 80%, black 20%);
+  transform: scale(0.97) translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.md3-btn-secondary {
-  background-color: var(--md-sys-color-secondary);
-  color: var(--md-sys-color-on-secondary);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--md-sys-color-secondary) 28%, transparent);
-}
-
-.md3-btn-secondary:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-secondary) 80%, black 20%);
-  box-shadow: 0 6px 20px color-mix(in srgb, var(--md-sys-color-secondary) 38%, transparent);
-  transform: translateY(-1px);
-}
-
-.md3-btn-secondary:active:not(:disabled) {
-  transform: scale(0.985) translateY(0);
-}
-
+/* Secondary / Tonal State */
+.md3-btn-secondary,
 .md3-btn-tonal {
-  background-color: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border-color: var(--md-sys-color-outline-variant, #cac4d0);
 }
 
+.md3-btn-secondary:hover:not(:disabled),
 .md3-btn-tonal:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-secondary-container) 92%, var(--md-sys-color-on-secondary-container) 8%);
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #e8def8) 86%, var(--md-sys-color-primary, #6750a4) 14%);
+  border-color: var(--md-sys-color-outline, #79747e);
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
 }
 
+.md3-btn-secondary:active:not(:disabled),
 .md3-btn-tonal:active:not(:disabled) {
-  transform: scale(0.985) translateY(0);
+  background-color: color-mix(in srgb, var(--md-sys-color-secondary-container, #e8def8) 75%, black 25%);
+  transform: scale(0.97) translateY(0);
 }
 
+/* Outlined State */
 .md3-btn-outlined {
-  background-color: transparent;
-  color: var(--md-sys-color-primary);
-  border: 1px solid var(--md-sys-color-outline);
+  background-color: var(--md-sys-color-surface-container, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border-color: var(--md-sys-color-outline-variant, #cac4d0);
 }
 
 .md3-btn-outlined:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
-  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-surface-container-high, #e6e0e9);
+  border-color: var(--md-sys-color-outline, #79747e);
+  color: var(--md-sys-color-primary, #6750a4);
   transform: translateY(-1px);
 }
 
 .md3-btn-outlined:active:not(:disabled) {
-  transform: scale(0.985) translateY(0);
+  background-color: var(--md-sys-color-surface-container-highest, #e0dbe3);
+  transform: scale(0.97) translateY(0);
 }
 
+/* Text / Subtle State (Explicit Idle Surface Contrast) */
 .md3-btn-text {
-  background-color: transparent;
-  color: var(--md-sys-color-primary);
-  border: none;
-  min-height: 40px;
-  padding: var(--md-spacing-s, 12px) var(--md-spacing-m, 16px);
+  background-color: var(--md-sys-color-surface-container-high, #e6e0e9);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border-color: var(--md-sys-color-outline-variant, #cac4d0);
 }
 
 .md3-btn-text:hover:not(:disabled) {
-  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+  background-color: var(--md-sys-color-surface-container-highest, #ded8e1);
+  color: var(--md-sys-color-error, #ba1a1a);
+  border-color: color-mix(in srgb, var(--md-sys-color-error) 40%, transparent);
+  transform: translateY(-1px);
+}
+
+.md3-btn-text:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--md-sys-color-error-container, #ffdad6) 40%, var(--md-sys-color-surface-container-highest));
+  transform: scale(0.97) translateY(0);
 }
 
 .md3-btn:disabled {
   opacity: 0.38;
   cursor: not-allowed;
+  transform: none !important;
 }
 
 /* Checkbox */
@@ -336,7 +381,7 @@
   display: flex;
   align-items: center;
   user-select: none;
-  padding-right: 40px !important;
+  padding-right: 32px !important;
 }
 
 .md3-select-display-text {
@@ -348,20 +393,20 @@
 
 .md3-select-caret {
   position: absolute;
-  right: var(--md-spacing-m, 16px);
+  right: 10px;
   pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--md-sys-color-on-surface-variant);
-  width: 18px;
-  height: 18px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  width: 15px;
+  height: 15px;
   transition: transform 0.2s var(--md-sys-motion-easing-emphasized, cubic-bezier(0.2, 0, 0, 1)), color 0.2s ease;
 }
 
 .md3-select-caret svg {
-  width: 18px;
-  height: 18px;
+  width: 15px;
+  height: 15px;
 }
 
 .md3-select-caret.is-open {
@@ -608,47 +653,50 @@
   }
 }
 
-/* ── MD3 FLOATING ACTION BUTTON (FAB) ── */
+/* ── MD3 FLOATING ACTION BUTTON (Minimal Clinical Scale) ── */
 .md3-fab {
   position: fixed;
-  bottom: var(--md-spacing-xxl, 32px);
-  right: var(--md-spacing-xxl, 32px);
-  min-width: 56px;
-  height: 56px;
-  border-radius: var(--md-sys-shape-corner-large, 16px);
-  background-color: var(--md-sys-color-primary-container);
-  color: var(--md-sys-color-on-primary-container);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent),
-              0 3px 6px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent);
-  display: flex;
+  bottom: var(--md-spacing-xl, 20px);
+  right: var(--md-spacing-xl, 20px);
+  min-width: var(--md-comp-fab-min-width, 40px);
+  height: var(--md-comp-fab-height, 40px);
+  border-radius: var(--md-comp-fab-border-radius, 12px);
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow, #000) 12%, transparent);
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--md-spacing-s, 12px);
-  padding: 0 var(--md-spacing-m, 16px);
+  gap: 6px;
+  padding: var(--md-comp-fab-padding, 0 14px);
   font: var(--md-sys-typescale-label-large-font);
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: var(--md-comp-fab-font-size, 0.82rem);
+  font-weight: 600;
   cursor: pointer;
   z-index: 99;
-  transition: transform 0.2s var(--md-sys-motion-easing-emphasized),
-              box-shadow 0.2s var(--md-sys-motion-easing-emphasized),
-              background-color 0.2s ease;
+  box-sizing: border-box;
+  transition: transform 0.15s var(--md-sys-motion-easing-emphasized),
+              box-shadow 0.15s var(--md-sys-motion-easing-emphasized),
+              background-color 0.15s ease,
+              border-color 0.15s ease;
 }
 
 .md3-fab-extended {
-  padding: 0 var(--md-spacing-xl, 24px);
-  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: var(--md-comp-fab-padding, 0 14px);
+  border-radius: var(--md-comp-fab-border-radius, 12px);
 }
 
 .md3-fab:hover {
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--md-sys-color-primary) 40%, transparent);
-  background-color: var(--md-sys-color-primary-fixed);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 24%, transparent);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary-container, #eaddff) 90%, white 10%);
+  border-color: var(--md-sys-color-outline, #79747e);
 }
 
 .md3-fab:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .md3-fab-icon {
@@ -658,8 +706,8 @@
 }
 
 .md3-fab-icon svg {
-  width: 24px;
-  height: 24px;
+  width: var(--md-comp-fab-icon-size, 18px);
+  height: var(--md-comp-fab-icon-size, 18px);
 }
 
 /* ── MD3 DATE INPUT FLOATING LABEL & PICKER STYLING ── */

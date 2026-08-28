@@ -50,14 +50,10 @@ export const LabProcessingView = () => {
       isRefreshing={isRefreshing}
       searchValue={searchValue}
       onSearchChange={setSearchValue}
-      priorityBar={(
-        <LabPriorityBar
-          counts={priorityCounts}
-          activeFilter={priorityFilter}
-          onFilterChange={setPriorityFilter}
-          statusCounts={statusCounts}
-        />
-      )}
+      priorityCounts={priorityCounts}
+      priorityFilter={priorityFilter}
+      onPriorityFilterChange={setPriorityFilter}
+      statusCounts={statusCounts}
     />
   );
 
@@ -89,6 +85,8 @@ export const LabProcessingView = () => {
             (o) => (o.status || '').toUpperCase() === 'COMPLETED'
           )}
           laboratories={laboratories}
+          patient={selectedVisit.patientId}
+          visit={selectedVisit}
         />
       ) : null}
     />

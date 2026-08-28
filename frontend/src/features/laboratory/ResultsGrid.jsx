@@ -5,415 +5,374 @@ import {
   Md3DataTable,
   Md3EmptyState,
   Md3Chip,
+  Md3Avatar,
 } from '../../components/md3/Md3Widgets';
+import { Md3Button } from '../../components/md3/Md3FormComponents';
 import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
+import './ResultsGrid.css';
 
 const priorityVariant = (p) => ({
   STAT: 'error', URGENT: 'warning', ROUTINE: 'secondary',
 })[p] || 'default';
 
+/**
+ * Strict clinical abnormal checker — avoids false positives on words like "Normal"
+ */
+const checkAbnormal = (val, flag) => {
+  if (flag === 'ABNORMAL' || flag === 'CRITICAL' || flag === 'HIGH' || flag === 'LOW') return true;
+  if (!val || typeof val !== 'string') return false;
+  const trimmed = val.trim().toLowerCase();
+  if (
+    trimmed === 'normal' ||
+    trimmed.startsWith('normal') ||
+    trimmed.includes('verified') ||
+    trimmed.includes('negative') ||
+    trimmed === 'compatible'
+  ) {
+    return false;
+  }
+  return ['abnormal', 'critical', 'high', 'low', 'positive', 'reactive', 'incompatible'].includes(trimmed);
+};
+
+const formatTime = (d) => {
+  if (!d) return '—';
+  const date = new Date(d);
+  if (Number.isNaN(+date)) return '—';
+  return date.toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const calcTAT = (collectedAt, completedAt) => {
+  if (!collectedAt || !completedAt) return '';
+  const diffMs = new Date(completedAt) - new Date(collectedAt);
+  const diffMins = Math.max(1, Math.round(diffMs / 60000));
+  if (diffMins < 60) return `${diffMins}m`;
+  return `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+};
+
+const ActionsCell = ({ row, onViewReport }) => {
+  const { showError } = useToast();
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!row.scanReportId) return;
+    try {
+      setDownloading(true);
+      const res = await api.get(`/laboratory/scans/${row.scanReportId}`, { responseType: 'blob' });
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', `Lab_Report_${row.orderId || 'Scan'}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      showError('Download Failed', err.response?.data?.message || err.message);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  if (row.scanReportId) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+        <Md3Button variant="tonal" size="small" onClick={handleDownload} loading={downloading}>
+          <Icon.Download />
+          <span>View Scan</span>
+        </Md3Button>
+      </div>
+    );
+  }
+
+  return <span style={{ color: 'var(--md-sys-color-outline, #79747e)', fontSize: '0.75rem' }}>—</span>;
+};
+
 const ResultsGrid = ({
   completedOrders = [],
   laboratories = [],
+  patient = null,
+  visit = null,
   onViewReport,
   className = '',
 }) => {
+  // Resolve patient info fallback
+  const resolvedPatientName = [patient?.firstName, patient?.lastName].filter(Boolean).join(' ')
+    || patient?.fullName
+    || patient?.name
+    || (visit?.patientId && typeof visit.patientId === 'object' ? [visit.patientId.firstName, visit.patientId.lastName].filter(Boolean).join(' ') : '')
+    || '';
+
+  const resolvedMRN = patient?.mrn || (visit?.patientId && typeof visit.patientId === 'object' ? visit.patientId.mrn : '') || '';
+
+  // ── Flatten orders into structured diagnostic rows ──
   const rows = React.useMemo(() => {
     const flat = [];
+
     completedOrders.forEach((order) => {
-      const orderTests = order.tests && Array.isArray(order.tests) ? order.tests : [];
       const scanReportId = order.results?.scanReportId || null;
+      const lab = laboratories?.find((l) =>
+        (l?._id && order.laboratoryId && String(l._id) === String(order.laboratoryId?._id || order.laboratoryId)) ||
+        (l?.name && order.labName && l.name.toLowerCase().trim() === order.labName.toLowerCase().trim())
+      ) || laboratories?.find((l) => (l?.testCatalog || []).some((t) => t.name?.toLowerCase().trim() === (order.testName || '').toLowerCase().trim()))
+        || laboratories?.[0] || null;
 
-      if (!order.results || typeof order.results !== 'object') {
-        if (orderTests.length === 0) {
-          flat.push({
-            _id: `${order._id}-summary`,
-            orderId: order._id,
-            laboratory: order._laboratoryName || order.laboratoryName || order.laboratoryId || 'Laboratory',
-            test: order.panelName || 'Test panel',
-            value: '—',
-            reference: order.referenceRange || 'See report',
-            unit: '',
-            flag: order.abnormalFlag || '',
-            priority: order.priority || 'ROUTINE',
-            completedAt: order.completedAt || order.updatedAt,
-            patientName: order._patientName || 'Unknown Patient',
-            mrn: order._mrn || '—',
-            orderedBy: order._orderedBy || 'Attending Physician',
-            sampleCollectedAt: order.sampleCollectedAt,
-            processedAt: order.processedAt,
-            scanReportId,
-          });
-        }
-        orderTests.forEach((t, i) => {
-          flat.push({
-            _id: `${order._id}-${t._id || t.code || i}`,
-            orderId: order._id,
-            laboratory: order._laboratoryName || order.laboratoryName || order.laboratoryId || 'Laboratory',
-            test: t.name || t.code || `Test ${i + 1}`,
-            value: t.result || '—',
-            reference: t.referenceRange || 'See report',
-            unit: t.unit || '',
-            flag: (t.result && t.flag) || t.abnormalFlag || '',
-            priority: order.priority || 'ROUTINE',
-            completedAt: order.completedAt || order.updatedAt,
-            patientName: order._patientName || 'Unknown Patient',
-            mrn: order._mrn || '—',
-            orderedBy: order._orderedBy || 'Attending Physician',
-            sampleCollectedAt: order.sampleCollectedAt,
-            processedAt: order.processedAt,
-            scanReportId,
-          });
-        });
-        return;
-      }
+      const testDef = lab?.testCatalog?.find((test) =>
+        test.name?.toLowerCase().trim() === (order.testName || '').toLowerCase().trim() ||
+        (test.testCode && order.testCode && test.testCode.toLowerCase().trim() === order.testCode.toLowerCase().trim()) ||
+        (test.code && order.testCode && test.code.toLowerCase().trim() === order.testCode.toLowerCase().trim())
+      );
 
-      // Filter out internal metadata keys like scanReportId or notes
-      const entries = Object.entries(order.results).filter(
+      const catalogFields = testDef?.resultFields || testDef?.fields || [];
+      const testDisplayName = order.testName || order.panelName || testDef?.name || order.labName || lab?.name || 'Laboratory Test';
+
+      const pName = order._patientName && order._patientName !== 'Unknown patient'
+        ? order._patientName
+        : (resolvedPatientName || 'Patient');
+
+      const pMrn = order._mrn && order._mrn !== '—'
+        ? order._mrn
+        : (resolvedMRN || '—');
+
+      const doctorName = order._orderedBy
+        ? (order._orderedBy.startsWith('Dr.') ? order._orderedBy : `Dr. ${order._orderedBy}`)
+        : (visit?.consultation?.doctorId ? `Dr. ${visit.consultation.doctorId.firstName || ''} ${visit.consultation.doctorId.lastName || ''}`.trim() : 'Attending Physician');
+
+      const resultsObj = order.results && typeof order.results === 'object' ? order.results : {};
+      const entries = Object.entries(resultsObj).filter(
         ([k]) => k !== '_notes' && k !== 'scanReportId' && !k.startsWith('attachment')
       );
 
-      if (entries.length === 0 && orderTests.length > 0) {
-        orderTests.forEach((t, i) => {
-          flat.push({
-            _id: `${order._id}-${t._id || t.code || i}`,
-            orderId: order._id,
-            laboratory: order._laboratoryName || order.laboratoryName || order.laboratoryId || 'Laboratory',
-            test: t.name || t.code || `Test ${i + 1}`,
-            value: 'Pending',
-            reference: t.referenceRange || 'See report',
-            unit: t.unit || '',
-            flag: '',
-            priority: order.priority || 'ROUTINE',
-            completedAt: order.completedAt || order.updatedAt,
-            patientName: order._patientName || 'Unknown Patient',
-            mrn: order._mrn || '—',
-            orderedBy: order._orderedBy || 'Attending Physician',
-            sampleCollectedAt: order.sampleCollectedAt,
-            processedAt: order.processedAt,
-            scanReportId,
-          });
-        });
-        return;
-      }
+      const completedTime = order.processedAt || order.completedAt || order.updatedAt || order._visitCreatedAt;
 
-      // If results map contains values but orderTests is empty (dynamic tests)
-      if (entries.length === 0 && orderTests.length === 0) {
+      if (entries.length === 0) {
         flat.push({
-          _id: `${order._id}-dynamic-empty`,
+          _id: `${order._id || Math.random()}-summary`,
           orderId: order._id,
-          laboratory: order._laboratoryName || order.laboratoryName || order.laboratoryId || 'Laboratory',
-          test: order.panelName || 'Diagnostic Report',
-          value: 'Uploaded Document',
-          reference: 'See report file',
+          laboratory: order._laboratoryName || order.labName || lab?.name || 'Laboratory',
+          testName: testDisplayName,
+          parameter: '',
+          value: scanReportId ? 'Uploaded Document' : (order.notes || 'Verified / Reported'),
+          reference: testDef?.referenceRange || '—',
           unit: '',
-          flag: '',
-          priority: order.priority || 'ROUTINE',
-          completedAt: order.completedAt || order.updatedAt,
-          patientName: order._patientName || 'Unknown Patient',
-          mrn: order._mrn || '—',
-          orderedBy: order._orderedBy || 'Attending Physician',
+          isAbnormal: false,
+          priority: (order.priority || 'ROUTINE').toUpperCase(),
+          completedAt: completedTime,
+          patientName: pName,
+          tokenString: order._tokenString || visit?.tokenString || '',
+          mrn: pMrn,
+          orderedBy: doctorName,
           sampleCollectedAt: order.sampleCollectedAt,
           processedAt: order.processedAt,
+          notes: order.notes || '',
           scanReportId,
         });
         return;
       }
 
       entries.forEach(([key, val], i) => {
+        const fieldMeta = catalogFields.find((f) => (f.key || f.label || f.name) === key);
+        const label = fieldMeta?.label || (key === 'test_key' ? 'Clinical Findings' : key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
+        const ref = fieldMeta?.reference || '';
+        const unit = fieldMeta?.unit || '';
+        const isAbnormal = checkAbnormal(String(val), order.flag);
+
         flat.push({
-          _id: `${order._id}-${key}-${i}`,
+          _id: `${order._id || Math.random()}-${key}-${i}`,
           orderId: order._id,
-          laboratory: order._laboratoryName || order.laboratoryName || order.laboratoryId || 'Laboratory',
-          test: key,
+          laboratory: order._laboratoryName || order.labName || lab?.name || 'Laboratory',
+          testName: testDisplayName,
+          parameter: label,
           value: val == null ? '—' : String(val),
-          reference: orderTests.find((t) => (t.name || t.code) === key)?.referenceRange || '',
-          unit: orderTests.find((t) => (t.name || t.code) === key)?.unit || '',
-          flag: typeof val === 'string' && /H|L|Abnormal|High|Low/i.test(val) ? 'ABNORMAL' : '',
-          priority: order.priority || 'ROUTINE',
-          completedAt: order.completedAt || order.updatedAt,
-          patientName: order._patientName || 'Unknown Patient',
-          mrn: order._mrn || '—',
-          orderedBy: order._orderedBy || 'Attending Physician',
+          reference: ref || '—',
+          unit: unit || '',
+          isAbnormal,
+          priority: (order.priority || 'ROUTINE').toUpperCase(),
+          completedAt: completedTime,
+          patientName: pName,
+          tokenString: order._tokenString || visit?.tokenString || '',
+          mrn: pMrn,
+          orderedBy: doctorName,
           sampleCollectedAt: order.sampleCollectedAt,
           processedAt: order.processedAt,
+          notes: order.notes || '',
           scanReportId,
         });
       });
     });
+
     return flat;
-  }, [completedOrders]);
+  }, [completedOrders, laboratories, resolvedPatientName, resolvedMRN, visit]);
 
-  const columns = [
-    {
-      key: 'priority',
-      label: 'Priority',
-      render: (row) => (
-        <Md3Chip variant={priorityVariant(row.priority)} size="small">
-          {row.priority}
-        </Md3Chip>
-      ),
-      width: 'minmax(0, 90px)',
-    },
-    {
-      key: 'patient',
-      label: 'Patient / Diagnosis Subject',
-      render: (row) => (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingRight: '8px' }}>
-          <span style={{ fontWeight: 600, color: 'var(--md-sys-color-on-surface, #1d1b20)', fontSize: '0.875rem' }}>
-            {row.patientName}
-          </span>
-          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)', fontWeight: 500 }}>
-            MRN: {row.mrn}
-          </span>
-        </div>
-      ),
-      width: 'minmax(0, 1.4fr)',
-    },
-    {
-      key: 'orderedBy',
-      label: 'Requesting MD',
-      render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--md-sys-color-on-surface-variant, #49454f)', fontSize: '0.8125rem' }}>
-          <Icon.Person style={{ width: '16px', height: '16px', flexShrink: 0 }} aria-hidden="true" />
-          <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '140px' }}>
-            {row.orderedBy}
-          </span>
-        </div>
-      ),
-      width: 'minmax(0, 1.2fr)',
-    },
-    {
-      key: 'laboratory',
-      label: 'Facility / Laboratory',
-      render: (row) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--md-sys-color-on-surface-variant, #49454f)', fontSize: '0.8125rem' }}>
-          <Icon.Microscope style={{ width: '16px', height: '16px', flexShrink: 0 }} aria-hidden="true" />
-          <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '140px' }}>
-            {row.laboratory}
-          </span>
-        </div>
-      ),
-      width: 'minmax(0, 1.2fr)',
-    },
-    {
-      key: 'test',
-      label: 'Analyzed Test',
-      render: (row) => (
-        <span style={{ fontWeight: 500, color: 'var(--md-sys-color-on-surface, #1d1b20)', fontSize: '0.875rem', textTransform: 'capitalize' }}>
-          {row.test}
-        </span>
-      ),
-      width: 'minmax(0, 1.1fr)',
-    },
-    {
-      key: 'value',
-      label: 'Result Value',
-      render: (row) => {
-        const isAbnormal = row.flag === 'ABNORMAL';
-        return (
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              fontWeight: 600,
-              fontSize: '0.875rem',
-              color: isAbnormal ? 'var(--md-sys-color-error, #b3261e)' : 'var(--md-sys-color-on-surface, #1d1b20)',
-              background: isAbnormal ? 'var(--md-sys-color-error-container, #f9dedc)' : 'transparent',
-              padding: isAbnormal ? '2px 6px' : '0',
-              borderRadius: '4px',
-            }}
-          >
-            {isAbnormal && <Icon.Alert style={{ width: '14px', height: '14px' }} aria-hidden="true" />}
-            <span>{row.value}</span>
-            {row.unit && (
-              <span style={{ fontWeight: 400, fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
-                &nbsp;{row.unit}
-              </span>
-            )}
-          </span>
-        );
-      },
-      width: 'minmax(0, 1.1fr)',
-    },
-    {
-      key: 'reference',
-      label: 'Ref Range',
-      render: (row) => (
-        <span style={{ fontSize: '0.8125rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
-          {row.reference || '—'}
-        </span>
-      ),
-      width: 'minmax(0, 100px)',
-    },
-    {
-      key: 'completedAt',
-      label: 'Reported / turnaround time',
-      render: (row) => {
-        const d = row.completedAt ? new Date(row.completedAt) : null;
-        const dateText = d && !Number.isNaN(+d)
-          ? d.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })
-          : '—';
-
-        let tatText = '';
-        if (row.sampleCollectedAt && row.completedAt) {
-          const diffMs = new Date(row.completedAt) - new Date(row.sampleCollectedAt);
-          const diffMins = Math.max(1, Math.round(diffMs / 60000));
-          if (diffMins < 60) {
-            tatText = `${diffMins}m`;
-          } else {
-            const hrs = Math.floor(diffMins / 60);
-            const mins = diffMins % 60;
-            tatText = `${hrs}h ${mins}m`;
-          }
-        }
-
-        return (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-            <time style={{ fontSize: '0.8125rem', color: 'var(--md-sys-color-on-surface, #1d1b20)' }} dateTime={d ? d.toISOString() : ''}>
-              {dateText}
-            </time>
-            {tatText && (
-              <span style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                color: 'var(--md-sys-color-secondary, #625b71)',
-              }}>
-                <Icon.Clock style={{ width: '12px', height: '12px' }} />
-                <span>TAT: {tatText}</span>
-              </span>
-            )}
-          </div>
-        );
-      },
-      width: 'minmax(0, 150px)',
-    },
-    {
-      key: 'actions',
-      label: 'Actions',
-      render: (row) => <ActionsCell row={row} onViewReport={onViewReport} />,
-      width: 'minmax(0, 130px)',
-    },
-  ];
+  // Group by test panel for clean linear worksheet presentation
+  const isWorksheetEmbedded = Boolean(visit || patient);
 
   return (
     <Md3Section
       title="Reported Results"
       subtitle={rows.length > 0
-        ? `${rows.length} completed analysis record${rows.length === 1 ? '' : 's'} · sorted by recency and urgency`
-        : 'Completed test results appear here as soon as they are published'}
+        ? `${rows.length} verified parameter${rows.length === 1 ? '' : 's'}`
+        : 'Completed test results appear here'}
       icon={<Icon.FileSearch />}
-      variant="default"
+      variant="compact"
       className={`results-grid ${className}`.trim()}
     >
       {rows.length === 0 ? (
-        <Md3EmptyState
-          icon={<Icon.Clipboard />}
-          title="No reported results yet"
-          subtitle="Complete a test and submit results to view them in this results grid."
-        />
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: '16px 12px',
+          color: 'var(--md-sys-color-on-surface-variant, #49454f)',
+          fontSize: '0.78rem',
+          fontStyle: 'italic',
+          background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
+          borderRadius: '6px',
+          border: '1px dashed var(--md-sys-color-outline-variant, #cac4d0)',
+        }}>
+          <Icon.Clipboard style={{ width: '16px', height: '16px', color: 'var(--md-sys-color-outline)' }} />
+          <span>No reported results yet. Completed tests will appear here.</span>
+        </div>
+      ) : isWorksheetEmbedded ? (
+        /* ─── 1. Linear Parameter Panel for Patient Worksheet ─── */
+        <div className="results-grid__panels-list">
+          {completedOrders.map((order) => {
+            const orderRows = rows.filter((r) => r.orderId === order._id);
+            const pMeta = priorityVariant((order.priority || 'ROUTINE').toUpperCase());
+            const tat = calcTAT(order.sampleCollectedAt, order.processedAt || order.updatedAt);
+
+            return (
+              <div key={order._id || order.id} className="results-panel-card">
+                <header className="results-panel-card__header">
+                  <div className="results-panel-card__title-group">
+                    <Icon.Beaker style={{ width: '15px', height: '15px', color: 'var(--md-sys-color-primary)' }} />
+                    <h4 className="results-panel-card__title">{order.testName || 'Diagnostic Panel'}</h4>
+                    <Md3Chip variant={pMeta} size="small">
+                      {(order.priority || 'ROUTINE').toUpperCase()}
+                    </Md3Chip>
+                  </div>
+
+                  <div className="results-panel-card__badges">
+                    <span className="results-panel-card__time" title="Reported Timestamp">
+                      <Icon.Clock />
+                      <span>{formatTime(order.processedAt || order.updatedAt)}</span>
+                    </span>
+                    {tat && (
+                      <span className="results-panel-card__time" style={{ color: 'var(--md-sys-color-secondary)' }}>
+                        <span>• TAT: {tat}</span>
+                      </span>
+                    )}
+                  </div>
+                </header>
+
+                <div className="results-panel-card__grid">
+                  {orderRows.map((r) => (
+                    <div key={r._id} className="result-parameter-item">
+                      <span className="result-parameter-item__label">{r.parameter || r.testName}</span>
+                      <div className="result-parameter-item__val-box">
+                        <span className={`result-parameter-item__val ${r.isAbnormal ? 'result-parameter-item__val--abnormal' : ''}`}>
+                          {r.value}
+                          {r.unit && <span style={{ fontSize: '0.70rem', fontWeight: 400 }}> {r.unit}</span>}
+                        </span>
+                        {r.reference && r.reference !== '—' && (
+                          <span className="result-parameter-item__ref">({r.reference})</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {order.notes && (
+                  <div className="results-panel-card__notes">
+                    <span className="material-symbols-rounded results-panel-card__notes-icon">notes</span>
+                    <span><strong>Note:</strong> {order.notes}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       ) : (
-        <Md3DataTable
-          ariaLabel="Laboratory results grid"
-          columns={columns}
-          rows={rows}
-          rowKey={(r) => r._id}
-          density="normal"
-          zebra
-        />
+        /* ─── 2. Global Hospital-Wide Linear Results Table ─── */
+        <div style={{ overflowX: 'auto', width: '100%', borderRadius: '8px', border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)' }}>
+          <table className="results-table">
+            <thead>
+              <tr>
+                <th style={{ width: '70px' }}>Priority</th>
+                <th>Patient</th>
+                <th>Test / Parameter</th>
+                <th>Measured Value</th>
+                <th>Reference Interval</th>
+                <th>Reported Time</th>
+                <th style={{ width: '100px' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row._id}>
+                  <td>
+                    <Md3Chip variant={priorityVariant(row.priority)} size="small">
+                      {row.priority}
+                    </Md3Chip>
+                  </td>
+                  <td>
+                    <div className="results-table__patient-cell">
+                      <Md3Avatar initials={row.patientName?.slice(0, 2).toUpperCase() || 'PT'} size="small" variant="primary" />
+                      <div className="results-table__patient-info">
+                        <span className="results-table__patient-name">{row.patientName}</span>
+                        <span className="results-table__patient-meta">
+                          {row.tokenString && `${row.tokenString} • `}MRN: {row.mrn}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="results-table__test-cell">
+                      <span className="results-table__test-name">{row.testName}</span>
+                      {row.parameter && (
+                        <span className="results-table__test-meta">{row.parameter} • {row.laboratory}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`results-table__val-box ${row.isAbnormal ? 'results-table__val-box--abnormal' : ''}`}>
+                      {row.isAbnormal && <Icon.Alert style={{ width: '13px', height: '13px' }} />}
+                      <span>{row.value}</span>
+                      {row.unit && <span style={{ fontSize: '0.70rem', fontWeight: 400 }}>&nbsp;{row.unit}</span>}
+                    </span>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
+                      {row.reference || '—'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface, #1c1b1f)' }}>
+                        {formatTime(row.completedAt)}
+                      </span>
+                      {row.sampleCollectedAt && (
+                        <span style={{ fontSize: '0.66rem', color: 'var(--md-sys-color-secondary, #625b71)', fontWeight: 600 }}>
+                          TAT: {calcTAT(row.sampleCollectedAt, row.completedAt)}
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <ActionsCell row={row} onViewReport={onViewReport} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </Md3Section>
-  );
-};
-
-/* Actions cell component to handle authenticated document streaming */
-const ActionsCell = ({ row, onViewReport }) => {
-  const [viewing, setViewing] = useState(false);
-  const { showError } = useToast();
-
-  const handleView = async (e) => {
-    e.preventDefault();
-    if (!row.scanReportId) return;
-    try {
-      setViewing(true);
-      const response = await api.get(`/laboratory/scans/${row.scanReportId}`, {
-        responseType: 'blob',
-      });
-      const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-    } catch (err) {
-      console.error('[ResultsGrid] Failed to stream scan:', err);
-      showError('Failed to retrieve scan report document.');
-    } finally {
-      setViewing(false);
-    }
-  };
-
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-      {row.scanReportId ? (
-        <button
-          type="button"
-          className="md3-btn-tonal"
-          style={{
-            padding: '4px 8px',
-            fontSize: '0.75rem',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            minHeight: '28px',
-            height: '28px',
-            border: 'none',
-            borderRadius: '100px',
-            cursor: 'pointer',
-            background: 'var(--md-sys-color-secondary-container, #e8def8)',
-            color: 'var(--md-sys-color-on-secondary-container, #1d192b)',
-            fontWeight: 500,
-          }}
-          onClick={handleView}
-          disabled={viewing}
-        >
-          <Icon.FileText style={{ width: '14px', height: '14px' }} />
-          <span>{viewing ? 'Opening...' : 'View Scan'}</span>
-        </button>
-      ) : null}
-
-      {typeof onViewReport === 'function' ? (
-        <button
-          type="button"
-          className="md3-btn-outlined"
-          style={{
-            padding: '4px 8px',
-            fontSize: '0.75rem',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-            minHeight: '28px',
-            height: '28px',
-            border: '1px solid var(--md-sys-color-outline, #79747e)',
-            borderRadius: '100px',
-            background: 'transparent',
-            color: 'var(--md-sys-color-primary, #6750a4)',
-            cursor: 'pointer',
-            fontWeight: 500,
-          }}
-          onClick={() => onViewReport(row)}
-        >
-          <Icon.FileText style={{ width: '14px', height: '14px' }} />
-          <span>Report</span>
-        </button>
-      ) : null}
-
-      {!row.scanReportId && typeof onViewReport !== 'function' ? (
-        <span style={{ color: 'var(--md-sys-color-outline-variant, #c4c7c5)', fontSize: '0.875rem' }}>—</span>
-      ) : null}
-    </div>
   );
 };
 

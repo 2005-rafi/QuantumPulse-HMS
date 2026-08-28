@@ -38,6 +38,15 @@ import UserProfilePage from '../pages/UserProfilePage';
 import { ReceptionPatientsView, ReceptionAppointmentsView } from '../features/patients/ReceptionViews';
 import { DoctorConsultationView, DoctorAppointmentsView, DoctorDeletionRequestsView } from '../features/doctor/DoctorViews';
 import { LabProcessingView, LabSpecimensView, LabReportedView } from '../features/laboratory/LabViews';
+import {
+  ProfileOverviewView,
+  ProfileEmploymentView,
+  ProfileAccessView,
+  ProfileCredentialsView,
+  ProfileDocumentsView,
+  ProfileHistoryView,
+  ProfileSettingsView,
+} from '../features/profile/ProfileViews';
 
 import AdminAnalytics from '../features/admin/AdminAnalytics';
 import AdminPatientManager from '../features/admin/AdminPatientManager';
@@ -46,6 +55,7 @@ import AdminDepartmentManager from '../features/admin/AdminDepartmentManager';
 import AdminLabManager from '../features/admin/AdminLabManager';
 import AdminSettings from '../features/admin/AdminSettings';
 import AdminAuditLogs from '../features/admin/AdminAuditLogs';
+import AdminTariffBilling from '../features/admin/AdminTariffBilling';
 import AppointmentDashboard from '../features/appointments/AppointmentDashboard';
 import { useAuth } from '../context/AuthContext';
 
@@ -166,15 +176,26 @@ export const router = createBrowserRouter([
           { path: 'staff', element: <AdminStaffManager /> },
           { path: 'departments', element: <AdminDepartmentManager /> },
           { path: 'laboratories', element: <AdminLabManager /> },
-          { path: 'settings', element: <AdminSettings /> },
+          { path: 'billing', element: <AdminTariffBilling /> },
+          { path: 'settings', element: <Navigate to="/dashboard/administrator/billing" replace /> },
           { path: 'audit', element: <AdminAuditLogs /> },
           { path: 'appointments', element: <AdminAppointmentsWrapper /> },
         ]
       },
-      // Profile (Accessible by all authenticated roles)
+      // Profile (Accessible by all authenticated roles) — Named Tab Routing
       {
         path: 'profile',
-        element: <UserProfilePage />
+        element: <UserProfilePage />,
+        children: [
+          { index: true, element: <Navigate to="overview" replace /> },
+          { path: 'overview', element: <ProfileOverviewView /> },
+          { path: 'employment', element: <ProfileEmploymentView /> },
+          { path: 'access', element: <ProfileAccessView /> },
+          { path: 'credentials', element: <ProfileCredentialsView /> },
+          { path: 'documents', element: <ProfileDocumentsView /> },
+          { path: 'history', element: <ProfileHistoryView /> },
+          { path: 'settings', element: <ProfileSettingsView /> },
+        ],
       },
     ],
   },

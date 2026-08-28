@@ -11,6 +11,9 @@ const decryptPopulatedAppointment = (appt) => {
   if (clone.patientId && typeof clone.patientId === 'object') {
     clone.patientId = decryptPatient(clone.patientId);
   }
+  if (clone.visitId && typeof clone.visitId === 'object' && clone.visitId.patientId && typeof clone.visitId.patientId === 'object') {
+    clone.visitId.patientId = decryptPatient(clone.visitId.patientId);
+  }
   return clone;
 };
 
@@ -33,7 +36,7 @@ class AppointmentRepository {
       .populate('patientId')
       .populate('departmentId', 'name code type status')
       .populate('doctorId', 'fullName employeeId position primarySpecialization consultingFee followUpFee')
-      .populate('visitId', 'visitNumber status tokenString calledAt vitals consultation')
+      .populate('visitId')
       .populate('createdBy', 'fullName employeeId')
       .populate('cancelledBy', 'fullName employeeId');
     return decryptPopulatedAppointment(doc);
@@ -44,7 +47,7 @@ class AppointmentRepository {
       .populate('patientId')
       .populate('departmentId', 'name code type status')
       .populate('doctorId', 'fullName employeeId position primarySpecialization')
-      .populate('visitId', 'visitNumber status tokenString');
+      .populate('visitId');
     return decryptPopulatedAppointment(doc);
   }
 
@@ -57,7 +60,7 @@ class AppointmentRepository {
       .populate('patientId')
       .populate('departmentId', 'name code type status')
       .populate('doctorId', 'fullName employeeId position primarySpecialization consultingFee followUpFee')
-      .populate('visitId', 'visitNumber status tokenString calledAt vitals consultation')
+      .populate('visitId')
       .populate('createdBy', 'fullName employeeId')
       .populate('cancelledBy', 'fullName employeeId');
     return decryptPopulatedAppointment(doc);
@@ -72,7 +75,7 @@ class AppointmentRepository {
         .populate('patientId')
         .populate('departmentId', 'name code type status')
         .populate('doctorId', 'fullName employeeId position primarySpecialization consultingFee followUpFee')
-        .populate('visitId', 'visitNumber status tokenString calledAt vitals consultation')
+        .populate('visitId')
         .sort(sort)
         .skip(skip)
         .limit(limit),

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Md3Button } from '../../components/md3/Md3FormComponents';
 import { Icon } from '../../components/md3/Md3Widgets';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './AppointmentDashboard.css';
 
 /**
@@ -96,7 +97,7 @@ export const CheckInDialog = ({
               </div>
               <div className="appt-summary-row">
                 <span className="appt-summary-label">Doctor</span>
-                <span className="appt-summary-value">Dr. {doctor.fullName || '—'}</span>
+                <span className="appt-summary-value">{formatDoctorName(doctor.fullName)}</span>
               </div>
               <div className="appt-summary-row">
                 <span className="appt-summary-label">Department</span>

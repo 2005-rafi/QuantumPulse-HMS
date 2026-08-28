@@ -1,7 +1,10 @@
 import React from 'react';
 import { Md3DataTable, Icon } from '../../components/md3/Md3Widgets';
 import { Md3Button } from '../../components/md3/Md3FormComponents';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import AppointmentStatusBadge from './AppointmentStatusBadge';
+import Md3Pagination from '../../components/md3/Md3Pagination';
+import usePagination from '../../hooks/usePagination';
 import './AppointmentDashboard.css';
 
 /**
@@ -16,6 +19,16 @@ export const AppointmentList = ({
   onCancel,
   onMarkMissed,
 }) => {
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    paginatedItems: paginatedAppointments,
+    showTopPagination,
+  } = usePagination(appointments, 50, [appointments.length]);
+
   const columns = [
     {
       key: 'appointmentNumber',
@@ -60,7 +73,7 @@ export const AppointmentList = ({
         const doc = row.doctorId || {};
         return (
           <div className="appt-doctor-cell">
-            <span className="appt-doctor-name">Dr. {doc.fullName || '—'}</span>
+            <span className="appt-doctor-name">{formatDoctorName(doc.fullName)}</span>
             <span className="appt-doctor-spec">{doc.primarySpecialization || doc.position || ''}</span>
           </div>
         );
@@ -97,54 +110,57 @@ export const AppointmentList = ({
       header: 'Visit / Token',
       render: (row) => {
         const v = row.visitId;
-        if (!v) return <span className="text-muted">—</span>;
+        if (!v) return <span className="appt-empty-token">—</span>;
         return (
-          <div className="appt-token-cell">
-            {v.tokenString ? (
-              <span className="appt-token-pill small">{v.tokenString}</span>
-            ) : (
-              <span className="appt-visit-num">{v.visitNumber}</span>
-            )}
-          </div>
+          <span className="appt-token-chip">
+            #{v.tokenNumber || '—'}
+          </span>
         );
       },
     },
     {
       key: 'actions',
       header: 'Actions',
-      align: 'right',
       render: (row) => {
         const isScheduled = row.status === 'SCHEDULED';
         const isCheckedIn = row.status === 'CHECKED_IN';
+        const isCompleted = row.status === 'COMPLETED';
+        const isCancelled = row.status === 'CANCELLED';
+        const isMissed = row.status === 'MISSED';
 
         return (
-          <div className="appt-actions-cell" onClick={(e) => e.stopPropagation()}>
+          <div className="appt-row-actions" onClick={(e) => e.stopPropagation()}>
             {isScheduled && (
               <>
-                <button
-                  type="button"
-                  className="appt-action-btn checkin"
-                  title="Check In Patient"
+                <Md3Button
+                  size="small"
+                  variant="filled"
                   onClick={() => onCheckIn && onCheckIn(row)}
-                  aria-label="Check in patient"
                 >
-                  <Icon.UserCheck />
-                  <span>Check In</span>
-                </button>
+                  Check In
+                </Md3Button>
+
                 <button
                   type="button"
-                  className="appt-action-btn secondary"
+                  className="appt-action-btn"
                   title="Reschedule"
-                  onClick={() => onReschedule && onReschedule(row)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReschedule && onReschedule(row);
+                  }}
                   aria-label="Reschedule appointment"
                 >
-                  <Icon.Calendar />
+                  <Icon.Clock />
                 </button>
+
                 <button
                   type="button"
                   className="appt-action-btn danger"
                   title="Cancel"
-                  onClick={() => onCancel && onCancel(row)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCancel && onCancel(row);
+                  }}
                   aria-label="Cancel appointment"
                 >
                   <Icon.X />
@@ -163,7 +179,10 @@ export const AppointmentList = ({
               type="button"
               className="appt-action-btn detail"
               title="View Details"
-              onClick={() => onSelectAppointment && onSelectAppointment(row)}
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelectAppointment && onSelectAppointment(row);
+              }}
               aria-label="View appointment details"
             >
               <Icon.Eye />
@@ -176,18 +195,47 @@ export const AppointmentList = ({
 
   return (
     <div className="appt-list-container">
-      <Md3DataTable
-        columns={columns}
-        rows={appointments}
-        loading={loading}
-        emptyState={
-          <div className="appt-empty-state">
-            <Icon.Calendar />
-            <h3>No Appointments Found</h3>
-            <p>Try adjusting your search criteria or book a new appointment.</p>
-          </div>
-        }
-      />
+      {/* Top Pagination (rendered when total records exceed 20) */}
+      {showTopPagination && (
+        <Md3Pagination
+          currentPage={page}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          itemLabel="appointments"
+          position="top"
+        />
+      )}
+
+      <div className="md3-paginated-content-fade" key={page}>
+        <Md3DataTable
+          columns={columns}
+          rows={paginatedAppointments}
+          loading={loading}
+          onRowClick={onSelectAppointment}
+          emptyState={
+            <div className="appt-empty-state">
+              <Icon.Calendar />
+              <h3>No Appointments Found</h3>
+              <p>Try adjusting your search criteria or book a new appointment.</p>
+            </div>
+          }
+        />
+      </div>
+
+      {/* Bottom Pagination */}
+      {totalItems > 0 && (
+        <Md3Pagination
+          currentPage={page}
+          totalItems={totalItems}
+          pageSize={pageSize}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+          itemLabel="appointments"
+          position="bottom"
+        />
+      )}
     </div>
   );
 };

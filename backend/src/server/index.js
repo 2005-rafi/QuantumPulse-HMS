@@ -4,6 +4,7 @@ const { connectDB } = require('../core/database/connection');
 const config = require('../core/config');
 const logger = require('../core/logger');
 const { setupCronJobs } = require('../core/cron');
+const { syncSystemPermissions } = require('../modules/administration/permission.sync');
 
 // Global Uncaught Exception Handler
 process.on('uncaughtException', (err) => {
@@ -29,7 +30,10 @@ const startServer = async () => {
   // 1. Establish Database Connection (MongoDB Atlas / Local)
   await connectDB();
 
-  // 2. Initialize Express Application
+  // 2. Synchronize System Permissions & Role Mappings
+  await syncSystemPermissions();
+
+  // 3. Initialize Express Application
   const app = createApp();
 
   // 3. Initialize background / recurring tasks

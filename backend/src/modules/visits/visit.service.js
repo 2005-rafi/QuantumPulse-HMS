@@ -26,12 +26,20 @@ class VisitService {
 
       // 2. Determine initial status
       let status = 'WAITING_TRIAGE';
-      if (data.isDirectPharmacy) status = 'WAITING_PHARMACY';
-
-      // 3. Generate department-prefixed daily token (CARD-014, GEN-001, etc.)
       let tokenString = null;
       let tokenSerial = null;
-      if (!data.isDirectPharmacy) {
+
+      if (data.isDirectPharmacy) {
+        status = 'WAITING_PHARMACY';
+        let pharmDept = await Department.findOne({ code: 'PHARM' }).select('name code').session(session);
+        if (!pharmDept) {
+          pharmDept = { name: 'Pharmacy', code: 'PHARM' };
+        }
+        const token = await tokenGenerator.generate(pharmDept, session);
+        tokenString = token.tokenString;
+        tokenSerial = token.tokenSerial;
+      } else {
+        // 3. Generate department-prefixed daily token (CARD-014, GEN-001, etc.)
         let department = null;
         if (data.departmentId) {
           department = await Department.findById(data.departmentId).select('name code').session(session);
@@ -64,7 +72,45 @@ class VisitService {
         visitData.consultation = { doctorId: data.doctorId, status: 'DRAFT' };
       }
 
-      return visitRepository.create(visitData, session ? { session } : {});
+      const createdVisit = await visitRepository.create(visitData, session ? { session } : {});
+
+      // Emit VISIT_REGISTERED BillableEvent to create the Bill ledger entry
+      setImmediate(async () => {
+        try {
+          const billingService = require('../billing/bill.service');
+          const { getTariffGrade } = require('../../core/constants');
+          let tariffGrade = null;
+          if (data.doctorId) {
+            // Try to get doctor's tariff grade for consultation fee resolution
+            const Staff = require('../staff/staff.model');
+            const doctor = await Staff.findById(data.doctorId).select('positionRank tariffGrade').lean();
+            if (doctor) {
+              tariffGrade = doctor.tariffGrade || getTariffGrade(doctor.positionRank || 1);
+            }
+          }
+
+          await billingService.processBillableEvent({
+            type: 'VISIT_REGISTERED',
+            visitId: createdVisit._id,
+            patientId: data.patientId,
+            triggeredBy: registeredBy,
+            triggeredAt: new Date(),
+            resolutionContext: {
+              category: 'REGISTRATION',
+              departmentId: data.departmentId || null,
+              tariffGrade,
+              visitType: data.visitType || 'OPD',
+              appointmentType: data.appointmentType || null,
+              quantity: 1,
+            },
+            description: 'OPD Registration Fee',
+          });
+        } catch (err) {
+          console.error('[VisitService] Failed to emit VISIT_REGISTERED BillableEvent:', err.message);
+        }
+      });
+
+      return createdVisit;
     };
 
     if (externalSession) {

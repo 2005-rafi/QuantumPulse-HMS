@@ -180,7 +180,7 @@ const AdministratorDashboard = () => {
     { id: 'staff', icon: 'badge', label: 'Manage Staff' },
     { id: 'departments', icon: 'corporate_fare', label: 'Manage Departments' },
     { id: 'laboratories', icon: 'science', label: 'Manage Laboratories' },
-    { id: 'settings', icon: 'settings', label: 'Settings' },
+    { id: 'billing', icon: 'payments', label: 'Billing & Tariff' },
     { id: 'audit', icon: 'history', label: 'Audit Logs' }
   ];
 

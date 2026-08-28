@@ -464,58 +464,41 @@ class AppointmentService {
 
   // ── 8. QUERIES & LISTINGS ─────────────────────────────────────────────────
 
-  async getAppointments(filters = {}, pagination = {}) {
-    const query = {};
+  async getAppointments(filters = {}, pagination = {}, securityScope = {}) {
+    const { QueryContext, QueryBuilder, AppointmentQueryConfig } = require('../../core/query');
 
-    if (filters.status) {
-      if (filters.status.includes(',')) {
-        query.status = { $in: filters.status.split(',') };
-      } else {
-        query.status = filters.status;
-      }
-    }
+    const queryContext = new QueryContext({
+      filters: { ...filters },
+      page: pagination.page || 1,
+      limit: pagination.limit || 20,
+      sortBy: pagination.sortBy || filters.sortBy || 'appointmentDate',
+      sortOrder: pagination.sortOrder || filters.sortOrder || 'asc',
+      securityScope,
+    });
 
-    if (filters.departmentId) {
-      query.departmentId = filters.departmentId;
-    }
+    const compiled = QueryBuilder.compile(queryContext, AppointmentQueryConfig);
 
-    if (filters.doctorId) {
-      query.doctorId = filters.doctorId;
-    }
-
-    if (filters.appointmentType) {
-      query.appointmentType = filters.appointmentType;
-    }
-
-    if (filters.patientId) {
-      query.patientId = filters.patientId;
-    }
-
-    // Date range filtering
+    // Handle single date convenience filter if passed as filters.date
     if (filters.date) {
       const targetDate = new Date(filters.date);
-      const startOfDay = new Date(targetDate);
-      startOfDay.setUTCHours(0, 0, 0, 0);
-      const endOfDay = new Date(targetDate);
-      endOfDay.setUTCHours(23, 59, 59, 999);
-      query.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
-    } else if (filters.startDate || filters.endDate) {
-      query.appointmentDate = {};
-      if (filters.startDate) {
-        const start = new Date(filters.startDate);
-        start.setUTCHours(0, 0, 0, 0);
-        query.appointmentDate.$gte = start;
-      }
-      if (filters.endDate) {
-        const end = new Date(filters.endDate);
-        end.setUTCHours(23, 59, 59, 999);
-        query.appointmentDate.$lte = end;
+      if (!isNaN(targetDate.getTime())) {
+        const startOfDay = new Date(targetDate);
+        startOfDay.setUTCHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setUTCHours(23, 59, 59, 999);
+        if (compiled.filter.$and) {
+          compiled.filter.$and.push({ appointmentDate: { $gte: startOfDay, $lte: endOfDay } });
+        } else if (Object.keys(compiled.filter).length > 0) {
+          compiled.filter = { $and: [compiled.filter, { appointmentDate: { $gte: startOfDay, $lte: endOfDay } }] };
+        } else {
+          compiled.filter.appointmentDate = { $gte: startOfDay, $lte: endOfDay };
+        }
       }
     }
 
     const [results, summary] = await Promise.all([
-      appointmentRepository.findAll(query, pagination, { appointmentDate: 1, startTime: 1 }),
-      appointmentRepository.getDashboardSummary(query.appointmentDate ? { appointmentDate: query.appointmentDate } : {}),
+      appointmentRepository.findAll(compiled.filter, compiled.pagination, compiled.sort),
+      appointmentRepository.getDashboardSummary(compiled.filter.appointmentDate ? { appointmentDate: compiled.filter.appointmentDate } : {}),
     ]);
 
     return {

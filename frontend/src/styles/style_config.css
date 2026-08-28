@@ -1,53 +1,164 @@
-/* ── MD3 Style Configuration ── */
+/* ==========================================================================
+   style_config.css — Centralized Design Metrics & MD3 Token System
+   Path: frontend/src/styles/style_config.css
+   Single Source of Truth for Spacing, Sizing, Density, Corners, & Typography
+   ========================================================================== */
 
 :root {
-  /* Spacing System (8dp Grid) */
-  --md-spacing-none: 0;
-  --md-spacing-xxs: 4px;
-  --md-spacing-xs: 8px;
-  --md-spacing-s: 12px;
-  --md-spacing-m: 16px;
-  --md-spacing-l: 24px;
-  --md-spacing-xl: 32px;
-  --md-spacing-xxl: 40px;
-  --md-spacing-xxxl: 48px;
-  --md-spacing-huge: 64px;
+  /* ── Spacing System (8dp Grid with 4dp/2dp Compact Sub-grid) ── */
+  --md-spacing-none: 0px;
+  --md-spacing-xxs: 2px;
+  --md-spacing-xs: 4px;
+  --md-spacing-s: 8px;
+  --md-spacing-m: 12px;
+  --md-spacing-l: 16px;
+  --md-spacing-xl: 20px;
+  --md-spacing-xxl: 24px;
+  --md-spacing-xxxl: 32px;
+  --md-spacing-huge: 48px;
 
-  /* Shape Corners */
+  /* ── Component Dimensions & Clinical Density Scale ── */
+  
+  /* 1. Header & Navigation Tabs */
+  --md-comp-header-height: 52px;
+  --md-comp-header-padding: 0 1.25rem;
+  --md-comp-tab-height: 34px;
+  --md-comp-tab-padding: 4px 14px;
+  --md-comp-tab-font-size: 0.8rem;
+  --md-comp-tab-icon-size: 15px;
+
+  /* 2. Top Metric Statistics Bar & Cards */
+  --md-comp-stats-bar-padding: 6px 16px;
+  --md-comp-stats-bar-gap: 8px;
+  --md-comp-stat-card-padding: 6px 12px;
+  --md-comp-stat-card-min-height: 48px;
+  --md-comp-stat-card-border-radius: 10px;
+  --md-comp-stat-icon-box-size: 28px;
+  --md-comp-stat-icon-size: 15px;
+  --md-comp-stat-label-size: 0.68rem;
+  --md-comp-stat-value-size: 0.95rem;
+
+  /* 3. Search & Filter Bar Controls */
+  --md-comp-search-bar-height: 34px;
+  --md-comp-search-input-padding: 4px 10px;
+  --md-comp-search-input-font-size: 0.82rem;
+  --md-comp-search-icon-size: 16px;
+  --md-comp-filter-btn-height: 32px;
+  --md-comp-filter-btn-padding: 3px 12px;
+  --md-comp-filter-btn-min-width: 80px;
+  
+  /* 4. Action Buttons (Centralized MD3 Minimal Scale) */
+  --md-comp-btn-height-sm: 28px;
+  --md-comp-btn-height-md: 32px;
+  --md-comp-btn-height-lg: 38px;
+  --md-comp-btn-padding-sm: 2px 10px;
+  --md-comp-btn-padding-md: 3px 12px;
+  --md-comp-btn-padding-lg: 6px 16px;
+  --md-comp-btn-font-size-sm: 0.76rem;
+  --md-comp-btn-font-size-md: 0.8rem;
+  --md-comp-btn-font-size-lg: 0.86rem;
+  --md-comp-btn-icon-size-sm: 14px;
+  --md-comp-btn-icon-size-md: 15px;
+  --md-comp-btn-icon-size-lg: 18px;
+  --md-comp-btn-border-radius: 9999px;
+
+  /* 5. Minimal FAB (Floating Action Button) Scale */
+  --md-comp-fab-height: 40px;
+  --md-comp-fab-min-width: 40px;
+  --md-comp-fab-padding: 0 14px;
+  --md-comp-fab-font-size: 0.82rem;
+  --md-comp-fab-icon-size: 18px;
+  --md-comp-fab-border-radius: 12px;
+  
+  /* 6. View Mode Toggle Controls (Cards / List) */
+  --md-comp-toggle-group-height: 32px;
+  --md-comp-toggle-btn-height: 28px;
+  --md-comp-toggle-btn-padding: 3px 10px;
+  --md-comp-toggle-font-size: 0.78rem;
+  --md-comp-toggle-icon-size: 15px;
+
+  /* 7. Data Tables & Grids */
+  --md-comp-table-header-padding: 8px 14px;
+  --md-comp-table-header-font-size: 0.72rem;
+  --md-comp-table-cell-padding: 8px 14px;
+  --md-comp-table-cell-font-size: 0.82rem;
+  --md-comp-card-padding: 12px 14px;
+
+  /* 8. Table & Row Action Buttons (Subtle Rounded Corners MD3 Scale) */
+  --md-comp-action-btn-height: 28px;
+  --md-comp-action-icon-btn-size: 28px;
+  --md-comp-action-icon-size: 14px;
+  --md-comp-action-btn-padding: 2px 10px;
+  --md-comp-action-corner: 8px;
+  --md-comp-action-gap: 4px;
+  --md-comp-action-font-size: 0.76rem;
+
+  /* 9. Avatars & Identity Badges */
+  --md-comp-avatar-size-xs: 24px;
+  --md-comp-avatar-size-sm: 28px;
+  --md-comp-avatar-size-md: 34px;
+  --md-comp-avatar-size-lg: 52px;
+
+  /* 10. Filter Side Sheet (Expanded Half-Screen MD3 Scale) */
+  --md-comp-filter-sheet-width-desktop: 50vw;
+  --md-comp-filter-sheet-min-width: 540px;
+  --md-comp-filter-sheet-max-width: 780px;
+  --md-comp-filter-chip-corner: 8px;
+  --md-comp-filter-chip-height: 28px;
+  --md-comp-filter-chip-padding: 3px 10px;
+  --md-comp-filter-chip-font-size: 0.78rem;
+
+  /* 11. Laboratory Tech Workbench (Small-to-Medium Clinical Density) */
+  --md-lab-header-height: 40px;
+  --md-lab-header-padding: 6px 12px;
+  --md-lab-workbench-gap: 8px;
+  --md-lab-specimen-card-padding: 8px 12px;
+  --md-lab-specimen-dot-size: 10px;
+  --md-lab-specimen-connector-width: 2px;
+  --md-lab-order-card-padding: 8px 12px;
+  --md-lab-notes-min-height: 44px;
+  --md-lab-upload-dropzone-padding: 10px 14px;
+  --md-lab-upload-dropzone-min-height: 52px;
+  --md-lab-upload-preview-max-height: 180px;
+  --md-lab-table-cell-padding: 6px 10px;
+  --md-lab-table-cell-font-size: 0.80rem;
+  --md-lab-section-header-padding: 6px 10px;
+
+  /* ── Shape Corners (MD3 Scale) ── */
   --md-sys-shape-corner-none: 0px;
   --md-sys-shape-corner-extra-small: 4px;
   --md-sys-shape-corner-small: 8px;
   --md-sys-shape-corner-medium: 12px;
   --md-sys-shape-corner-large: 16px;
-  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-extra-large: 24px;
   --md-sys-shape-corner-full: 9999px;
 
-  /* Typography Scales */
-  --md-sys-typescale-display-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
-  --md-sys-typescale-display-large-size: 3.5rem;
+  /* ── Typography Scales (Centralized Inter Typography) ── */
+  --md-sys-typescale-display-large-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --md-sys-typescale-display-large-size: 2.75rem;
   --md-sys-typescale-display-large-weight: 400;
 
-  --md-sys-typescale-headline-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
-  --md-sys-typescale-headline-large-size: 2rem;
-  --md-sys-typescale-headline-large-weight: 400;
+  --md-sys-typescale-headline-large-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --md-sys-typescale-headline-large-size: 1.35rem;
+  --md-sys-typescale-headline-large-weight: 600;
 
-  --md-sys-typescale-title-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
-  --md-sys-typescale-title-large-size: 1.375rem;
-  --md-sys-typescale-title-large-weight: 400;
+  --md-sys-typescale-title-large-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --md-sys-typescale-title-large-size: 1.15rem;
+  --md-sys-typescale-title-large-weight: 600;
 
-  --md-sys-typescale-body-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
-  --md-sys-typescale-body-large-size: 1rem;
+  --md-sys-typescale-body-large-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --md-sys-typescale-body-large-size: 0.84rem;
   --md-sys-typescale-body-large-weight: 400;
-  --md-sys-typescale-body-large-line-height: 1.5;
+  --md-sys-typescale-body-large-line-height: 1.4;
 
-  --md-sys-typescale-label-large-font: 'Roboto', 'Segoe UI', system-ui, sans-serif;
-  --md-sys-typescale-label-large-size: 0.875rem;
-  --md-sys-typescale-label-large-weight: 500;
+  --md-sys-typescale-label-large-font: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --md-sys-typescale-label-large-size: 0.75rem;
+  --md-sys-typescale-label-large-weight: 600;
 
-  /* Motion & Easing */
+  /* ── Motion & Easing ── */
   --md-sys-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
   --md-sys-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
-  --md-sys-motion-duration-short: 200ms;
-  --md-sys-motion-duration-medium: 300ms;
-  --md-sys-motion-duration-long: 500ms;
+  --md-sys-motion-duration-short: 150ms;
+  --md-sys-motion-duration-medium: 250ms;
+  --md-sys-motion-duration-long: 400ms;
 }

@@ -21,6 +21,8 @@ const laboratoryRoutes = require('../../modules/laboratory/laboratory.routes');
 const pharmacyRoutes = require('../../modules/pharmacy/pharmacy.routes');
 const auditRoutes = require('../../modules/audit/audit.routes');
 const appointmentRoutes = require('../../modules/appointments/appointment.routes');
+const tariffRoutes = require('../../modules/tariff/tariff.routes');
+const billRoutes = require('../../modules/billing/bill.routes');
 
 const createApp = () => {
   const app = express();
@@ -110,6 +112,8 @@ const createApp = () => {
   app.use('/api/v1/pharmacy', pharmacyRoutes);
   app.use('/api/v1/audit', auditRoutes);
   app.use('/api/v1/appointments', appointmentRoutes);
+  app.use('/api/v1/tariff', tariffRoutes);
+  app.use('/api/v1/bills', billRoutes);
 
   // Health check
   app.get('/api/v1/health', (req, res) => {

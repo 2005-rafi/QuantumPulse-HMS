@@ -8,6 +8,7 @@ import CommonHeader from '../components/shell/CommonHeader';
 import PatientList from '../features/patients/PatientList';
 import PatientProfile from '../features/patients/PatientProfile';
 import BillingTemplate from '../features/billing/BillingTemplate';
+import DirectDispenseModal from '../features/pharmacy/DirectDispenseModal';
 import { Icon } from '../components/md3/Md3Widgets';
 import { timeSince, formatQueueWaitTime } from '../utils/dateFormatting';
 import { CURRENCY_SYMBOL } from '../constants/currency';
@@ -49,6 +50,7 @@ const PharmacyDashboard = () => {
     setShowPreview,
     hospitalInfo,
     labels,
+    fieldVisibility,
     customFields,
     fetchQueue,
     handlePatientSelect,
@@ -60,6 +62,10 @@ const PharmacyDashboard = () => {
     handleGeneratePreview,
     handleFinalize,
     totalBillAmount,
+    directDispenseOpen,
+    setDirectDispenseOpen,
+    catalogMedicines,
+    handleStartDirectDispenseForPatient,
   } = usePharmacyDispense();
 
   const handleLogout = async () => {
@@ -112,6 +118,17 @@ const PharmacyDashboard = () => {
             <span>Patient Profile</span>
           </button>
         )}
+
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button
+            type="button"
+            className="pharmacy-direct-dispense-btn"
+            onClick={() => setDirectDispenseOpen(true)}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>shopping_cart_checkout</span>
+            <span>Direct OTC Dispense</span>
+          </button>
+        </div>
       </nav>
 
       {/* ─── MAIN WORKSPACE ─── */}
@@ -248,11 +265,23 @@ const PharmacyDashboard = () => {
                     </h3>
 
                     {medications.length === 0 ? (
-                      <p className="pharmacy-no-meds">
-                        {selectedVisit.consultation?.doctorId
-                          ? 'No medications prescribed for this visit.'
-                          : 'No medications added yet.'}
-                      </p>
+                      <div className="pharmacy-advice-card">
+                        <div className="pharmacy-advice-card__icon">
+                          <span className="material-symbols-rounded">medical_information</span>
+                        </div>
+                        <div className="pharmacy-advice-card__body">
+                          <h4 className="pharmacy-advice-card__title">
+                            {selectedVisit.consultation?.doctorId
+                              ? 'Consultation & Review Encounter (Nil Medications Prescribed)'
+                              : 'Direct Pharmacy Cart (Empty)'}
+                          </h4>
+                          <p className="pharmacy-advice-card__desc">
+                            {selectedVisit.consultation?.doctorId
+                              ? 'No active medications were prescribed during this consultation. You can generate the bill preview directly to settle consultation/lab dues and complete this visit, or click "+ Add Medication" below if the patient requests OTC items.'
+                              : 'No items in cart. Click "+ Add Medication" or select from quick catalog below.'}
+                          </p>
+                        </div>
+                      </div>
                     ) : (
                       <div className="pharmacy-med-table-wrapper">
                         <table className="pharmacy-med-table">
@@ -271,36 +300,44 @@ const PharmacyDashboard = () => {
                                 <td>
                                   <input
                                     type="text"
-                                    placeholder="Medicine Name"
+                                    placeholder="Medicine Name (type for catalog lookup)"
                                     value={med.recommended}
+                                    list={`med-catalog-${index}`}
                                     onChange={(e) => handleMedChange(index, 'recommended', e.target.value)}
                                     className="pharmacy-med-input"
                                   />
-                                    {med.dosageSchedule && (
-                                      <div className="pharmacy-dosage-chips">
-                                        <span className="pharmacy-dosage-chip">
-                                          <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>light_mode</span>
-                                          M: {med.dosageSchedule.morning?.count ?? 0}
-                                          {med.dosageSchedule.morning?.timing !== 'N/A'
-                                            ? ` (${(med.dosageSchedule.morning?.timing || '').replace('_', ' ')})`
-                                            : ''}
-                                        </span>
-                                        <span className="pharmacy-dosage-chip">
-                                          <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>sunny</span>
-                                          A: {med.dosageSchedule.afternoon?.count ?? 0}
-                                          {med.dosageSchedule.afternoon?.timing !== 'N/A'
-                                            ? ` (${(med.dosageSchedule.afternoon?.timing || '').replace('_', ' ')})`
-                                            : ''}
-                                        </span>
-                                        <span className="pharmacy-dosage-chip">
-                                          <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>bedtime</span>
-                                          N: {med.dosageSchedule.night?.count ?? 0}
-                                          {med.dosageSchedule.night?.timing !== 'N/A'
-                                            ? ` (${(med.dosageSchedule.night?.timing || '').replace('_', ' ')})`
-                                            : ''}
-                                        </span>
-                                      </div>
-                                    )}
+                                  <datalist id={`med-catalog-${index}`}>
+                                    {catalogMedicines.map((cm) => (
+                                      <option key={cm._id} value={cm.medicineName}>
+                                        {cm.genericName ? `${cm.genericName} — ` : ''}{CURRENCY_SYMBOL}{cm.unitPrice}/{cm.unit || 'tab'}
+                                      </option>
+                                    ))}
+                                  </datalist>
+                                  {med.dosageSchedule && (
+                                    <div className="pharmacy-dosage-chips">
+                                      <span className="pharmacy-dosage-chip">
+                                        <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>light_mode</span>
+                                        M: {med.dosageSchedule.morning?.count ?? 0}
+                                        {med.dosageSchedule.morning?.timing !== 'N/A'
+                                          ? ` (${(med.dosageSchedule.morning?.timing || '').replace('_', ' ')})`
+                                          : ''}
+                                      </span>
+                                      <span className="pharmacy-dosage-chip">
+                                        <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>sunny</span>
+                                        A: {med.dosageSchedule.afternoon?.count ?? 0}
+                                        {med.dosageSchedule.afternoon?.timing !== 'N/A'
+                                          ? ` (${(med.dosageSchedule.afternoon?.timing || '').replace('_', ' ')})`
+                                          : ''}
+                                      </span>
+                                      <span className="pharmacy-dosage-chip">
+                                        <span className="material-symbols-rounded" style={{ fontSize: '14px', marginRight: '4px', verticalAlign: 'middle' }}>bedtime</span>
+                                        N: {med.dosageSchedule.night?.count ?? 0}
+                                        {med.dosageSchedule.night?.timing !== 'N/A'
+                                          ? ` (${(med.dosageSchedule.night?.timing || '').replace('_', ' ')})`
+                                          : ''}
+                                      </span>
+                                    </div>
+                                  )}
                                 </td>
                                 <td>
                                   <input
@@ -358,14 +395,33 @@ const PharmacyDashboard = () => {
                       </div>
                     )}
 
-                    <button
-                      type="button"
-                      className="pharmacy-add-med-btn"
-                      onClick={handleAddMedication}
-                    >
-                      <Icon.Plus />
-                      Add Medication
-                    </button>
+                    <div className="pharmacy-med-actions-row">
+                      <button
+                        type="button"
+                        className="pharmacy-add-med-btn"
+                        onClick={() => handleAddMedication()}
+                      >
+                        <Icon.Plus />
+                        Add Medication
+                      </button>
+
+                      {catalogMedicines.length > 0 && (
+                        <div className="pharmacy-quick-chips">
+                          <span className="pharmacy-quick-chips__label">Quick Add:</span>
+                          {catalogMedicines.slice(0, 5).map((cm) => (
+                            <button
+                              key={cm._id}
+                              type="button"
+                              className="pharmacy-quick-chip"
+                              onClick={() => handleAddMedication(cm)}
+                              title={`Add ${cm.medicineName} (${CURRENCY_SYMBOL}${cm.unitPrice})`}
+                            >
+                              + {cm.medicineName}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Charges */}
@@ -454,6 +510,7 @@ const PharmacyDashboard = () => {
                       total={Number(totalBillAmount)}
                       hospitalInfo={hospitalInfo}
                       labels={labels}
+                      fieldVisibility={fieldVisibility}
                       customFields={customFields}
                     />
                   </div>
@@ -469,6 +526,7 @@ const PharmacyDashboard = () => {
                         total={Number(totalBillAmount)}
                         hospitalInfo={hospitalInfo}
                         labels={labels}
+                        fieldVisibility={fieldVisibility}
                         customFields={customFields}
                       />
                     </div>,
@@ -481,6 +539,13 @@ const PharmacyDashboard = () => {
           </div>
         )}
       </main>
+
+      {/* ─── DIRECT DISPENSE MODAL ─── */}
+      <DirectDispenseModal
+        isOpen={directDispenseOpen}
+        onClose={() => setDirectDispenseOpen(false)}
+        onStartDirectDispense={handleStartDirectDispenseForPatient}
+      />
     </div>
   );
 };

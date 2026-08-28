@@ -8,7 +8,7 @@ const ROLE_CONFIG = {
   Reception: {
     color: '#1565c0',
     bg: '#e3f2fd',
-    icon: '🏥',
+    icon: 'local_hospital',
     label: 'Reception',
     description: 'Patient registration, visit creation, and billing management.',
     capabilities: [
@@ -22,7 +22,7 @@ const ROLE_CONFIG = {
   Nurse: {
     color: '#558b2f',
     bg: '#f1f8e9',
-    icon: '🩺',
+    icon: 'vital_signs',
     label: 'Nurse',
     description: 'Record patient vitals, observations, and open doctor consultations.',
     capabilities: [
@@ -35,7 +35,7 @@ const ROLE_CONFIG = {
   Doctor: {
     color: '#6a1b9a',
     bg: '#f3e5f5',
-    icon: '👨‍⚕️',
+    icon: 'stethoscope',
     label: 'Doctor',
     description: 'Full clinical workflow — diagnose, prescribe, order investigations.',
     capabilities: [
@@ -49,7 +49,7 @@ const ROLE_CONFIG = {
   Laboratory: {
     color: '#e65100',
     bg: '#fff3e0',
-    icon: '🔬',
+    icon: 'biotech',
     label: 'Laboratory',
     description: 'Process lab orders — collect samples, run tests, verify results.',
     capabilities: [
@@ -62,7 +62,7 @@ const ROLE_CONFIG = {
   Pharmacy: {
     color: '#00695c',
     bg: '#e0f2f1',
-    icon: '💊',
+    icon: 'medication',
     label: 'Pharmacy',
     description: 'Dispense medicines against finalized prescriptions.',
     capabilities: [
@@ -75,7 +75,7 @@ const ROLE_CONFIG = {
   Administrator: {
     color: '#bf360c',
     bg: '#fbe9e7',
-    icon: '⚙️',
+    icon: 'admin_panel_settings',
     label: 'Administrator',
     description: 'Full system administration — users, roles, permissions, audit logs.',
     capabilities: [
@@ -110,7 +110,7 @@ const RoleDashboard = ({ role }) => {
 
       <main className="dashboard-main">
         <div className="dashboard-welcome">
-          <span className="role-icon">{roleConfig.icon}</span>
+          <span className="material-symbols-rounded role-icon">{roleConfig.icon}</span>
           <div>
             <h1 className="dashboard-title">Welcome, {user?.fullName?.split(' ')[0]}!</h1>
             <p className="dashboard-role-label">{roleConfig.label} Dashboard</p>
@@ -124,7 +124,7 @@ const RoleDashboard = ({ role }) => {
             <div className="capability-list">
               {roleConfig.capabilities.map((cap) => (
                 <div key={cap} className="capability-item">
-                  <span className="cap-check" style={{ color: roleConfig.color }}>✓</span>
+                  <span className="material-symbols-rounded cap-check" style={{ fontSize: '16px', color: roleConfig.color }}>check</span>
                   {cap}
                 </div>
               ))}

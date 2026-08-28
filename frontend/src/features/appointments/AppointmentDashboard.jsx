@@ -98,15 +98,15 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
 
   return (
     <div className="appt-dashboard">
-      {/* Top Header & Admin Schedule Trigger */}
+      {/* Top Lifecycle Stats Grid (5 Cards forming 2nd row in 10-card unified grid) */}
       <div className="appt-stats-grid">
         <div className="appt-stat-card">
           <div className="appt-stat-icon total">
             <Icon.Calendar />
           </div>
-          <div>
-            <div className="appt-stat-val">{summary.total || 0}</div>
-            <div className="appt-stat-label">Total Today</div>
+          <div className="appt-stat-content">
+            <span className="appt-stat-label">Total Today</span>
+            <span className="appt-stat-val">{summary.total || 0}</span>
           </div>
         </div>
 
@@ -114,9 +114,9 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
           <div className="appt-stat-icon scheduled">
             <Icon.Clock />
           </div>
-          <div>
-            <div className="appt-stat-val">{summary.SCHEDULED || 0}</div>
-            <div className="appt-stat-label">Scheduled / Pending</div>
+          <div className="appt-stat-content">
+            <span className="appt-stat-label">Scheduled / Pending</span>
+            <span className="appt-stat-val">{summary.SCHEDULED || 0}</span>
           </div>
         </div>
 
@@ -124,9 +124,9 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
           <div className="appt-stat-icon checked-in">
             <Icon.UserCheck />
           </div>
-          <div>
-            <div className="appt-stat-val">{summary.CHECKED_IN || 0}</div>
-            <div className="appt-stat-label">Checked In / Triage</div>
+          <div className="appt-stat-content">
+            <span className="appt-stat-label">Checked In / Triage</span>
+            <span className="appt-stat-val">{summary.CHECKED_IN || 0}</span>
           </div>
         </div>
 
@@ -134,9 +134,9 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
           <div className="appt-stat-icon completed">
             <Icon.CheckCircle />
           </div>
-          <div>
-            <div className="appt-stat-val">{summary.COMPLETED || 0}</div>
-            <div className="appt-stat-label">Consulted</div>
+          <div className="appt-stat-content">
+            <span className="appt-stat-label">Consulted</span>
+            <span className="appt-stat-val">{summary.COMPLETED || 0}</span>
           </div>
         </div>
 
@@ -144,9 +144,9 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
           <div className="appt-stat-icon cancelled">
             <Icon.XCircle />
           </div>
-          <div>
-            <div className="appt-stat-val">{summary.CANCELLED || 0}</div>
-            <div className="appt-stat-label">Cancelled</div>
+          <div className="appt-stat-content">
+            <span className="appt-stat-label">Cancelled</span>
+            <span className="appt-stat-val">{summary.CANCELLED || 0}</span>
           </div>
         </div>
       </div>
@@ -185,19 +185,6 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
         onCancel={handleOpenCancel}
         onMarkMissed={handleMarkMissed}
       />
-
-      {/* Floating Action Button for Booking (Portalled directly to body for true viewport docking) */}
-      {createPortal(
-        <div className="reception-fab-dock">
-          <Md3Fab
-            icon={<Icon.Plus />}
-            label="Book Appointment"
-            onClick={() => setIsBookSheetOpen(true)}
-            ariaLabel="Book New Appointment"
-          />
-        </div>,
-        document.body
-      )}
 
       {/* ── BOTTOM SHEETS & DIALOGS (Portalled directly to document.body for true full-screen overlay) ── */}
 
@@ -241,7 +228,7 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
       {/* Details Dialog */}
       {selectedAppointmentForDetails && createPortal(
         <div className="appt-modal-backdrop" onClick={() => setSelectedAppointmentForDetails(null)}>
-          <div className="appt-modal-container modal-wide" onClick={(e) => e.stopPropagation()}>
+          <div className="appt-modal-container modal-expanded-appointment" onClick={(e) => e.stopPropagation()}>
             <AppointmentDetails
               appointment={selectedAppointmentForDetails}
               onClose={() => setSelectedAppointmentForDetails(null)}

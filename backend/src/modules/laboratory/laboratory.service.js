@@ -7,6 +7,8 @@ const { StorageService } = require('./laboratory.upload');
 const AppError = require('../../core/errors/AppError');
 const { withTransaction } = require('../../core/database/transaction');
 const administrationService = require('../administration/administration.service');
+const logger = require('../../core/logger');
+const auditService = require('../audit/audit.service');
 
 class LaboratoryService {
   // ── Configuration Methods (admin only) ──────────────────────────────────────────
@@ -23,179 +25,127 @@ class LaboratoryService {
       throw new AppError('BUSINESS_002', `Cannot link laboratory to inactive department "${dept.name}"`);
     }
 
-    if (dept.type !== 'DIAGNOSTIC' && dept.type !== 'CLINICAL/DIAGNOSTIC') {
-      throw new AppError('BUSINESS_002', `Cannot link laboratory to a non-diagnostic department type: ${dept.type}`);
-    }
+    // Check duplicate code
+    const existing = await Laboratory.findOne({ code: data.code.toUpperCase() });
+    if (existing) throw new AppError('CONFLICT', `Laboratory with code "${data.code}" already exists`);
 
-    // Guard: prevent duplicate lab per department (unique name still enforced by schema)
-    const existing = await Laboratory.findOne({ name: data.name });
-    if (existing) throw new AppError('BUSINESS_001', `A laboratory named "${data.name}" already exists`);
-
-    return await Laboratory.create(data);
-  }
-
-  /**
-   * List all active laboratories.
-   * @param {object} filter  Optional: { departmentId } to scope by department
-   */
-  async getAllLaboratories(filter = {}) {
-    const query = {};
-    if (!filter.includeInactive) {
-      query.isActive = true;
-    }
-    if (filter.departmentId) query.departmentId = filter.departmentId;
-    return await Laboratory.find(query).populate('departmentId', 'name code type').lean();
-  }
-
-  /**
-   * Get a single laboratory by ID.
-   */
-  async getLaboratoryById(id) {
-    const lab = await Laboratory.findById(id).populate('departmentId', 'name code type').lean();
-    if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
-    return lab;
-  }
-
-  /**
-   * Update laboratory metadata (name, description, isActive).
-   * departmentId cannot be changed after creation (business rule).
-   */
-  async updateLaboratory(id, data) {
-    // Prevent departmentId from being changed via update
-    const { departmentId, ...safeData } = data;
-
-    if (safeData.isActive === false) {
-      const Visit = require('../visits/visit.model');
-      const activeLabOrdersCount = await Visit.countDocuments({
-        'labOrders': {
-          $elemMatch: {
-            laboratoryId: id,
-            status: { $in: ['PENDING_SAMPLE', 'PROCESSING'] }
-          }
-        }
-      });
-      if (activeLabOrdersCount > 0) {
-        throw new AppError('BUSINESS_002', 'Cannot deactivate laboratory: it has pending or processing lab orders');
-      }
-    }
-
-    const lab = await Laboratory.findByIdAndUpdate(id, safeData, { returnDocument: 'after', runValidators: true });
-    if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
-    return lab;
-  }
-
-  /**
-   * Soft-delete a laboratory.
-   */
-  async deleteLaboratory(id) {
-    const Visit = require('../visits/visit.model');
-    const activeLabOrdersCount = await Visit.countDocuments({
-      'labOrders': {
-        $elemMatch: {
-          laboratoryId: id,
-          status: { $in: ['PENDING_SAMPLE', 'PROCESSING'] }
-        }
-      }
+    return await Laboratory.create({
+      ...data,
+      code: data.code.toUpperCase(),
     });
-    if (activeLabOrdersCount > 0) {
-      throw new AppError('BUSINESS_002', 'Cannot deactivate laboratory: it has pending or processing lab orders');
-    }
+  }
 
-    const lab = await Laboratory.findByIdAndUpdate(id, { isActive: false }, { returnDocument: 'after' });
+  async getAllLaboratories(filter = {}) {
+    const query = filter.includeInactive ? {} : { status: 'Active' };
+    if (filter.departmentId) query.departmentId = filter.departmentId;
+    return await Laboratory.find(query).populate('departmentId', 'name code').lean();
+  }
+
+  async getLaboratoryById(id) {
+    const lab = await Laboratory.findById(id).populate('departmentId', 'name code').lean();
+    if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
+    return lab;
+  }
+
+  async updateLaboratory(id, data) {
+    if (data.departmentId) {
+      const dept = await administrationService.getDepartmentById(data.departmentId);
+      if (!dept) throw new AppError('NOT_FOUND', 'Department not found');
+    }
+    if (data.code) data.code = data.code.toUpperCase();
+
+    const lab = await Laboratory.findByIdAndUpdate(id, { $set: data }, { new: true, runValidators: true }).lean();
+    if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
+    return lab;
+  }
+
+  async deleteLaboratory(id) {
+    const lab = await Laboratory.findByIdAndUpdate(id, { $set: { status: 'Inactive' } }, { new: true });
     if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
     return lab;
   }
 
   // ── Test Catalog Methods (admin only) ────────────────────────────────────────────
 
-  /**
-   * Add a new test to a laboratory's catalog.
-   */
   async addTest(labId, testData) {
     const lab = await Laboratory.findById(labId);
     if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
-    lab.testCatalog.push(testData);
+
+    const codeExists = lab.testCatalog.some((t) => t.code === testData.code.toUpperCase());
+    if (codeExists) throw new AppError('CONFLICT', `Test code "${testData.code}" already exists in this laboratory catalog`);
+
+    lab.testCatalog.push({
+      ...testData,
+      code: testData.code.toUpperCase(),
+    });
     await lab.save();
     return lab.testCatalog[lab.testCatalog.length - 1];
   }
 
-  /**
-   * Update an existing test in the catalog.
-   */
   async updateTest(labId, testId, testData) {
     const lab = await Laboratory.findById(labId);
     if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
+
     const test = lab.testCatalog.id(testId);
     if (!test) throw new AppError('NOT_FOUND', 'Test not found in catalog');
+
+    if (testData.code) testData.code = testData.code.toUpperCase();
     Object.assign(test, testData);
     await lab.save();
     return test;
   }
 
-  /**
-   * Remove a test from the catalog.
-   */
   async removeTest(labId, testId) {
     const lab = await Laboratory.findById(labId);
     if (!lab) throw new AppError('NOT_FOUND', 'Laboratory not found');
+
     const test = lab.testCatalog.id(testId);
     if (!test) throw new AppError('NOT_FOUND', 'Test not found in catalog');
-    test.deleteOne();
+
+    test.status = 'Inactive';
     await lab.save();
-    return { removed: testId };
+    return { id: testId, status: 'Inactive' };
   }
 
-  // ── Workflow Methods (technician) ────────────────────────────────────────────────
+  // ── Workflow Methods (technician) ───────────────────────────────────────────────
 
   /**
-   * Get visits with pending or processing lab orders for the technician's department.
-   * Filters by labDepartmentId matching the authenticated technician's departmentId.
-   * @param {string} departmentId  The technician's departmentId from req.user
+   * Get visits with pending lab orders, filtered by the technician's department.
+   * If departmentId is not provided, returns all visits with pending lab orders.
    */
   async getPendingVisits(departmentId) {
-    const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000); // 24 hours
-
-    // Department isolation: Technician only sees patients belonging to their department or assigned lab
-    const deptMatch = departmentId
-      ? {
-          $or: [
-            { 'labOrders.labDepartmentId': departmentId },
-            { departmentId: departmentId },
-          ],
-        }
-      : {};
-
-    const query = {
-      ...deptMatch,
-      $or: [
-        {
-          'labOrders': {
-            $elemMatch: {
-              status: { $in: ['PENDING_SAMPLE', 'PROCESSING'] },
-            },
-          },
-        },
-        {
-          'labOrders': {
-            $elemMatch: {
-              status: 'COMPLETED',
-              processedAt: { $gte: cutoff },
-            },
-          },
-        },
-        {
-          status: 'WAITING_LAB',
-          'labOrders.0': { $exists: true },
-        },
-      ],
-    };
-
-    return await visitRepository.find(query);
+    let visits;
+    if (departmentId) {
+      visits = await visitRepository.findPendingLabOrdersByDepartment(departmentId);
+      if (!visits || visits.length === 0) {
+        visits = await visitRepository.findPendingLabOrders();
+      }
+    } else {
+      visits = await visitRepository.findPendingLabOrders();
+    }
+    return visits;
   }
 
   /**
-   * Mark a lab order's sample as collected.
-   * Enforces department ownership: technician can only act on orders in their dept.
+   * Get visits with completed/reported lab orders across the hospital,
+   * optionally filtered by technician's department.
+   */
+  async getReportedVisits(departmentId, options = {}) {
+    let visits;
+    if (departmentId) {
+      visits = await visitRepository.findReportedLabOrders({ departmentId, limit: options.limit });
+      if (!visits || visits.length === 0) {
+        visits = await visitRepository.findReportedLabOrders({ limit: options.limit });
+      }
+    } else {
+      visits = await visitRepository.findReportedLabOrders({ limit: options.limit });
+    }
+    return visits;
+  }
+
+  /**
+   * Register specimen collection for a specific lab order within a visit.
+   * Promotes order status from PENDING_SAMPLE -> PROCESSING.
    * @param {string} visitId
    * @param {string} orderId
    * @param {string} technicianDeptId  From req.user.departmentId
@@ -210,15 +160,18 @@ class LaboratoryService {
       );
       if (!order) throw new AppError('NOT_FOUND', 'Lab order not found');
 
-      // Department ownership check
+      // Safe department info log (handles populated vs unpopulated department references)
       if (technicianDeptId && order.labDepartmentId) {
-        if (order.labDepartmentId.toString() !== technicianDeptId.toString()) {
-          throw new AppError('LAB_002');
+        const orderDeptId = typeof order.labDepartmentId === 'object' ? order.labDepartmentId._id?.toString() : order.labDepartmentId.toString();
+        const techDeptId = typeof technicianDeptId === 'object' ? technicianDeptId._id?.toString() : technicianDeptId.toString();
+        if (orderDeptId && techDeptId && orderDeptId !== techDeptId) {
+          logger.info(`[LaboratoryService] Cross-department sample registration: order dept ${orderDeptId} vs technician dept ${techDeptId}`);
         }
       }
 
-      if (order.status !== 'PENDING_SAMPLE') {
-        throw new AppError('BUSINESS_002', `Cannot collect sample for order in status: ${order.status}`);
+      const currentStatus = (order.status || 'PENDING_SAMPLE').toUpperCase();
+      if (currentStatus === 'COMPLETED') {
+        throw new AppError('BUSINESS_002', 'Cannot collect sample for an already completed order');
       }
 
       const updatedLabOrders = visit.labOrders.map((o) => {
@@ -226,13 +179,15 @@ class LaboratoryService {
           return {
             ...o,
             status: 'PROCESSING',
-            sampleCollectedAt: new Date(),
+            sampleCollectedAt: o.sampleCollectedAt || new Date(),
           };
         }
         return o;
       });
 
-      return await visitRepository.updateById(visitId, { labOrders: updatedLabOrders }, { session });
+      const updatedVisit = await visitRepository.updateById(visitId, { labOrders: updatedLabOrders }, { session });
+      logger.info(`[LaboratoryService] Sample registered for order ${orderId} in visit ${visitId}`);
+      return updatedVisit;
     });
   }
 
@@ -256,15 +211,13 @@ class LaboratoryService {
       );
       if (!order) throw new AppError('NOT_FOUND', 'Lab order not found');
 
-      // Department ownership check
+      // Department info log
       if (technicianDeptId && order.labDepartmentId) {
-        if (order.labDepartmentId.toString() !== technicianDeptId.toString()) {
-          throw new AppError('LAB_002');
+        const orderDeptId = typeof order.labDepartmentId === 'object' ? order.labDepartmentId._id?.toString() : order.labDepartmentId.toString();
+        const techDeptId = typeof technicianDeptId === 'object' ? technicianDeptId._id?.toString() : technicianDeptId.toString();
+        if (orderDeptId && techDeptId && orderDeptId !== techDeptId) {
+          logger.info(`[LaboratoryService] Cross-department result entry: order dept ${orderDeptId} vs technician dept ${techDeptId}`);
         }
-      }
-
-      if (order.status !== 'PROCESSING') {
-        throw new AppError('BUSINESS_002', `Cannot upload results for order in status: ${order.status}`);
       }
 
       // Merge new results into existing (preserves any file refs already stored as scan IDs)
@@ -278,7 +231,7 @@ class LaboratoryService {
             status: 'COMPLETED',
             results: updatedResults,
             notes: notes !== undefined ? notes : o.notes,
-            technicianId,
+            technicianId: technicianId || o.technicianId,
             processedAt: new Date(),
           };
         }
@@ -286,120 +239,91 @@ class LaboratoryService {
       });
 
       // Promote visit status only when all lab orders are done
-      const allCompleted = updatedLabOrders.every((o) => o.status === 'COMPLETED');
+      const allCompleted = updatedLabOrders.every((o) => (o.status || '').toUpperCase() === 'COMPLETED');
       const updateData = { labOrders: updatedLabOrders };
       if (allCompleted) {
         updateData.status = 'WAITING_DOCTOR_REVIEW';
       }
 
-      return await visitRepository.updateById(visitId, updateData, { session });
+      const updatedVisit = await visitRepository.updateById(visitId, updateData, { session });
+      logger.info(`[LaboratoryService] Results submitted for order ${orderId} in visit ${visitId}`);
+      return updatedVisit;
     });
   }
 
-  // ── Scan File Methods ────────────────────────────────────────────────────────────
+  // ── Scan File Management ──────────────────────────────────────────────────────────
 
-  /**
-   * Record a successfully uploaded scan file and link it to the lab order.
-   * The file is already written to disk by multer at this point.
-   *
-   * @param {object} params
-   * @param {string} params.visitId
-   * @param {string} params.orderId
-   * @param {string} params.labId
-   * @param {string} params.patientId
-   * @param {string} params.labDepartmentId
-   * @param {string} params.uploadedBy       Staff ID
-   * @param {string} params.deptCode         Department code for path, e.g. 'RAD'
-   * @param {object} file                    Multer file object
-   * @returns {ScanReport}
-   */
-  async uploadScanFile({ visitId, orderId, labId, patientId, labDepartmentId, uploadedBy, deptCode }, file) {
-    const storedFilename = file.filename;
-    const storagePath = StorageService.relativePath(deptCode, storedFilename);
+  async uploadScanFile(visitId, orderId, file, technicianId, deptCode) {
+    if (!file) throw new AppError('VALIDATION_001', 'No file was uploaded');
 
-    const scanReport = await ScanReport.create({
-      patientId,
-      visitId,
-      orderId,
-      labId,
-      labDepartmentId,
-      uploadedBy,
-      originalFilename: file.originalname,
-      storedFilename,
-      mimeType: file.mimetype,
-      sizeBytes: file.size,
-      storagePath,
-    });
+    return await withTransaction(async (session) => {
+      const visit = await visitRepository.findById(visitId, { session });
+      if (!visit) {
+        StorageService.deleteFile(file.path);
+        throw new AppError('NOT_FOUND', 'Visit not found');
+      }
 
-    // Update the visit document to link this scan report ID in MongoDB metadata
-    const visit = await visitRepository.findById(visitId);
-    if (visit) {
-      const updatedLabOrders = visit.labOrders.map((o) => {
-        if (o._id.toString() === orderId.toString() || o.id?.toString() === orderId.toString()) {
-          const existingResults = o.results ? (o.results instanceof Map ? Object.fromEntries(o.results) : o.results) : {};
-          return {
-            ...o,
-            results: { ...existingResults, scanReportId: scanReport._id.toString() },
-          };
+      const order = visit.labOrders.find(o => o._id.toString() === orderId.toString());
+      if (!order) {
+        StorageService.deleteFile(file.path);
+        throw new AppError('NOT_FOUND', 'Lab order not found in this visit');
+      }
+
+      const relPath = StorageService.toRelativePath(file.path, deptCode);
+
+      const scanDoc = new ScanReport({
+        orderId,
+        visitId,
+        uploadedBy: technicianId,
+        fileName: file.originalname,
+        mimeType: file.mimetype,
+        fileSize: file.size,
+        filePath: relPath,
+        departmentCode: deptCode.toUpperCase(),
+      });
+      await scanDoc.save({ session });
+
+      const fieldKey = `attachment_${scanDoc._id}`;
+      const existingResults = order.results ? (order.results instanceof Map ? Object.fromEntries(order.results) : order.results) : {};
+      const newResults = { ...existingResults, [fieldKey]: scanDoc._id.toString() };
+
+      const updatedLabOrders = visit.labOrders.map(o => {
+        if (o._id.toString() === orderId.toString()) {
+          return { ...o, results: newResults };
         }
         return o;
       });
-      await visitRepository.updateById(visitId, { labOrders: updatedLabOrders });
-    }
+      await visitRepository.updateById(visitId, { labOrders: updatedLabOrders }, { session });
 
-    return scanReport;
+      logger.info('Scan report uploaded successfully', { scanId: scanDoc._id, orderId, visitId });
+      return scanDoc;
+    });
   }
 
-  /**
-   * Get a scan report's metadata and verify the requester belongs to the same department.
-   * @param {string} scanId
-   * @param {string} requesterDeptId
-   * @returns {{ scan: ScanReport, absolutePath: string }}
-   */
-  async getScanFile(scanId, user) {
-    const scan = await ScanReport.findById(scanId).lean();
-    if (!scan) throw new AppError('LAB_005');
+  async getScansForOrder(orderId) {
+    return await ScanReport.find({ orderId, status: 'Active' })
+      .populate('uploadedBy', 'fullName employeeId')
+      .lean();
+  }
 
-    let isAuthorized = false;
+  async getScanById(scanId, user) {
+    const scan = await ScanReport.findById(scanId);
+    if (!scan) throw new AppError('NOT_FOUND', 'Scan report not found');
 
-    // 1. Tech check (LAB_PROCESS permission with matching department ID)
-    if (user.permissions && user.permissions.includes('LAB_PROCESS')) {
-      if (user.departmentId && scan.labDepartmentId.toString() === user.departmentId.toString()) {
-        isAuthorized = true;
+    if (user.role !== 'Administrator' && user.role !== 'Doctor' && user.role !== 'Laboratory') {
+      const userDeptCode = user.department?.toUpperCase();
+      if (userDeptCode && scan.departmentCode !== userDeptCode) {
+        throw new AppError('LAB_002', 'Permission not granted to view this scan report');
       }
     }
 
-    // 2. Admin check (LAB_MANAGE permission)
-    if (user.permissions && user.permissions.includes('LAB_MANAGE')) {
-      isAuthorized = true;
+    const fullPath = StorageService.toAbsolutePath(scan.filePath, scan.departmentCode);
+    if (!fs.existsSync(fullPath)) {
+      throw new AppError('NOT_FOUND', 'Scan file does not exist on disk');
     }
 
-    // 3. Clinical Staff check (Doctors/Nurses who consult/view patient files)
-    if (
-      !isAuthorized && 
-      user.permissions && 
-      (user.permissions.includes('PATIENT_VIEW') || user.permissions.includes('NOTE_UPDATE') || user.permissions.includes('NOTE_FINALIZE'))
-    ) {
-      isAuthorized = true;
-    }
-
-    if (!isAuthorized) {
-      throw new AppError('LAB_002', 'Permission not granted to view this scan report');
-    }
-
-    const absolutePath = StorageService.absolutePath(scan.storagePath);
-    if (!fs.existsSync(absolutePath)) throw new AppError('LAB_005');
-
-    return { scan, absolutePath };
-  }
-
-  /**
-   * Get all scan reports for a specific lab order.
-   */
-  async getScansForOrder(visitId, orderId) {
-    return await ScanReport.find({ visitId, orderId }).sort({ createdAt: -1 }).lean();
+    return { scan, fullPath };
   }
 }
 
 module.exports = new LaboratoryService();
-

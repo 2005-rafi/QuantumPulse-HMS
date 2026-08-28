@@ -1,0 +1,231 @@
+/* ResultsGrid — Linear Clinical Layout for Reported Results */
+
+.results-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-spacing-s, 8px);
+  width: 100%;
+}
+
+/* Linear Result Panels (Single Patient Worksheet Mode) */
+.results-grid__panels-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-spacing-s, 8px);
+  width: 100%;
+}
+
+.results-panel-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 8px);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: border-color 0.15s ease;
+}
+
+.results-panel-card:hover {
+  border-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 30%, var(--md-sys-color-outline-variant, #cac4d0));
+}
+
+.results-panel-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.results-panel-card__title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.results-panel-card__title {
+  font: 700 0.85rem/1.2 var(--md-sys-typescale-title-medium-font, 'Inter', sans-serif);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+}
+
+.results-panel-card__badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.results-panel-card__time {
+  font: 500 0.72rem/1 'Roboto Mono', monospace;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.results-panel-card__time .material-symbols-rounded,
+.results-panel-card__time svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Parameters Table / Grid */
+.results-panel-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.result-parameter-item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-surface-container-high, #ece6f0);
+  border-radius: 4px;
+}
+
+.result-parameter-item__label {
+  font: 500 0.76rem/1.2 'Inter', sans-serif;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-parameter-item__val-box {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.result-parameter-item__val {
+  font: 700 0.82rem/1 'Roboto Mono', monospace;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.result-parameter-item__val--abnormal {
+  color: var(--md-sys-color-error, #ba1a1a);
+  background: var(--md-sys-color-error-container, #ffdad6);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.result-parameter-item__ref {
+  font: 400 0.68rem/1 'Inter', sans-serif;
+  color: var(--md-sys-color-outline, #79747e);
+}
+
+.results-panel-card__notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 4px 8px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 4px;
+  font: 400 0.74rem/1.3 'Inter', sans-serif;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.results-panel-card__notes-icon {
+  font-size: 13px;
+  color: var(--md-sys-color-secondary, #625b71);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* Global Results Table (Full reported tab) */
+.results-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.results-table th {
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 6px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.results-table td {
+  padding: 8px 10px;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  border-bottom: 1px solid var(--md-sys-color-surface-container-high, #ece6f0);
+  vertical-align: middle;
+}
+
+.results-table tr:hover td {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.results-table__patient-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.results-table__patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.results-table__patient-name {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.results-table__patient-meta {
+  font: 500 0.68rem/1 'Roboto Mono', monospace;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.results-table__test-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.results-table__test-name {
+  font-weight: 600;
+  font-size: 0.80rem;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.results-table__test-meta {
+  font-size: 0.70rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.results-table__val-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  font-size: 0.80rem;
+}
+
+.results-table__val-box--abnormal {
+  color: var(--md-sys-color-error, #ba1a1a);
+  background: var(--md-sys-color-error-container, #ffdad6);
+  padding: 1px 5px;
+  border-radius: 3px;
+}

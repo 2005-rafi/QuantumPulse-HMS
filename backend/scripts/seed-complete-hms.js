@@ -56,14 +56,22 @@ const PERMISSION_DEFS = [
   { code: 'APPOINTMENT_CANCEL',          module: 'appointments', description: 'Cancel scheduled appointments' },
   { code: 'APPOINTMENT_CHECKIN',         module: 'appointments', description: 'Check-in patient and generate OPD visit ticket' },
   { code: 'APPOINTMENT_MARK_MISSED',     module: 'appointments', description: 'Mark unattended appointments as missed' },
-  { code: 'APPOINTMENT_MANAGE_SCHEDULE', module: 'appointments', description: 'Configure doctor weekly schedules and slot capacity' }
+  { code: 'APPOINTMENT_MANAGE_SCHEDULE', module: 'appointments', description: 'Configure doctor weekly schedules and slot capacity' },
+  { code: 'TARIFF_VIEW',           module: 'tariff',         description: 'View service master catalog and tariff rules' },
+  { code: 'TARIFF_MANAGE',         module: 'tariff',         description: 'Create, update, publish, or cancel tariff rules' },
+  { code: 'MEDICINE_PRICE_MANAGE', module: 'pharmacy',       description: 'Manage pharmacy medicine pricing catalog' },
+  { code: 'BILL_VIEW',             module: 'billing',        description: 'View patient bills, line items, and receipts' },
+  { code: 'BILL_FINALIZE',         module: 'billing',        description: 'Finalize and lock patient bills' },
+  { code: 'ADJUSTMENT_REQUEST',    module: 'billing',        description: 'Request financial adjustments and refunds' },
+  { code: 'ADJUSTMENT_APPROVE',    module: 'billing',        description: 'Approve or reject financial adjustments' },
+  { code: 'FINANCIAL_ANALYTICS',   module: 'billing',        description: 'Access financial revenue charts and analytics' }
 ];
 
 const ROLE_PERMISSIONS = {
   'Administrator': PERMISSION_DEFS.map(p => p.code),
   'Reception': [
     'PATIENT_REGISTER', 'PATIENT_UPDATE', 'PATIENT_VIEW', 'VISIT_CREATE', 'VISIT_VIEW', 'VISIT_CLOSE',
-    'BILL_GENERATE', 'PAYMENT_RECORD',
+    'BILL_GENERATE', 'PAYMENT_RECORD', 'BILL_VIEW',
     'APPOINTMENT_VIEW', 'APPOINTMENT_CREATE', 'APPOINTMENT_UPDATE', 'APPOINTMENT_CANCEL', 'APPOINTMENT_CHECKIN', 'APPOINTMENT_MARK_MISSED'
   ],
   'Nurse': [
@@ -77,7 +85,7 @@ const ROLE_PERMISSIONS = {
     'VISIT_VIEW', 'LAB_PROCESS', 'LAB_VERIFY'
   ],
   'Pharmacy': [
-    'PATIENT_VIEW', 'VISIT_VIEW', 'VISIT_CREATE', 'MEDICINE_DISPENSE', 'BILL_GENERATE'
+    'PATIENT_VIEW', 'VISIT_VIEW', 'VISIT_CREATE', 'MEDICINE_DISPENSE', 'BILL_GENERATE', 'BILL_VIEW', 'MEDICINE_PRICE_MANAGE'
   ]
 };
 

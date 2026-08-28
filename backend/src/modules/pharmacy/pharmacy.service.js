@@ -1,6 +1,7 @@
 const visitRepository = require('../visits/visit.repository');
 const AppError = require('../../core/errors/AppError');
 const { withTransaction } = require('../../core/database/transaction');
+const medicinePriceRepository = require('./medicine-price.repository');
 
 class PharmacyService {
   async dispenseMedications(visitId, data, pharmacistId) {
@@ -14,10 +15,10 @@ class PharmacyService {
         throw new AppError('BUSINESS_002', `Cannot dispense medications in current status: ${visit.status}`);
       }
 
-      const { dispensedMedications, consultationFee = 0, labCharges = 0 } = data;
+      const dispensedMedications = Array.isArray(data.dispensedMedications) ? data.dispensedMedications : [];
       const pharmacyCharges = dispensedMedications.reduce((sum, med) => sum + (med.amount || 0), 0);
-      const overallTotal = consultationFee + labCharges + pharmacyCharges;
 
+      // Update visit: record pharmacy work and mark completed
       const updatedData = {
         status: 'COMPLETED',
         pharmacyWork: {
@@ -25,21 +26,71 @@ class PharmacyService {
           dispensedMedications,
           totalAmount: pharmacyCharges,
           status: 'COMPLETED',
-          processedAt: new Date()
+          processedAt: new Date(),
         },
+        // Keep visit.billing for backward compat with existing seeded visits
         billing: {
-          consultationFee,
-          labCharges,
+          consultationFee: data.consultationFee || 0,
+          labCharges: data.labCharges || 0,
           pharmacyCharges,
-          totalAmount: overallTotal,
+          totalAmount: (data.consultationFee || 0) + (data.labCharges || 0) + pharmacyCharges,
           billedBy: pharmacistId,
-          billedAt: new Date()
-        }
+          billedAt: new Date(),
+        },
       };
 
       const result = await visitRepository.updateById(visitId, updatedData, { session });
+
+      // Emit BillableEvent for each dispensed medicine (async, non-blocking for session)
+      // This is done after the visit update to avoid circular dependency issues in MVP
+      setImmediate(async () => {
+        try {
+          const billingService = require('../billing/bill.service');
+          for (const med of dispensedMedications) {
+            if (!med.recommended && !med.alternativeGiven) continue;
+            const medicineName = med.alternativeGiven || med.recommended || 'Medicine';
+            await billingService.processBillableEvent({
+              type: 'MEDICINE_DISPENSED',
+              visitId,
+              patientId: visit.patientId && visit.patientId._id ? visit.patientId._id : visit.patientId,
+              triggeredBy: pharmacistId,
+              triggeredAt: new Date(),
+              resolutionContext: {
+                category: 'PHARMACY',
+                medicineName,
+                quantity: 1,
+              },
+              preResolvedPrice: med.amount || 0,
+              description: `${medicineName}${med.quantity ? ` x${med.quantity}` : ''}`,
+            });
+          }
+        } catch (err) {
+          console.error('[PharmacyService] Failed to emit medicine BillableEvents:', err.message);
+        }
+      });
+
       return result;
     });
+  }
+
+  async getMedicinePriceByName(medicineName) {
+    return medicinePriceRepository.findActiveByName(medicineName);
+  }
+
+  async listMedicinePrices(filters, options) {
+    return medicinePriceRepository.list(filters, options);
+  }
+
+  async createMedicinePrice(data, staffId) {
+    return medicinePriceRepository.create({ ...data, setBy: staffId, effectiveFrom: data.effectiveFrom || new Date() });
+  }
+
+  async updateMedicinePrice(id, data) {
+    return medicinePriceRepository.update(id, data);
+  }
+
+  async deactivateMedicinePrice(id, staffId) {
+    return medicinePriceRepository.deactivate(id, staffId);
   }
 }
 

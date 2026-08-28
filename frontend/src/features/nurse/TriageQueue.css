@@ -1,29 +1,199 @@
-/* ============================================================
-   TriageQueue.css — Material 3 Compliant Queue Panel
-   ============================================================ */
+/* ==========================================================================
+   TriageQueue.css — Pure Material 3 Clinical Queue Sidebar
+   Path: frontend/src/features/nurse/TriageQueue.css
+   Calibrated Spacing & Clean Material State Matrix
+   ========================================================================== */
 
-/* ─── Called section — highlights active called patients ─── */
-.triage-queue__called-section {
+.triage-queue-panel {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--md-sys-color-tertiary, #7d5260);
-  margin-bottom: 8px;
-}
-
-.triage-queue {
+  height: 100%;
   width: 100%;
+  background-color: var(--md-sys-color-surface, #ffffff);
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  min-height: 480px;
+  overflow: hidden;
+  position: relative;
 }
 
+/* ─── 1. Compact Material 3 Queue Header ─── */
+.triage-queue__header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  flex-shrink: 0;
+  gap: 10px;
+}
+
+.triage-queue__header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.triage-queue__header-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.triage-queue__header-icon .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.triage-queue__header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.triage-queue__header-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.triage-queue__header-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.triage-queue__count-badge {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  line-height: 1.2;
+}
+
+.triage-queue__header-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.triage-queue__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.triage-queue__refresh-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+  outline: none;
+}
+
+.triage-queue__refresh-btn .material-symbols-rounded {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.triage-queue__refresh-btn:hover:not(:disabled) {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+}
+
+.triage-queue__refresh-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.triage-queue__refresh-btn.is-loading .material-symbols-rounded {
+  animation: triageRefreshSpin 0.7s linear infinite;
+}
+
+@keyframes triageRefreshSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── Search / Filter Bar ─── */
+.triage-queue__search-wrap {
+  padding: 8px 14px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.triage-queue__search-icon {
+  font-size: 16px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.triage-queue__search-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.76rem;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  outline: none;
+  padding: 2px 0;
+}
+
+.triage-queue__search-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0.7;
+}
+
+.triage-queue__search-clear {
+  border: none;
+  background: transparent;
+  padding: 2px;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+}
+
+.triage-queue__search-clear .material-symbols-rounded {
+  font-size: 14px;
+}
+
+/* ─── Queue Body & List ─── */
 .triage-queue__body {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: 10px 12px;
   box-sizing: border-box;
 }
 
@@ -33,23 +203,445 @@
   gap: 10px;
 }
 
-/* ─── Loading State ─── */
+/* ─── Called Patients Section ─── */
+.triage-queue__called-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 10px;
+  margin-bottom: 6px;
+  border-bottom: 1.5px dashed var(--md-sys-color-tertiary, #7d5260);
+}
+
+.triage-queue__section-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--md-sys-color-tertiary, #7d5260);
+}
+
+.triage-queue__section-label .material-symbols-rounded {
+  font-size: 14px;
+}
+
+/* ─── 2. Pure Material 3 Patient Card ─── */
+.triage-queue-card {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 12px;
+  border-radius: var(--md-sys-shape-corner-small, 10px);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-left: 3.5px solid transparent;
+  cursor: pointer;
+  outline: none;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent);
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    border-left 0.15s ease,
+    transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.15s ease;
+}
+
+/* ── State: HOVER ── */
+.triage-queue-card:hover {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 60%, var(--md-sys-color-outline-variant));
+  border-left-color: var(--md-sys-color-primary, #6750a4);
+  transform: translateY(-1.5px);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 14%, transparent);
+}
+
+/* ── State: ONTAP (Active click) ── */
+.triage-queue-card:active {
+  transform: scale(0.985);
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.triage-queue-card:focus-visible {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+}
+
+/* ── State: SELECTED ── */
+.triage-queue-card--selected {
+  background-color: var(--md-sys-color-primary-container, #eaddff) !important;
+  border-color: var(--md-sys-color-primary, #6750a4) !important;
+  border-left: 4px solid var(--md-sys-color-primary, #6750a4) !important;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 22%, transparent) !important;
+}
+
+.triage-queue-card--selected .triage-queue-card__name {
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.triage-queue-card--selected .triage-queue-card__token {
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+/* ── State: CALLED (Active Summoned) ── */
+.triage-queue-card--called {
+  background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
+  border-color: var(--md-sys-color-tertiary, #7d5260);
+  border-left: 4px solid var(--md-sys-color-tertiary, #7d5260);
+}
+
+.triage-queue-card--called .triage-queue-card__token {
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
+}
+
+/* ── Urgency-coded rail fallback ── */
+.triage-queue-card--urgency-error:not(.triage-queue-card--selected):not(:hover) {
+  border-left-color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.triage-queue-card--urgency-secondary:not(.triage-queue-card--selected):not(:hover) {
+  border-left-color: var(--md-sys-color-secondary, #625b71);
+}
+
+/* ─── Card Header Row (Token, Type, Urgency, Action) ─── */
+.triage-queue-card__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.triage-queue-card__badge-cluster {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.triage-queue-card__token {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #6750a4);
+  line-height: 1.2;
+}
+
+.triage-queue-card__type-tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.2;
+}
+
+.triage-queue-card__time-cluster {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.triage-queue-card__urgency-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.triage-queue-card__urgency-pill .material-symbols-rounded {
+  font-size: 11px;
+}
+
+.triage-queue-card__urgency-pill--error {
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  font-weight: 700;
+}
+
+.triage-queue-card__urgency-pill--secondary {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* ─── Action Buttons (Call / Skip) ─── */
+.triage-queue-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.triage-card-action-btn {
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  box-sizing: border-box;
+  transition: all 0.15s ease;
+}
+
+.triage-card-action-btn .material-symbols-rounded {
+  font-size: 13px;
+}
+
+.triage-card-action-btn--call {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
+}
+
+.triage-card-action-btn--call:hover:not(:disabled) {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+}
+
+.triage-card-action-btn--call:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.triage-card-action-btn--skip {
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.triage-card-action-btn--skip:hover:not(:disabled) {
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  border-color: var(--md-sys-color-error, #ba1a1a);
+  transform: translateY(-1px);
+}
+
+.triage-card-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ─── Patient Identity Row ─── */
+.triage-queue-card__identity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.triage-queue-card__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-primary, #6750a4) 0%,
+    var(--md-sys-color-primary-container, #eaddff) 100%
+  );
+  color: var(--md-sys-color-on-primary, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.80rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+
+.triage-queue-card__identity-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.triage-queue-card__name-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.triage-queue-card__name {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.triage-queue-card__tags-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.triage-queue-card__mrn-tag {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #6750a4);
+  letter-spacing: 0.01em;
+}
+
+.triage-queue-card__demog-tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.triage-queue-card__blood-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--md-sys-color-error, #ba1a1a);
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+.triage-queue-card__blood-tag .material-symbols-rounded {
+  font-size: 11px;
+}
+
+/* ─── Collision Guard (DOB & Masked Phone) ─── */
+.triage-queue-card__collision-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.triage-queue-card__collision-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  letter-spacing: 0.01em;
+}
+
+.triage-queue-card__collision-item .material-symbols-rounded {
+  font-size: 12px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* ─── Reason for Visit Box ─── */
+.triage-queue-card__reason-box {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-left: 2.5px solid var(--md-sys-color-primary, #6750a4);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.70rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.triage-queue-card__reason-box .material-symbols-rounded {
+  font-size: 13px;
+  color: var(--md-sys-color-primary, #6750a4);
+  flex-shrink: 0;
+}
+
+.triage-queue-card__reason-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Info Chips (Allergies / Conditions) ─── */
+.triage-queue-card__chips-cluster {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.triage-queue-card__info-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.64rem;
+  font-weight: 600;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.triage-queue-card__info-chip .material-symbols-rounded {
+  font-size: 11px;
+}
+
+.triage-queue-card__info-chip--alert {
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  font-weight: 700;
+}
+
+/* ─── Loading & Empty States ─── */
 .triage-queue__loading {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 48px 20px;
+  gap: 8px;
+  padding: 32px 16px;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   font-weight: 500;
 }
 
 .triage-queue__spinner {
-  width: 28px;
-  height: 28px;
-  border: 3px solid var(--md-sys-color-surface-container-high);
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--md-sys-color-surface-container-high);
   border-top-color: var(--md-sys-color-primary);
   border-radius: 50%;
   animation: triageSpin 0.8s linear infinite;
@@ -59,244 +651,42 @@
   to { transform: rotate(360deg); }
 }
 
-/* ─── Queue Item Card ─── */
-.triage-queue-card {
+.triage-queue__empty-state {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border-radius: 14px;
-  background-color: var(--md-sys-color-surface, #ffffff);
-  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
-  outline: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.triage-queue-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background-color: transparent;
-  transition: background-color 0.18s ease;
-}
-
-.triage-queue-card:hover {
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  border-color: var(--md-sys-color-primary, #6750a4);
-  transform: translateY(-1px);
-}
-
-.triage-queue-card:focus-visible {
-  border-color: var(--md-sys-color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
-}
-
-.triage-queue-card--selected {
-  background-color: var(--md-sys-color-primary-container, #eaddff);
-  border-color: var(--md-sys-color-primary, #6750a4);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 12%, transparent);
-}
-
-.triage-queue-card--selected::before {
-  background-color: var(--md-sys-color-primary, #6750a4);
-}
-
-.triage-queue-card--selected:hover {
-  background-color: var(--md-sys-color-primary-container, #eaddff);
-}
-
-/* ─── Token Hero Row ─── */
-.triage-queue-card__token-row {
-  display: flex;
   align-items: center;
+  text-align: center;
+  padding: 32px 16px;
   gap: 8px;
-  justify-content: space-between;
 }
 
-.triage-queue-card__token {
-  font-size: 1.05rem;
-  font-weight: 800;
-  font-family: 'Roboto Mono', monospace;
-  color: var(--md-sys-color-primary, #6750a4);
+.triage-queue__empty-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
-  padding: 2px 8px;
-  border-radius: 6px;
-  letter-spacing: 0.02em;
-  line-height: 1.2;
-}
-
-.triage-queue-card--selected .triage-queue-card__token {
-  background-color: var(--md-sys-color-surface, #ffffff);
-  color: var(--md-sys-color-on-primary-container, #21005d);
-}
-
-.triage-queue-card--called .triage-queue-card__token {
-  color: var(--md-sys-color-tertiary);
-  background-color: var(--md-sys-color-tertiary-container);
-}
-
-.triage-queue-card__actions {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-/* ─── Patient identity ─── */
-.triage-queue-card__top {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-}
-
-.triage-queue-card__main {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-  flex: 1;
-}
-
-.triage-queue-card__name-row {
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+  justify-content: center;
 }
 
-.triage-queue-card__name {
-  margin: 0;
-  font-size: 0.94rem;
+.triage-queue__empty-icon .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.triage-queue__empty-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
 }
 
-.triage-queue-card--selected .triage-queue-card__name {
-  color: var(--md-sys-color-on-primary-container, #21005d);
-}
-
-.triage-queue-card__meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.triage-queue-card__mrn {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--md-sys-color-primary, #6750a4);
-  letter-spacing: 0.02em;
-}
-
-.triage-queue-card--selected .triage-queue-card__mrn {
-  color: var(--md-sys-color-on-primary-container, #21005d);
-}
-
-.triage-queue-card__demog {
-  font-size: 0.78rem;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-weight: 500;
-}
-
-.triage-queue-card--selected .triage-queue-card__demog {
-  color: var(--md-sys-color-on-primary-container, #21005d);
-  opacity: 0.85;
-}
-
-/* ─── Collision Guard: phone + DOB ─── */
-.triage-queue-card__collision-guard {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 2px;
-}
-
-.triage-queue-card__dob,
-.triage-queue-card__phone {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+.triage-queue__empty-desc {
+  font-family: 'Inter', sans-serif;
   font-size: 0.74rem;
-  font-family: 'Roboto Mono', monospace;
-  color: var(--md-sys-color-on-surface-variant);
-  letter-spacing: 0.01em;
-}
-
-.triage-queue-card__meta-icon {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-}
-
-/* ─── Reason for Visit ─── */
-.triage-queue-card__reason {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  border-radius: 8px;
-  font-size: 0.78rem;
-  color: var(--md-sys-color-on-surface-variant);
-  font-weight: 500;
-  border-left: 3px solid var(--md-sys-color-primary, #6750a4);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.triage-queue-card__reason svg {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  color: var(--md-sys-color-primary);
-}
-
-.triage-queue-card--selected .triage-queue-card__reason {
-  background-color: var(--md-sys-color-surface, #ffffff);
-  color: var(--md-sys-color-on-primary-container);
-  border-left-color: var(--md-sys-color-primary);
-}
-
-/* ─── Called card — pulsing border ring ─── */
-.triage-queue-card--called {
-  border-color: var(--md-sys-color-tertiary);
-  background-color: color-mix(in srgb, var(--md-sys-color-tertiary-container) 25%, var(--md-sys-color-surface));
-}
-
-/* ─── Responsive ─── */
-@media (max-width: 599px) {
-  .triage-queue__body {
-    max-height: 45vh;
-    padding: 8px;
-  }
-  .triage-queue-card {
-    padding: 10px;
-  }
-}
-
-@media (min-width: 901px) {
-  .triage-queue {
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    height: 100% !important;
-    min-height: 0 !important;
-    background-color: transparent !important;
-  }
-  .triage-queue__body {
-    max-height: none !important;
-    flex: 1 !important;
-  }
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0;
+  line-height: 1.4;
 }

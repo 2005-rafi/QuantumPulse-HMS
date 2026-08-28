@@ -745,3 +745,116 @@
     padding: 14px 16px;
   }
 }
+
+/* ── Direct OTC Button in Tabs ── */
+.pharmacy-direct-dispense-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin-right: 16px;
+  background-color: var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border: none;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--md-sys-elevation-1);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.pharmacy-direct-dispense-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 90%, black);
+  box-shadow: var(--md-sys-elevation-2);
+  transform: translateY(-1px);
+}
+
+/* ── Zero-Medication Advice Encounter Banner ── */
+.pharmacy-advice-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  margin-bottom: 16px;
+}
+
+.pharmacy-advice-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pharmacy-advice-card__icon .material-symbols-rounded {
+  font-size: 24px;
+}
+
+.pharmacy-advice-card__body {
+  flex: 1;
+}
+
+.pharmacy-advice-card__title {
+  margin: 0 0 4px 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.pharmacy-advice-card__desc {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── Medication Action Row & Quick Chips ── */
+.pharmacy-med-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pharmacy-quick-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pharmacy-quick-chips__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.pharmacy-quick-chip {
+  padding: 4px 12px;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pharmacy-quick-chip:hover {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+}

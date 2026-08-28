@@ -1,0 +1,122 @@
+/* ============================================================
+   Md3SearchBar.css — Pure Material Design 3 Search Component Styles
+   ============================================================ */
+
+.md3-search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 8px;
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+  box-sizing: border-box;
+}
+
+.md3-search-bar--compact {
+  height: 34px;
+  padding: 0 8px;
+}
+
+.md3-search-bar:hover {
+  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.md3-search-bar:focus-within {
+  background-color: var(--md-sys-color-surface, #ffffff);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 20%, transparent);
+}
+
+.md3-search-bar__leading-icon {
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-right: 8px;
+  flex-shrink: 0;
+  pointer-events: none;
+  transition: color 0.15s ease;
+}
+
+.md3-search-bar:focus-within .md3-search-bar__leading-icon {
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-search-bar__input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  line-height: 1.2;
+}
+
+.md3-search-bar__input::placeholder {
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+  font-weight: 400;
+}
+
+.md3-search-bar__trailing {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  flex-shrink: 0;
+}
+
+.md3-search-bar__count-badge {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  white-space: nowrap;
+}
+
+.md3-search-bar__shortcut-hint {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  padding: 2px 5px;
+  border-radius: 4px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+  pointer-events: none;
+}
+
+.md3-search-bar__clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  outline: none;
+}
+
+.md3-search-bar__clear-btn:hover {
+  background-color: var(--md-sys-color-outline-variant, #cac4d0);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+}
+
+.md3-search-bar__clear-btn .material-symbols-rounded {
+  font-size: 14px;
+}

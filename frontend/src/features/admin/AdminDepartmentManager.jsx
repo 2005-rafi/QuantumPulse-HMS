@@ -6,9 +6,10 @@ import CreateLaboratorySheet from './CreateLaboratorySheet';
 import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { Md3SearchBar } from '../../components/md3/AdminControls';
 import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
-import { Md3Select, Md3Checkbox } from '../../components/md3/Md3FormComponents';
 import { Md3TestCatalogConfigurator } from '../../components/md3/Md3TestCatalogConfigurator';
 import { Md3DynamicVitalsConfigurator } from '../../components/md3/Md3DynamicVitalsConfigurator';
+import Md3Pagination from '../../components/md3/Md3Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const TYPE_FILTERS = [
   { value: 'ALL',                  label: 'All' },
@@ -96,6 +97,16 @@ const AdminDepartmentManager = () => {
     const matchesType = typeFilter === 'ALL' || dept.type === typeFilter;
     return matchesSearch && matchesType;
   });
+
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    paginatedItems: paginatedDepts,
+    showTopPagination,
+  } = usePagination(filteredDepts, 50, [searchQuery, typeFilter, showInactive]);
 
   // ── HOD Assignment ───────────────────────────────────────────────────────────
 
@@ -212,7 +223,7 @@ const AdminDepartmentManager = () => {
         </div>
 
         {/* ── Type filter tabs ───────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
           {TYPE_FILTERS.map((f) => (
             <button
               key={f.value}
@@ -232,10 +243,23 @@ const AdminDepartmentManager = () => {
           ))}
         </div>
 
+        {/* Top Pagination (rendered when total records exceed 20) */}
+        {showTopPagination && (
+          <Md3Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="departments"
+            position="top"
+          />
+        )}
+
         {/* ── Department Cards Grid ──────────────────────────────────────────── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="md3-data-grid" style={{ flex: 1, paddingBottom: '80px' }}>
-            {filteredDepts.length === 0 ? (
+          <div className="md3-data-grid md3-paginated-content-fade" key={page} style={{ flex: 1, paddingBottom: '20px' }}>
+            {paginatedDepts.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', width: '100%' }}>
                 <Md3EmptyState
                   icon="corporate_fare"
@@ -245,7 +269,7 @@ const AdminDepartmentManager = () => {
                 />
               </div>
             ) : (
-              filteredDepts.map((dept) => {
+              paginatedDepts.map((dept) => {
                 const typeColor = TYPE_COLORS[dept.type] || TYPE_COLORS.SUPPORT;
                 const isInactive = dept.status === 'Inactive';
                 const hod = dept.headOfDepartment;
@@ -445,6 +469,19 @@ const AdminDepartmentManager = () => {
               })
             )}
           </div>
+
+          {/* Bottom Pagination */}
+          {totalItems > 0 && (
+            <Md3Pagination
+              currentPage={page}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="departments"
+              position="bottom"
+            />
+          )}
         </div>
       </section>
 
@@ -472,8 +509,38 @@ const AdminDepartmentManager = () => {
 
       {/* ── HOD Assignment Dialog ─────────────────────────────────────────── */}
       {hodDept && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
-          <div style={{ background: 'var(--md-sys-color-surface-container-low)', color: 'var(--md-sys-color-on-surface)', padding: '28px', borderRadius: '28px', maxWidth: '480px', width: '90%', border: '1px solid var(--md-sys-color-outline-variant)', boxShadow: '0 8px 32px rgba(0,0,0,0.2)' }}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            backdropFilter: 'blur(3px)',
+            WebkitBackdropFilter: 'blur(3px)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: '36px 16px',
+            overflowY: 'auto',
+            zIndex: 2000,
+          }}
+          onClick={() => setHodDept(null)}
+        >
+          <div
+            style={{
+              background: 'var(--md-sys-color-surface-container-low)',
+              color: 'var(--md-sys-color-on-surface)',
+              padding: '28px',
+              borderRadius: '28px',
+              maxWidth: '480px',
+              width: '90%',
+              margin: '0 auto',
+              maxHeight: 'calc(100vh - 72px)',
+              overflowY: 'auto',
+              border: '1px solid var(--md-sys-color-outline-variant)',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 style={{ marginTop: 0, color: 'var(--md-sys-color-primary)', fontSize: '18px' }}>
               Assign Head of Department
             </h3>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Md3Button } from './Md3FormComponents';
+import Md3SearchMultiSelect from './Md3SearchMultiSelect';
 import './FilterSideSheet.css';
 
 // Positions mapping matching constants/index.js for dynamic filtering
@@ -33,6 +34,12 @@ const POSITION_ROLE_MAP = {
 
 const ALL_POSITIONS = Object.values(POSITION_ROLE_MAP).flat();
 
+const STATUS_OPTIONS = [
+  { value: 'Active', label: 'Active', badge: 'Active' },
+  { value: 'Inactive', label: 'Inactive', badge: 'Inactive' },
+  { value: 'Disabled', label: 'Disabled', badge: 'Disabled' },
+];
+
 export const StaffFilterSideSheet = ({
   isOpen,
   onClose,
@@ -52,7 +59,8 @@ export const StaffFilterSideSheet = ({
   // Sync state on open
   useEffect(() => {
     if (isOpen) {
-      setSelectedStatuses(initialFilters.statuses || []);
+      const initStatuses = (initialFilters.statuses || []).filter(s => (s || '').toLowerCase() !== 'all');
+      setSelectedStatuses(initStatuses);
       setSelectedRoles(initialFilters.roles || []);
       setSelectedDepartments(initialFilters.departments || []);
       setSelectedPositions(initialFilters.positions || []);
@@ -62,16 +70,56 @@ export const StaffFilterSideSheet = ({
 
   // Sorted departments A-Z
   const sortedDepartments = useMemo(() => {
-    return [...departments].sort((a, b) => a.name.localeCompare(b.name));
+    return [...departments].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }, [departments]);
 
-  // Determine which positions to display based on selected roles
+  // 1. Roles Options
+  const roleOptions = useMemo(() => {
+    return roles.map((r) => ({
+      value: r.name,
+      label: r.name,
+      badge: r.description || null,
+    }));
+  }, [roles]);
+
+  // 2. Department Options
+  const departmentOptions = useMemo(() => {
+    return sortedDepartments.map((d) => ({
+      value: d._id,
+      label: d.name,
+      badge: d.code || null,
+    }));
+  }, [sortedDepartments]);
+
+  // 3. Dynamic Positions based on selected roles
   const visiblePositions = useMemo(() => {
     if (selectedRoles.length === 0) {
       return ALL_POSITIONS;
     }
-    return selectedRoles.flatMap(roleName => POSITION_ROLE_MAP[roleName] || []);
+    return selectedRoles.flatMap((roleName) => POSITION_ROLE_MAP[roleName] || []);
   }, [selectedRoles]);
+
+  const positionOptions = useMemo(() => {
+    return visiblePositions.map((pos) => ({
+      value: pos,
+      label: pos,
+    }));
+  }, [visiblePositions]);
+
+  // Handle role changes and auto-prune stale selected positions
+  const handleRolesChange = (newRoles) => {
+    setSelectedRoles(newRoles);
+    if (newRoles.length > 0) {
+      const allowedPositions = newRoles.flatMap((r) => POSITION_ROLE_MAP[r] || []);
+      setSelectedPositions((posPrev) => posPrev.filter((p) => allowedPositions.includes(p)));
+    }
+  };
+
+  const activeFiltersCount =
+    selectedStatuses.length +
+    selectedRoles.length +
+    selectedDepartments.length +
+    selectedPositions.length;
 
   if (!isOpen && !isClosing) return null;
 
@@ -80,50 +128,20 @@ export const StaffFilterSideSheet = ({
     setTimeout(() => {
       onClose();
       setIsClosing(false);
-    }, 280); // matches CSS drawer slide-out animation time
-  };
-
-  const handleToggleStatus = (status) => {
-    setSelectedStatuses(prev => 
-      prev.includes(status) ? prev.filter(s => s !== status) : [...prev, status]
-    );
-  };
-
-  const handleToggleRole = (roleName) => {
-    setSelectedRoles(prev => {
-      const updated = prev.includes(roleName) ? prev.filter(r => r !== roleName) : [...prev, roleName];
-      // Clean up selected positions that are no longer valid under the updated roles list
-      if (updated.length > 0) {
-        const allowedPositions = updated.flatMap(r => POSITION_ROLE_MAP[r] || []);
-        setSelectedPositions(posPrev => posPrev.filter(p => allowedPositions.includes(p)));
-      }
-      return updated;
-    });
-  };
-
-  const handleToggleDepartment = (deptId) => {
-    setSelectedDepartments(prev => 
-      prev.includes(deptId) ? prev.filter(d => d !== deptId) : [...prev, deptId]
-    );
-  };
-
-  const handleTogglePosition = (position) => {
-    setSelectedPositions(prev => 
-      prev.includes(position) ? prev.filter(p => p !== position) : [...prev, position]
-    );
+    }, 280);
   };
 
   const handleApply = () => {
     onApply({
-      statuses: selectedStatuses,
+      statuses: selectedStatuses.filter((s) => (s || '').toLowerCase() !== 'all'),
       roles: selectedRoles,
       departments: selectedDepartments,
-      positions: selectedPositions
+      positions: selectedPositions,
     });
     handleClose();
   };
 
-  const handleReset = () => {
+  const handleResetAll = () => {
     setSelectedStatuses([]);
     setSelectedRoles([]);
     setSelectedDepartments([]);
@@ -132,141 +150,125 @@ export const StaffFilterSideSheet = ({
 
   return createPortal(
     <div className={`md3-side-sheet-backdrop ${isClosing ? 'is-closing' : ''}`} onClick={handleClose}>
-      <div 
-        className={`md3-side-sheet-container ${isClosing ? 'is-closing' : ''}`} 
+      <div
+        className={`md3-side-sheet-container ${isClosing ? 'is-closing' : ''}`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label="Filter staff records"
+        aria-label="Filter staff directory"
       >
-        {/* Header */}
+        {/* ── Header ── */}
         <div className="md3-side-sheet-header">
           <div className="md3-side-sheet-header-title-group">
-            <h3>Filters</h3>
+            <div className="md3-ssf-title-row">
+              <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary)' }}>
+                tune
+              </span>
+              <h3>Filters</h3>
+              {activeFiltersCount > 0 && (
+                <span className="md3-filter-active-badge">{activeFiltersCount} Active</span>
+              )}
+            </div>
             <span className="md3-side-sheet-subtitle">Refine staff directory</span>
           </div>
-          <button type="button" className="md3-side-sheet-close-btn" onClick={handleClose} aria-label="Close filters">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="20" height="20">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
+
+          <div className="md3-side-sheet-header-actions">
+            {activeFiltersCount > 0 && (
+              <button
+                type="button"
+                className="md3-filter-clear-link"
+                onClick={handleResetAll}
+                title="Reset all filters"
+              >
+                Reset All
+              </button>
+            )}
+            <button
+              type="button"
+              className="md3-side-sheet-close-btn"
+              onClick={handleClose}
+              aria-label="Close filters"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>
+                close
+              </span>
+            </button>
+          </div>
         </div>
 
-        {/* Scrollable Content */}
+        {/* ── Scrollable Content: 4 Organized Multi-Select Filter Components ── */}
         <div className="md3-side-sheet-content">
-          
-          {/* Category: Account Status */}
-          <div className="md3-ssf-category">
-            <span className="md3-ssf-category-label">Account Status</span>
-            <div className="md3-ssf-chips-deck">
-              {['Active', 'Inactive'].map((status) => {
-                const isSelected = selectedStatuses.includes(status);
-                return (
-                  <button
-                    key={status}
-                    type="button"
-                    className={`md3-filter-chip ${isSelected ? 'is-selected' : ''}`}
-                    onClick={() => handleToggleStatus(status)}
-                  >
-                    {isSelected && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="md3-chip-check-icon" width="12" height="12">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                    {status}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {/* Component 1: Account Status */}
+            <Md3SearchMultiSelect
+              title="Account Status"
+              icon="toggle_on"
+              placeholder="Search status (Active, Inactive, Disabled)..."
+              options={STATUS_OPTIONS}
+              selectedValues={selectedStatuses}
+              onChange={setSelectedStatuses}
+              placeholderText="All account statuses (No filter)"
+            />
 
-          {/* Category: Roles */}
-          <div className="md3-ssf-category">
-            <span className="md3-ssf-category-label">Roles</span>
-            <div className="md3-ssf-chips-deck">
-              {roles.map((r) => {
-                const isSelected = selectedRoles.includes(r.name);
-                return (
-                  <button
-                    key={r._id || r.name}
-                    type="button"
-                    className={`md3-filter-chip ${isSelected ? 'is-selected' : ''}`}
-                    onClick={() => handleToggleRole(r.name)}
-                  >
-                    {isSelected && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="md3-chip-check-icon" width="12" height="12">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                    {r.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+            {/* Component 2: Roles */}
+            <Md3SearchMultiSelect
+              title="Roles"
+              icon="badge"
+              placeholder="Search & select roles..."
+              options={roleOptions}
+              selectedValues={selectedRoles}
+              onChange={handleRolesChange}
+              placeholderText="All staff roles (No filter)"
+            />
 
-          {/* Category: Departments */}
-          {sortedDepartments.length > 0 && (
-            <div className="md3-ssf-category">
-              <span className="md3-ssf-category-label">Departments</span>
-              <div className="md3-ssf-chips-deck">
-                {sortedDepartments.map((dept) => {
-                  const isSelected = selectedDepartments.includes(dept._id);
-                  return (
-                    <button
-                      key={dept._id}
-                      type="button"
-                      className={`md3-filter-chip ${isSelected ? 'is-selected' : ''}`}
-                      onClick={() => handleToggleDepartment(dept._id)}
-                    >
-                      {isSelected && (
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="md3-chip-check-icon" width="12" height="12">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                      {dept.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+            {/* Component 3: Departments */}
+            <Md3SearchMultiSelect
+              title="Departments"
+              icon="domain"
+              placeholder="Search & select hospital departments..."
+              options={departmentOptions}
+              selectedValues={selectedDepartments}
+              onChange={setSelectedDepartments}
+              placeholderText="All hospital departments (No filter)"
+            />
 
-          {/* Category: Positions */}
-          <div className="md3-ssf-category">
-            <span className="md3-ssf-category-label">Positions</span>
-            <div className="md3-ssf-chips-deck" style={{ maxHeight: '200px', overflowY: 'auto', padding: '4px', border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: '12px', background: 'var(--md-sys-color-surface-container-lowest)' }}>
-              {visiblePositions.map((pos) => {
-                const isSelected = selectedPositions.includes(pos);
-                return (
-                  <button
-                    key={pos}
-                    type="button"
-                    className={`md3-filter-chip ${isSelected ? 'is-selected' : ''}`}
-                    onClick={() => handleTogglePosition(pos)}
-                    style={{ margin: '4px' }}
-                  >
-                    {isSelected && (
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="md3-chip-check-icon" width="12" height="12">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                    {pos}
-                  </button>
-                );
-              })}
-            </div>
+            {/* Component 4: Positions */}
+            <Md3SearchMultiSelect
+              title={selectedRoles.length > 0 ? `Positions (${selectedRoles.join(', ')})` : 'Positions'}
+              icon="work"
+              placeholder="Search & select job positions..."
+              options={positionOptions}
+              selectedValues={selectedPositions}
+              onChange={setSelectedPositions}
+              placeholderText={
+                selectedRoles.length > 0
+                  ? `All positions under ${selectedRoles.join(', ')}`
+                  : 'All staff positions (No filter)'
+              }
+            />
           </div>
         </div>
 
-        {/* Footer Actions */}
+        {/* ── Sticky Footer Actions ── */}
         <div className="md3-side-sheet-footer">
-          <Md3Button variant="outlined" onClick={handleReset} style={{ flex: 1, minHeight: '44px' }}>
+          <Md3Button
+            type="button"
+            variant="secondary"
+            onClick={handleResetAll}
+            disabled={activeFiltersCount === 0}
+          >
             Reset
           </Md3Button>
-          <Md3Button variant="primary" onClick={handleApply} style={{ flex: 1, minHeight: '44px' }}>
-            Apply Filters
+          <Md3Button
+            type="button"
+            variant="filled"
+            onClick={handleApply}
+            style={{ minWidth: '130px' }}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '6px' }}>
+              filter_alt
+            </span>
+            Apply Filters {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
           </Md3Button>
         </div>
       </div>
@@ -274,3 +276,5 @@ export const StaffFilterSideSheet = ({
     document.body
   );
 };
+
+export default StaffFilterSideSheet;

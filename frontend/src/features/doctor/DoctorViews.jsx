@@ -59,16 +59,17 @@ export const DoctorConsultationView = () => {
  * DoctorAppointmentsView — Doctor's daily scheduled appointments.
  */
 export const DoctorAppointmentsView = () => {
-  const { user, queue, handleSelectVisit } = useOutletContext();
+  const { user, handleSelectVisit } = useOutletContext();
   const navigate = useNavigate();
 
   return (
     <DoctorAppointmentView
       doctorId={user?.staffId}
-      onOpenVisit={(visitId) => {
-        const target = queue.find((v) => v._id === visitId) || { _id: visitId };
-        handleSelectVisit(target);
-        navigate('/dashboard/doctor/consultation');
+      onOpenVisit={(item) => {
+        if (item) {
+          handleSelectVisit(item);
+          navigate('/dashboard/doctor/consultation');
+        }
       }}
     />
   );

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
+import Md3Pagination from '../../components/md3/Md3Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
   const { showError } = useToast();
@@ -98,6 +100,16 @@ const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
     });
   }, [dataList, searchTerm]);
 
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    paginatedItems: paginatedQueue,
+    showTopPagination,
+  } = usePagination(filteredData, 50, [searchTerm, dateFilterMode, startDate, endDate, type]);
+
   if (!isOpen || !type) return null;
 
   const getDuration = (visit) => {
@@ -181,8 +193,42 @@ const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'color-mix(in srgb, var(--md-sys-color-scrim, #000) 45%, transparent)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', zIndex: 2000 }}>
-      <div style={{ background: 'var(--md-sys-color-surface-container-low)', color: 'var(--md-sys-color-on-surface)', padding: '24px 28px', borderRadius: 'var(--md-sys-shape-corner-extra-large, 28px)', width: 'min(1600px, 96vw)', height: 'min(920px, 94vh)', overflow: 'hidden', border: '1px solid var(--md-sys-color-outline-variant)', boxShadow: '0 20px 60px color-mix(in srgb, var(--md-sys-color-shadow, #000) 22%, transparent)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(15, 23, 42, 0.45)',
+        backdropFilter: 'blur(3px)',
+        WebkitBackdropFilter: 'blur(3px)',
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'center',
+        padding: '24px 16px',
+        zIndex: 2000,
+        overflowY: 'auto',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
+          color: 'var(--md-sys-color-on-surface, #1c1b1f)',
+          padding: '20px 24px',
+          borderRadius: 'var(--md-sys-shape-corner-extra-large, 24px)',
+          width: 'min(1560px, 96vw)',
+          maxHeight: 'calc(100vh - 48px)',
+          height: 'min(900px, calc(100vh - 48px))',
+          overflow: 'hidden',
+          border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
+          boxShadow: '0 16px 48px rgba(0, 0, 0, 0.18)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px',
+          boxSizing: 'border-box',
+          margin: '0 auto',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
         
         {/* Header */}
         <div style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)', paddingBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
@@ -283,14 +329,27 @@ const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
 
         </div>
 
+        {/* Top Pagination (rendered when total records exceed 20) */}
+        {showTopPagination && (
+          <Md3Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="queue entries"
+            position="top"
+          />
+        )}
+
         {/* Table Body Container */}
-        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', borderRadius: '16px', border: '1px solid var(--md-sys-color-outline-variant)', background: 'var(--md-sys-color-surface)', scrollbarWidth: 'thin' }}>
+        <div className="md3-paginated-content-fade" key={page} style={{ flex: 1, overflowY: 'auto', overflowX: 'auto', borderRadius: '16px', border: '1px solid var(--md-sys-color-outline-variant)', background: 'var(--md-sys-color-surface)', scrollbarWidth: 'thin' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: '64px 16px', color: 'var(--md-sys-color-on-surface-variant)' }}>
               <span className="md3-spinner md3-spinner--md" style={{ display: 'inline-block', marginBottom: '8px' }} />
               <div>Fetching real-time clinical queue records...</div>
             </div>
-          ) : filteredData.length === 0 ? (
+          ) : paginatedQueue.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '64px 16px', color: 'var(--md-sys-color-on-surface-variant)' }}>
               <span className="material-symbols-rounded" style={{ fontSize: '48px', opacity: 0.4, marginBottom: '8px' }}>inbox</span>
               <div style={{ fontWeight: 700, fontSize: '14px' }}>No patient records found in this queue.</div>
@@ -314,7 +373,7 @@ const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
                 </tr>
               </thead>
               <tbody>
-                {filteredData.map((visit) => {
+                {paginatedQueue.map((visit) => {
                   const badge = getStatusBadgeStyle(visit.status);
                   const p = visit.patientId || {};
                   const patientFullName = getPatientName(p);
@@ -396,12 +455,21 @@ const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
           )}
         </div>
 
-        {/* Footer */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--md-sys-color-outline-variant)', flexWrap: 'wrap', gap: '10px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-            Showing <strong>{filteredData.length}</strong> of <strong>{dataList.length}</strong> total queue entries
-          </span>
+        {/* Bottom Pagination */}
+        {totalItems > 0 && (
+          <Md3Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="queue entries"
+            position="bottom"
+          />
+        )}
 
+        {/* Footer */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid var(--md-sys-color-outline-variant)', flexWrap: 'wrap', gap: '10px' }}>
           <button
             onClick={onClose}
             style={{ padding: '8px 24px', background: 'var(--md-sys-color-primary)', color: 'var(--md-sys-color-on-primary)', border: 'none', borderRadius: '100px', fontWeight: 700, fontSize: '12px', cursor: 'pointer', transition: 'all 150ms ease' }}

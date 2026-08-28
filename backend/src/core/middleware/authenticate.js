@@ -1,13 +1,32 @@
 const { verifyAccessToken } = require('../../modules/auth/token.service');
 const identityService = require('../../modules/identity/identity.service');
-const staffService = require('../../modules/staff/staff.service');
-const administrationService = require('../../modules/administration/administration.service');
 const { error: sendError } = require('../responses');
 const logger = require('../logger');
 
+// Fast 30-second in-memory TTL cache for user account status to avoid DB connection pool starvation
+const userStatusCache = new Map();
+const CACHE_TTL_MS = 30000;
+
+const getCachedUserStatus = async (userId) => {
+  const now = Date.now();
+  const cached = userStatusCache.get(userId);
+  if (cached && now - cached.timestamp < CACHE_TTL_MS) {
+    return cached.status;
+  }
+  try {
+    const identity = await identityService.getById(userId);
+    const status = identity ? identity.accountStatus : null;
+    userStatusCache.set(userId, { status, timestamp: now });
+    return status;
+  } catch (err) {
+    // If DB fails temporarily, fall back to cached status if available
+    return cached?.status || 'Active';
+  }
+};
+
 /**
  * Verifies JWT access token on every protected route.
- * Attaches req.user = { userId, staffId, role, department, permissions }
+ * Attaches req.user = { userId, staffId, role, department, departmentId, permissions }
  */
 const authenticate = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
@@ -19,43 +38,24 @@ const authenticate = async (req, res, next) => {
   try {
     const payload = verifyAccessToken(token);
     
-    // Check account status in DB to handle real-time locking/disabling
-    const identity = await identityService.getById(payload.userId);
-    if (!identity) {
+    // Fast account status check with 30s TTL cache (0 DB calls for cached requests)
+    const accountStatus = await getCachedUserStatus(payload.userId);
+    if (!accountStatus) {
       return sendError(res, 'AUTH_007', 'Authentication required', null, 401);
     }
 
-    if (identity.accountStatus !== 'Active') {
+    if (accountStatus !== 'Active') {
       logger.warn('Auth blocked: account is not active', { 
         userId: payload.userId, 
-        status: identity.accountStatus, 
+        status: accountStatus, 
         requestId: req.requestId 
       });
-      const errorCode = identity.accountStatus === 'Locked' ? 'AUTH_004' : 'AUTH_005';
-      const errorMessage = identity.accountStatus === 'Locked' ? 'Account locked' : 'Account disabled';
+      const errorCode = accountStatus === 'Locked' ? 'AUTH_004' : 'AUTH_005';
+      const errorMessage = accountStatus === 'Locked' ? 'Account locked' : 'Account disabled';
       return sendError(res, errorCode, errorMessage, null, 401);
     }
 
-    // Resolve real-time role permissions from database
-    let permissions = payload.permissions;
-    if (identity.staffId) {
-      try {
-        const staff = await staffService.getById(identity.staffId.toString());
-        if (staff && staff.roleId) {
-          const livePerms = await administrationService.getPermissionCodesForRole(staff.roleId._id || staff.roleId);
-          if (Array.isArray(livePerms) && livePerms.length > 0) {
-            permissions = livePerms;
-          }
-        }
-      } catch (err) {
-        // Fallback to token permissions on non-critical error
-      }
-    }
-
-    req.user = {
-      ...payload,
-      permissions: permissions || [],
-    };
+    req.user = payload;
     return next();
   } catch (err) {
     logger.warn('Token verification failed', { error: err.message, requestId: req.requestId });

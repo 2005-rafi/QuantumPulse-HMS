@@ -1,0 +1,199 @@
+/* ==========================================================================
+   TariffManager.css — High-Density Tariff Governance Layout
+   ========================================================================== */
+
+.tariff-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.tariff-chips-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tariff-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 2px 0;
+}
+
+.tariff-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.tariff-refresh-btn:hover {
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.tariff-table-container {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+}
+
+.tariff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.tariff-table thead tr {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  text-align: left;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.tariff-table th {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+}
+
+.tariff-row {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.tariff-row:hover {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+.tariff-row td {
+  padding: 10px 14px;
+  vertical-align: middle;
+}
+
+.tariff-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.tariff-cat-pill--registration {
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.tariff-cat-pill--consultation {
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.tariff-cat-pill--diagnostics {
+  background: var(--md-sys-color-tertiary-container, #ffd8e4);
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
+}
+
+.tariff-cat-pill--procedure {
+  background: rgba(230, 81, 0, 0.12);
+  color: #e65100;
+}
+
+.tariff-code-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-family: monospace;
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-outline, #79747e);
+}
+
+.tariff-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.tariff-status-badge--published {
+  background: rgba(46, 125, 50, 0.12);
+  color: #2e7d32;
+}
+
+.tariff-status-badge--draft {
+  background: rgba(230, 81, 0, 0.12);
+  color: #e65100;
+}
+
+.tariff-status-badge--cancelled {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+
+.tariff-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.tariff-action-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-color: var(--md-sys-color-outline, #79747e);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.tariff-action-btn--edit:hover {
+  color: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.tariff-action-btn--publish:hover {
+  color: #2e7d32;
+  border-color: #2e7d32;
+}
+
+.tariff-action-btn--cancel:hover {
+  color: var(--md-sys-color-error, #ba1a1a);
+  border-color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.tariff-action-btn .material-symbols-rounded {
+  font-size: 16px !important;
+}

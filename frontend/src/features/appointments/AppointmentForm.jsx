@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Md3Button, Md3Select, Md3DatePicker } from '../../components/md3/Md3FormComponents';
+import { Md3Button, Md3Select, Md3DatePicker, Md3TextField } from '../../components/md3/Md3FormComponents';
 import { Icon } from '../../components/md3/Md3Widgets';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import { patientAPI } from '../../services/patientAPI';
 import { appointmentAPI } from '../../services/appointmentAPI';
 import { useAppointmentAvailability } from '../../hooks/useAppointmentAvailability';
@@ -403,7 +404,7 @@ export const AppointmentForm = ({ onSuccess, onCancel, preselectedPatient = null
                 value={selectedDoctorId}
                 options={doctors.map((doc) => ({
                   value: doc._id || doc.id,
-                  label: `Dr. ${doc.fullName} (${doc.primarySpecialization || doc.position || 'General'})`,
+                  label: `${formatDoctorName(doc.fullName)} (${doc.primarySpecialization || doc.position || 'General'})`,
                 }))}
                 onChange={(e) => handleDoctorChange(e.target.value)}
               />
@@ -489,7 +490,7 @@ export const AppointmentForm = ({ onSuccess, onCancel, preselectedPatient = null
             </div>
             <div className="appt-summary-row">
               <span className="appt-summary-label">Consulting Doctor</span>
-              <span className="appt-summary-value">Dr. {selectedDoctorObj?.fullName || '—'}</span>
+              <span className="appt-summary-value">{formatDoctorName(selectedDoctorObj?.fullName)}</span>
             </div>
             <div className="appt-summary-row">
               <span className="appt-summary-label">Schedule Slot</span>

@@ -3,11 +3,12 @@
  * Encapsulates all state and logic for the Reception Dashboard.
  *
  * SOLID:
- *   SRP — Manages patient selection, registration sheet state, and visit counters only.
- *   DIP — Depends on patientAPI abstraction, not raw fetch.
+ *   SRP — Manages patient selection, registration sheet state, visit and appointment counters.
+ *   DIP — Depends on patientAPI & appointmentAPI abstractions, not raw fetch.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { patientAPI } from '../services/patientAPI';
+import { appointmentAPI } from '../services/appointmentAPI';
 
 /**
  * @returns {{
@@ -17,6 +18,7 @@ import { patientAPI } from '../services/patientAPI';
  *   printData: Object|null,
  *   totalPatients: number,
  *   todaysVisits: number,
+ *   todaysAppointments: number,
  *   handlePatientSelect: Function,
  *   handleVisitCreated: Function,
  *   handlePrintDone: Function,
@@ -29,9 +31,12 @@ export const useReceptionDashboard = () => {
   const [printData, setPrintData] = useState(null);
   const [totalPatients, setTotalPatients] = useState(0);
   const [todaysVisits, setTodaysVisits] = useState(0);
+  const [todaysAppointments, setTodaysAppointments] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
+
+    // Fetch total patients count
     patientAPI.search('', 1, 1)
       .then((res) => {
         if (!cancelled) {
@@ -40,6 +45,19 @@ export const useReceptionDashboard = () => {
         }
       })
       .catch(() => {});
+
+    // Fetch today's appointments summary
+    const todayStr = new Date().toISOString().split('T')[0];
+    appointmentAPI.getAll({ date: todayStr, limit: 1 })
+      .then((res) => {
+        if (!cancelled) {
+          const data = res.data?.data || res.data || {};
+          const apptTotal = data.summary?.total !== undefined ? data.summary.total : (data.total || 0);
+          setTodaysAppointments(apptTotal);
+        }
+      })
+      .catch(() => {});
+
     return () => { cancelled = true; };
   }, []);
 
@@ -76,6 +94,7 @@ export const useReceptionDashboard = () => {
     printData,
     totalPatients,
     todaysVisits,
+    todaysAppointments,
     handlePatientSelect,
     handleVisitCreated,
     handlePrintDone,

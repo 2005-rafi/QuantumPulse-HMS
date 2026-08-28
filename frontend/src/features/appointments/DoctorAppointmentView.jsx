@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { appointmentAPI } from '../../services/appointmentAPI';
 import { Icon } from '../../components/md3/Md3Widgets';
 import { Md3Button, Md3DatePicker } from '../../components/md3/Md3FormComponents';
+import ClinicalPatientOverlayDialog from '../../components/md3/ClinicalPatientOverlayDialog';
 import AppointmentStatusBadge from './AppointmentStatusBadge';
 import './AppointmentDashboard.css';
 
@@ -15,6 +16,7 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeOverlayType, setActiveOverlayType] = useState(null); // 'total' | 'checkedIn' | 'scheduled' | 'completed' | null
 
   const getTargetDate = (mode) => {
     const today = new Date();
@@ -87,6 +89,33 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
     return `${f}${l}` || 'PT';
   };
 
+  const maskPhone = (phone) => {
+    if (!phone) return null;
+    const str = String(phone).trim();
+    if (str.length <= 4) return str;
+    return str.slice(0, 3) + '••••' + str.slice(-3);
+  };
+
+  const isNoneOrNkda = (text) => {
+    if (!text) return true;
+    if (typeof text === 'string') {
+      const clean = text.trim().toUpperCase();
+      return (
+        clean === '' ||
+        clean === 'NONE' ||
+        clean === 'NIL' ||
+        clean === 'NO' ||
+        clean === 'NKDA' ||
+        clean === 'NO KNOWN ALLERGIES' ||
+        clean === 'NO KNOWN DRUG ALLERGIES' ||
+        clean === 'N/A' ||
+        clean === 'NULL' ||
+        clean === 'UNDEFINED'
+      );
+    }
+    return false;
+  };
+
   return (
     <div className="appt-doctor-schedule-view">
       {/* ─── HEADER & CONTROLS ─── */}
@@ -156,9 +185,14 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
         </div>
       </div>
 
-      {/* ─── SUMMARY STATS STRIP ─── */}
+      {/* ─── SUMMARY STATS STRIP (CLICKABLE ON-TAP OVERLAYS) ─── */}
       <div className="appt-doc-stats-grid">
-        <div className="appt-doc-stat-card total">
+        <div
+          className="appt-doc-stat-card total clickable-stat-card"
+          onClick={() => setActiveOverlayType('total')}
+          title="Click to open full patients ledger overlay"
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-card-icon">
             <Icon.Users />
           </div>
@@ -168,7 +202,12 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
           </div>
         </div>
 
-        <div className="appt-doc-stat-card checked-in">
+        <div
+          className="appt-doc-stat-card checked-in clickable-stat-card"
+          onClick={() => setActiveOverlayType('checkedIn')}
+          title="Click to open ready & checked-in patients ledger"
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-card-icon">
             <Icon.UserCheck />
           </div>
@@ -178,7 +217,12 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
           </div>
         </div>
 
-        <div className="appt-doc-stat-card scheduled">
+        <div
+          className="appt-doc-stat-card scheduled clickable-stat-card"
+          onClick={() => setActiveOverlayType('scheduled')}
+          title="Click to open pre-booked patients awaiting arrival ledger"
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-card-icon">
             <Icon.Clock />
           </div>
@@ -188,7 +232,12 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
           </div>
         </div>
 
-        <div className="appt-doc-stat-card completed">
+        <div
+          className="appt-doc-stat-card completed clickable-stat-card"
+          onClick={() => setActiveOverlayType('completed')}
+          title="Click to open completed consultations ledger"
+          style={{ cursor: 'pointer' }}
+        >
           <div className="stat-card-icon">
             <Icon.CheckCircle />
           </div>
@@ -241,8 +290,14 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
           {appointments.map((appt) => {
             const patient = appt.patientId || {};
             const visit = appt.visitId;
-            const vitals = visit?.vitals;
-            const hasVitals = !!(vitals?.bloodPressureSystolic || vitals?.pulseRate || vitals?.chiefComplaint);
+            const vitals = visit?.vitals || {};
+            const hasVitals = !!(
+              vitals.bloodPressureSystolic ||
+              vitals.pulseRate ||
+              vitals.temperature ||
+              vitals.spO2 ||
+              vitals.weightKg
+            );
             const isCheckedIn = appt.status === 'CHECKED_IN' || visit?.status === 'WAITING_DOCTOR' || visit?.status === 'IN_PROGRESS';
             const isCompleted = appt.status === 'COMPLETED' || visit?.status === 'COMPLETED';
 
@@ -255,118 +310,211 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
                 })
               : '—';
 
+            // Allergies
+            const rawAllergies = Array.isArray(patient.allergies)
+              ? patient.allergies.filter(a => !isNoneOrNkda(a))
+              : (typeof patient.allergies === 'string' && !isNoneOrNkda(patient.allergies))
+                ? patient.allergies.split(',').map(s => s.trim()).filter(s => !isNoneOrNkda(s))
+                : [];
+            const hasAllergies = rawAllergies.length > 0;
+            const allergyText = rawAllergies.join(', ');
+
+            const maskedPhone = maskPhone(patient.phoneNumber);
+
             return (
               <div
                 key={appt._id}
                 className={`appt-doc-card ${isCheckedIn ? 'ready-consult' : ''} ${isCompleted ? 'done-consult' : ''}`}
               >
-                {/* Time Badge Column */}
-                <div className="appt-card-time-block">
-                  <span className="appt-time-main">{appt.startTime || '—'}</span>
-                  <span className="appt-time-end">to {appt.endTime || '—'}</span>
-                  <span className="appt-date-pill">{apptDateFormatted}</span>
-                  <span className="appt-type-pill">{appt.appointmentType || 'SCHEDULED'}</span>
+                {/* ── Left Schedule Box (Date & Slot) ── */}
+                <div className="appt-card-schedule-box">
+                  <div className="appt-date-header">
+                    <Icon.Calendar size={13} />
+                    <span>{apptDateFormatted}</span>
+                  </div>
+                  <div className="appt-time-slot">
+                    <span className="appt-time-start">{appt.startTime || '—'}</span>
+                    <span className="appt-time-sep">—</span>
+                    <span className="appt-time-finish">{appt.endTime || '—'}</span>
+                  </div>
+                  <div className="appt-type-chip">
+                    {appt.appointmentType === 'FOLLOW_UP' ? 'Follow-Up' : appt.appointmentType === 'WALK_IN' ? 'Walk-In' : 'Scheduled Consultation'}
+                  </div>
                 </div>
 
-                {/* Patient Information Column */}
-                <div className="appt-card-main-block">
-                  <div className="appt-patient-hero-row">
-                    <div className="appt-avatar-circle">
-                      {getInitials(patient.firstName, patient.lastName)}
-                    </div>
-                    <div className="appt-patient-info">
-                      <div className="appt-patient-name-line">
-                        <h4>
-                          {patient.firstName ? `${patient.firstName} ${patient.lastName || ''}` : 'Unknown Patient'}
-                        </h4>
-                        <span className="appt-mrn-pill">MRN: {patient.mrn || '—'}</span>
-                        <AppointmentStatusBadge status={appt.status} />
+                {/* ── Center Patient Details & Clinical Snapshot ── */}
+                <div className="appt-card-center-block">
+                  {/* Row 1: Patient Demographics & Action */}
+                  <div className="appt-patient-header-row">
+                    <div className="appt-patient-identity-left">
+                      <div className="appt-avatar-badge">
+                        {getInitials(patient.firstName, patient.lastName)}
                       </div>
-                      <div className="appt-patient-demographics">
-                        <span>
-                          <strong>Age / Gender:</strong> {patient.age ? `${patient.age} yrs` : '—'}, {patient.gender || '—'}
-                        </span>
-                        {patient.bloodGroup && (
-                          <span className="appt-blood-pill">
-                            <Icon.Heart /> {patient.bloodGroup}
+                      <div className="appt-patient-title-group">
+                        <div className="appt-name-row">
+                          <h4 className="appt-patient-name">
+                            {patient.firstName ? `${patient.firstName} ${patient.lastName || ''}` : 'Unknown Patient'}
+                          </h4>
+                          <span className="appt-mrn-tag">MRN: {patient.mrn || '—'}</span>
+                          <span className="appt-code-tag">Appt: {appt.appointmentNumber || '—'}</span>
+                          <AppointmentStatusBadge status={appt.status} />
+                        </div>
+
+                        <div className="appt-demog-meta-row">
+                          <span className="appt-demog-item">
+                            <strong>{patient.age ? `${patient.age}y` : '—'}</strong> · {patient.gender || '—'}
                           </span>
-                        )}
-                        <span className="appt-code-tag">
-                          Appt #: <strong>{appt.appointmentNumber || '—'}</strong>
-                        </span>
+                          {patient.bloodGroup && (
+                            <span className="appt-blood-tag">
+                              <Icon.Droplet />
+                              <span>{patient.bloodGroup}</span>
+                            </span>
+                          )}
+                          {maskedPhone && (
+                            <span className="appt-phone-tag">
+                              <Icon.Phone />
+                              <span>{maskedPhone}</span>
+                            </span>
+                          )}
+                          {hasAllergies ? (
+                            <span className="appt-allergy-tag" title={`Allergy: ${allergyText}`}>
+                              <Icon.Alert />
+                              <span>Allergy: {allergyText}</span>
+                            </span>
+                          ) : (
+                            <span className="appt-nkda-tag">
+                              <Icon.Check />
+                              <span>NKDA</span>
+                            </span>
+                          )}
+                          {appt.departmentId?.name && (
+                            <span className="appt-dept-tag">
+                              <Icon.Activity />
+                              <span>{appt.departmentId.name}</span>
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Reason & Notes Row */}
-                  <div className="appt-reason-row">
-                    <div className="appt-reason-item">
-                      <span className="reason-label">Chief Complaint / Reason:</span>
-                      <span className="reason-text">{appt.reason || 'General Consultation'}</span>
+                    {/* Action Button */}
+                    <div className="appt-card-action-slot">
+                      {visit ? (
+                        <Md3Button
+                          variant="primary"
+                          onClick={() =>
+                            onOpenVisit &&
+                            onOpenVisit({
+                              ...appt,
+                              ...visit,
+                              patientId: patient,
+                              appointmentNumber: appt.appointmentNumber,
+                              appointmentDate: appt.appointmentDate,
+                              startTime: appt.startTime,
+                              endTime: appt.endTime,
+                              appointmentType: appt.appointmentType,
+                              reason: appt.reason || visit.vitals?.chiefComplaint || visit.reason,
+                            })
+                          }
+                          className="appt-start-btn"
+                        >
+                          <Icon.FileText />
+                          <span>Open Patient File</span>
+                        </Md3Button>
+                      ) : (
+                        <Md3Button
+                          variant="secondary"
+                          onClick={() =>
+                            onOpenVisit &&
+                            onOpenVisit({
+                              ...appt,
+                              patientId: patient,
+                              appointmentNumber: appt.appointmentNumber,
+                              appointmentDate: appt.appointmentDate,
+                              startTime: appt.startTime,
+                              endTime: appt.endTime,
+                              appointmentType: appt.appointmentType,
+                              reason: appt.reason,
+                            })
+                          }
+                          className="appt-start-btn"
+                          title="Review future patient chart & medical history"
+                        >
+                          <Icon.FileText />
+                          <span>Preview Chart</span>
+                        </Md3Button>
+                      )}
                     </div>
-                    {appt.departmentId?.name && (
-                      <span className="appt-dept-pill">
-                        <Icon.Activity /> {appt.departmentId.name}
-                      </span>
-                    )}
                   </div>
 
-                  {/* Triage Vitals / Check-in Live Status Ribbon */}
-                  {visit ? (
-                    <div className={`appt-triage-ribbon ${hasVitals ? 'vitals-done' : 'vitals-waiting'}`}>
-                      <div className="triage-ribbon-left">
+                  {/* Row 2: Chief Complaint / Reason */}
+                  <div className="appt-complaint-box">
+                    <span className="appt-complaint-label">Chief Complaint / Reason:</span>
+                    <span className="appt-complaint-value">{appt.reason || 'General Consultation & Follow-up'}</span>
+                  </div>
+
+                  {/* Row 3: Structured Triage Vitals Bar */}
+                  {visit && (
+                    <div className={`appt-vitals-strip ${hasVitals ? 'has-vitals' : 'awaiting-vitals'}`}>
+                      <div className="appt-vitals-strip-left">
                         {hasVitals ? (
                           <>
-                            <Icon.CheckCircle />
-                            <span className="triage-status-title">Triage Vitals Recorded</span>
-                            <span className="triage-vitals-preview">
-                              {vitals.bloodPressureSystolic && vitals.bloodPressureDiastolic
-                                ? `BP: ${vitals.bloodPressureSystolic}/${vitals.bloodPressureDiastolic} mmHg • `
-                                : ''}
-                              {vitals.pulseRate ? `Pulse: ${vitals.pulseRate} bpm • ` : ''}
-                              {vitals.spO2 ? `SpO2: ${vitals.spO2}% • ` : ''}
-                              {vitals.temperature ? `Temp: ${vitals.temperature}°F • ` : ''}
-                              {vitals.weightKg ? `Weight: ${vitals.weightKg} kg` : ''}
+                            <span className="appt-vitals-icon-badge">
+                              <Icon.CheckCircle size={14} />
                             </span>
+                            <span className="appt-vitals-heading">Triage Vitals:</span>
+                            <div className="appt-vitals-chips-list">
+                              {vitals.bloodPressureSystolic && vitals.bloodPressureDiastolic && (
+                                <span className="appt-vital-chip">
+                                  <strong>BP</strong> {vitals.bloodPressureSystolic}/{vitals.bloodPressureDiastolic}
+                                </span>
+                              )}
+                              {vitals.pulseRate && (
+                                <span className="appt-vital-chip">
+                                  <strong>Pulse</strong> {vitals.pulseRate} bpm
+                                </span>
+                              )}
+                              {vitals.spO2 && (
+                                <span className="appt-vital-chip">
+                                  <strong>SpO2</strong> {vitals.spO2}%
+                                </span>
+                              )}
+                              {vitals.temperature && (
+                                <span className="appt-vital-chip">
+                                  <strong>Temp</strong> {vitals.temperature}°F
+                                </span>
+                              )}
+                              {vitals.weightKg && (
+                                <span className="appt-vital-chip">
+                                  <strong>Weight</strong> {vitals.weightKg} kg
+                                </span>
+                              )}
+                              {vitals.bmi && (
+                                <span className="appt-vital-chip">
+                                  <strong>BMI</strong> {vitals.bmi}
+                                </span>
+                              )}
+                            </div>
                           </>
                         ) : (
                           <>
-                            <Icon.Clock />
-                            <span className="triage-status-title">Checked In</span>
-                            <span className="triage-status-sub">Patient in triage queue, waiting for nurse vitals</span>
+                            <span className="appt-vitals-icon-badge waiting">
+                              <Icon.Clock size={14} />
+                            </span>
+                            <span className="appt-vitals-heading">Checked In:</span>
+                            <span className="appt-vitals-sub">Patient in triage queue, waiting for nurse vitals recording</span>
                           </>
                         )}
                       </div>
-                      <div className="triage-ribbon-right">
-                        <span className="token-badge">
-                          Token: <strong>{visit.tokenString || visit.visitNumber}</strong>
-                        </span>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="appt-triage-ribbon awaiting-arrival">
-                      <Icon.Info />
-                      <span>Pre-booked appointment. Patient has not yet checked in at reception.</span>
-                    </div>
-                  )}
-                </div>
 
-                {/* Action Column */}
-                <div className="appt-card-action-block">
-                  {visit ? (
-                    <Md3Button
-                      variant="primary"
-                      onClick={() => onOpenVisit && onOpenVisit(visit._id || visit.id || visit)}
-                      className="appt-start-btn"
-                    >
-                      <Icon.FileText />
-                      <span>Open Patient File</span>
-                    </Md3Button>
-                  ) : (
-                    <span className="appt-awaiting-badge">
-                      <Icon.Clock />
-                      <span>Awaiting Arrival</span>
-                    </span>
+                      {visit.tokenString && (
+                        <div className="appt-vitals-strip-right">
+                          <span className="appt-token-pill">
+                            Token: <strong>{visit.tokenString}</strong>
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -374,6 +522,41 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
           })}
         </div>
       )}
+
+      {/* ─── REUSABLE FULL-AXIS PATIENT LEDGER OVERLAY DIALOG ─── */}
+      <ClinicalPatientOverlayDialog
+        isOpen={!!activeOverlayType}
+        onClose={() => setActiveOverlayType(null)}
+        type={
+          activeOverlayType === 'total'
+            ? 'appointments_total'
+            : activeOverlayType === 'checkedIn'
+            ? 'appointments_checked_in'
+            : activeOverlayType === 'scheduled'
+            ? 'appointments_scheduled'
+            : 'appointments_completed'
+        }
+        items={
+          activeOverlayType === 'total'
+            ? appointments
+            : activeOverlayType === 'checkedIn'
+            ? appointments.filter(
+                (a) =>
+                  a.status === 'CHECKED_IN' ||
+                  a.visitId?.status === 'WAITING_DOCTOR' ||
+                  a.visitId?.status === 'IN_PROGRESS'
+              )
+            : activeOverlayType === 'scheduled'
+            ? appointments.filter((a) => a.status === 'SCHEDULED' || a.status === 'CONFIRMED' || !a.visitId)
+            : appointments.filter((a) => a.status === 'COMPLETED' || a.visitId?.status === 'COMPLETED')
+        }
+        onSelectPatient={(item) => {
+          if (onOpenVisit && item) {
+            onOpenVisit(item);
+          }
+        }}
+        doctorId={doctorId}
+      />
     </div>
   );
 };

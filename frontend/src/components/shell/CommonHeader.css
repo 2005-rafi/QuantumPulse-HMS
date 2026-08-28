@@ -10,11 +10,11 @@
   color: var(--md-sys-color-on-surface, #1c1b1f);
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   box-shadow: none;
-  height: 64px;
+  height: var(--md-comp-header-height, 52px);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: var(--md-comp-header-padding, 0 1.25rem);
   flex-shrink: 0;
   box-sizing: border-box;
 }
@@ -22,13 +22,13 @@
 .common-header__left {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
+  gap: var(--md-spacing-s, 8px);
 }
 
 .common-header__brand-icon {
-  height: 40px;
-  width: 40px;
-  border-radius: 12px;
+  height: 34px;
+  width: 34px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
@@ -44,8 +44,8 @@
 
 .common-header__brand-icon--has-logo {
   width: auto;
-  min-width: 40px;
-  max-width: 200px;
+  min-width: 34px;
+  max-width: 180px;
   background-color: transparent;
   overflow: visible;
   border-radius: 0;
@@ -54,7 +54,7 @@
 .common-header__brand-logo {
   width: auto;
   height: 100%;
-  max-height: 38px;
+  max-height: 32px;
   max-width: 100%;
   object-fit: contain;
   display: block;
@@ -66,18 +66,18 @@
 }
 
 .common-header__title {
-  font-family: 'Roboto', sans-serif;
-  font-size: 1.15rem;
+  font-family: var(--md-sys-typescale-title-large-font);
+  font-size: 1.05rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
   margin: 0;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   letter-spacing: -0.01em;
 }
 
 .common-header__subtitle {
-  font-family: 'Roboto', sans-serif;
-  font-size: 0.82rem;
+  font-family: var(--md-sys-typescale-body-large-font);
+  font-size: 0.76rem;
   font-weight: 500;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
@@ -189,7 +189,7 @@
 }
 
 .common-header__popover-name {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.98rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #1c1b1f);
@@ -206,7 +206,7 @@
 }
 
 .common-header__popover-role-badge {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.7rem;
   font-weight: 800;
   color: var(--md-sys-color-primary, #6750a4);
@@ -218,7 +218,7 @@
 }
 
 .common-header__popover-dept-badge {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface-variant, #49454f);
@@ -292,14 +292,14 @@
 }
 
 .common-header__menu-title {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .common-header__menu-sub {
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Inter', sans-serif;
   font-size: 0.75rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   white-space: nowrap;

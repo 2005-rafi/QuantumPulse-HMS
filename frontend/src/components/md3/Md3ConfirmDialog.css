@@ -10,9 +10,12 @@
   inset: 0;
   z-index: 9999;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 24px;
+  padding: 48px 16px 24px;
+  overflow-y: auto;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
   background: transparent;
 }
 
@@ -26,11 +29,11 @@
 
 @keyframes md3-overlay-in {
   from { background: rgba(0, 0, 0, 0); }
-  to   { background: rgba(0, 0, 0, 0.45); }
+  to   { background: rgba(15, 23, 42, 0.45); }
 }
 
 @keyframes md3-overlay-out {
-  from { background: rgba(0, 0, 0, 0.45); }
+  from { background: rgba(15, 23, 42, 0.45); }
   to   { background: rgba(0, 0, 0, 0); }
 }
 
@@ -118,7 +121,7 @@
 }
 
 .md3-dialog-title {
-  font-family: var(--md-sys-typescale-headline-small-font, 'Roboto', sans-serif);
+  font-family: var(--md-sys-typescale-headline-small-font, 'Inter', sans-serif);
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
@@ -127,7 +130,7 @@
 }
 
 .md3-dialog-message {
-  font-family: var(--md-sys-typescale-body-medium-font, 'Roboto', sans-serif);
+  font-family: var(--md-sys-typescale-body-medium-font, 'Inter', sans-serif);
   font-size: 0.9375rem;
   font-weight: 400;
   color: var(--md-sys-color-on-surface-variant, #49454f);
@@ -160,7 +163,7 @@
 .md3-dialog-btn {
   border: none;
   border-radius: 100px;
-  font-family: var(--md-sys-typescale-label-large-font, 'Roboto', sans-serif);
+  font-family: var(--md-sys-typescale-label-large-font, 'Inter', sans-serif);
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0.02em;

@@ -16,8 +16,6 @@ const encryptPatient = (data) => {
   if (clone.address) {
     clone.address = { ...clone.address };
     if (clone.address.street) clone.address.street = encryptRandom(clone.address.street);
-    if (clone.address.city) clone.address.city = encryptRandom(clone.address.city);
-    if (clone.address.state) clone.address.state = encryptRandom(clone.address.state);
     if (clone.address.pinCode) clone.address.pinCode = encryptRandom(clone.address.pinCode);
   }
   
@@ -132,8 +130,10 @@ const findDuplicates = async (filter) => {
   return decryptPatient(docs);
 };
 
-const search = async (filter = {}, page = 1, limit = 20, sort = { createdAt: -1 }) => {
-  const docs = await Patient.find(filter)
+const search = async (filter = {}, page = 1, limit = 20, sort = { createdAt: -1, _id: -1 }, projection = null) => {
+  let query = Patient.find(filter);
+  if (projection) query = query.select(projection);
+  const docs = await query
     .sort(sort)
     .skip((page - 1) * limit)
     .limit(limit)

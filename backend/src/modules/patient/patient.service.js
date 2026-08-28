@@ -96,53 +96,15 @@ const enrichPatientsWithHistory = async (items) => {
   }
 };
 
-const search = async ({ q, page = 1, limit = 20, visitType, startDate, endDate, departmentId, doctorId, sortBy } = {}) => {
-  const filter = {};
-  
-  // 1. Search Query Optimization & Input Encryption
-  if (q) {
-    const cleanQ = q.trim();
-    
-    // Check if cleanQ is numeric (phone/Aadhaar search)
-    const isNumeric = /^[0-9]+$/.test(cleanQ);
-    if (isNumeric) {
-      const encVal = encryptDeterministic(cleanQ);
-      filter.$or = [
-        { phone: encVal },
-        { whatsapp: encVal },
-        { aadhaar: encVal }
-      ];
-    } else {
-      // Check if cleanQ is MRN (PT-...)
-      const isMrn = cleanQ.toUpperCase().startsWith('PT-');
-      if (isMrn) {
-        // Index-prefix match on MRN is optimized using ^ anchor
-        filter.mrn = { $regex: new RegExp('^' + cleanQ, 'i') };
-      } else {
-        // Name search: use prefix match (^ anchor) on indexed name fields to utilize index!
-        const parts = cleanQ.split(/\s+/);
-        if (parts.length > 1) {
-          filter.$or = [
-            {
-              firstName: { $regex: new RegExp('^' + parts[0], 'i') },
-              lastName: { $regex: new RegExp('^' + parts.slice(1).join(' '), 'i') }
-            },
-            {
-              firstName: { $regex: new RegExp('^' + parts.slice(1).join(' '), 'i') },
-              lastName: { $regex: new RegExp('^' + parts[0], 'i') }
-            }
-          ];
-        } else {
-          filter.$or = [
-            { firstName: { $regex: new RegExp('^' + cleanQ, 'i') } },
-            { lastName: { $regex: new RegExp('^' + cleanQ, 'i') } }
-          ];
-        }
-      }
-    }
-  }
+const { QueryContext, QueryBuilder, PatientQueryConfig } = require('../../core/query');
 
-  // 2. Resolve Visit Filters
+const search = async (queryParams = {}, securityScope = {}) => {
+  const queryContext = QueryContext.fromRequest({ query: queryParams }, securityScope);
+
+  const { visitType, startDate, endDate, departmentId, doctorId } = queryParams;
+  const compiled = QueryBuilder.compile(queryContext, PatientQueryConfig);
+
+  // 1. Resolve Visit Filters if present
   const visitFilter = {};
   if (visitType) {
     const types = Array.isArray(visitType) ? visitType : visitType.split(',').filter(Boolean);
@@ -166,38 +128,31 @@ const search = async ({ q, page = 1, limit = 20, visitType, startDate, endDate, 
     visitFilter.createdAt = {};
     if (startDate) {
       const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-      visitFilter.createdAt.$gte = start;
+      if (!isNaN(start.getTime())) {
+        start.setHours(0, 0, 0, 0);
+        visitFilter.createdAt.$gte = start;
+      }
     }
     if (endDate) {
       const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-      visitFilter.createdAt.$lte = end;
+      if (!isNaN(end.getTime())) {
+        end.setHours(23, 59, 59, 999);
+        visitFilter.createdAt.$lte = end;
+      }
     }
   }
 
-  // 3. Build Sort Configuration
-  const sort = {};
-  if (sortBy === 'nameA-Z') {
-    sort.firstName = 1;
-    sort.lastName = 1;
-  } else if (sortBy === 'oldest') {
-    sort.createdAt = 1;
-  } else {
-    sort.createdAt = -1;
-  }
-
-  // Determine whether to use aggregate lookup join vs standard search
+  // Determine whether to use aggregate lookup join vs direct indexed search
   const hasVisitFilters = Object.keys(visitFilter).length > 0;
   if (hasVisitFilters) {
     const pipeline = [];
-    
-    // Stage 1: Match patient name/phone/mrn first
-    if (Object.keys(filter).length > 0) {
-      pipeline.push({ $match: filter });
+
+    // Stage 1: Match patient name/phone/mrn first using compiled filter
+    if (compiled.filter && Object.keys(compiled.filter).length > 0) {
+      pipeline.push({ $match: compiled.filter });
     }
-    
-    // Stage 2: Lookup visits to join
+
+    // Stage 2: Lookup visits to join (bounded by $limit: 1 per patient)
     pipeline.push({
       $lookup: {
         from: 'visits',
@@ -206,36 +161,36 @@ const search = async ({ q, page = 1, limit = 20, visitType, startDate, endDate, 
           {
             $match: {
               $expr: { $eq: ['$patientId', '$$patientId'] },
-              ...visitFilter
-            }
+              ...visitFilter,
+            },
           },
-          { $limit: 1 } // Stop looking up as soon as one matching visit is found
+          { $limit: 1 },
         ],
-        as: 'matchingVisits'
-      }
+        as: 'matchingVisits',
+      },
     });
 
     // Stage 3: Keep only patients with matches
     pipeline.push({
       $match: {
-        'matchingVisits.0': { $exists: true }
-      }
+        'matchingVisits.0': { $exists: true },
+      },
     });
 
-    // Stage 4: Project out joined array to keep memory footprint low
+    // Stage 4: Project out joined array to keep memory footprint minimal
     pipeline.push({
-      $project: { matchingVisits: 0 }
+      $project: { matchingVisits: 0 },
     });
 
-    // Stage 5: Sort
-    pipeline.push({ $sort: sort });
+    // Stage 5: Sort deterministically
+    pipeline.push({ $sort: compiled.sort });
 
     // Stage 6: Facet search for paginated items and count in a single query
     pipeline.push({
       $facet: {
         metadata: [{ $count: 'total' }],
-        data: [{ $skip: (page - 1) * limit }, { $limit: limit }]
-      }
+        data: [{ $skip: (compiled.page - 1) * compiled.limit }, { $limit: compiled.limit }],
+      },
     });
 
     const result = await repo.aggregateSearch(pipeline);
@@ -243,18 +198,24 @@ const search = async ({ q, page = 1, limit = 20, visitType, startDate, endDate, 
     return {
       items: enrichedItems,
       total: result.total,
-      page,
-      limit,
-      pages: Math.ceil(result.total / limit)
+      page: compiled.page,
+      limit: compiled.limit,
+      pages: Math.ceil(result.total / compiled.limit),
     };
   } else {
-    // Normal query path
+    // Direct indexed query path
     const [rawItems, total] = await Promise.all([
-      repo.search(filter, page, limit, sort),
-      repo.countDocuments(filter)
+      repo.search(compiled.filter, compiled.page, compiled.limit, compiled.sort, compiled.projection),
+      repo.countDocuments(compiled.filter),
     ]);
     const enrichedItems = await enrichPatientsWithHistory(rawItems);
-    return { items: enrichedItems, total, page, limit, pages: Math.ceil(total / limit) };
+    return {
+      items: enrichedItems,
+      total,
+      page: compiled.page,
+      limit: compiled.limit,
+      pages: Math.ceil(total / compiled.limit),
+    };
   }
 };
 

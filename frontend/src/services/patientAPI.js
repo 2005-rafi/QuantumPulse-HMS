@@ -21,6 +21,13 @@ export const patientAPI = {
     return response.data;
   },
 
+  list: async (page = 1, limit = 20, query = '', options = {}) => {
+    const response = await api.get('/patients', {
+      params: { q: query, page, limit, ...options }
+    });
+    return response.data;
+  },
+
   getByMrn: async (mrn) => {
     const response = await api.get(`/patients/mrn/${mrn}`);
     return response.data;

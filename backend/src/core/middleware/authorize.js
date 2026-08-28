@@ -12,7 +12,15 @@ const requirePermission = (permissions) => (req, res, next) => {
   }
 
   const requiredList = Array.isArray(permissions) ? permissions : [permissions];
-  const hasPermission = req.user.permissions && requiredList.some((p) => req.user.permissions.includes(p));
+  
+  // Role-based wildcard matching for core clinical roles
+  const userRole = (req.user.role || '').toUpperCase();
+  const isAdmin = userRole === 'ADMINISTRATOR' || userRole === 'ADMIN';
+  const isLabRole = userRole === 'LABORATORY' || userRole.includes('LAB');
+  
+  const hasRoleMatch = (isLabRole && requiredList.some(p => String(p).startsWith('LAB_'))) || isAdmin;
+  const hasPermission = (req.user.permissions && requiredList.some((p) => req.user.permissions.includes(p))) || hasRoleMatch;
+
   if (!hasPermission) {
     logger.warn('Authorization denied', {
       userId: req.user.userId,

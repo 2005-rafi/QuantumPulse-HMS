@@ -6,6 +6,8 @@ import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { Md3TestCatalogConfigurator } from '../../components/md3/Md3TestCatalogConfigurator';
 import { Md3SearchBar, Md3SegmentedFilter } from '../../components/md3/AdminControls';
 import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
+import Md3Pagination from '../../components/md3/Md3Pagination';
+import usePagination from '../../hooks/usePagination';
 
 const AdminLabManager = () => {
   const { 
@@ -83,10 +85,20 @@ const AdminLabManager = () => {
     return matchesSearch && matchesType;
   });
 
+  const {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalItems,
+    paginatedItems: paginatedLabs,
+    showTopPagination,
+  } = usePagination(filteredLaboratories, 50, [searchQuery, typeFilter]);
+
   return (
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <section className="info-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
           <h2 style={{ margin: 0, color: 'var(--md-sys-color-primary)' }}>Hospital Laboratories</h2>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
             <Md3SearchBar 
@@ -106,9 +118,22 @@ const AdminLabManager = () => {
           </div>
         </div>
 
+        {/* Top Pagination (rendered when total records exceed 20) */}
+        {showTopPagination && (
+          <Md3Pagination
+            currentPage={page}
+            totalItems={totalItems}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            itemLabel="laboratories"
+            position="top"
+          />
+        )}
+
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="md3-data-grid" style={{ flex: 1, paddingBottom: '80px' }}>
-            {filteredLaboratories.length === 0 ? (
+          <div className="md3-data-grid md3-paginated-content-fade" key={page} style={{ flex: 1, paddingBottom: '20px' }}>
+            {paginatedLabs.length === 0 ? (
               <div style={{ gridColumn: '1 / -1', width: '100%' }}>
                 <Md3EmptyState
                   icon="science"
@@ -184,6 +209,19 @@ const AdminLabManager = () => {
               ))
             )}
           </div>
+
+          {/* Bottom Pagination */}
+          {totalItems > 0 && (
+            <Md3Pagination
+              currentPage={page}
+              totalItems={totalItems}
+              pageSize={pageSize}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              itemLabel="laboratories"
+              position="bottom"
+            />
+          )}
         </div>
       </section>
 

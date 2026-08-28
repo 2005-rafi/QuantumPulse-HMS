@@ -15,6 +15,9 @@ const createPatientSchema = Joi.object({
     street: Joi.string().allow('', null).trim(),
     city: Joi.string().allow('', null).trim(),
     state: Joi.string().allow('', null).trim(),
+    stateCode: Joi.string().allow('', null).trim(),
+    country: Joi.string().allow('', null).trim(),
+    countryCode: Joi.string().allow('', null).trim(),
     pinCode: Joi.string().allow('', null).trim()
   }).optional(),
   emergencyContact: Joi.object({
@@ -39,6 +42,9 @@ const updatePatientSchema = Joi.object({
     street: Joi.string().allow('', null).trim(),
     city: Joi.string().allow('', null).trim(),
     state: Joi.string().allow('', null).trim(),
+    stateCode: Joi.string().allow('', null).trim(),
+    country: Joi.string().allow('', null).trim(),
+    countryCode: Joi.string().allow('', null).trim(),
     pinCode: Joi.string().allow('', null).trim()
   }).optional(),
   emergencyContact: Joi.object({

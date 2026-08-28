@@ -260,26 +260,39 @@ const update = async (id, data, adminStaffId) => {
   return { ...updatedStaff, username: identity?.username || '' };
 };
 
-const list = async ({ page = 1, limit = 20, status, departmentId, roleId, role } = {}) => {
-  const filter = {};
-  if (status) filter.status = status;
-  if (departmentId) filter.departmentId = departmentId;
-  if (roleId) filter.roleId = roleId;
+const list = async (queryParams = {}, securityScope = {}) => {
+  const { QueryContext, QueryBuilder, StaffQueryConfig } = require('../../core/query');
 
-  if (role) {
-    const Role = require('../administration/role.model');
-    const roleDoc = await Role.findOne({ name: role });
+  const filters = { ...queryParams };
+  if (filters.role) {
+    const roleDoc = await Role.findOne({ name: filters.role });
     if (roleDoc) {
-      filter.roleId = roleDoc._id;
+      filters.roleId = roleDoc._id.toString();
     } else {
-      filter.roleId = new mongoose.Types.ObjectId();
+      filters.roleId = new mongoose.Types.ObjectId().toString();
     }
+    delete filters.role;
   }
+
+  const queryContext = new QueryContext({
+    ...filters,
+    securityScope: { ...securityScope, isDeleted: { $ne: true } },
+  });
+
+  const compiled = QueryBuilder.compile(queryContext, StaffQueryConfig);
+
   const [items, total] = await Promise.all([
-    repo.list(filter, page, limit),
-    repo.countDocuments(filter),
+    Staff.find(compiled.filter)
+      .select(compiled.projection)
+      .populate('departmentId', 'name')
+      .populate('roleId', 'name')
+      .sort(compiled.sort)
+      .skip(compiled.pagination.skip)
+      .limit(compiled.pagination.limit)
+      .lean(),
+    Staff.countDocuments(compiled.filter),
   ]);
-  
+
   const staffIds = items.map((item) => item._id);
   const identities = await identityService.getByStaffIds(staffIds);
 
@@ -292,8 +305,8 @@ const list = async ({ page = 1, limit = 20, status, departmentId, roleId, role }
     ...item,
     username: identityMap[item._id.toString()] || '',
   }));
-  
-  return { items: itemsWithUsername, total, page, limit, pages: Math.ceil(total / limit) };
+
+  return { items: itemsWithUsername, total, page: compiled.page, limit: compiled.limit, pages: Math.ceil(total / compiled.limit) };
 };
 
 const disableStaff = async (id) => {
