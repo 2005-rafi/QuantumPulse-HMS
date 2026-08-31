@@ -28,7 +28,20 @@ const ipdRoutes = require('../../modules/ipd/ipd.routes');
 
 const createApp = () => {
   const app = express();
-
+  const allowedCors = (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      config.corsOrigin === '*' ||
+      config.corsOrigin === origin ||
+      origin.endsWith('.trycloudflare.com') ||
+      origin.includes('localhost') ||
+      origin.includes('127.0.0.1')
+    ) {
+      return callback(null, true);
+    }
+    return callback(null, true);
+  };
+  app.use(cors({ origin: allowedCors, credentials: true }));
   // Security - Enable CORS first so rate limiter and preflight headers match
   app.use(cors({ origin: config.corsOrigin, credentials: true }));
 
