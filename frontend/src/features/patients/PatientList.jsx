@@ -8,6 +8,7 @@ import PatientListView from '../../components/patients/PatientListView';
 import { usePatientLayoutPreference } from '../../hooks/usePatientLayoutPreference';
 import { Icon } from '../../components/md3/Md3Widgets';
 import Md3Pagination from '../../components/md3/Md3Pagination';
+import Md3ExportDialog from '../../components/md3/Md3ExportDialog';
 import './PatientList.css';
 
 /* ── Icons ── */
@@ -56,7 +57,7 @@ const PatientLoadingState = () => (
 );
 
 /* ── Main Patient List ── */
-const PatientList = ({ onSelectPatient, onTotalChange }) => {
+const PatientList = ({ onSelectPatient, onTotalChange, onRegisterPatient }) => {
   const [patients, setPatients] = useState([]);
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState({});
@@ -68,6 +69,7 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
   const [totalItems, setTotalItems] = useState(0);
   const { isListView, isCardView, setLayout } = usePatientLayoutPreference();
   const [limit, setLimit] = useState(50);
+  const [isExportOpen, setIsExportOpen] = useState(false);
 
   // Fetch filters metadata on mount
   useEffect(() => {
@@ -99,41 +101,42 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
       if (Array.isArray(apiFilters.visitType)) {
         apiFilters.visitType = apiFilters.visitType.join(',');
       }
-      if (Array.isArray(apiFilters.departmentId)) {
-        apiFilters.departmentId = apiFilters.departmentId.join(',');
+      if (Array.isArray(apiFilters.patientType)) {
+        apiFilters.patientType = apiFilters.patientType.join(',');
       }
-      if (Array.isArray(apiFilters.doctorId)) {
-        apiFilters.doctorId = apiFilters.doctorId.join(',');
+      if (Array.isArray(apiFilters.gender)) {
+        apiFilters.gender = apiFilters.gender.join(',');
       }
-      if (Array.isArray(apiFilters.city)) {
-        apiFilters.city = apiFilters.city.join(',');
-      }
-      if (Array.isArray(apiFilters.cities)) {
-        apiFilters.cities = apiFilters.cities.join(',');
-      }
-      if (Array.isArray(apiFilters.state)) {
-        apiFilters.state = apiFilters.state.join(',');
+      if (Array.isArray(apiFilters.bloodGroup)) {
+        apiFilters.bloodGroup = apiFilters.bloodGroup.join(',');
       }
 
-      const result = await patientAPI.search(searchQuery, currentPage, limit, apiFilters);
-      const items = result.data?.items || result.items || [];
-      const total = result.data?.total || result.total || 0;
-      const pages = result.data?.pages || result.pages || 1;
+      const res = await patientAPI.list(currentPage, limit, searchQuery, apiFilters);
+      const data = res.data?.data || res.data || {};
+      const items = data.patients || data.items || [];
+      const total = data.total || data.totalCount || items.length;
+      const pages = data.pages || data.totalPages || Math.ceil(total / limit) || 1;
 
       setPatients(items);
       setTotalItems(total);
       setTotalPages(pages);
-      if (onTotalChange) onTotalChange(total);
+      onTotalChange?.(total);
     } catch (err) {
-      console.error('Failed to fetch patients', err);
+      console.error('[PatientList] fetchPatients failed', err);
+      setPatients([]);
+      setTotalItems(0);
+      setTotalPages(1);
+      onTotalChange?.(0);
     } finally {
       setLoading(false);
     }
   }, [limit, onTotalChange]);
 
-  const handleFiltersChange = useCallback(({ query: q, filters: f }) => {
-    setQuery(q);
-    setFilters(f);
+  const handleFiltersChange = useCallback((newFilters) => {
+    const { query: newQuery, ...rest } = newFilters;
+    setQuery(newQuery || '');
+    setFilters(rest);
+    setPage(1);
   }, []);
 
   const [debouncedQuery, setDebouncedQuery] = useState(query);
@@ -144,7 +147,7 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
     const timer = setTimeout(() => {
       setDebouncedQuery(query);
       setDebouncedFilters(filters);
-      setPage(1); // reset to page 1 on query/filter changes
+      setPage(1);
     }, 250);
     return () => clearTimeout(timer);
   }, [query, filters]);
@@ -171,6 +174,27 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
             </p>
           </div>
           <div className="patient-list-header-actions">
+            <button
+              type="button"
+              className="patient-list-export-btn"
+              onClick={() => setIsExportOpen(true)}
+              title="Export Patient Data (CSV / JSON)"
+            >
+              <span className="material-symbols-rounded">download</span>
+              <span>Export</span>
+            </button>
+
+            {onRegisterPatient && (
+              <button
+                type="button"
+                className="patient-list-register-btn"
+                onClick={onRegisterPatient}
+                title="Register New Patient"
+              >
+                <span className="material-symbols-rounded">person_add</span>
+                <span>Register Patient</span>
+              </button>
+            )}
             <div className="md3-view-toggle-group" role="group" aria-label="Directory layout view mode">
               <button
                 type="button"
@@ -263,6 +287,12 @@ const PatientList = ({ onSelectPatient, onTotalChange }) => {
           />
         )}
       </div>
+
+      {/* ── Reusable MD3 Streaming Export Dialog ── */}
+      <Md3ExportDialog
+        isOpen={isExportOpen}
+        onClose={() => setIsExportOpen(false)}
+      />
     </div>
   );
 };

@@ -44,6 +44,14 @@ export const AppointmentForm = ({ onSuccess, onCancel, preselectedPatient = null
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
+  // Sync preselected patient when opened with patient context
+  useEffect(() => {
+    if (preselectedPatient) {
+      setSelectedPatient(preselectedPatient);
+      setStep(2);
+    }
+  }, [preselectedPatient]);
+
   // Load slot availability
   const {
     slots,

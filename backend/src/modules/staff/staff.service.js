@@ -164,7 +164,7 @@ const create = async (data, adminStaffId) => {
   // Validate dynamic role metadata
   await validateSpecialtyDetails(role.name, data);
 
-  return withTransaction(async (session) => {
+  const savedStaff = await withTransaction(async (session) => {
     const Staff = require('./staff.model');
     const newStaffDoc = new Staff({ ...data, employeeId });
     await newStaffDoc.save(session ? { session } : {});
@@ -193,8 +193,10 @@ const create = async (data, adminStaffId) => {
       );
     }
 
-    return repo.findById(newStaffDoc._id);
+    return newStaffDoc;
   });
+
+  return repo.findById(savedStaff._id);
 };
 
 const update = async (id, data, adminStaffId) => {
@@ -355,73 +357,73 @@ const deleteStaff = async (id) => {
 };
 
 const changePosition = async (staffId, newPosition, reason, adminStaffId) => {
-  return withTransaction(async (session) => {
-    const staff = await repo.findById(staffId);
-    if (!staff) throw new AppError('NOT_FOUND', 'Staff member not found');
+    await withTransaction(async (session) => {
+      const staff = await repo.findById(staffId);
+      if (!staff) throw new AppError('NOT_FOUND', 'Staff member not found');
 
-    const role = await Role.findById(staff.roleId?._id || staff.roleId);
-    if (!role) throw new AppError('NOT_FOUND', 'Role not found');
+      const role = await Role.findById(staff.roleId?._id || staff.roleId);
+      if (!role) throw new AppError('NOT_FOUND', 'Role not found');
 
-    const allowedPositions = POSITIONS[role.name];
-    if (!allowedPositions) {
-      throw new AppError('BAD_REQUEST', `No positions configured for role ${role.name}`);
-    }
+      const allowedPositions = POSITIONS[role.name];
+      if (!allowedPositions) {
+        throw new AppError('BAD_REQUEST', `No positions configured for role ${role.name}`);
+      }
 
-    const newPosObj = allowedPositions.find(p => p.title === newPosition);
-    if (!newPosObj) {
-      throw new AppError('BAD_REQUEST', `Invalid position "${newPosition}" for role "${role.name}"`);
-    }
+      const newPosObj = allowedPositions.find(p => p.title === newPosition);
+      if (!newPosObj) {
+        throw new AppError('BAD_REQUEST', `Invalid position "${newPosition}" for role "${role.name}"`);
+      }
 
-    const currentPosObj = allowedPositions.find(p => p.title === staff.position);
-    const oldRank = currentPosObj ? currentPosObj.rank : 0;
-    const newRank = newPosObj.rank;
+      const currentPosObj = allowedPositions.find(p => p.title === staff.position);
+      const oldRank = currentPosObj ? currentPosObj.rank : 0;
+      const newRank = newPosObj.rank;
 
-    let changeType = 'LATERAL';
-    if (oldRank < newRank) {
-      changeType = 'PROMOTION';
-    } else if (oldRank > newRank) {
-      changeType = 'DEMOTION';
-    }
+      let changeType = 'LATERAL';
+      if (oldRank < newRank) {
+        changeType = 'PROMOTION';
+      } else if (oldRank > newRank) {
+        changeType = 'DEMOTION';
+      }
 
-    const previousPosition = staff.position;
+      const previousPosition = staff.position;
 
-    // Update staff position directly in DB under session
-    const Staff = require('./staff.model');
-    await Staff.findByIdAndUpdate(staffId, { position: newPosition }, session ? { session, runValidators: true } : { runValidators: true });
+      // Update staff position directly in DB under session
+      const Staff = require('./staff.model');
+      await Staff.findByIdAndUpdate(staffId, { position: newPosition }, session ? { session, runValidators: true } : { runValidators: true });
 
-    // Create history record
-    await PositionHistory.create(
-      [
-        {
-          staffId,
-          previousPosition,
-          newPosition,
-          changeType,
-          reason,
-          changedBy: adminStaffId
+      // Create history record
+      await PositionHistory.create(
+        [
+          {
+            staffId,
+            previousPosition,
+            newPosition,
+            changeType,
+            reason,
+            changedBy: adminStaffId
+          }
+        ],
+        session ? { session } : {}
+      );
+
+      // If position changed to Head of Department, sync department headOfDepartment
+      if (newPosition === 'Head of Department' && staff.departmentId) {
+        const deptId = staff.departmentId?._id || staff.departmentId;
+        if (deptId) {
+          const Department = require('../administration/department.model');
+          await Department.findByIdAndUpdate(deptId, { headOfDepartment: staffId }, session ? { session } : {});
         }
-      ],
-      session ? { session } : {}
-    );
-
-    // If position changed to Head of Department, sync department headOfDepartment
-    if (newPosition === 'Head of Department' && staff.departmentId) {
-      const deptId = staff.departmentId?._id || staff.departmentId;
-      if (deptId) {
-        const Department = require('../administration/department.model');
-        await Department.findByIdAndUpdate(deptId, { headOfDepartment: staffId }, session ? { session } : {});
+      } else if (previousPosition === 'Head of Department' && newPosition !== 'Head of Department' && staff.departmentId) {
+        // If position demoted/changed from Head of Department, clear department HOD if it was this staff
+        const deptId = staff.departmentId?._id || staff.departmentId;
+        if (deptId) {
+          const Department = require('../administration/department.model');
+          await Department.findOneAndUpdate({ _id: deptId, headOfDepartment: staffId }, { headOfDepartment: null }, session ? { session } : {});
+        }
       }
-    } else if (previousPosition === 'Head of Department' && newPosition !== 'Head of Department' && staff.departmentId) {
-      // If position demoted/changed from Head of Department, clear department HOD if it was this staff
-      const deptId = staff.departmentId?._id || staff.departmentId;
-      if (deptId) {
-        const Department = require('../administration/department.model');
-        await Department.findOneAndUpdate({ _id: deptId, headOfDepartment: staffId }, { headOfDepartment: null }, session ? { session } : {});
-      }
-    }
+    });
 
     return getById(staffId);
-  });
 };
 
 const getPositionHistory = async (staffId) => {

@@ -31,9 +31,25 @@ export const ToastProvider = ({ children }) => {
     }, 300);
   }, []);
 
-  // Dispatch a new toast
+  // Dispatch a new toast with explanatory title and subtitle
   const addToast = useCallback((message, reason, type = 'success', duration = 5000) => {
-    const newToast = new Toast(message, reason, type, duration);
+    let formattedMessage = message || (type === 'error' ? 'Error' : 'Notification');
+    let formattedReason = reason;
+
+    // If reason is omitted and message is explanatory, split at delimiter or set sensible fallback
+    if (!formattedReason && typeof formattedMessage === 'string' && formattedMessage.length > 35) {
+      if (formattedMessage.includes(': ')) {
+        const idx = formattedMessage.indexOf(': ');
+        formattedReason = formattedMessage.substring(idx + 2).trim();
+        formattedMessage = formattedMessage.substring(0, idx).trim();
+      } else if (formattedMessage.includes('. ')) {
+        const idx = formattedMessage.indexOf('. ');
+        formattedReason = formattedMessage.substring(idx + 2).trim();
+        formattedMessage = formattedMessage.substring(0, idx + 1).trim();
+      }
+    }
+
+    const newToast = new Toast(formattedMessage, formattedReason, type, duration);
     setToasts((prev) => [...prev, newToast]);
 
     // Auto dismiss after duration

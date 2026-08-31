@@ -1,25 +1,24 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTriageQueue } from '../hooks/useTriageQueue';
-import TriageQueue from '../features/nurse/TriageQueue';
-import PatientTriageSheet from '../features/nurse/PatientTriageSheet';
-import { Icon } from '../components/md3/Md3Widgets';
+import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
 import CommonHeader from '../components/shell/CommonHeader';
 import DashboardStatsBar from '../components/dashboard/DashboardStatsBar';
 import './NurseDashboard.css';
 
 /**
- * NurseDashboard — Pure Presentation Component
+ * NurseDashboard — Shell Component supporting OPD Triage & Inpatient Ward Stations.
  *
  * SOLID:
- *   SRP  — This component renders UI only. All logic lives in useTriageQueue hook.
- *   OCP  — Extend features via the hook, not by modifying this component.
- *   DIP  — Depends on useTriageQueue abstraction, not raw visitAPI calls.
+ *   SRP  — Renders top shell, navigation tabs, and child view outlet.
+ *   OCP  — Extend features via child routes without modifying the shell.
+ *   DIP  — Depends on useTriageQueue abstraction.
  */
 const NurseDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const {
     queue,
@@ -37,6 +36,26 @@ const NurseDashboard = () => {
   const handleLogout = async () => {
     await logout();
     navigate('/login', { replace: true });
+  };
+
+  const headerTabs = [
+    {
+      id: 'triage',
+      label: 'OPD Triage Station',
+      icon: <Icon.Stethoscope />,
+    },
+    {
+      id: 'ipd',
+      label: 'Inpatient Ward Station',
+      icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>hotel</span>,
+    },
+  ];
+
+  // Derive active tab from URL path
+  const activeTab = location.pathname.includes('/ipd') ? 'ipd' : 'triage';
+
+  const handleTabChange = (tabId) => {
+    navigate(`/dashboard/nurse/${tabId}`);
   };
 
   const stats = [
@@ -62,42 +81,37 @@ const NurseDashboard = () => {
 
   return (
     <div className="nurse-page">
-
       {/* ─── TOP APP BAR ─── */}
       <CommonHeader
-        brandTitle={`Triage Station · ${deptName}`}
-        brandSubtitle="Nursing Assessment · Route to Doctor"
+        brandTitle={`Nursing Portal · ${deptName}`}
+        brandSubtitle="OPD Triage &amp; Inpatient Clinical Care"
+        centerSlot={
+          <Md3Tabs tabs={headerTabs} activeTab={activeTab} onChange={handleTabChange} />
+        }
         user={user}
         onLogout={handleLogout}
       />
 
-      {/* ─── STATS BAR ─── */}
-      <DashboardStatsBar stats={stats} showToday />
+      {/* ─── STATS BAR (Only on Triage tab) ─── */}
+      {activeTab === 'triage' && <DashboardStatsBar stats={stats} showToday />}
 
-      {/* ─── MAIN WORKSPACE ─── */}
+      {/* ─── MAIN WORKSPACE ROUTED VIEWS ─── */}
       <main className="nurse-main">
-        <div className="nurse-layout">
-
-          <section className="nurse-col nurse-col--queue" aria-label="Waiting triage queue">
-            <TriageQueue
-              visits={queue}
-              selectedVisitId={selectedVisit?._id || selectedVisit?.id || null}
-              onSelectVisit={handleSelect}
-              onRefresh={fetchQueue}
-              loading={loadingQueue}
-            />
-          </section>
-
-          <section className="nurse-col nurse-col--sheet" aria-label="Patient triage assessment sheet">
-            <PatientTriageSheet
-              visit={selectedVisit}
-              department={department}
-              onComplete={handleTriageComplete}
-              onCancel={handleTriageCancel}
-            />
-          </section>
-
-        </div>
+        <Outlet
+          context={{
+            user,
+            queue,
+            loadingQueue,
+            selectedVisit,
+            department,
+            triagedToday,
+            fetchQueue,
+            handleSelect,
+            handleTriageComplete,
+            handleTriageCancel,
+            deptName,
+          }}
+        />
       </main>
     </div>
   );

@@ -25,6 +25,12 @@ const CONSULTATION_TAB = {
   icon: null, // Rendered in DoctorDashboard
 };
 
+const IPD_TAB = {
+  id: 'ipd',
+  label: 'Inpatient Ward',
+  icon: null,
+};
+
 const APPOINTMENTS_TAB = {
   id: 'appointments',
   label: 'Appointments',
@@ -427,6 +433,7 @@ export const useDoctorWorkspace = () => {
 
   const headerTabs = useMemo(() => [
     CONSULTATION_TAB,
+    IPD_TAB,
     APPOINTMENTS_TAB,
     {
       ...DELETION_TAB,

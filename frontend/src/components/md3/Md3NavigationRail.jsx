@@ -30,10 +30,7 @@ const Md3NavigationRail = ({ items, activeItem, onSelect }) => {
               title={item.label}
             >
               <div className="md3-nav-rail__item-indicator">
-                <span 
-                  className="material-symbols-rounded md3-nav-rail__icon" 
-                  style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
-                >
+                <span className="material-symbols-rounded md3-nav-rail__icon">
                   {item.icon}
                 </span>
               </div>

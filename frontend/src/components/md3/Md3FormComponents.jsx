@@ -136,39 +136,87 @@ export const Md3Select = ({
   const menuRef = React.useRef(null);
   const searchInputRef = React.useRef(null);
   
+  const [listStyle, setListStyle] = React.useState({});
+  
   const isFilled = value !== '' && value !== null && value !== undefined;
   
-  // Calculate top-layer floating viewport coordinates
+  const handleClose = React.useCallback(() => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsClosing(false);
+      setFocusedIndex(-1);
+    }, 180);
+  }, []);
+
+  // Calculate top-layer floating viewport coordinates with screen-edge intelligence
   const updatePosition = React.useCallback(() => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
     const viewportWidth = window.innerWidth;
-    const expectedMenuHeight = 280;
-    const spaceBelow = viewportHeight - rect.bottom;
-    const spaceAbove = rect.top;
 
-    const placeAbove = spaceBelow < expectedMenuHeight && spaceAbove > spaceBelow;
-    const width = Math.max(rect.width, 220);
-    let left = rect.left;
-    if (left + width > viewportWidth - 12) {
-      left = Math.max(12, viewportWidth - width - 12);
+    // If anchor is scrolled completely off-screen, close menu
+    if (rect.bottom < -60 || rect.top > viewportHeight + 60) {
+      if (isOpen && !isClosing) handleClose();
+      return;
     }
 
-    const top = placeAbove
-      ? Math.max(12, rect.top - 4)
-      : rect.bottom + 4;
+    const safeMargin = 12;
+    const spaceBelow = viewportHeight - rect.bottom - safeMargin;
+    const spaceAbove = rect.top - safeMargin;
+    const minComfortableHeight = 220; // Height required for search input + options
+    const targetMaxHeight = 320;
 
-    setMenuStyle({
-      position: 'fixed',
-      top: `${top}px`,
-      left: `${left}px`,
-      width: `${width}px`,
-      zIndex: 999999,
-      transformOrigin: placeAbove ? 'bottom' : 'top',
-      transform: placeAbove ? 'translateY(-100%)' : 'none',
+    // Flip to top if insufficient space below and more space above
+    const placeAbove = spaceBelow < minComfortableHeight && spaceAbove > spaceBelow;
+    const availableSpace = placeAbove ? spaceAbove : spaceBelow;
+    const computedMaxHeight = Math.max(140, Math.min(targetMaxHeight, availableSpace));
+    const computedListMaxHeight = Math.max(60, computedMaxHeight - 56); // Space remaining for options list
+
+    // Horizontal positioning and screen edge clamping
+    let width = Math.max(rect.width, 220);
+    if (width > viewportWidth - 2 * safeMargin) {
+      width = viewportWidth - 2 * safeMargin;
+    }
+
+    let left = rect.left;
+    if (left + width > viewportWidth - safeMargin) {
+      left = Math.max(safeMargin, viewportWidth - width - safeMargin);
+    }
+    if (left < safeMargin) {
+      left = safeMargin;
+    }
+
+    if (placeAbove) {
+      setMenuStyle({
+        position: 'fixed',
+        bottom: `${Math.max(safeMargin, viewportHeight - rect.top + 4)}px`,
+        top: 'auto',
+        left: `${left}px`,
+        width: `${width}px`,
+        maxHeight: `${computedMaxHeight}px`,
+        zIndex: 999999,
+        transformOrigin: 'bottom',
+      });
+    } else {
+      setMenuStyle({
+        position: 'fixed',
+        top: `${Math.min(viewportHeight - safeMargin - computedMaxHeight, rect.bottom + 4)}px`,
+        bottom: 'auto',
+        left: `${left}px`,
+        width: `${width}px`,
+        maxHeight: `${computedMaxHeight}px`,
+        zIndex: 999999,
+        transformOrigin: 'top',
+      });
+    }
+
+    setListStyle({
+      maxHeight: `${computedListMaxHeight}px`,
+      overflowY: 'auto',
     });
-  }, []);
+  }, [isOpen, isClosing, handleClose]);
 
   // Sync position on open, scroll, or window resize
   React.useEffect(() => {
@@ -220,15 +268,6 @@ export const Md3Select = ({
   if (selectedOption) {
     selectedLabel = selectedOption.label;
   }
-
-  const handleClose = React.useCallback(() => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setIsOpen(false);
-      setIsClosing(false);
-      setFocusedIndex(-1);
-    }, 180);
-  }, []);
 
   const toggleOpen = () => {
     if (disabled) return;
@@ -351,7 +390,7 @@ export const Md3Select = ({
               onKeyDown={handleKeyDown}
             />
           </div>
-          <ul className="md3-select-dropdown-list">
+          <ul className="md3-select-dropdown-list" style={listStyle}>
             {filteredOptions.length === 0 ? (
               <li className="md3-select-dropdown-item is-disabled">No results found</li>
             ) : (
@@ -386,15 +425,23 @@ export const Md3BottomSheet = ({
   title,
   subtitle,
   className = '',
+  initialHeightVh = 88,
+  minHeightVh = 32,
+  maxHeightVh = 96,
   children
 }) => {
   const [shouldRender, setShouldRender] = React.useState(isOpen);
   const [isClosing, setIsClosing] = React.useState(false);
+  const [sheetHeightVh, setSheetHeightVh] = React.useState(initialHeightVh);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const dragStartYRef = React.useRef(0);
+  const dragStartHeightRef = React.useRef(initialHeightVh);
 
   React.useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
       setIsClosing(false);
+      setSheetHeightVh(initialHeightVh);
     } else if (shouldRender) {
       setIsClosing(true);
       const timer = setTimeout(() => {
@@ -403,7 +450,7 @@ export const Md3BottomSheet = ({
       }, 240); // 240ms exit animation
       return () => clearTimeout(timer);
     }
-  }, [isOpen]);
+  }, [isOpen, initialHeightVh]);
 
   const handleClose = React.useCallback(() => {
     if (!isClosing && onClose) {
@@ -425,9 +472,49 @@ export const Md3BottomSheet = ({
     };
   }, [isOpen, handleClose]);
 
+  // Drag to resize handlers
+  const handlePointerDown = (e) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    setIsDragging(true);
+    dragStartYRef.current = e.clientY;
+    dragStartHeightRef.current = sheetHeightVh;
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDragging) return;
+    const deltaY = dragStartYRef.current - e.clientY;
+    const deltaVh = (deltaY / window.innerHeight) * 100;
+    const nextHeight = Math.min(maxHeightVh, Math.max(minHeightVh, dragStartHeightRef.current + deltaVh));
+    setSheetHeightVh(nextHeight);
+  };
+
+  const handlePointerUp = (e) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore
+    }
+    // Auto-close if dragged below 22vh
+    if (sheetHeightVh < 24) {
+      handleClose();
+    }
+  };
+
+  const handleDoubleClickHandle = () => {
+    // Quick toggle between expanded (95vh) and standard (60vh)
+    setSheetHeightVh((prev) => (prev > 80 ? 60 : 95));
+  };
+
   if (!shouldRender) return null;
 
-  return (
+  return createPortal(
     <div 
       className={`md3-bottom-sheet-overlay ${isClosing ? 'is-closing' : ''}`} 
       onClick={handleClose} 
@@ -435,10 +522,24 @@ export const Md3BottomSheet = ({
       aria-modal="true"
     >
       <div 
-        className={`md3-bottom-sheet-container ${isClosing ? 'is-closing' : ''} ${className}`} 
+        className={`md3-bottom-sheet-container ${isClosing ? 'is-closing' : ''} ${isDragging ? 'is-dragging' : ''} ${className}`} 
         onClick={(e) => e.stopPropagation()}
+        style={{
+          height: `${sheetHeightVh}vh`,
+          maxHeight: `${maxHeightVh}vh`,
+        }}
       >
-        <div className="md3-bottom-sheet-handle-bar">
+        <div 
+          className="md3-bottom-sheet-handle-bar"
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerUp}
+          onDoubleClick={handleDoubleClickHandle}
+          title="Drag up or down to resize sheet • Double click to toggle expand"
+          role="separator"
+          aria-label="Resize Bottom Sheet"
+        >
           <div className="md3-bottom-sheet-handle" />
         </div>
         <div className="md3-bottom-sheet-header">
@@ -462,7 +563,8 @@ export const Md3BottomSheet = ({
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
@@ -522,17 +624,60 @@ export const Md3DatePicker = ({
   };
 
   const updatePosition = React.useCallback(() => {
-    if (containerRef.current && isOpen) {
-      const rect = containerRef.current.getBoundingClientRect();
+    if (!containerRef.current || !isOpen) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    const viewportWidth = window.innerWidth;
+
+    // If anchor is scrolled completely off-screen, close menu
+    if (rect.bottom < -60 || rect.top > viewportHeight + 60) {
+      if (isOpen && !isClosing) handleClose();
+      return;
+    }
+
+    const safeMargin = 12;
+    const spaceBelow = viewportHeight - rect.bottom - safeMargin;
+    const spaceAbove = rect.top - safeMargin;
+    const expectedCalendarHeight = 310;
+    const placeAbove = spaceBelow < expectedCalendarHeight && spaceAbove > spaceBelow;
+
+    let width = Math.max(rect.width, 280);
+    if (width > viewportWidth - 2 * safeMargin) {
+      width = viewportWidth - 2 * safeMargin;
+    }
+
+    let left = rect.left;
+    if (left + width > viewportWidth - safeMargin) {
+      left = Math.max(safeMargin, viewportWidth - width - safeMargin);
+    }
+    if (left < safeMargin) {
+      left = safeMargin;
+    }
+
+    if (placeAbove) {
       setDropdownStyle({
         position: 'fixed',
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-        zIndex: 100000
+        bottom: `${Math.max(safeMargin, viewportHeight - rect.top + 4)}px`,
+        top: 'auto',
+        left: `${left}px`,
+        width: `${width}px`,
+        maxHeight: `${Math.max(160, Math.min(340, spaceAbove))}px`,
+        zIndex: 100000,
+        transformOrigin: 'bottom',
+      });
+    } else {
+      setDropdownStyle({
+        position: 'fixed',
+        top: `${rect.bottom + 4}px`,
+        bottom: 'auto',
+        left: `${left}px`,
+        width: `${width}px`,
+        maxHeight: `${Math.max(160, Math.min(340, spaceBelow))}px`,
+        zIndex: 100000,
+        transformOrigin: 'top',
       });
     }
-  }, [isOpen]);
+  }, [isOpen, isClosing, handleClose]);
 
   React.useEffect(() => {
     if (isOpen) {

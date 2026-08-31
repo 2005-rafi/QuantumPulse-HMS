@@ -20,23 +20,46 @@ const logToFileFallback = (logData, error) => {
   }
 };
 
+const SENSITIVE_PHI_KEYS = new Set([
+  'password', 'passwordhash', 'token', 'refreshtoken', 'accesstoken',
+  'aadhaar', 'phone', 'whatsapp', 'email', 'name', 'fullname', 'firstname', 'lastname'
+]);
+
+const sanitizeAuditDetails = (details) => {
+  if (!details || typeof details !== 'object') return details;
+  if (Array.isArray(details)) return details.map(sanitizeAuditDetails);
+
+  const clean = {};
+  for (const key of Object.keys(details)) {
+    if (SENSITIVE_PHI_KEYS.has(key.toLowerCase())) {
+      clean[key] = '[REDACTED_PHI]';
+    } else if (typeof details[key] === 'object' && details[key] !== null) {
+      clean[key] = sanitizeAuditDetails(details[key]);
+    } else {
+      clean[key] = details[key];
+    }
+  }
+  return clean;
+};
+
 class AuditService {
   /**
    * Log a system event
    * @param {string} actorId - ObjectId of the staff member
    * @param {string} actorRole - Role name
-   * @param {string} action - Action identifier (e.g., 'LOGIN', 'PATIENT_REGISTER')
+   * @param {string} action - Action identifier (e.g., 'LOGIN', 'PATIENT_REGISTER', 'PATIENT_RECORD_ACCESSED')
    * @param {string} targetId - ID of the affected entity (optional)
-   * @param {Object} details - Additional metadata/payload (optional)
+   * @param {Object} details - Additional metadata/payload (optional, automatically sanitized against PHI leaks)
    * @param {string} ipAddress - IP address of the request (optional)
    */
   async logEvent(actorId, actorRole, action, targetId = null, details = null, ipAddress = null) {
+    const cleanDetails = sanitizeAuditDetails(details);
     const logData = {
       actorId,
       actorRole,
       action,
       targetId: targetId ? String(targetId) : null,
-      details,
+      details: cleanDetails,
       ipAddress
     };
 

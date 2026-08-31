@@ -1,0 +1,206 @@
+/* ── Material Design 3 Clinical Staff List Table View ── */
+.md3-staff-list-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.md3-staff-list-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-staff-list-table thead {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.md3-staff-list-table th {
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  white-space: nowrap;
+}
+
+.md3-staff-list-table td {
+  padding: 8px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, rgba(202, 196, 208, 0.5));
+  transition: background-color 0.15s ease;
+}
+
+.md3-staff-list-row:last-child td {
+  border-bottom: none;
+}
+
+.md3-staff-list-row:hover td {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.md3-staff-list-row.is-disabled {
+  opacity: 0.7;
+}
+
+/* ── Columns Width & Alignment ── */
+.col-staff-name {
+  min-width: 220px;
+}
+.col-staff-dept {
+  min-width: 160px;
+}
+.col-staff-role {
+  min-width: 180px;
+}
+.col-staff-license {
+  min-width: 150px;
+}
+.col-staff-fee {
+  min-width: 110px;
+}
+.col-staff-status {
+  min-width: 90px;
+}
+.col-staff-actions {
+  min-width: 130px;
+  width: 130px;
+}
+.text-right {
+  text-align: right;
+}
+
+/* ── Cell: Staff Profile & Emp ID ── */
+.md3-staff-cell-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.md3-staff-profile-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.md3-staff-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-staff-empid {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.70rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: 1px;
+}
+
+/* ── Cell: Department ── */
+.md3-staff-dept-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.80rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+/* ── Cell: Role & Position ── */
+.md3-staff-role-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.md3-staff-role-chip {
+  font-size: 0.70rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.md3-staff-pos-chip {
+  font-size: 0.70rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+/* ── Cell: License ── */
+.md3-staff-license-code {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── Cell: Fee ── */
+.md3-staff-fee-badge {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #2e7d32;
+}
+
+/* ── Table Action Buttons ── */
+.md3-staff-table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.md3-staff-table-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md3-staff-table-btn span {
+  font-size: 16px;
+}
+
+.md3-staff-table-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #00668b);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+.md3-staff-table-btn--error:hover {
+  background: #ba1a1a;
+  color: #ffffff;
+  border-color: #ba1a1a;
+}
+
+.md3-staff-table-btn--success:hover {
+  background: #2e7d32;
+  color: #ffffff;
+  border-color: #2e7d32;
+}

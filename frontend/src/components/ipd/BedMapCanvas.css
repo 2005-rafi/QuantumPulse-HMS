@@ -1,0 +1,206 @@
+/**
+ * components/ipd/BedMapCanvas.css
+ * 2D Spatial Floor and Room Cluster Grid Layout.
+ */
+
+.ipd-map-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.ipd-map-stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background: var(--md-sys-color-surface-container, #f0f5f2);
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+}
+
+.ipd-map-stats-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ipd-stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ipd-stat-pill--vacant {
+  background: var(--md-sys-color-primary-container, #bbf2e1);
+  color: var(--md-sys-color-on-primary-container, #00211a);
+}
+
+.ipd-stat-pill--occupied {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+
+.ipd-stat-pill--reserved {
+  background: var(--md-sys-color-tertiary-container, #ffddb3);
+  color: var(--md-sys-color-on-tertiary-container, #2b1700);
+}
+
+.ipd-stat-pill--maint {
+  background: var(--md-sys-color-surface-container-high, #e0e8e4);
+  color: var(--md-sys-color-on-surface-variant, #404944);
+}
+
+.ipd-rooms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.ipd-room-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: box-shadow 0.2s;
+}
+
+.ipd-room-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.ipd-room-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.ipd-room-title-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.ipd-room-number {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.ipd-room-name {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #404944);
+}
+
+.ipd-room-type-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container-highest, #dce5e0);
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.ipd-room-beds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.ipd-admin-add-bed-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2e);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ipd-admin-add-bed-btn:hover {
+  background: var(--md-sys-color-primary, #00668b);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  box-shadow: var(--md-sys-elevation-1, 0 1px 3px rgba(0, 0, 0, 0.12));
+}
+
+.ipd-admin-add-bed-btn:active {
+  transform: scale(0.97);
+}
+
+.ipd-room-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--md-sys-color-surface-container-low, #f2f7f4);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-outline, #707974);
+  border: 1px dashed var(--md-sys-color-outline-variant, #c0c9c4);
+}
+
+/* ── Responsive Adaptations for IPD Bed Map (MD3 Window Size Classes) ── */
+
+/* Medium: Tablet (600px - 1023px) */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .ipd-rooms-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+/* Compact: Mobile (< 600px) */
+@media (max-width: 599px) {
+  .ipd-map-container {
+    gap: 12px;
+  }
+
+  .ipd-map-stats-bar {
+    padding: 10px 12px;
+    border-radius: 12px;
+    gap: 8px;
+  }
+
+  .ipd-map-stats-chips {
+    gap: 6px;
+  }
+
+  .ipd-stat-pill {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+  }
+
+  .ipd-rooms-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .ipd-room-card {
+    padding: 12px;
+    border-radius: 14px;
+    gap: 10px;
+  }
+
+  .ipd-room-beds {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+}

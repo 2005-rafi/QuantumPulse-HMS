@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { Country, State, City } from 'country-state-city';
 import { Md3TextField, Md3Select, Md3Button } from '../../components/md3/Md3FormComponents';
 import api from '../../services/api';
 import { staffAPI } from '../../services/staffAPI';
@@ -6,6 +8,7 @@ import { useToast } from '../../context/ToastContext';
 import { POSITIONS } from '../../core/constants';
 import Md3FileUploader from '../../components/md3/Md3FileUploader';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import './CreateStaffSheet.css';
 
 // ── Step config ────────────────────────────────────────────────────────────
 const STEPS = [
@@ -24,7 +27,7 @@ const EMPTY_FORM = {
   gender: '', dateOfBirth: '', bloodGroup: '', maritalStatus: '', nationality: '',
   // Step 1 – Contact
   phone: '', alternatePhone: '', email: '',
-  addressLine1: '', addressLine2: '', area: '', city: '', state: '', country: '', postalCode: '',
+  addressLine1: '', addressLine2: '', area: '', city: '', state: '', stateCode: '', country: 'India', countryCode: 'IN', postalCode: '',
   emergencyContactName: '', emergencyContactNumber: '',
   // Step 2 – Employment
   employmentType: '', joiningDate: '', shift: '', reportingTo: '',
@@ -69,20 +72,21 @@ const toOpts = (arr) => [{ value:'', label:'-- Select --' }, ...arr.map(v=>({ va
 
 // ── Helper: form section header ─────────────────────────────────────────────
 const SectionHeader = ({ icon, title }) => (
-  <div style={{ display:'flex', alignItems:'center', gap:'10px', margin:'20px 0 12px', paddingBottom:'8px', borderBottom:'1px solid var(--md-sys-color-outline-variant)' }}>
-    <span className="material-symbols-rounded" style={{ fontSize:'18px', color:'var(--md-sys-color-primary)' }}>{icon}</span>
-    <span style={{ fontSize:'13px', fontWeight:'700', letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--md-sys-color-on-surface-variant)' }}>{title}</span>
+  <div className="md3-staff-section-header">
+    <span className="material-symbols-rounded section-icon">{icon}</span>
+    <span className="section-title">{title}</span>
   </div>
 );
 
 // ── 2-column grid row ───────────────────────────────────────────────────────
 const FieldRow = ({ children }) => (
-  <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'16px' }}>{children}</div>
+  <div className="md3-staff-field-row">{children}</div>
 );
 
 // ── Main component ──────────────────────────────────────────────────────────
 const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles = [], staff }) => {
   const { showError } = useToast();
+  const [isClosing, setIsClosing] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
@@ -90,6 +94,13 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
   const [fieldErrors, setFieldErrors] = useState({});
   const [createdStaffId, setCreatedStaffId] = useState(null);
   const [activeStaffList, setActiveStaffList] = useState([]);
+
+  // Sync open state
+  useEffect(() => {
+    if (isOpen) {
+      setIsClosing(false);
+    }
+  }, [isOpen]);
 
   // Fetch active staff list to resolve supervisors
   useEffect(() => {
@@ -106,6 +117,22 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
   useEffect(() => {
     if (!isOpen) return;
     if (staff) {
+      let matchedCountryCode = 'IN';
+      if (staff.country) {
+        const foundC = Country.getAllCountries().find(
+          c => c.name.toLowerCase() === staff.country.toLowerCase() || c.isoCode.toLowerCase() === staff.country.toLowerCase()
+        );
+        if (foundC) matchedCountryCode = foundC.isoCode;
+      }
+
+      let matchedStateCode = '';
+      if (staff.state) {
+        const foundS = State.getStatesOfCountry(matchedCountryCode).find(
+          s => s.name.toLowerCase() === staff.state.toLowerCase() || s.isoCode.toLowerCase() === staff.state.toLowerCase()
+        );
+        if (foundS) matchedStateCode = foundS.isoCode;
+      }
+
       setFormData({
         ...EMPTY_FORM,
         fullName:             staff.fullName || '',
@@ -128,7 +155,9 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
         area:                 staff.area               || '',
         city:                 staff.city               || '',
         state:                staff.state              || '',
-        country:              staff.country            || '',
+        stateCode:            matchedStateCode,
+        country:              staff.country            || 'India',
+        countryCode:          matchedCountryCode,
         postalCode:           staff.postalCode         || '',
         emergencyContactName:   staff.emergencyContactName   || '',
         emergencyContactNumber: staff.emergencyContactNumber || '',
@@ -177,6 +206,81 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
         .catch(() => {});
     }
   }, [currentStep, staff]);
+
+  // ── Country, State, City Cascading Lists ──
+  const allCountries = useMemo(() => {
+    return Country.getAllCountries().map(c => ({
+      value: c.isoCode,
+      label: `${c.flag || ''} ${c.name} (+${c.phonecode})`.trim(),
+      name: c.name,
+      isoCode: c.isoCode,
+      phonecode: c.phonecode
+    }));
+  }, []);
+
+  const availableStates = useMemo(() => {
+    const code = formData.countryCode || 'IN';
+    return State.getStatesOfCountry(code).map(s => ({
+      value: s.name,
+      label: s.name,
+      isoCode: s.isoCode,
+      name: s.name
+    }));
+  }, [formData.countryCode]);
+
+  const availableCities = useMemo(() => {
+    const countryCode = formData.countryCode || 'IN';
+    let stateCode = formData.stateCode;
+    if (!stateCode && formData.state) {
+      const found = availableStates.find(s => s.name === formData.state || s.isoCode === formData.state);
+      if (found) stateCode = found.isoCode;
+    }
+    if (!countryCode || !stateCode) return [];
+    try {
+      const rawCities = City.getCitiesOfState(countryCode, stateCode) || [];
+      return rawCities.map(c => ({
+        value: c.name,
+        label: c.name
+      }));
+    } catch {
+      return [];
+    }
+  }, [formData.countryCode, formData.stateCode, formData.state, availableStates]);
+
+  const handleCountryChange = (e) => {
+    const code = e.target.value;
+    const cObj = allCountries.find(c => c.value === code);
+    setFormData(prev => ({
+      ...prev,
+      countryCode: code,
+      country: cObj ? cObj.name : code,
+      state: '',
+      stateCode: '',
+      city: '',
+    }));
+    setFieldErrors(prev => ({ ...prev, country: null, state: null, city: null }));
+  };
+
+  const handleStateChange = (e) => {
+    const val = e.target.value;
+    const stObj = availableStates.find(s => s.name === val || s.isoCode === val);
+    setFormData(prev => ({
+      ...prev,
+      state: val,
+      stateCode: stObj ? stObj.isoCode : '',
+      city: '',
+    }));
+    setFieldErrors(prev => ({ ...prev, state: null, city: null }));
+  };
+
+  const handleCityChange = (e) => {
+    const val = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      city: val,
+    }));
+    setFieldErrors(prev => ({ ...prev, city: null }));
+  };
 
   const handleChange = useCallback((e) => {
     let { name, value } = e.target;
@@ -227,12 +331,16 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
   }, [roles]);
 
   const handleClose = () => {
-    setFormData(EMPTY_FORM);
-    setCreatedStaffId(null);
-    setError(null);
-    setFieldErrors({});
-    setCurrentStep(1);
-    onClose();
+    setIsClosing(true);
+    setTimeout(() => {
+      setFormData(EMPTY_FORM);
+      setCreatedStaffId(null);
+      setError(null);
+      setFieldErrors({});
+      setCurrentStep(1);
+      setIsClosing(false);
+      onClose();
+    }, 200);
   };
 
   // Derived role name and position rank
@@ -285,7 +393,23 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
         errors.email = 'Please enter a valid email address';
       }
 
-      if (formData.postalCode.trim() && formData.postalCode.trim().length !== 6) {
+      if (!formData.addressLine1?.trim()) {
+        errors.addressLine1 = 'Address Line 1 is required';
+      }
+
+      if (!formData.countryCode) {
+        errors.country = 'Country is required';
+      }
+
+      if (!formData.state?.trim()) {
+        errors.state = 'State / Province is required';
+      }
+
+      if (!formData.city?.trim()) {
+        errors.city = 'City / Town is required';
+      }
+
+      if (formData.postalCode?.trim() && formData.postalCode.trim().length !== 6) {
         errors.postalCode = 'Postal code must be exactly 6 digits';
       }
     }
@@ -386,7 +510,10 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
             yearsOfExperience: staffFields.yearsOfExperience ? Number(staffFields.yearsOfExperience) : undefined,
           });
           const staffRes = await api.post('/staff', payload);
-          staffId = staffRes.data.data._id;
+          staffId = staffRes.data?.data?._id || staffRes.data?._id || staffRes.data?.data?.id;
+          if (!staffId) {
+            throw new Error('Staff record was created but could not resolve staff ID.');
+          }
           setCreatedStaffId(staffId);
         }
         // Create identity (username + temp password → firstLogin: true enforced server-side)
@@ -399,79 +526,128 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
       }
       handleClose();
     } catch (err) {
-      const msg = err.response?.data?.message || `Error ${staff ? 'updating' : 'creating'} staff account.`;
-      setError(msg);
-      showError(msg);
+      const responseData = err.response?.data;
+      const errorDetail =
+        responseData?.message ||
+        responseData?.detail ||
+        responseData?.title ||
+        err.userMessage ||
+        err.message ||
+        `Error ${staff ? 'updating' : 'creating'} staff account.`;
+      
+      setError(errorDetail);
+      showError(
+        staff ? 'Staff Profile Update Failed' : 'Staff Registration Failed',
+        errorDetail
+      );
+
+      // Intelligent step routing & field error highlighting:
+      const lower = errorDetail.toLowerCase();
+      const newFieldErrors = {};
+
+      if (lower.includes('medical license') || lower.includes('medical registration') || lower.includes('medical council')) {
+        newFieldErrors.medicalLicenseNumber = errorDetail;
+        setCurrentStep(3);
+      } else if (lower.includes('nursing license')) {
+        newFieldErrors.nursingLicenseNumber = errorDetail;
+        setCurrentStep(3);
+      } else if (lower.includes('laboratory') || lower.includes('certification code')) {
+        newFieldErrors.labCertificationCode = errorDetail;
+        setCurrentStep(3);
+      } else if (lower.includes('pharmacy license')) {
+        newFieldErrors.pharmacyLicenseNumber = errorDetail;
+        setCurrentStep(3);
+      } else if (lower.includes('supervisor') || lower.includes('intern')) {
+        newFieldErrors.reportingTo = errorDetail;
+        setCurrentStep(2);
+      } else if (lower.includes('position')) {
+        newFieldErrors.position = errorDetail;
+        setCurrentStep(2);
+      } else if (lower.includes('role')) {
+        newFieldErrors.roleId = errorDetail;
+        setCurrentStep(2);
+      } else if (lower.includes('department')) {
+        newFieldErrors.departmentId = errorDetail;
+        setCurrentStep(2);
+      } else if (lower.includes('email')) {
+        newFieldErrors.email = errorDetail;
+        setCurrentStep(1);
+      } else if (lower.includes('phone') || lower.includes('mobile')) {
+        newFieldErrors.phone = errorDetail;
+        setCurrentStep(1);
+      } else if (lower.includes('address') || lower.includes('city') || lower.includes('state') || lower.includes('country') || lower.includes('postal')) {
+        setCurrentStep(1);
+      } else if (lower.includes('username') || lower.includes('password')) {
+        newFieldErrors.username = errorDetail;
+        setCurrentStep(4);
+      }
+
+      setFieldErrors(prev => ({ ...prev, ...newFieldErrors }));
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen && !isClosing) return null;
 
-  return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 3000,
-      display: 'flex', justifyContent: 'flex-end',
-      background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
-    }} onClick={handleClose}>
+  return createPortal(
+    <div
+      className={`md3-staff-sheet-backdrop ${isClosing ? 'is-closing' : ''}`}
+      onClick={handleClose}
+    >
       <div
+        className={`md3-staff-sheet-container ${isClosing ? 'is-closing' : ''}`}
         onClick={e => e.stopPropagation()}
-        style={{
-          width: 'min(760px, 95vw)',
-          height: '100%',
-          background: 'var(--md-sys-color-surface)',
-          color: 'var(--md-sys-color-on-surface)',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '-8px 0 32px rgba(0,0,0,0.18)',
-          overflowY: 'hidden',
-        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label={staff ? 'Edit Staff Profile' : 'Register New Staff Member'}
       >
         {/* ── Header ── */}
-        <div style={{ padding: '24px 28px 16px', borderBottom: '1px solid var(--md-sys-color-outline-variant)', flexShrink: 0 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div className="md3-staff-sheet-header">
+          <div className="md3-staff-sheet-title-row">
             <div>
-              <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>
+              <h2 className="md3-staff-sheet-title">
                 {staff ? 'Edit Staff Profile' : 'Register New Staff Member'}
               </h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              <p className="md3-staff-sheet-subtitle">
                 {staff ? 'Update employment and personal details.' : 'Complete all sections to create a staff account.'}
               </p>
             </div>
-            <button onClick={handleClose} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--md-sys-color-on-surface)', padding:'4px', display:'flex' }}>
-              <span className="material-symbols-rounded">close</span>
+            <button
+              onClick={handleClose}
+              className="md3-staff-sheet-close-btn"
+              aria-label="Close sheet"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>close</span>
             </button>
           </div>
 
           {/* Step indicator */}
-          <div style={{ display: 'flex', gap: '4px', marginTop: '20px' }}>
+          <div className="md3-staff-stepper">
             {STEPS.map((step, idx) => {
               const isActive    = step.id === currentStep;
               const isCompleted = step.id < currentStep;
               return (
                 <React.Fragment key={step.id}>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: isCompleted ? 'pointer' : 'default' }}
-                       onClick={() => isCompleted && setCurrentStep(step.id)}>
-                    <div style={{
-                      width: '32px', height: '32px', borderRadius: '50%',
-                      background: isActive ? 'var(--md-sys-color-primary)' : isCompleted ? 'var(--md-sys-color-secondary-container)' : 'var(--md-sys-color-surface-container-high)',
-                      color: isActive ? 'var(--md-sys-color-on-primary)' : isCompleted ? 'var(--md-sys-color-on-secondary-container)' : 'var(--md-sys-color-on-surface-variant)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '16px', transition: 'all 200ms',
-                    }}>
+                  <button
+                    type="button"
+                    className={`md3-staff-step-item ${isActive ? 'is-active' : ''} ${isCompleted ? 'is-completed is-clickable' : ''}`}
+                    onClick={() => isCompleted && setCurrentStep(step.id)}
+                    disabled={!isCompleted && !isActive}
+                  >
+                    <div className="md3-staff-step-circle">
                       {isCompleted
                         ? <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>check</span>
                         : <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>{step.icon}</span>
                       }
                     </div>
-                    <span style={{ fontSize: '10px', fontWeight: isActive ? 700 : 500, color: isActive ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-on-surface-variant)', textAlign: 'center', lineHeight: 1.2 }}>
+                    <span className="md3-staff-step-label">
                       {step.label}
                     </span>
-                  </div>
+                  </button>
                   {idx < STEPS.length - 1 && (
-                    <div style={{ flex: 0.3, display: 'flex', alignItems: 'center', paddingBottom: '18px' }}>
-                      <div style={{ height: '2px', width: '100%', background: step.id < currentStep ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)', borderRadius: '2px', transition: 'background 300ms' }} />
+                    <div className="md3-staff-step-connector">
+                      <div className={`md3-staff-step-line ${step.id < currentStep ? 'is-completed' : ''}`} />
                     </div>
                   )}
                 </React.Fragment>
@@ -481,10 +657,11 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
         </div>
 
         {/* ── Body ── */}
-        <form onSubmit={handleSubmit} style={{ flex: 1, overflowY: 'auto', padding: '0 28px 24px' }}>
+        <form onSubmit={handleSubmit} className="md3-staff-sheet-body">
           {error && (
-            <div style={{ margin: '16px 0', padding: '12px 16px', background: 'var(--md-sys-color-error-container)', color: 'var(--md-sys-color-on-error-container)', borderRadius: '12px', fontSize: '13px', fontWeight: 500 }}>
-              {error}
+            <div className="md3-staff-error-banner">
+              <span className="material-symbols-rounded error-icon">error</span>
+              <div style={{ flex: 1 }}>{error}</div>
             </div>
           )}
 
@@ -521,18 +698,101 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
               <Md3TextField name="email" label="Email Address *" type="email" value={formData.email} onChange={handleChange} placeholder="doctor@hospital.com" error={fieldErrors.email} />
 
               <SectionHeader icon="home" title="Address" />
-              <Md3TextField name="addressLine1" label="Address Line 1 *" value={formData.addressLine1} onChange={handleChange} placeholder="House / Flat / Street" />
+              <Md3TextField
+                name="addressLine1"
+                label="Address Line 1 *"
+                value={formData.addressLine1}
+                onChange={handleChange}
+                placeholder="House / Flat / Street"
+                error={fieldErrors.addressLine1}
+              />
               <div style={{ height: '12px' }} />
-              <Md3TextField name="addressLine2" label="Address Line 2" value={formData.addressLine2} onChange={handleChange} placeholder="Locality / Area" />
+              <Md3TextField
+                name="addressLine2"
+                label="Address Line 2"
+                value={formData.addressLine2}
+                onChange={handleChange}
+                placeholder="Locality / Area"
+              />
+              <div style={{ height: '12px' }} />
+              <Md3Select
+                id="staffCountry"
+                name="countryCode"
+                label="Country *"
+                value={formData.countryCode}
+                onChange={handleCountryChange}
+                disabled={loading}
+                options={allCountries}
+                error={fieldErrors.country}
+              />
               <div style={{ height: '12px' }} />
               <FieldRow>
-                <Md3TextField name="city"       label="City *"    value={formData.city}    onChange={handleChange} />
-                <Md3TextField name="state"      label="State *"   value={formData.state}   onChange={handleChange} />
+                {availableStates.length > 0 ? (
+                  <Md3Select
+                    id="staffState"
+                    name="state"
+                    label="State / Province *"
+                    value={formData.state}
+                    onChange={handleStateChange}
+                    disabled={loading}
+                    options={[{ value: '', label: 'Select State / Province' }, ...availableStates]}
+                    error={fieldErrors.state}
+                  />
+                ) : (
+                  <Md3TextField
+                    id="staffState"
+                    name="state"
+                    label="State / Province *"
+                    value={formData.state}
+                    onChange={handleChange}
+                    placeholder="e.g. State / Region"
+                    disabled={loading}
+                    error={fieldErrors.state}
+                  />
+                )}
+
+                {availableStates.length > 0 ? (
+                  <Md3Select
+                    id="staffCity"
+                    name="city"
+                    label="City / Town *"
+                    value={formData.city}
+                    onChange={handleCityChange}
+                    disabled={loading || !formData.state}
+                    options={[
+                      {
+                        value: '',
+                        label: !formData.state
+                          ? 'Select State First'
+                          : (availableCities.length > 0 ? 'Select City / Town' : 'No cities listed (type in address)')
+                      },
+                      ...availableCities
+                    ]}
+                    error={fieldErrors.city}
+                  />
+                ) : (
+                  <Md3TextField
+                    id="staffCity"
+                    name="city"
+                    label="City / Town *"
+                    value={formData.city}
+                    onChange={handleChange}
+                    placeholder="e.g. City / Town"
+                    disabled={loading}
+                    error={fieldErrors.city}
+                  />
+                )}
               </FieldRow>
               <div style={{ height: '12px' }} />
               <FieldRow>
-                <Md3TextField name="country"    label="Country"    value={formData.country}    onChange={handleChange} />
-                <Md3TextField name="postalCode" label="Postal Code" value={formData.postalCode} onChange={handleChange} error={fieldErrors.postalCode} />
+                <Md3TextField
+                  name="postalCode"
+                  label="Postal Code"
+                  value={formData.postalCode}
+                  onChange={handleChange}
+                  placeholder="e.g. 400001"
+                  error={fieldErrors.postalCode}
+                />
               </FieldRow>
 
               <SectionHeader icon="emergency" title="Emergency Contact" />
@@ -681,7 +941,7 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
           {currentStep === 4 && (
             <>
               <SectionHeader icon="manage_accounts" title="Login Credentials" />
-              <div style={{ padding: '12px 16px', background: 'var(--md-sys-color-secondary-container)', borderRadius: '12px', marginBottom: '16px', fontSize: '13px', color: 'var(--md-sys-color-on-secondary-container)', lineHeight: 1.6 }}>
+              <div className="md3-staff-info-card">
                 <strong>Note:</strong> A temporary password will be created. The staff member must change it upon their first login.
               </div>
 
@@ -692,7 +952,7 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
                 onChange={handleChange}
                 placeholder="e.g. EMP000245 (auto-generated, editable)"
               />
-              <div style={{ height: '12px' }} />
+              <div className="md3-staff-field-gap" />
 
               {!staff && (
                 <>
@@ -704,7 +964,7 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
                     onChange={handleChange}
                     placeholder="Min 6 characters (staff must change on first login)"
                   />
-                  <div style={{ height: '12px' }} />
+                  <div className="md3-staff-field-gap" />
                 </>
               )}
 
@@ -720,7 +980,7 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
               )}
 
               <SectionHeader icon="info" title="Registration Summary" />
-              <div style={{ background: 'var(--md-sys-color-surface-container)', borderRadius: '12px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '13px' }}>
+              <div className="md3-staff-summary-card">
                 {[
                   ['Full Name',       formData.fullName       || '—'],
                   ['Role',            roles.find(r => r._id === formData.roleId)?.name || '—'],
@@ -731,9 +991,9 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
                   ['Email',           formData.email           || '—'],
                   ['Phone',           formData.phone           || '—'],
                 ].map(([label, value]) => (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 500 }}>{label}</span>
-                    <span style={{ fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>{value}</span>
+                  <div key={label} className="md3-staff-summary-row">
+                    <span className="md3-staff-summary-label">{label}</span>
+                    <span className="md3-staff-summary-value">{value}</span>
                   </div>
                 ))}
               </div>
@@ -742,15 +1002,7 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
         </form>
 
         {/* ── Navigation Footer ── */}
-        <div style={{
-          padding: '16px 28px',
-          borderTop: '1px solid var(--md-sys-color-outline-variant)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexShrink: 0,
-          background: 'var(--md-sys-color-surface-container-lowest)',
-        }}>
+        <div className="md3-staff-sheet-footer">
           <div>
             {currentStep > 1 && (
               <Md3Button variant="text" onClick={() => setCurrentStep(s => s - 1)} type="button">
@@ -762,8 +1014,8 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-            <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+          <div className="md3-staff-footer-actions">
+            <span className="md3-staff-step-counter">
               Step {currentStep} of {STEPS.length}
             </span>
             {currentStep < STEPS.length ? (
@@ -795,7 +1047,8 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

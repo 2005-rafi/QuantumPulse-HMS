@@ -1,0 +1,136 @@
+/* ==========================================================================
+   AuditListView.css — Pure Material 3 Tabular List View for Audit Logs
+   ========================================================================== */
+
+.md3-audit-list-table-container {
+  width: 100%;
+  overflow-x: auto;
+  background: var(--md-sys-color-surface, #ffffff);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.md3-audit-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.8125rem;
+}
+
+.md3-audit-list-table thead tr {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-audit-list-table th {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+}
+
+.md3-audit-list-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f0ebee);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  vertical-align: middle;
+}
+
+.md3-audit-list-row {
+  transition: background-color 150ms ease;
+}
+
+.md3-audit-list-row:hover {
+  background-color: var(--md-sys-color-surface-container-lowest, #fdf8fd);
+}
+
+/* ── Columns & Cells ── */
+.col-audit-time {
+  width: 160px;
+}
+
+.col-audit-action {
+  width: 200px;
+}
+
+.col-audit-actor {
+  min-width: 180px;
+}
+
+.col-audit-target {
+  width: 140px;
+}
+
+.col-audit-ip {
+  width: 130px;
+}
+
+.col-audit-summary {
+  min-width: 160px;
+}
+
+.col-audit-actions {
+  width: 100px;
+}
+
+.md3-audit-time-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.md3-audit-rel-time {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-audit-iso-time {
+  font-size: 0.70rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-audit-actor-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.md3-audit-actor-name {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.2;
+}
+
+.md3-audit-actor-sub {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-audit-table-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: transparent;
+  color: var(--md-sys-color-primary, #00668b);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.md3-audit-table-btn:hover {
+  background: var(--md-sys-color-primary-container, #c2e8ff);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+.text-right {
+  text-align: right;
+}

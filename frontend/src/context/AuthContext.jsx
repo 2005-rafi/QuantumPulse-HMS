@@ -1,5 +1,13 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { authAPI } from '../services/api';
+import sessionStore, {
+  getAccessToken,
+  getRefreshToken,
+  setTokens,
+  clearTokens,
+  isTokenExpired,
+  subscribeAuthChange,
+} from '../core/useSessionStore';
 
 const AuthContext = createContext(null);
 
@@ -9,30 +17,68 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Restore session on mount
+  // Restore session on mount (In-Memory + Refresh Token Bootstrap)
   useEffect(() => {
+    let isMounted = true;
+
     const restoreSession = async () => {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        setLoading(false);
+      let accessToken = getAccessToken();
+      const refreshToken = getRefreshToken();
+
+      // If no accessToken in memory, but refreshToken exists, perform silent bootstrap refresh
+      if ((!accessToken || isTokenExpired(accessToken)) && refreshToken) {
+        try {
+          const { data } = await authAPI.refresh(refreshToken);
+          if (data?.data?.accessToken) {
+            accessToken = data.data.accessToken;
+            setTokens(accessToken, data.data.refreshToken || refreshToken);
+          }
+        } catch (refreshErr) {
+          console.warn('Session bootstrap refresh failed:', refreshErr?.message);
+          clearTokens(false);
+          if (isMounted) {
+            setUser(null);
+            setLoading(false);
+          }
+          return;
+        }
+      }
+
+      if (!accessToken) {
+        if (isMounted) setLoading(false);
         return;
       }
+
       try {
         const { data } = await authAPI.me();
-        setUser(data.data);
-        if (data.data && data.data.departmentId) {
-          setDepartmentId(data.data.departmentId);
+        if (isMounted) {
+          setUser(data.data);
+          if (data.data?.departmentId) {
+            setDepartmentId(data.data.departmentId);
+          }
         }
-        setUser(data.data);
-      } catch {
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setUser(null);
+      } catch (err) {
+        clearTokens(false);
+        if (isMounted) setUser(null);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
+
     restoreSession();
+
+    // Subscribe to cross-tab logout events
+    const unsubscribe = subscribeAuthChange((event) => {
+      if (event.type === 'LOGOUT' && isMounted) {
+        setUser(null);
+        setDepartmentId(null);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (username, password) => {
@@ -40,12 +86,23 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data } = await authAPI.login({ username, password });
       const { accessToken, refreshToken, user: userData } = data.data;
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      // Fetch full me() to get permissions
+      // In-memory token storage + persistent refresh token
+      setTokens(accessToken, refreshToken);
+
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('hms_auth_username', username);
+        sessionStorage.removeItem('hms_terminal_locked');
+        sessionStorage.setItem('hms_last_activity', String(Date.now()));
+      }
+
+      // Fetch full me() to verify fresh permissions
       const meRes = await authAPI.me();
-      setUser(meRes.data.data);
-      return meRes.data.data;
+      const fullUser = meRes.data.data || userData;
+      setUser(fullUser);
+      if (fullUser?.departmentId) {
+        setDepartmentId(fullUser.departmentId);
+      }
+      return fullUser;
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed';
       setError(msg);
@@ -57,11 +114,16 @@ export const AuthProvider = ({ children }) => {
     try {
       await authAPI.logout();
     } catch {
-      // Swallow — clear local state regardless
+      // Swallow network failure on logout — clear local session regardless
     }
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    clearTokens(true);
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('hms_auth_username');
+      sessionStorage.removeItem('hms_terminal_locked');
+      sessionStorage.removeItem('hms_last_activity');
+    }
     setUser(null);
+    setDepartmentId(null);
   }, []);
 
   const hasPermission = useCallback(
@@ -70,7 +132,18 @@ export const AuthProvider = ({ children }) => {
   );
 
   return (
-    <AuthContext.Provider value={{ user, departmentId, setDepartmentId, loading, error, login, logout, hasPermission }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        departmentId,
+        setDepartmentId,
+        loading,
+        error,
+        login,
+        logout,
+        hasPermission,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

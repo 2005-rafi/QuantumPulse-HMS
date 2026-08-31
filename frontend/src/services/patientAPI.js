@@ -63,8 +63,59 @@ export const patientAPI = {
     return response.data;
   },
 
-  rejectDeletion: async (id) => {
-    const response = await api.patch(`/patients/deletion-requests/${id}/reject`);
+  rejectDeletionRequest: async (id, reason) => {
+    const response = await api.patch(`/patients/deletion-requests/${id}/reject`, { reason });
     return response.data;
-  }
+  },
+
+  /**
+   * Stream export patient records with live chunk progress and auth management
+   */
+  exportData: async (exportOptions, onProgress, abortSignal) => {
+    try {
+      const response = await api.post('/patients/export', exportOptions, {
+        responseType: 'blob',
+        signal: abortSignal,
+        onDownloadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.loaded) {
+            onProgress({ receivedBytes: progressEvent.loaded });
+          }
+        },
+      });
+
+      const contentDisposition = response.headers['content-disposition'] || '';
+      let filename = `patient_export_${exportOptions.scope || 'data'}.${exportOptions.format === 'json' ? 'json' : 'csv'}`;
+      if (contentDisposition && contentDisposition.includes('filename=')) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) filename = match[1];
+      }
+
+      const blob = new Blob([response.data], {
+        type: exportOptions.format === 'json' ? 'application/json' : 'text/csv; charset=utf-8',
+      });
+
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(downloadUrl);
+
+      return { success: true, filename, totalBytes: blob.size };
+    } catch (err) {
+      if (err.response && err.response.data instanceof Blob) {
+        // Parse blob error back to JSON message
+        try {
+          const text = await err.response.data.text();
+          const json = JSON.parse(text);
+          throw new Error(json.message || json.error?.message || 'Export failed.');
+        } catch {
+          // fall through
+        }
+      }
+      throw err;
+    }
+  },
 };

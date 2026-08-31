@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { createPortal } from 'react-dom';
-import { Md3Button, Md3TextField, Md3Select } from '../../components/md3/Md3FormComponents';
-import { Icon, Md3Avatar, Md3Divider } from '../../components/md3/Md3Widgets';
+import { Md3Button, Md3TextField, Md3Select, Md3BottomSheet } from '../../components/md3/Md3FormComponents';
+import { Icon, Md3Avatar } from '../../components/md3/Md3Widgets';
 import { visitAPI } from '../../services/visitAPI';
 import { staffAPI } from '../../services/staffAPI';
 import { tariffAPI } from '../../services/tariffAPI';
+import ipdApi from '../../services/ipdApi';
 import api from '../../services/api';
+import BedAllocationPicker from '../../components/ipd/BedAllocationPicker';
+import IpdAdmissionSlip from '../../components/ipd/IpdAdmissionSlip';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
 import '../appointments/AppointmentDashboard.css';
 
@@ -28,12 +30,8 @@ const formatDoctorName = (name) => {
 };
 
 /**
- * NewVisitDialog — Standalone, reusable Material Design 3 modal for checking in patients into OPD triage.
- * Features:
- * - Department-filtered physician assignment (no cross-department leakage).
- * - Decongested, pure Material 3 two-tier dropdown layout.
- * - Always-visible, anchored modal confirmation and cancel buttons.
- * - Multi-encounter active awareness and same-department duplicate warnings.
+ * NewVisitDialog — Bottom Sheet for checking in existing patients
+ * into either Outpatient (OPD) queue or Inpatient (IPD) admission.
  */
 export const NewVisitDialog = ({
   patient,
@@ -44,44 +42,59 @@ export const NewVisitDialog = ({
   initialDoctorId = '',
   existingVisits = [],
 }) => {
+  const [mode, setMode] = useState('OPD'); // 'OPD' | 'IPD_MEDICAL' | 'IPD_SURGICAL'
   const [departments, setDepartments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [loadingMeta, setLoadingMeta] = useState(false);
 
   const [visitForm, setVisitForm] = useState({
-    visitType: 'OPD',
     departmentId: initialDepartmentId,
     doctorId: initialDoctorId,
     reasonForVisit: '',
     registrationFee: 0,
     consultationFee: 500,
     paymentMethod: 'Cash',
+    // IPD fields
+    selectedBedId: '',
+    selectedBed: null,
+    admissionType: 'PLANNED',
+    provisionalDiagnosis: '',
+    chiefComplaints: '',
+    carePlan: '',
+    dietTier: 'REGULAR_DIET',
+    initialDepositAmount: 5000,
+    depositPaymentMethod: 'Cash',
   });
 
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
+  const [generatedAdmission, setGeneratedAdmission] = useState(null);
 
   // Active encounters for this patient
   const activeVisits = (existingVisits || []).filter(
     (v) => v.status !== 'COMPLETED' && v.status !== 'CANCELLED'
   );
 
-  // Check if chosen department is already active
-  const isSameDeptActive = visitForm.departmentId 
-    ? activeVisits.find((v) => (v.departmentId?._id || v.departmentId) === visitForm.departmentId)
-    : null;
-
   // Sync initial props when opened
   useEffect(() => {
     if (isOpen) {
+      setMode('OPD');
       setVisitForm({
-        visitType: 'OPD',
         departmentId: initialDepartmentId,
         doctorId: initialDoctorId,
         reasonForVisit: '',
         registrationFee: 0,
         consultationFee: 500,
         paymentMethod: 'Cash',
+        selectedBedId: '',
+        selectedBed: null,
+        admissionType: 'PLANNED',
+        provisionalDiagnosis: '',
+        chiefComplaints: '',
+        carePlan: '',
+        dietTier: 'REGULAR_DIET',
+        initialDepositAmount: 5000,
+        depositPaymentMethod: 'Cash',
       });
       setFormError(null);
     }
@@ -143,33 +156,24 @@ export const NewVisitDialog = ({
     }
   }, [visitForm.departmentId, availableDoctors]);
 
-  // Auto-resolve authoritative tariff pricing for Registration and Doctor Consultation
+  // Auto-resolve authoritative tariff pricing for Consultation in OPD
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || mode !== 'OPD') return;
 
     let isMounted = true;
     const resolveTariffs = async () => {
       try {
-        // 1. Resolve Registration Fee
-        const regRes = await tariffAPI.resolvePrice({
-          category: 'REGISTRATION',
-          visitType: visitForm.visitType || 'OPD',
-        });
-        const resolvedRegFee = regRes.data?.data?.amount ?? regRes.data?.amount ?? 100;
-
-        // 2. Resolve Consultation Fee based on Department & Doctor
         const consRes = await tariffAPI.resolvePrice({
           category: 'CONSULTATION',
           departmentId: visitForm.departmentId || undefined,
           staffId: visitForm.doctorId || undefined,
-          visitType: visitForm.visitType || 'OPD',
+          visitType: 'OPD',
         });
         const resolvedConsFee = consRes.data?.data?.amount ?? consRes.data?.amount ?? 500;
 
         if (isMounted) {
           setVisitForm((prev) => ({
             ...prev,
-            registrationFee: resolvedRegFee,
             consultationFee: resolvedConsFee,
           }));
         }
@@ -182,9 +186,7 @@ export const NewVisitDialog = ({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, visitForm.visitType, visitForm.departmentId, visitForm.doctorId]);
-
-  const selectedDeptObj = departments.find((d) => d._id === visitForm.departmentId);
+  }, [isOpen, mode, visitForm.departmentId, visitForm.doctorId]);
 
   if (!isOpen || !patient) return null;
 
@@ -212,77 +214,100 @@ export const NewVisitDialog = ({
         throw new Error('Patient ID is missing. Please re-open the patient profile.');
       }
 
-      const regFee = Number(visitForm.registrationFee) || 0;
-      const consFee = Number(visitForm.consultationFee) || 0;
+      // Case A: Inpatient Admission (Medical or Surgical)
+      if (mode === 'IPD_MEDICAL' || mode === 'IPD_SURGICAL') {
+        if (!visitForm.departmentId) throw new Error('Please select an admitting department.');
+        if (!visitForm.doctorId) throw new Error('Please select an attending doctor.');
+        if (!visitForm.selectedBedId) throw new Error('Please select a vacant bed from the bed map.');
+        if (!visitForm.provisionalDiagnosis.trim()) throw new Error('Provisional diagnosis is required.');
 
-      const payload = {
-        patientId: String(pId),
-        visitType: visitForm.visitType || 'OPD',
-        ...(visitForm.departmentId ? { departmentId: visitForm.departmentId } : {}),
-        ...(visitForm.doctorId ? { doctorId: visitForm.doctorId } : {}),
-        ...(visitForm.reasonForVisit ? { reasonForVisit: visitForm.reasonForVisit.trim() } : {}),
-        receptionPayment: {
-          registrationFee: regFee,
-          consultationFee: consFee,
-          paymentMethod: visitForm.paymentMethod || 'Cash',
-        },
-      };
+        const admissionPayload = {
+          patientId: String(pId),
+          primaryDoctorId: visitForm.doctorId,
+          admittingDepartmentId: visitForm.departmentId,
+          bedId: visitForm.selectedBedId,
+          admissionType: mode === 'IPD_SURGICAL' ? 'SURGICAL' : (visitForm.admissionType || 'PLANNED'),
+          provisionalDiagnosis: visitForm.provisionalDiagnosis.trim(),
+          chiefComplaints: visitForm.chiefComplaints || visitForm.reasonForVisit || '',
+          carePlan: visitForm.carePlan || '',
+          dietTier: visitForm.dietTier || 'REGULAR_DIET',
+          initialDepositAmount: Number(visitForm.initialDepositAmount) || 0,
+          depositPaymentMethod: visitForm.depositPaymentMethod || 'Cash',
+        };
 
-      const res = await visitAPI.create(payload);
-      const createdVisit = res.data?.data || res.data;
+        const res = await ipdApi.admitPatient(admissionPayload);
+        const createdAdmission = res.data?.data;
 
-      if (onSuccess) {
-        onSuccess({ patient, visit: createdVisit });
+        const completeSlip = {
+          ...createdAdmission,
+          patient,
+          primaryDoctor: doctors.find(d => d._id === visitForm.doctorId) || {},
+          department: departments.find(d => d._id === visitForm.departmentId) || {},
+          bed: visitForm.selectedBed || {},
+          initialDepositAmount: visitForm.initialDepositAmount,
+          depositPaymentMethod: visitForm.depositPaymentMethod,
+        };
+
+        setGeneratedAdmission(completeSlip);
+
+        if (onSuccess) {
+          onSuccess({ patient, admission: createdAdmission, isIpd: true });
+        }
       }
-      onClose();
+      // Case B: Standard OPD Visit
+      else {
+        const regFee = Number(visitForm.registrationFee) || 0;
+        const consFee = Number(visitForm.consultationFee) || 0;
+
+        const payload = {
+          patientId: String(pId),
+          visitType: 'OPD',
+          ...(visitForm.departmentId ? { departmentId: visitForm.departmentId } : {}),
+          ...(visitForm.doctorId ? { doctorId: visitForm.doctorId } : {}),
+          ...(visitForm.reasonForVisit ? { reasonForVisit: visitForm.reasonForVisit.trim() } : {}),
+          receptionPayment: {
+            registrationFee: regFee,
+            consultationFee: consFee,
+            paymentMethod: visitForm.paymentMethod || 'Cash',
+          },
+        };
+
+        const res = await visitAPI.create(payload);
+        const createdVisit = res.data?.data || res.data;
+
+        if (onSuccess) {
+          onSuccess({ patient, visit: createdVisit, isIpd: false });
+        }
+        onClose();
+      }
     } catch (err) {
-      console.error('[NewVisitDialog] Create visit error', err);
-      setFormError(err.response?.data?.message || err.message || 'Failed to create new visit');
+      console.error('[NewVisitDialog] Encounter error', err);
+      setFormError(err.response?.data?.message || err.message || 'Failed to process encounter');
     } finally {
       setFormLoading(false);
     }
   };
 
-  const totalFee = (Number(visitForm.registrationFee) || 0) + (Number(visitForm.consultationFee) || 0);
   const initials = `${patient.firstName?.[0] || ''}${patient.lastName?.[0] || ''}`.toUpperCase();
 
-  return createPortal(
-    <div className="appt-modal-backdrop" onClick={onClose}>
-      <div className="appt-modal-container new-visit-modal-container" onClick={(e) => e.stopPropagation()}>
-        {/* Modal Header */}
-        <div className="appt-modal-header">
-          <div className="appt-modal-title-group">
-            <div className="appt-modal-icon check-in">
-              <Icon.Plus />
-            </div>
-            <div>
-              <h3 className="appt-modal-title">Create New OPD Visit</h3>
-              <p className="appt-modal-subtitle">
-                Register consultation routing and issue live OPD Queue Token
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="appt-modal-close"
-            onClick={onClose}
-            aria-label="Close dialog"
-          >
-            <Icon.X />
-          </button>
-        </div>
-
-        {/* Modal Body (Scrollable Container) */}
-        <div className="appt-modal-body">
+  return (
+    <>
+      <Md3BottomSheet
+        isOpen={isOpen}
+        onClose={onClose}
+        title="Patient Check-In &amp; Inpatient Admission"
+        subtitle="Create an OPD consultation queue token or directly admit as Inpatient (IPD)"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {formError && (
-            <div className="appt-dialog-error" role="alert" style={{ marginBottom: '8px' }}>
+            <div className="appt-dialog-error" role="alert">
               <Icon.Alert />
               <span>{formError}</span>
             </div>
           )}
 
           {/* Patient Header Strip */}
-          <div className="new-visit-patient-badge">
+          <div className="new-visit-patient-badge" style={{ margin: 0 }}>
             <div className="new-visit-patient-info">
               <Md3Avatar initials={initials} size="medium" variant="primary" />
               <div>
@@ -328,217 +353,293 @@ export const NewVisitDialog = ({
                 <div style={{ marginTop: '2px', opacity: 0.9 }}>
                   {activeVisits.map(v => `${v.tokenString || v.visitNumber} (${v.departmentId?.name || 'General OPD'} · ${v.status.replace(/_/g, ' ')})`).join(', ')}
                 </div>
-                <div style={{ marginTop: '4px', fontSize: '0.75rem', opacity: 0.8 }}>
-                  Creating this visit will issue an additional concurrent queue token for the selected department.
-                </div>
               </div>
             </div>
           )}
 
-          <form id="new-visit-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} noValidate>
-            {/* Section 1: Clinical Department & Doctor Routing (Decongested 2-Tier Layout) */}
-            <div>
-              <h4 className="new-visit-section-title" style={{ marginBottom: '12px' }}>
-                <Icon.Calendar />
-                <span>Clinical Routing & Physician</span>
-              </h4>
-
-              {/* Tier 1: Visit Type & Department */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginBottom: '12px' }}>
-                <Md3Select
-                  id="nv-visitType"
-                  name="visitType"
-                  label="Visit Type *"
-                  value={visitForm.visitType}
-                  onChange={handleField}
-                  disabled={formLoading}
-                  options={[
-                    { value: 'OPD', label: 'OPD (Outpatient Consultation)' },
-                    { value: 'EMERGENCY', label: 'Emergency / Urgent Care' },
-                  ]}
-                />
-
-                <Md3Select
-                  id="nv-departmentId"
-                  name="departmentId"
-                  label="Department *"
-                  value={visitForm.departmentId}
-                  onChange={handleField}
-                  disabled={formLoading || loadingMeta}
-                  options={[
-                    { value: '', label: loadingMeta ? 'Loading departments…' : 'Select Clinical Department' },
-                    ...departments.map((d) => ({ value: d._id, label: `${d.name} (${d.code || 'GEN'})` })),
-                  ]}
-                />
-              </div>
-
-              {/* Tier 2: Department-Filtered Physician Selection */}
+          {/* Workflow Mode Selector */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+            <button
+              type="button"
+              className={`reg-workflow-btn ${mode === 'OPD' ? 'is-active' : ''}`}
+              onClick={() => setMode('OPD')}
+            >
+              <span className="material-symbols-rounded">stethoscope</span>
               <div>
-                <Md3Select
-                  id="nv-doctorId"
-                  name="doctorId"
-                  label={visitForm.departmentId && selectedDeptObj ? `Assigned Doctor (${selectedDeptObj.name})` : 'Assigned Doctor (Optional)'}
-                  value={visitForm.doctorId}
-                  onChange={handleField}
-                  disabled={formLoading || loadingMeta}
-                  options={[
-                    { 
-                      value: '', 
-                      label: visitForm.departmentId && availableDoctors.length === 0 
-                        ? 'No specific doctor assigned — Route to General Department Triage' 
-                        : 'Any Available Doctor / General Queue' 
-                    },
-                    ...availableDoctors.map((doc) => ({
-                      value: doc._id,
-                      label: `${formatDoctorName(doc.fullName || doc.name)} (${doc.departmentId?.name || selectedDeptObj?.name || 'Physician'})`,
-                    })),
-                  ]}
-                />
-                <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px', paddingLeft: '4px' }}>
-                  {visitForm.departmentId
-                    ? `${availableDoctors.length} physician(s) available for ${selectedDeptObj?.name || 'this department'}`
-                    : 'Select a department above to filter doctors by medical specialty.'}
-                </div>
+                <span className="reg-workflow-btn-label">OPD Walk-in</span>
+                <span className="reg-workflow-btn-sub">Outpatient queue token</span>
               </div>
-            </div>
+            </button>
 
-            {/* Same Department Duplicate Warning */}
-            {isSameDeptActive && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '10px 14px',
-                background: 'var(--md-sys-color-tertiary-container)',
-                color: 'var(--md-sys-color-on-tertiary-container)',
-                borderRadius: '10px',
-                fontSize: '0.8125rem',
-                fontWeight: 600
-              }}>
-                <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>warning</span>
-                <span>Notice: Patient already has an active visit in this department ({isSameDeptActive.tokenString || isSameDeptActive.visitNumber}).</span>
+            <button
+              type="button"
+              className={`reg-workflow-btn ${mode === 'IPD_MEDICAL' ? 'is-active' : ''}`}
+              onClick={() => setMode('IPD_MEDICAL')}
+            >
+              <span className="material-symbols-rounded">hotel</span>
+              <div>
+                <span className="reg-workflow-btn-label">Direct IPD Admission</span>
+                <span className="reg-workflow-btn-sub">Bed allocation &amp; Nursing</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className={`reg-workflow-btn ${mode === 'IPD_SURGICAL' ? 'is-active' : ''}`}
+              onClick={() => setMode('IPD_SURGICAL')}
+            >
+              <span className="material-symbols-rounded">surgical</span>
+              <div>
+                <span className="reg-workflow-btn-label">Surgical / OT</span>
+                <span className="reg-workflow-btn-sub">Pre/Post-Op admission</span>
+              </div>
+            </button>
+          </div>
+
+          <form id="new-visit-bottom-sheet-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} noValidate>
+            
+            {/* ── OPD MODE ── */}
+            {mode === 'OPD' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  <Md3Select
+                    id="nv-departmentId"
+                    name="departmentId"
+                    label="Department *"
+                    value={visitForm.departmentId}
+                    onChange={handleField}
+                    disabled={formLoading || loadingMeta}
+                    required
+                  >
+                    <option value="">-- Select Clinical Department --</option>
+                    {departments
+                      .filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC')
+                      .map((d) => (
+                        <option key={d._id} value={d._id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </Md3Select>
+
+                  <Md3Select
+                    id="nv-doctorId"
+                    name="doctorId"
+                    label="Attending Doctor (Optional)"
+                    value={visitForm.doctorId}
+                    onChange={handleField}
+                    disabled={formLoading || loadingMeta}
+                  >
+                    <option value="">-- Any Available Doctor --</option>
+                    {availableDoctors.map((d) => (
+                      <option key={d._id} value={d._id}>
+                        {formatDoctorName(d.fullName)}
+                      </option>
+                    ))}
+                  </Md3Select>
+                </div>
+
+                <div>
+                  <Md3TextField
+                    id="nv-reasonForVisit"
+                    name="reasonForVisit"
+                    label="Reason for Visit / Chief Complaint"
+                    value={visitForm.reasonForVisit}
+                    onChange={handleField}
+                    placeholder="e.g. High fever, headache, routine review"
+                    disabled={formLoading}
+                  />
+                  <div className="new-visit-chips-row" style={{ marginTop: '8px' }}>
+                    {QUICK_COMPLAINTS.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className="new-visit-chip"
+                        onClick={() => handleChipClick(c)}
+                      >
+                        + {c}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                  <Md3TextField
+                    id="nv-consultationFee"
+                    name="consultationFee"
+                    type="number"
+                    label={`Consultation Fee (${CURRENCY_SYMBOL})`}
+                    value={visitForm.consultationFee}
+                    onChange={handleField}
+                    disabled={formLoading}
+                  />
+                  <Md3Select
+                    id="nv-paymentMethod"
+                    name="paymentMethod"
+                    label="Payment Method *"
+                    value={visitForm.paymentMethod}
+                    onChange={handleField}
+                    disabled={formLoading}
+                    options={[
+                      { value: 'Cash', label: 'Cash' },
+                      { value: 'Card', label: 'Card' },
+                      { value: 'UPI', label: 'UPI' },
+                      { value: 'Insurance', label: 'Insurance' },
+                    ]}
+                  />
+                </div>
               </div>
             )}
 
-            {/* Section 2: Chief Complaint */}
-            <div className="new-visit-field-full">
-              <Md3TextField
-                id="nv-reasonForVisit"
-                name="reasonForVisit"
-                label="Reason for Visit / Chief Complaint"
-                placeholder="Describe presenting symptoms, chief complaints, or purpose of visit…"
-                value={visitForm.reasonForVisit}
-                onChange={handleField}
-                disabled={formLoading}
-                multiline
-                rows={2}
-              />
-            </div>
-
-            {/* Quick Complaint Chips */}
-            <div className="new-visit-chips-wrap">
-              <span className="new-visit-chips-label">Quick Symptoms:</span>
-              <div className="new-visit-chips-list">
-                {QUICK_COMPLAINTS.map((complaint) => (
-                  <button
-                    key={complaint}
-                    type="button"
-                    className={`new-visit-chip ${
-                      visitForm.reasonForVisit.includes(complaint) ? 'active' : ''
-                    }`}
-                    onClick={() => handleChipClick(complaint)}
-                    disabled={formLoading}
+            {/* ── IPD MODE ── */}
+            {(mode === 'IPD_MEDICAL' || mode === 'IPD_SURGICAL') && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  <Md3Select
+                    id="nv-ipd-departmentId"
+                    name="departmentId"
+                    label="Admitting Department *"
+                    value={visitForm.departmentId}
+                    onChange={handleField}
+                    disabled={formLoading || loadingMeta}
+                    required
                   >
-                    + {complaint}
-                  </button>
-                ))}
+                    <option value="">-- Select Inpatient Department --</option>
+                    {departments
+                      .filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC')
+                      .map((d) => (
+                        <option key={d._id} value={d._id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </Md3Select>
+
+                  <Md3Select
+                    id="nv-ipd-doctorId"
+                    name="doctorId"
+                    label={mode === 'IPD_SURGICAL' ? 'Operating Surgeon *' : 'Attending Consultant *'}
+                    value={visitForm.doctorId}
+                    onChange={handleField}
+                    disabled={formLoading || loadingMeta}
+                    required
+                  >
+                    <option value="">-- Select Attending Consultant --</option>
+                    {availableDoctors.map((d) => (
+                      <option key={d._id} value={d._id}>
+                        {formatDoctorName(d.fullName)}
+                      </option>
+                    ))}
+                  </Md3Select>
+                </div>
+
+                {/* Interactive Bed & Room Allocator */}
+                <BedAllocationPicker
+                  selectedBedId={visitForm.selectedBedId}
+                  onSelectBed={(bedObj) => {
+                    setVisitForm((prev) => ({
+                      ...prev,
+                      selectedBedId: bedObj._id,
+                      selectedBed: bedObj,
+                    }));
+                  }}
+                  patientGender={patient.gender}
+                />
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                  <Md3TextField
+                    id="nv-provisionalDiagnosis"
+                    name="provisionalDiagnosis"
+                    label="Provisional Diagnosis *"
+                    value={visitForm.provisionalDiagnosis}
+                    onChange={handleField}
+                    placeholder="e.g. Acute Cholecystitis, Dengue with Thrombocytopenia"
+                    disabled={formLoading}
+                    required
+                  />
+
+                  <Md3Select
+                    id="nv-dietTier"
+                    name="dietTier"
+                    label="Inpatient Diet Tier *"
+                    value={visitForm.dietTier}
+                    onChange={handleField}
+                    disabled={formLoading}
+                    options={[
+                      { value: 'REGULAR_DIET', label: 'Regular Hospital Diet' },
+                      { value: 'DIABETIC_DIET', label: 'Diabetic Diet' },
+                      { value: 'RENAL_DIET', label: 'Renal Diet' },
+                      { value: 'HIGH_PROTEIN', label: 'High Protein Diet' },
+                      { value: 'SOFT_DIET', label: 'Soft / Semi-Solid Diet' },
+                      { value: 'LIQUID_DIET', label: 'Clear Liquid Diet' },
+                      { value: 'NPO', label: 'NPO (Nil Per Os - Fasting)' },
+                    ]}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                  <Md3TextField
+                    id="nv-initialDepositAmount"
+                    name="initialDepositAmount"
+                    type="number"
+                    label={`Initial Advance Deposit (${CURRENCY_SYMBOL})`}
+                    value={visitForm.initialDepositAmount}
+                    onChange={handleField}
+                    disabled={formLoading}
+                  />
+                  <Md3Select
+                    id="nv-depositPaymentMethod"
+                    name="depositPaymentMethod"
+                    label="Deposit Payment Method *"
+                    value={visitForm.depositPaymentMethod}
+                    onChange={handleField}
+                    disabled={formLoading}
+                    options={[
+                      { value: 'Cash', label: 'Cash' },
+                      { value: 'Card', label: 'Credit / Debit Card' },
+                      { value: 'UPI', label: 'UPI / Digital' },
+                      { value: 'Insurance', label: 'Insurance Pre-Auth' },
+                    ]}
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
-            <Md3Divider />
-
-            {/* Section 3: Reception Billing & Fee Collection */}
-            <h4 className="new-visit-section-title">
-              <Icon.CreditCard />
-              <span>Reception Billing & Fee Collection</span>
-            </h4>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-              <Md3TextField
-                id="nv-registrationFee"
-                name="registrationFee"
-                label={`Registration Fee (${CURRENCY_SYMBOL})`}
-                type="number"
-                min="0"
-                step="10"
-                value={visitForm.registrationFee}
-                onChange={handleField}
+            {/* Bottom Sheet Actions */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px', borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: '16px' }}>
+              <Md3Button
+                type="button"
+                variant="secondary"
+                onClick={onClose}
                 disabled={formLoading}
-              />
-
-              <Md3TextField
-                id="nv-consultationFee"
-                name="consultationFee"
-                label={`Doctor Fee (${CURRENCY_SYMBOL})`}
-                type="number"
-                min="0"
-                step="50"
-                value={visitForm.consultationFee}
-                onChange={handleField}
+                style={{ width: 'auto', minWidth: '120px' }}
+              >
+                Cancel
+              </Md3Button>
+              <Md3Button
+                type="submit"
+                variant="primary"
+                loading={formLoading}
                 disabled={formLoading}
-              />
-
-              <Md3Select
-                id="nv-paymentMethod"
-                name="paymentMethod"
-                label="Payment Method *"
-                value={visitForm.paymentMethod}
-                onChange={handleField}
-                disabled={formLoading}
-                options={[
-                  { value: 'Cash', label: 'Cash' },
-                  { value: 'UPI', label: 'UPI / QR Code' },
-                  { value: 'Card', label: 'Debit / Credit Card' },
-                  { value: 'Insurance', label: 'Insurance' },
-                ]}
-              />
-            </div>
-
-            {/* Fee Summary */}
-            <div className="new-visit-fee-summary">
-              <span className="new-visit-fee-label">Total Payment Collectible at Reception:</span>
-              <span className="new-visit-fee-total">{CURRENCY_SYMBOL}{totalFee.toFixed(2)}</span>
+                style={{ width: 'auto', minWidth: '220px' }}
+              >
+                {mode === 'OPD' ? 'Create OPD Visit & Token' : mode === 'IPD_MEDICAL' ? 'Admit to Inpatient (IPD)' : 'Confirm Surgical Admission'}
+              </Md3Button>
             </div>
           </form>
         </div>
+      </Md3BottomSheet>
 
-        {/* Modal Actions Footer (Pinned, always visible) */}
-        <div className="appt-modal-actions">
-          <Md3Button
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={formLoading}
-            style={{ width: 'auto', minWidth: '110px' }}
-          >
-            Cancel
-          </Md3Button>
-          <Md3Button
-            type="submit"
-            form="new-visit-form"
-            onClick={handleSubmit}
-            disabled={formLoading}
-            loading={formLoading}
-            loadingText="Generating Token…"
-            style={{ width: 'auto', minWidth: '220px' }}
-          >
-            <Icon.Plus />
-            <span>Confirm & Check In Patient</span>
-          </Md3Button>
-        </div>
-      </div>
-    </div>,
-    document.body
+      {/* Printable IPD Admission Slip Modal */}
+      {generatedAdmission && (
+        <IpdAdmissionSlip
+          admissionData={generatedAdmission}
+          isOpen={!!generatedAdmission}
+          onClose={() => {
+            setGeneratedAdmission(null);
+            onClose();
+          }}
+        />
+      )}
+    </>
   );
 };
 

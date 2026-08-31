@@ -174,10 +174,12 @@ const AdministratorDashboard = () => {
   const activeTab = pathParts[pathParts.length - 1] || 'analytics';
 
   const NAV_ITEMS = [
-    { id: 'analytics', icon: 'monitoring', label: 'Analytics' },
+    { id: 'analytics', icon: 'analytics', label: 'Analytics' },
+    { id: 'storage', icon: 'cloud_sync', label: 'Storage & Files' },
     { id: 'patients', icon: 'groups', label: 'Patients' },
     { id: 'appointments', icon: 'calendar_month', label: 'Appointments' },
     { id: 'staff', icon: 'badge', label: 'Manage Staff' },
+    { id: 'facility-builder', icon: 'domain_add', label: 'Facility & Beds' },
     { id: 'departments', icon: 'corporate_fare', label: 'Manage Departments' },
     { id: 'laboratories', icon: 'science', label: 'Manage Laboratories' },
     { id: 'billing', icon: 'payments', label: 'Billing & Tariff' },
@@ -192,15 +194,15 @@ const AdministratorDashboard = () => {
         onLogout={handleLogout}
       />
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', overflow: 'hidden' }}>
         <Md3NavigationRail 
           items={NAV_ITEMS}
           activeItem={activeTab === 'administrator' ? 'analytics' : activeTab}
           onSelect={(id) => navigate(`/dashboard/administrator/${id}`)}
         />
 
-        <main className="dashboard-main" style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto' }}>
-          <div key={activeTab} className="admin-tab-content-fade">
+        <main className="dashboard-main" style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+          <div key={activeTab} className="admin-tab-content-fade" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100%', width: '100%' }}>
             <Outlet context={{
               stats,
               lastUpdated,

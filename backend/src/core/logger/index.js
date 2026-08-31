@@ -55,7 +55,7 @@ const transports = [
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,
     maxSize: '20m',
-    maxFiles: '30d',
+    maxFiles: process.env.LOG_RETENTION_DAYS || '2190d', // 6-year HIPAA compliance retention
     format: fileFormat,
   }),
 
@@ -67,7 +67,7 @@ const transports = [
     datePattern: 'YYYY-MM-DD',
     zippedArchive: true,
     maxSize: '20m',
-    maxFiles: '14d',
+    maxFiles: process.env.LOG_RETENTION_DAYS || '2190d', // 6-year HIPAA compliance retention
     format: fileFormat,
   }),
 ];

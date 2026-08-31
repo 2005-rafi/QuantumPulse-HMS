@@ -40,9 +40,9 @@ const LoginPage = () => {
   const config = useConfig();
   const navigate = useNavigate();
 
-  // Load saved username if rememberMe was previously set
+  // Load saved username if rememberMe was previously set in this session
   useEffect(() => {
-    const savedUser = localStorage.getItem('hms_saved_username');
+    const savedUser = sessionStorage.getItem('hms_saved_username');
     if (savedUser) {
       setForm((prev) => ({ ...prev, username: savedUser }));
       setRememberMe(true);
@@ -95,11 +95,11 @@ const LoginPage = () => {
     try {
       const user = await login(form.username.trim(), form.password);
       
-      // Handle Remember Me persistence
+      // Handle Remember Me persistence (scoped to browser session)
       if (rememberMe) {
-        localStorage.setItem('hms_saved_username', form.username.trim());
+        sessionStorage.setItem('hms_saved_username', form.username.trim());
       } else {
-        localStorage.removeItem('hms_saved_username');
+        sessionStorage.removeItem('hms_saved_username');
       }
 
       const targetRoute = ROLE_ROUTES[user.role] || '/dashboard';

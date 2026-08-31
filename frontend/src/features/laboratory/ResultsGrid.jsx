@@ -63,8 +63,13 @@ const ActionsCell = ({ row, onViewReport }) => {
     if (!row.scanReportId) return;
     try {
       setDownloading(true);
-      const res = await api.get(`/laboratory/scans/${row.scanReportId}`, { responseType: 'blob' });
-      const blobUrl = window.URL.createObjectURL(new Blob([res.data]));
+      const res = await api.get(`/laboratory/scans/${row.scanReportId}?json=true`);
+      if (res.data?.data?.downloadUrl) {
+        window.open(res.data.data.downloadUrl, '_blank', 'noopener,noreferrer');
+        return;
+      }
+      const blobRes = await api.get(`/laboratory/scans/${row.scanReportId}`, { responseType: 'blob' });
+      const blobUrl = window.URL.createObjectURL(new Blob([blobRes.data]));
       const link = document.createElement('a');
       link.href = blobUrl;
       link.setAttribute('download', `Lab_Report_${row.orderId || 'Scan'}.pdf`);

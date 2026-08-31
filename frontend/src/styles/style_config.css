@@ -162,3 +162,11 @@
   --md-sys-motion-duration-medium: 250ms;
   --md-sys-motion-duration-long: 400ms;
 }
+
+/* ── HIPAA Workstation Privacy & Shoulder-Surfing Defense ── */
+#root.hms-privacy-blur > *:not(.hms-lock-portal):not(.hms-warn-banner) {
+  filter: blur(10px) brightness(0.65) grayscale(0.2);
+  pointer-events: none;
+  user-select: none;
+  transition: filter 0.3s cubic-bezier(0.2, 0, 0, 1);
+}

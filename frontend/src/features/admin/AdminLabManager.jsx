@@ -8,6 +8,10 @@ import { Md3SearchBar, Md3SegmentedFilter } from '../../components/md3/AdminCont
 import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import Md3Pagination from '../../components/md3/Md3Pagination';
 import usePagination from '../../hooks/usePagination';
+import LaboratoryCard from '../../components/laboratories/LaboratoryCard';
+import LaboratoryListView from '../../components/laboratories/LaboratoryListView';
+import LaboratoryDetailSheet from '../../components/laboratories/LaboratoryDetailSheet';
+import { useLabLayoutPreference } from '../../hooks/useLabLayoutPreference';
 
 const AdminLabManager = () => {
   const { 
@@ -23,6 +27,8 @@ const AdminLabManager = () => {
 
   const [isCreateLaboratoryOpen, setIsCreateLaboratoryOpen] = useState(false);
   const [editingLab, setEditingLab] = useState(null);
+  const [inspectingLab, setInspectingLab] = useState(null);
+  const { isListView, isCardView, setLayout } = useLabLayoutPreference();
   
   // Search and Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,13 +105,43 @@ const AdminLabManager = () => {
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <section className="info-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0, color: 'var(--md-sys-color-primary)' }}>Hospital Laboratories</h2>
-          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+          <div>
+            <h2 style={{ margin: 0, color: 'var(--md-sys-color-primary)' }}>Hospital Laboratories</h2>
+            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              {filteredLaboratories.length} laborator{filteredLaboratories.length !== 1 ? 'ies' : 'y'} shown
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
             <Md3SearchBar 
               value={searchQuery} 
               onChange={setSearchQuery} 
               placeholder="Search lab or dept code..." 
             />
+
+            {/* View Mode Toggle: Cards vs List */}
+            <div className="md3-view-toggle-group" role="group" aria-label="Laboratory directory layout view mode">
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isCardView ? 'active' : ''}`}
+                onClick={() => setLayout('cards')}
+                title="Card Grid View"
+                aria-pressed={isCardView}
+              >
+                <span className="material-symbols-rounded">grid_view</span>
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isListView ? 'active' : ''}`}
+                onClick={() => setLayout('list')}
+                title="Tabular List View"
+                aria-pressed={isListView}
+              >
+                <span className="material-symbols-rounded">view_list</span>
+                <span>List</span>
+              </button>
+            </div>
+
             <Md3SegmentedFilter
               selectedValue={typeFilter}
               onChange={setTypeFilter}
@@ -115,6 +151,29 @@ const AdminLabManager = () => {
                 { value: 'CLINICAL/DIAGNOSTIC', label: 'Clin+Diag' },
               ]}
             />
+            <button
+              onClick={() => setIsCreateLaboratoryOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 20px',
+                background: 'var(--md-sys-color-primary, #00668b)',
+                color: 'var(--md-sys-color-on-primary, #ffffff)',
+                border: 'none',
+                borderRadius: '100px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                transition: 'all 200ms ease',
+                height: '44px',
+                boxShadow: 'var(--md-sys-elevation-1, 0 1px 3px rgba(0,0,0,0.12))'
+              }}
+              className="lab-add-btn"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
+              Add Laboratory
+            </button>
           </div>
         </div>
 
@@ -132,83 +191,56 @@ const AdminLabManager = () => {
         )}
 
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="md3-data-grid md3-paginated-content-fade" key={page} style={{ flex: 1, paddingBottom: '20px' }}>
-            {paginatedLabs.length === 0 ? (
-              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
-                <Md3EmptyState
-                  icon="science"
-                  title="No laboratories found"
-                  description="There are currently no diagnostic or clinical laboratories configured matching the search criteria or filter."
-                  variant="card"
-                />
+          {paginatedLabs.length === 0 ? (
+            <div style={{ width: '100%', padding: '20px 0' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '48px 24px',
+                textAlign: 'center',
+                background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
+                borderRadius: '16px',
+                border: '1px dashed var(--md-sys-color-outline-variant, #cac4d0)'
+              }}>
+                <span className="material-symbols-rounded" style={{ fontSize: '48px', color: 'var(--md-sys-color-primary, #00668b)', marginBottom: '12px' }}>
+                  science
+                </span>
+                <h3 style={{ margin: '0 0 6px', fontSize: '1.1rem', color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>
+                  No laboratories found
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
+                  There are currently no diagnostic or clinical laboratories configured matching the search criteria or filter.
+                </p>
               </div>
-            ) : (
-              filteredLaboratories.map(lab => (
-                <div key={lab._id} className="md3-data-card">
-                  <div className="md3-data-card-header">
-                    <h3 className="md3-data-card-title" style={{ opacity: lab.isActive ? 1 : 0.65 }}>{lab.name}</h3>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {!lab.isActive && (
-                        <span className="md3-status-chip md3-card-btn-error" style={{ fontSize: '10px', padding: '2px 8px' }}>
-                          INACTIVE
-                        </span>
-                      )}
-                      <span className="md3-status-chip md3-card-btn-secondary" style={{ fontSize: '11px', padding: '3px 10px', fontFamily: 'monospace', fontWeight: 'bold' }}>
-                        {lab.departmentId?.code || 'LAB'}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="md3-data-card-body">
-                    <p style={{ margin: 0, color: 'var(--md-sys-color-on-surface-variant)', fontSize: '13px', lineHeight: '1.4' }}>
-                      {lab.description || 'No description provided.'}
-                    </p>
-                    <div className="md3-card-meta-list" style={{ marginTop: '12px' }}>
-                      <div className="md3-card-meta-item">
-                        <span className="md3-card-meta-label">Department</span>
-                        <span className="md3-card-meta-value">{lab.departmentId?.name || '—'}</span>
-                      </div>
-                      <div className="md3-card-meta-item">
-                        <span className="md3-card-meta-label">Dept Type</span>
-                        <span className="md3-status-chip md3-card-btn-secondary" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '11px', fontWeight: 600 }}>
-                          {lab.departmentId?.type || 'DIAGNOSTIC'}
-                        </span>
-                      </div>
-                      <div className="md3-card-meta-item">
-                        <span className="md3-card-meta-label">Catalog Size</span>
-                        <span className="md3-card-meta-value">{(lab.testCatalog?.length || 0)} test{lab.testCatalog?.length !== 1 ? 's' : ''}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="md3-data-card-actions">
-                    <button 
-                      onClick={() => setEditingLab(lab)}
-                      className="md3-card-btn md3-card-btn-outlined"
-                    >
-                      Edit Details
-                    </button>
-                    <button 
-                      onClick={() => handleEditLabCatalog(lab)}
-                      className="md3-card-btn md3-card-btn-outlined"
-                    >
-                      Test Catalog
-                    </button>
-                    <button 
-                      onClick={() => handleToggleLabStatus(lab._id, lab.name, lab.isActive)}
-                      className={`md3-card-btn ${lab.isActive ? 'md3-card-btn-outlined' : 'md3-card-btn-primary'}`}
-                    >
-                      {lab.isActive ? 'Deactivate' : 'Activate'}
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteLaboratory(lab._id, lab.name)}
-                      className="md3-card-btn md3-card-btn-error"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+            </div>
+          ) : isListView ? (
+            <div className="md3-paginated-content-fade" key={`list-${page}`} style={{ flex: 1, paddingBottom: '20px' }}>
+              <LaboratoryListView
+                laboratories={paginatedLabs}
+                onInspect={(lab) => setInspectingLab(lab)}
+                onEdit={(lab) => setEditingLab(lab)}
+                onEditCatalog={(lab) => handleEditLabCatalog(lab)}
+                onToggleStatus={(id, name, status) => handleToggleLabStatus(id, name, status)}
+                onDelete={(id, name) => handleDeleteLaboratory(id, name)}
+              />
+            </div>
+          ) : (
+            <div className="lab-card-grid md3-paginated-content-fade" key={`cards-${page}`} style={{ flex: 1, paddingBottom: '20px' }}>
+              {paginatedLabs.map((lab) => (
+                <LaboratoryCard
+                  key={lab._id}
+                  lab={lab}
+                  onInspect={(l) => setInspectingLab(l)}
+                  onEdit={(l) => setEditingLab(l)}
+                  onEditCatalog={(l) => handleEditLabCatalog(l)}
+                  onToggleStatus={(id, name, status) => handleToggleLabStatus(id, name, status)}
+                  onDelete={(id, name) => handleDeleteLaboratory(id, name)}
+                />
+              ))}
+            </div>
+          )}
 
           {/* Bottom Pagination */}
           {totalItems > 0 && (
@@ -225,11 +257,14 @@ const AdminLabManager = () => {
         </div>
       </section>
 
-      <Md3Fab 
-        icon={<Icon.Plus />} 
-        label="Add Lab" 
-        onClick={() => setIsCreateLaboratoryOpen(true)} 
-        style={{ position: 'fixed', bottom: '32px', right: '32px' }} 
+      {/* Slide-Over Laboratory Detail Sheet */}
+      <LaboratoryDetailSheet
+        lab={inspectingLab}
+        isOpen={!!inspectingLab}
+        onClose={() => setInspectingLab(null)}
+        onEdit={(lab) => { setInspectingLab(null); setEditingLab(lab); }}
+        onEditCatalog={(lab) => { setInspectingLab(null); handleEditLabCatalog(lab); }}
+        onToggleStatus={(id, name, status) => { setInspectingLab(null); handleToggleLabStatus(id, name, status); }}
       />
 
       <CreateLaboratorySheet

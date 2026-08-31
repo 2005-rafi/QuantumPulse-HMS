@@ -13,6 +13,7 @@ router.get('/', authenticate, controller.list);
 router.get('/generate-username', authenticate, requirePermission('MANAGE_USERS'), controller.generateUsername);
 router.post('/upload-document', authenticate, requirePermission('MANAGE_USERS'), upload.single('document'), handleUploadError, controller.uploadCertificate);
 router.get('/certificates/:filename', authenticate, controller.downloadCertificate);
+router.get('/:id/verification-document', authenticate, controller.downloadCertificate);
 
 router.get('/:id', authenticate, requirePermissionOrSelf('MANAGE_USERS', 'id'), controller.getById);
 router.put('/:id', authenticate, requirePermission('MANAGE_USERS'), validate(updateStaffSchema), controller.update);

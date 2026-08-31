@@ -800,51 +800,69 @@
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
   position: relative;
-  background-color: var(--md-sys-color-surface-container-low);
+  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
   border-radius: var(--md-sys-shape-corner-full, 9999px);
-  padding: 0;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 3px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
   width: fit-content;
   box-sizing: border-box;
-  height: var(--md-comp-tab-height, 34px);
+  height: var(--md-comp-tab-height, 36px);
   align-items: center;
+  overflow: hidden;
 }
 
 .md3-tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--md-spacing-xs, 4px);
-  padding: var(--md-comp-tab-padding, 4px 14px);
+  gap: var(--md-spacing-xs, 6px);
+  padding: var(--md-comp-tab-padding, 4px 16px);
   height: 100%;
   background: transparent;
   border: none;
   cursor: pointer;
-  font-size: var(--md-comp-tab-font-size, 0.8rem);
+  font-size: var(--md-comp-tab-font-size, 0.82rem);
   font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #797667);
   border-radius: var(--md-sys-shape-corner-full, 9999px);
   z-index: 1;
-  transition: color var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-standard);
+  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1), transform 0.15s ease;
   white-space: nowrap;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .md3-tab:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary);
-  outline-offset: -2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary, #6b5f19);
 }
 
 .md3-tab:hover {
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+.md3-tab:active {
+  transform: scale(0.96);
 }
 
 .md3-tab--active {
-  color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary, #6b5f19);
+  font-weight: 700;
+}
+
+.md3-tab__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .md3-tab__icon svg {
-  width: var(--md-comp-tab-icon-size, 15px);
-  height: var(--md-comp-tab-icon-size, 15px);
+  width: var(--md-comp-tab-icon-size, 16px);
+  height: var(--md-comp-tab-icon-size, 16px);
+}
+
+.md3-tab__icon .material-symbols-rounded {
+  font-size: 17px;
 }
 
 .md3-tabs__indicator {
@@ -855,7 +873,7 @@
   /* width and transform set by inline styles */
   z-index: 0;
   pointer-events: none;
-  transition: transform var(--md-sys-motion-duration-medium) var(--md-sys-motion-easing-emphasized);
+  transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .md3-tabs__indicator::after {
@@ -865,8 +883,9 @@
   bottom: 3px;
   left: 3px;
   right: 3px;
-  background-color: var(--md-sys-color-secondary-container);
+  background-color: var(--md-sys-color-secondary-container, #e8e2d0);
   border-radius: var(--md-sys-shape-corner-full, 9999px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* ──────────────────────────────────────────────────────

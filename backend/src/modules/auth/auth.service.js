@@ -150,6 +150,7 @@ const me = async (userId) => {
 
   return {
     id: userId,
+    username: identity.username,
     staffId: staff?._id ? staff._id.toString() : '',
     fullName: staff?.fullName || 'Authenticated User',
     employeeId: staff?.employeeId || '',
@@ -161,4 +162,55 @@ const me = async (userId) => {
   };
 };
 
-module.exports = { login, logout, refresh, me };
+/**
+ * Unlock: re-authenticate user during lock screen and rotate session tokens.
+ */
+const unlock = async (userId, username, password) => {
+  let identity = null;
+  if (userId) {
+    identity = await identityService.findByIdWithSecrets(userId);
+  }
+  if (!identity && username) {
+    identity = await identityService.findByUsername(username);
+  }
+  if (!identity) {
+    throw new AppError('AUTH_001');
+  }
+
+  // Check account status
+  if (identity.accountStatus === ACCOUNT_STATUS.LOCKED) throw new AppError('AUTH_004');
+  if (identity.accountStatus === ACCOUNT_STATUS.DISABLED) throw new AppError('AUTH_005');
+  if (identity.accountStatus !== ACCOUNT_STATUS.ACTIVE) throw new AppError('AUTH_001');
+
+  // Verify password
+  const isMatch = await bcrypt.compare(password, identity.passwordHash);
+  if (!isMatch) {
+    const updated = await identityService.incrementFailedAttempts(identity._id);
+    if (updated.failedLoginAttempts >= config.maxFailedAttempts) {
+      await identityService.lockAccount(identity._id);
+      logger.warn('Account locked after failed unlock attempts', { userId: identity._id });
+    }
+    throw new AppError('AUTH_001');
+  }
+
+  // Reset failed attempts
+  await identityService.resetFailedAttempts(identity._id);
+
+  // Load staff & build payload
+  const staff = identity.staffId ? await staffService.getById(identity.staffId.toString()) : null;
+  const payload = await buildUserPayload(identity, staff);
+
+  const accessToken = signAccessToken(payload);
+  const refreshToken = signRefreshToken({ userId: identity._id.toString() });
+
+  const hash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+  await identityService.updateRefreshToken(identity._id.toString(), hash);
+
+  return {
+    user: payload,
+    accessToken,
+    refreshToken,
+  };
+};
+
+module.exports = { login, logout, refresh, me, unlock };

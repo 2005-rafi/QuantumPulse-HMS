@@ -43,4 +43,24 @@ const me = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
-module.exports = { login, logout, refresh, me };
+const unlock = async (req, res, next) => {
+  try {
+    const { password, username } = req.body;
+    const userId = req.user?.userId || null;
+    const result = await service.unlock(userId, username, password);
+    
+    // Log audit event
+    auditService.logEvent(
+      result.user.staffId,
+      result.user.role,
+      'TERMINAL_UNLOCKED',
+      null,
+      { userId: result.user.userId },
+      req.ip
+    );
+
+    return success(res, result, 'Workstation unlocked successfully');
+  } catch (err) { next(err); }
+};
+
+module.exports = { login, logout, refresh, me, unlock };

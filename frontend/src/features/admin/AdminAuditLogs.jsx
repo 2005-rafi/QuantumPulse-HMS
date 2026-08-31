@@ -1,16 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { auditAPI } from '../../services/auditAPI';
-import { Icon } from '../../components/md3/Md3Widgets';
 import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import Md3Pagination from '../../components/md3/Md3Pagination';
+import { Md3SearchBar } from '../../components/md3/AdminControls';
+import { useAuditLayoutPreference } from '../../hooks/useAuditLayoutPreference';
+import AuditCard from '../../components/audit/AuditCard';
+import AuditListView from '../../components/audit/AuditListView';
+import AuditDetailDialog from '../../components/audit/AuditDetailDialog';
+import './AdminAuditLogs.css';
 
-const AdminAuditLogs = () => {
+const CATEGORY_FILTERS = [
+  { id: 'ALL', label: 'All Audits', icon: 'list_alt' },
+  { id: 'AUTH', label: 'Auth & Access', icon: 'lock' },
+  { id: 'PATIENT', label: 'Patient Data', icon: 'personal_injury' },
+  { id: 'STAFF', label: 'Staff & Governance', icon: 'badge' },
+  { id: 'BILLING', label: 'Financial & Billing', icon: 'payments' },
+];
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+
+export const AdminAuditLogs = () => {
+  const { layout, setLayout, isCardView, isListView } = useAuditLayoutPreference();
   const [auditLogs, setAuditLogs] = useState([]);
   const [auditPage, setAuditPage] = useState(1);
   const [auditPageSize, setAuditPageSize] = useState(20);
   const [auditTotalItems, setAuditTotalItems] = useState(0);
-  const [selectedAuditDetail, setSelectedAuditDetail] = useState(null);
+  const [selectedAuditLog, setSelectedAuditLog] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeCategory, setActiveCategory] = useState('ALL');
 
   useEffect(() => {
     fetchAuditLogs(auditPage, auditPageSize);
@@ -35,109 +53,196 @@ const AdminAuditLogs = () => {
     setAuditPage(1);
   };
 
-  const showTopPagination = auditTotalItems > 20;
+  // Client-side category and query filtering on the loaded batch for ultra-responsive feedback
+  const filteredLogs = useMemo(() => {
+    return auditLogs.filter((log) => {
+      // Category filter
+      if (activeCategory !== 'ALL') {
+        const act = (log.action || '').toUpperCase();
+        if (activeCategory === 'AUTH' && !(act.includes('LOGIN') || act.includes('LOGOUT') || act.includes('AUTH') || act.includes('TERMINAL') || act.includes('PASSWORD'))) {
+          return false;
+        }
+        if (activeCategory === 'PATIENT' && !(act.includes('PATIENT') || act.includes('ADMISSION') || act.includes('DISCHARGE') || act.includes('CLINICAL') || act.includes('VITALS'))) {
+          return false;
+        }
+        if (activeCategory === 'STAFF' && !(act.includes('STAFF') || act.includes('ROLE') || act.includes('PERMISSION') || act.includes('DEPT') || act.includes('HOD'))) {
+          return false;
+        }
+        if (activeCategory === 'BILLING' && !(act.includes('BILL') || act.includes('PAYMENT') || act.includes('TARIFF') || act.includes('LEDGER') || act.includes('ADJUSTMENT'))) {
+          return false;
+        }
+      }
+
+      // Search query filter
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        const actorName = (log.actorId?.fullName || log.actorId?.username || '').toLowerCase();
+        const action = (log.action || '').toLowerCase();
+        const targetId = (log.targetId || '').toLowerCase();
+        const role = (log.actorRole || '').toLowerCase();
+        const ip = (log.ipAddress || '').toLowerCase();
+        return actorName.includes(q) || action.includes(q) || targetId.includes(q) || role.includes(q) || ip.includes(q);
+      }
+
+      return true;
+    });
+  }, [auditLogs, activeCategory, searchQuery]);
 
   return (
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <section className="info-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-          <div>
-            <h2 style={{ margin: 0, color: 'var(--md-sys-color-primary)' }}>System Audit Logs</h2>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Comprehensive security and operational event ledger
-            </p>
+        
+        {/* ── HEADER & SEARCH BAR ROW ── */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', flex: 1 }}>
+            <div>
+              <h2 style={{ color: 'var(--md-sys-color-primary, #00668b)', margin: 0, fontSize: '1.4rem', fontWeight: 700 }}>
+                System Audit Logs
+              </h2>
+              <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
+                Comprehensive security and clinical operational ledger
+              </p>
+            </div>
+
+            <div style={{ maxWidth: '340px', flex: 1 }}>
+              <Md3SearchBar
+                value={searchQuery}
+                onChange={setSearchQuery}
+                placeholder="Search by action, actor, target or IP..."
+              />
+            </div>
+          </div>
+
+          {/* View Mode Switcher: Cards vs List */}
+          <div className="md3-view-toggle-group" role="group" aria-label="Audit logs layout view mode">
+            <button
+              type="button"
+              className={`md3-view-toggle-btn ${isCardView ? 'active' : ''}`}
+              onClick={() => setLayout('cards')}
+              title="Card Grid View"
+              aria-pressed={isCardView}
+            >
+              <span className="material-symbols-rounded">grid_view</span>
+              <span>Cards</span>
+            </button>
+            <button
+              type="button"
+              className={`md3-view-toggle-btn ${isListView ? 'active' : ''}`}
+              onClick={() => setLayout('list')}
+              title="Tabular List View"
+              aria-pressed={isListView}
+            >
+              <span className="material-symbols-rounded">view_list</span>
+              <span>List</span>
+            </button>
           </div>
         </div>
 
-        {/* Top Pagination (rendered when total records exceed 20) */}
-        {showTopPagination && (
-          <Md3Pagination
-            currentPage={auditPage}
-            totalItems={auditTotalItems}
-            pageSize={auditPageSize}
-            onPageChange={setAuditPage}
-            onPageSizeChange={handlePageSizeChange}
-            itemLabel="audit logs"
-            position="top"
-          />
+        {/* ── DOMAIN CATEGORY QUICK FILTERS ── */}
+        <div className="md3-audit-chips-bar" role="tablist" aria-label="Audit Domain Filters">
+          {CATEGORY_FILTERS.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`md3-audit-chip-btn ${isActive ? 'is-active' : ''}`}
+                onClick={() => setActiveCategory(cat.id)}
+                role="tab"
+                aria-selected={isActive}
+              >
+                <span className="material-symbols-rounded">{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── TOP PAGINATION (with 100 items per page option) ── */}
+        {auditTotalItems > 0 && (
+          <div style={{ marginTop: '8px', marginBottom: '8px' }}>
+            <Md3Pagination
+              currentPage={auditPage}
+              totalItems={auditTotalItems}
+              pageSize={auditPageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={setAuditPage}
+              onPageSizeChange={handlePageSizeChange}
+              itemLabel="audit events"
+              position="top"
+            />
+          </div>
         )}
 
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="md3-data-grid md3-paginated-content-fade" key={`${auditPage}-${auditPageSize}`} style={{ flex: 1, paddingBottom: '20px' }}>
-            {auditLogs.length === 0 ? (
-              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
-                <Md3EmptyState
-                  icon="history"
-                  title="No audit events recorded"
-                  description="System activity and security events will appear here chronologically as actions are performed."
-                  variant="card"
+        {/* ── MAIN CONTENT AREA (CARDS OR LIST) ── */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          {loading ? (
+            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              Loading audit ledger...
+            </div>
+          ) : filteredLogs.length === 0 ? (
+            <div style={{ padding: '24px 0', width: '100%' }}>
+              <Md3EmptyState
+                icon="history"
+                title={searchQuery || activeCategory !== 'ALL' ? 'No matching audit events' : 'No audit events recorded'}
+                description={
+                  searchQuery || activeCategory !== 'ALL'
+                    ? 'Try clearing the search query or selecting a different category filter.'
+                    : 'System activity and security events will appear here chronologically as actions are performed.'
+                }
+                variant="card"
+              />
+            </div>
+          ) : isCardView ? (
+            <div
+              className="audit-card-grid md3-paginated-content-fade"
+              key={`cards-${auditPage}-${auditPageSize}`}
+              style={{ flex: 1, paddingBottom: '20px' }}
+            >
+              {filteredLogs.map((log) => (
+                <AuditCard
+                  key={log._id}
+                  log={log}
+                  onInspect={(item) => setSelectedAuditLog(item)}
                 />
-              </div>
-            ) : (
-              auditLogs.map(log => (
-                <div key={log._id} className="md3-data-card" style={{ gap: '8px' }}>
-                  <div className="md3-data-card-header">
-                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <h3 className="md3-data-card-title">{log.action}</h3>
-                      <span className="md3-data-card-subtitle">{new Date(log.timestamp).toLocaleString()}</span>
-                    </div>
-                    <span className="md3-status-chip md3-card-btn-secondary">
-                      {log.actorRole}
-                    </span>
-                  </div>
-                  <div className="md3-data-card-body" style={{ marginTop: '8px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div><span style={{ fontWeight: '500', color: 'var(--md-sys-color-on-surface-variant)' }}>Actor:</span> {log.actorId?.fullName || log.actorId?.username || 'System'}</div>
-                      <div><span style={{ fontWeight: '500', color: 'var(--md-sys-color-on-surface-variant)' }}>Target ID:</span> <span style={{ fontFamily: 'monospace', fontSize: '12px', background: 'var(--md-sys-color-surface-container-high)', color: 'var(--md-sys-color-on-surface)', padding: '2px 4px', borderRadius: '4px' }}>{log.targetId || '—'}</span></div>
-                    </div>
-                  </div>
-                  <div className="md3-data-card-actions" style={{ paddingTop: '8px', marginTop: '8px' }}>
-                    <button 
-                      onClick={() => setSelectedAuditDetail(log.details)} 
-                      className="md3-card-btn md3-card-btn-secondary"
-                      style={{ height: '36px' }}
-                    >
-                      View Payload JSON
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              className="md3-paginated-content-fade"
+              key={`list-${auditPage}-${auditPageSize}`}
+              style={{ flex: 1, paddingBottom: '20px' }}
+            >
+              <AuditListView
+                auditLogs={filteredLogs}
+                onInspect={(item) => setSelectedAuditLog(item)}
+              />
+            </div>
+          )}
 
-          {/* Bottom Pagination */}
+          {/* ── BOTTOM PAGINATION (with 100 items per page option) ── */}
           {auditTotalItems > 0 && (
             <Md3Pagination
               currentPage={auditPage}
               totalItems={auditTotalItems}
               pageSize={auditPageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
               onPageChange={setAuditPage}
               onPageSizeChange={handlePageSizeChange}
-              itemLabel="audit logs"
+              itemLabel="audit events"
               position="bottom"
             />
           )}
         </div>
       </section>
 
-      {selectedAuditDetail && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '24px 16px', zIndex: 1000, overflowY: 'auto' }}>
-          <div style={{ background: 'var(--md-sys-color-surface)', color: 'var(--md-sys-color-on-surface)', border: '1px solid var(--md-sys-color-outline-variant)', padding: '20px', borderRadius: '16px', maxWidth: '600px', width: '100%', maxHeight: '80vh', overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.3)', marginTop: '20px' }}>
-            <h3 style={{ marginTop: 0, borderBottom: '1px solid var(--md-sys-color-outline-variant)', paddingBottom: '10px', color: 'var(--md-sys-color-primary)' }}>Audit Event Payload</h3>
-            <pre style={{ background: 'var(--md-sys-color-surface-container-high)', color: 'var(--md-sys-color-on-surface)', padding: '15px', borderRadius: '8px', overflowX: 'auto', fontSize: '13px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
-              {JSON.stringify(selectedAuditDetail, null, 2)}
-            </pre>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
-              <button 
-                onClick={() => setSelectedAuditDetail(null)} 
-                className="md3-card-btn md3-card-btn-primary"
-                style={{ width: 'auto', padding: '8px 24px' }}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* ── TOP-CENTER AUDIT PAYLOAD INSPECTION MODAL ── */}
+      {selectedAuditLog && (
+        <AuditDetailDialog
+          log={selectedAuditLog}
+          isOpen={!!selectedAuditLog}
+          onClose={() => setSelectedAuditLog(null)}
+        />
       )}
     </div>
   );

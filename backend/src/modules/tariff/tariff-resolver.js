@@ -1,4 +1,4 @@
-﻿const TariffRule = require('./tariff-rule.model');
+const TariffRule = require('./tariff-rule.model');
 
 /**
  * TariffResolver -- Single authority for price resolution.
@@ -114,6 +114,14 @@ class TariffResolver {
       if (!context.appointmentType || s.appointmentType !== context.appointmentType) return -Infinity;
       score += 1;
     }
+    if (s.wardClass) {
+      if (!context.wardClass || s.wardClass !== context.wardClass) return -Infinity;
+      score += 6;
+    }
+    if (s.bedFeature) {
+      if (!context.bedFeature || s.bedFeature !== context.bedFeature) return -Infinity;
+      score += 3;
+    }
 
     return score;
   }
@@ -123,6 +131,8 @@ class TariffResolver {
     const s = rule.scope || {};
     if (s.staffId) parts.push(`Doctor override`);
     if (s.departmentId) parts.push(`dept: ${rule.scope.departmentId}`);
+    if (s.wardClass) parts.push(`ward: ${s.wardClass}`);
+    if (s.bedFeature) parts.push(`feature: ${s.bedFeature}`);
     if (s.tariffGrade) parts.push(`grade: ${s.tariffGrade}`);
     if (s.visitType) parts.push(`visit: ${s.visitType}`);
     if (s.appointmentType) parts.push(`appt: ${s.appointmentType}`);

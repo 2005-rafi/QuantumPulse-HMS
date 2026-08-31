@@ -1,0 +1,190 @@
+/* ── Material Design 3 Clinical Laboratory List Table View ── */
+.md3-lab-list-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.md3-lab-list-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-lab-list-table thead {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.md3-lab-list-table th {
+  padding: 10px 14px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  white-space: nowrap;
+}
+
+.md3-lab-list-table td {
+  padding: 8px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, rgba(202, 196, 208, 0.5));
+  transition: background-color 0.15s ease;
+}
+
+.md3-lab-list-row:last-child td {
+  border-bottom: none;
+}
+
+.md3-lab-list-row:hover td {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.md3-lab-list-row.is-inactive {
+  opacity: 0.7;
+}
+
+/* ── Columns Width & Alignment ── */
+.col-lab-name {
+  min-width: 220px;
+}
+.col-lab-dept {
+  min-width: 180px;
+}
+.col-lab-type {
+  min-width: 140px;
+}
+.col-lab-catalog {
+  min-width: 130px;
+}
+.col-lab-status {
+  min-width: 90px;
+}
+.col-lab-actions {
+  min-width: 140px;
+  width: 140px;
+}
+.text-right {
+  text-align: right;
+}
+
+/* ── Cell: Lab Profile ── */
+.md3-lab-cell-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.md3-lab-profile-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.md3-lab-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-lab-code {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: 1px;
+}
+
+/* ── Cell: Department ── */
+.md3-lab-dept-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.80rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+/* ── Cell: Type ── */
+.md3-lab-type-badge {
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--md-sys-color-tertiary-container, #ffd8e4);
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
+  display: inline-block;
+}
+
+/* ── Cell: Catalog Pill ── */
+.md3-lab-catalog-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-surface-container-highest, #ece6f0);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* ── Table Action Buttons ── */
+.md3-lab-table-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.md3-lab-table-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md3-lab-table-btn span {
+  font-size: 16px;
+}
+
+.md3-lab-table-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #00668b);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+.md3-lab-table-btn--error:hover {
+  background: #ba1a1a;
+  color: #ffffff;
+  border-color: #ba1a1a;
+}
+
+.md3-lab-table-btn--success:hover {
+  background: #2e7d32;
+  color: #ffffff;
+  border-color: #2e7d32;
+}

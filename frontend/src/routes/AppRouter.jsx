@@ -1,3 +1,9 @@
+/**
+ * routes/AppRouter.jsx
+ * Centralized React Router Guard Components (ProtectedRoute, RoleRoute, PermissionRoute, GuestRoute).
+ * Enforces fine-grained authentication and permission validation (HIPAA § 164.312(a)(1) / OWASP ASVS V4.1).
+ */
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -37,14 +43,60 @@ export const ProtectedRoute = ({ children }) => {
 };
 
 /**
- * RoleRoute — redirects to the user's correct dashboard if role doesn't match.
+ * RoleRoute — redirects to user's assigned dashboard if role or fine-grained permission doesn't match.
  */
-export const RoleRoute = ({ role, children }) => {
-  const { user } = useAuth();
+export const RoleRoute = ({ role, permission, requires, children }) => {
+  const { user, hasPermission } = useAuth();
 
-  if (user && user.role !== role && user.role !== 'Administrator') {
-    const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
-    return <Navigate to={correctRoute} replace />;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 1. Role verification
+  if (role) {
+    const allowedRoles = Array.isArray(role) ? role : [role];
+    if (!allowedRoles.includes(user.role) && user.role !== 'Administrator') {
+      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
+      return <Navigate to={correctRoute} replace />;
+    }
+  }
+
+  // 2. Permission verification (if fine-grained requirement specified)
+  const reqPermissions = permission || requires;
+  if (reqPermissions && user.role !== 'Administrator') {
+    const perms = Array.isArray(reqPermissions) ? reqPermissions : [reqPermissions];
+    const hasAccess = perms.some((p) => hasPermission(p));
+    if (!hasAccess) {
+      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
+      return <Navigate to={correctRoute} replace />;
+    }
+  }
+
+  return children;
+};
+
+/**
+ * PermissionRoute — guards child routes with required permissions.
+ */
+export const PermissionRoute = ({ permission, requires, children }) => {
+  const { user, hasPermission } = useAuth();
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === 'Administrator') {
+    return children;
+  }
+
+  const reqPermissions = permission || requires;
+  if (reqPermissions) {
+    const perms = Array.isArray(reqPermissions) ? reqPermissions : [reqPermissions];
+    const hasAccess = perms.some((p) => hasPermission(p));
+    if (!hasAccess) {
+      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
+      return <Navigate to={correctRoute} replace />;
+    }
   }
 
   return children;
@@ -64,4 +116,11 @@ export const GuestRoute = ({ children }) => {
   }
 
   return children;
+};
+
+export default {
+  ProtectedRoute,
+  RoleRoute,
+  PermissionRoute,
+  GuestRoute,
 };

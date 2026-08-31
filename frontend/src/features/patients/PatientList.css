@@ -28,18 +28,32 @@
   margin-bottom: 0;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 600px) {
   .patient-list-header {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1.25rem;
   }
 }
 
-@media (min-width: 1200px) {
+@media (max-width: 599px) {
   .patient-list-header {
-    padding: 0 1.25rem;
+    padding: 0 4px;
+    gap: 6px;
+  }
+
+  .patient-list-controls-layer {
+    padding: 4px 4px !important;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .patient-list-header {
+    padding: 0 16px;
+  }
+
+  .patient-list-controls-layer {
+    padding: 4px 16px !important;
   }
 }
 
@@ -260,11 +274,67 @@
   }
 }
 
-/* ── MD3 Segmented View Toggle Group ── */
+/* ── MD3 Header Actions & Register Button ── */
 .patient-list-header-actions {
   display: flex;
   align-items: center;
   gap: var(--md-spacing-s, 8px);
+  flex-wrap: wrap;
+}
+
+.patient-list-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--md-comp-toggle-group-height, 32px);
+  padding: 0 12px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background-color: var(--md-sys-color-surface-container-highest, #ece6da);
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.patient-list-export-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #e0d9cc);
+  transform: translateY(-1px);
+}
+
+.patient-list-export-btn .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--md-sys-color-primary, #6b5f19);
+}
+
+.patient-list-register-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--md-comp-toggle-group-height, 32px);
+  padding: 0 12px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  background-color: var(--md-sys-color-primary, #6b5f19);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border: 1px solid var(--md-sys-color-primary, #6b5f19);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.patient-list-register-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6b5f19) 88%, white 12%);
+  transform: translateY(-1px);
+}
+
+.patient-list-register-btn .material-symbols-rounded {
+  font-size: 16px;
 }
 
 .md3-view-toggle-group {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import Md3Pagination from '../../components/md3/Md3Pagination';
@@ -192,20 +193,23 @@ const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.45)',
-        backdropFilter: 'blur(3px)',
-        WebkitBackdropFilter: 'blur(3px)',
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(15, 23, 42, 0.38)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
-        padding: '24px 16px',
+        padding: '36px 16px 24px',
         zIndex: 2000,
         overflowY: 'auto',
+        boxSizing: 'border-box',
       }}
       onClick={onClose}
     >
@@ -479,7 +483,8 @@ const CommandCenterDetailDialog = ({ isOpen, onClose, type }) => {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

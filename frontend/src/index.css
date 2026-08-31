@@ -28,3 +28,28 @@ html.theme-transitioning *::after {
   transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
   transition-delay: 0s !important;
 }
+
+/* ── Pure Material Design 3 Glassmorphism System & Tokens ── */
+:root {
+  --md-sys-glass-scrim: rgba(15, 23, 42, 0.38);
+  --md-sys-glass-blur: 8px;
+  --md-sys-glass-border: rgba(255, 255, 255, 0.2);
+}
+
+.md3-glass-scrim {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--md-sys-glass-scrim);
+  backdrop-filter: blur(var(--md-sys-glass-blur));
+  -webkit-backdrop-filter: blur(var(--md-sys-glass-blur));
+  z-index: 1300;
+  box-sizing: border-box;
+}
+
+.md3-glass-surface {
+  background-color: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18), 0 4px 12px rgba(0, 0, 0, 0.08);
+}

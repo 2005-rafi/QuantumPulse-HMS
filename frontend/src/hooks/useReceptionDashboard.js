@@ -65,9 +65,11 @@ export const useReceptionDashboard = () => {
     setSelectedPatient(patient);
   }, []);
 
-  const handleVisitCreated = useCallback(({ patient, visit }) => {
+  const handleVisitCreated = useCallback(({ patient, visit, isIpd, admission }) => {
     setIsRegSheetOpen(false);
-    setPrintData({ patient, visit });
+    if (!isIpd && visit) {
+      setPrintData({ patient, visit });
+    }
     setTotalPatients((prev) => prev + 1);
     setTodaysVisits((prev) => prev + 1);
   }, []);

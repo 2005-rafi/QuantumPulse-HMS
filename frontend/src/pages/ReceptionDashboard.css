@@ -280,41 +280,22 @@
   opacity: 0.5;
 }
 
-/* ── Responsive: Compact (mobile ≤ 599px) ── */
+/* ── Floating Action Button Dock (Portaled Viewport Dock) ── */
+.reception-fab-dock {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.18));
+}
+
+/* ── Responsive: Compact (mobile < 600px) ── */
 @media (max-width: 599px) {
-  .reception-header {
-    padding: 0 16px;
-    height: 56px;
-  }
-
-  .reception-brand-title {
-    font-size: 0.9rem;
-    max-width: 140px;
-  }
-
-  .reception-user-name {
-    display: none;
-  }
-
-  .reception-user-info {
-    display: none;
-  }
-
-  .reception-user-badge {
-    padding: 4px;
-    background: transparent;
-    border-color: transparent;
-    gap: 0;
-  }
-
-  .reception-stats-bar {
-    padding: 12px 12px;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
-
   .reception-main {
-    padding: 16px 12px 96px;
+    padding: 8px 8px 88px;
   }
 
   .reception-print-header {
@@ -325,47 +306,34 @@
   .profile-view-breadcrumb {
     display: none;
   }
+
+  .reception-fab-dock {
+    bottom: 16px;
+    right: 16px;
+  }
 }
 
-/* ── Responsive: Medium (tablet 600–1199px) ── */
-@media (min-width: 600px) and (max-width: 1199px) {
-  .reception-header {
-    padding: 0 20px;
-  }
-
-  .reception-stats-bar {
-    padding: 16px 20px;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
+/* ── Responsive: Medium (tablet 600–1023px) ── */
+@media (min-width: 600px) and (max-width: 1023px) {
   .reception-main {
-    padding: 24px 20px 96px;
+    padding: 12px 16px 84px;
+  }
+
+  .reception-fab-dock {
+    bottom: 20px;
+    right: 20px;
   }
 }
 
-/* ── Responsive: Expanded (desktop 1200px+) ── */
-@media (min-width: 1200px) {
-  .reception-header {
-    padding: 0 32px;
-  }
-
-  .reception-stats-bar {
-    padding: 20px 32px;
-    gap: 16px;
-  }
-
+/* ── Responsive: Expanded (desktop 1024px+) ── */
+@media (min-width: 1024px) {
   .reception-main {
-    padding: 32px 32px 100px;
+    padding: var(--md-spacing-m, 12px) 1.25rem 80px;
   }
-}
 
-/* --- FAB Dock --- */
-.reception-fab-dock {
-  position: fixed;
-  bottom: var(--md-spacing-xl);
-  right: var(--md-spacing-xl);
-  z-index: 100;
-  animation: md3ScaleIn 0.3s cubic-bezier(0.2, 0, 0, 1);
+  .reception-fab-dock {
+    bottom: var(--md-spacing-xl, 24px);
+    right: var(--md-spacing-xl, 24px);
+  }
 }
 

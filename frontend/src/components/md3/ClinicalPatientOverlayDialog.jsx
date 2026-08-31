@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { Icon } from './Md3Widgets';
@@ -263,20 +264,26 @@ const ClinicalPatientOverlayDialog = ({
     return list;
   }, [dataList, searchTerm, filterMode]);
 
-  // Keyboard shortcut: ESC to close
+  // Keyboard shortcut: ESC to close & body scroll lock
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && isOpen) {
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="c-overlay-backdrop" onClick={onClose}>
       <div
         className="c-overlay-container"
@@ -614,7 +621,8 @@ const ClinicalPatientOverlayDialog = ({
           </Md3Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -1,18 +1,20 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useConfig } from '../contexts/ConfigContext';
 import { useReceptionDashboard } from '../hooks/useReceptionDashboard';
 import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
+import { Md3Button } from '../components/md3/Md3FormComponents';
 import CommonHeader from '../components/shell/CommonHeader';
 import DashboardStatsBar from '../components/dashboard/DashboardStatsBar';
+import Md3ClinicalDrawer from '../components/md3/Md3ClinicalDrawer';
 import './ReceptionDashboard.css';
 
 /**
  * ReceptionDashboard — Layout & Navigation Shell Component
  *
  * SOLID:
- *   SRP  — Renders top shell, global stats, and child view outlet.
+ *   SRP  — Renders top shell, global stats, drawer navigation, and child view outlet.
  *   OCP  — Extend by adding child routes, not modifying this layout.
  *   DIP  — Depends on useReceptionDashboard abstraction.
  */
@@ -21,6 +23,7 @@ const ReceptionDashboard = () => {
   const config = useConfig();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const {
     selectedPatient,
@@ -44,10 +47,15 @@ const ReceptionDashboard = () => {
   const tabs = [
     { id: 'patients', label: 'Walk-in & Patients', icon: <Icon.Users /> },
     { id: 'appointments', label: 'Appointments', icon: <Icon.Calendar /> },
+    { id: 'bed-map', label: 'IPD Bed Map', icon: <span className="material-symbols-rounded">bed</span> },
   ];
 
   // Derive active tab directly from URL path
-  const activeTab = location.pathname.includes('/appointments') ? 'appointments' : 'patients';
+  const activeTab = location.pathname.includes('/bed-map')
+    ? 'bed-map'
+    : location.pathname.includes('/appointments')
+    ? 'appointments'
+    : 'patients';
 
   const handleTabChange = (tabId) => {
     navigate(`/dashboard/reception/${tabId}`);
@@ -72,17 +80,11 @@ const ReceptionDashboard = () => {
       value: todaysAppointments > 0 ? String(todaysAppointments) : '0',
       variant: 'primary',
     },
-    {
-      icon: <Icon.Activity />,
-      label: 'Active Module',
-      value: 'Reception',
-      variant: 'default',
-    },
   ];
 
   return (
     <div className="reception-page">
-      {/* ─── TOP APP BAR WITH TABS IN CENTER SLOT ─── */}
+      {/* ─── TOP APP BAR WITH TABS IN CENTER SLOT (DESKTOP) & DRAWER TRIGGER (MOBILE/TABLET) ─── */}
       <CommonHeader
         brandTitle={config?.SHORT_NAME || 'HMS'}
         brandSubtitle="Clinical Reception"
@@ -93,6 +95,32 @@ const ReceptionDashboard = () => {
             onChange={handleTabChange}
             className="reception-header-tabs"
           />
+        }
+        user={user}
+        onLogout={handleLogout}
+        onMenuClick={() => setIsDrawerOpen(true)}
+      />
+
+      {/* ─── CLINICAL NAVIGATION & ACTIVITIES DRAWER (MOBILE & TABLET) ─── */}
+      <Md3ClinicalDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        brandTitle={config?.SHORT_NAME || 'Quantum CareOne'}
+        brandSubtitle="Clinical Reception"
+        navItems={tabs}
+        activeTab={activeTab}
+        onNavigate={handleTabChange}
+        activities={stats}
+        actionSlot={
+          <Md3Button
+            variant="primary"
+            onClick={() => {
+              setIsDrawerOpen(false);
+              setIsRegSheetOpen(true);
+            }}
+          >
+            <Icon.Plus /> Register Patient
+          </Md3Button>
         }
         user={user}
         onLogout={handleLogout}
@@ -124,4 +152,5 @@ const ReceptionDashboard = () => {
 };
 
 export default ReceptionDashboard;
+
 

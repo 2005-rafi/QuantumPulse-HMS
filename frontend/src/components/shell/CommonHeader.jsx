@@ -26,7 +26,9 @@ const CommonHeader = ({
   centerSlot,
   user,
   onLogout,
-  extraMenuItems = []
+  extraMenuItems = [],
+  onMenuClick,
+  quickActionSlot,
 }) => {
   const navigate = useNavigate();
   const config = useConfig();
@@ -103,6 +105,17 @@ const CommonHeader = ({
     <header className="common-header" role="banner">
       {/* Brand Section */}
       <div className="common-header__left">
+        {onMenuClick && (
+          <button
+            type="button"
+            className="common-header__menu-trigger"
+            onClick={onMenuClick}
+            aria-label="Open navigation drawer"
+            title="Navigation Menu"
+          >
+            <span className="material-symbols-rounded">menu</span>
+          </button>
+        )}
         <div className={`common-header__brand-icon ${hasLogo ? 'common-header__brand-icon--has-logo' : ''}`}>
           {resolvedLogo}
         </div>
@@ -114,15 +127,20 @@ const CommonHeader = ({
         </div>
       </div>
 
-      {/* Center Slot (Tabs, Search Bar) */}
+      {/* Center Slot (Tabs, Search Bar on Desktop/Tablet) */}
       {centerSlot && (
         <div className="common-header__center">
           {centerSlot}
         </div>
       )}
 
-      {/* User Section */}
+      {/* User Section & Quick Action Slot */}
       <div className="common-header__right">
+        {quickActionSlot && (
+          <div className="common-header__quick-action">
+            {quickActionSlot}
+          </div>
+        )}
         <button
           ref={triggerRef}
           className="common-header__user-trigger"

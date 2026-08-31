@@ -1,0 +1,289 @@
+/* ==========================================================================
+   AuditCard.css — Pure Material 3 Clinical System Audit Card
+   Compact 5-Column Responsive Multi-Card Grid Component
+   ========================================================================== */
+
+.md3-audit-card {
+  position: relative;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+  height: fit-content;
+  align-self: start;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  user-select: none;
+}
+
+.md3-audit-card:hover {
+  background-color: var(--md-sys-color-surface-container, #f3ede8);
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.md3-audit-card--selected {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+/* Subtle Interactive Rail */
+.md3-audit-card-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: transparent;
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1), background-color 180ms ease;
+}
+
+.md3-audit-card:hover .md3-audit-card-rail {
+  background-color: var(--md-sys-color-primary, #00668b);
+  transform: scaleY(1);
+}
+
+/* ── HEADER ROW ── */
+.md3-audit-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.md3-audit-card-avatar-wrap {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.md3-audit-card-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.md3-audit-card-name {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-audit-card-role-line {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-audit-card-badges {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.md3-audit-role-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  background-color: var(--md-sys-color-surface-container-highest, #ece6f0);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-audit-role-pill--admin {
+  background-color: var(--md-sys-color-primary-container, #c2e8ff);
+  color: var(--md-sys-color-on-primary-container, #004d67);
+}
+
+.md3-audit-role-pill--doctor {
+  background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
+}
+
+.md3-audit-role-pill--nurse {
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* ── SUB-HEADER: ACTION CHIP & TIMESTAMP ── */
+.md3-audit-card-sub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.md3-audit-action-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: inherit;
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 65%;
+  background: var(--md-sys-color-surface-container, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-audit-action-badge--auth {
+  background: #e0f2fe;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.md3-audit-action-badge--patient {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border-color: #e9d5ff;
+}
+
+.md3-audit-action-badge--billing {
+  background: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+.md3-audit-action-badge--security {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.md3-audit-time-text {
+  font-size: 0.70rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+}
+
+/* ── CARD BODY INSIGHTS ── */
+.md3-audit-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+  border-top: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+  border-bottom: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-audit-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.73rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.25;
+}
+
+.md3-audit-meta-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.md3-audit-target-code {
+  font-family: monospace;
+  font-size: 0.70rem;
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+/* ── CARD ACTION BUTTONS ── */
+.md3-audit-card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.md3-audit-btn {
+  flex: 1;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  gap: 4px;
+}
+
+.md3-audit-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #00668b);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+.md3-audit-btn .material-symbols-rounded {
+  font-size: 15px;
+}
+
+/* ── Audit Card Grid Layout (5-column MD3 Adaptive) ── */
+.audit-card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: start;
+  align-content: start;
+}
+
+@media (max-width: 1600px) {
+  .audit-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1280px) {
+  .audit-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .audit-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .audit-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

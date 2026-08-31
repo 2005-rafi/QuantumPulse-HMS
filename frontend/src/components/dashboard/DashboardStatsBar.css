@@ -14,28 +14,27 @@
   box-sizing: border-box;
 }
 
-/* Responsive: Medium */
-@media (min-width: 600px) and (max-width: 1199px) {
+/* Responsive: Medium (Tablet 600px - 1023px) */
+@media (min-width: 600px) and (max-width: 1023px) {
   .dashboard-stats-bar {
-    padding: var(--md-comp-stats-bar-padding, 6px 12px);
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--md-comp-stats-bar-gap, 8px);
+    padding: 8px 16px;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 8px;
   }
 }
 
-/* Responsive: Compact */
+/* Responsive: Compact (Mobile < 600px) — Hidden on mobile screen (stats accessible in drawer) */
 @media (max-width: 599px) {
   .dashboard-stats-bar {
-    padding: var(--md-spacing-xs, 4px) var(--md-spacing-s, 8px);
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--md-spacing-xs, 4px);
+    display: none !important;
   }
 }
 
-/* Responsive: Desktop */
-@media (min-width: 1200px) {
+/* Responsive: Desktop (>= 1024px) */
+@media (min-width: 1024px) {
   .dashboard-stats-bar {
     padding: var(--md-comp-stats-bar-padding, 6px 16px);
+    grid-template-columns: repeat(var(--stats-count, 4), 1fr);
     gap: var(--md-comp-stats-bar-gap, 8px);
   }
 }

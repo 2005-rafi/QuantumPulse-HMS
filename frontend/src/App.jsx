@@ -14,19 +14,50 @@ const GlobalApiInterceptor = ({ children }) => {
 
   useEffect(() => {
     registerErrorCallback((error) => {
+      const responseData = error.response?.data;
+      const detailedMessage =
+        responseData?.message ||
+        responseData?.detail ||
+        error.apiMessage ||
+        error.userMessage ||
+        'An unexpected error occurred.';
+
       if (error.isRateLimit) {
-        showError('Rate Limit Exceeded', error.apiMessage);
+        showError('Rate Limit Exceeded', detailedMessage);
       } else if (error.response?.status === 403) {
-        showError('Access Denied', 'You do not have permission to perform this action.');
-      } else if (error.response?.status === 400 && error.isValidationError) {
-        showError('Validation Error', error.apiMessage);
+        showError('Access Denied', detailedMessage);
+      } else if (error.response?.status === 400 || error.response?.status === 422) {
+        showError('Validation & Requirements Notice', detailedMessage);
+      } else if (error.response?.status === 409) {
+        showError('Duplicate Conflict', detailedMessage);
       } else if (error.response?.status >= 500) {
-        showError('Server Error', 'A system error occurred. Please contact IT support.');
+        showError('Server Error', detailedMessage);
       }
     });
 
     return () => registerErrorCallback(null);
   }, [showError]);
+
+  return children;
+};
+
+/**
+ * CrossTabAuthSync — Synchronizes authentication logout state across browser tabs.
+ */
+const CrossTabAuthSync = ({ children }) => {
+  useEffect(() => {
+    const handleStorage = (e) => {
+      if (e.key === 'hms_secure_ref_token' && !e.newValue) {
+        // Token was cleared in another tab
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   return children;
 };
@@ -38,9 +69,11 @@ const App = () => {
   return (
     <ToastProvider>
       <GlobalApiInterceptor>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
+        <CrossTabAuthSync>
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </CrossTabAuthSync>
       </GlobalApiInterceptor>
     </ToastProvider>
   );

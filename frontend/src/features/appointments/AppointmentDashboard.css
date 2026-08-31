@@ -17,9 +17,31 @@
   box-sizing: border-box;
 }
 
-@media (max-width: 1024px) {
+@media (min-width: 600px) and (max-width: 1023px) {
   .appt-stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 599px) {
+  .appt-stats-grid {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    gap: 8px;
+    padding-bottom: 2px;
+  }
+
+  .appt-stats-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .appt-stat-card {
+    flex: 0 0 calc(50% - 4px);
+    min-width: 140px;
+    scroll-snap-align: start;
   }
 }
 
@@ -194,6 +216,36 @@
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: var(--md-spacing-xs, 6px);
   width: 100%;
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .appt-filters-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+}
+
+@media (max-width: 599px) {
+  .appt-filters-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .appt-filters-actions {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .appt-filters-actions .appt-filter-btn {
+    flex: 1 1 calc(50% - 6px);
+    justify-content: center;
+    height: 32px !important;
+  }
+
+  .appt-filters-actions .appt-filter-btn--primary {
+    flex: 1 1 100%;
+    height: 34px !important;
+  }
 }
 
 .appt-filter-item {
@@ -674,21 +726,20 @@
   color: var(--md-sys-color-error, #ba1a1a);
 }
 
-/* ── MODALS & DIALOGS (Pure Material 3 Centered Elevation) ── */
+/* ── MODALS & DIALOGS (Pure Material 3 Top-Center Form Layout) ── */
 .appt-modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   margin: 0;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.52); /* MD3 Scrim — Full screen infinite coverage on X & Y axes */
-  z-index: 9999;
+  padding: 48px 16px 24px;
+  background-color: rgba(15, 23, 42, 0.38);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2000;
   display: flex;
-  align-items: center;
+  align-items: flex-start;  /* TOP-CENTER FOR FORM & DETAIL MODALS */
   justify-content: center;
   box-sizing: border-box;
   overflow-y: auto;

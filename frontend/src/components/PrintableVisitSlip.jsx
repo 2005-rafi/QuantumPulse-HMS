@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './md3/Md3Widgets';
 import { useConfig } from '../contexts/ConfigContext';
+import { useAuth } from '../context/AuthContext';
 import { CURRENCY_SYMBOL } from '../constants/currency';
 import './PrintableVisitSlip.css';
 
@@ -264,8 +265,25 @@ const SlipHeader = ({ title, subtitle, compact = false }) => {
   );
 };
 
+/* ─── Shared: Print Audit Watermark (HIPAA Integrity) ─────────────────────── */
+const PrintWatermark = ({ user, visit }) => {
+  const staffName = user?.staffDetails?.fullName || user?.username || 'Attending Staff';
+  const roleName = user?.role || 'Staff';
+  const timestamp = new Date().toLocaleString('en-IN', {
+    day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', hour12: true,
+  });
+
+  return (
+    <div className="print-audit-watermark">
+      CONFIDENTIAL MEDICAL RECORD • Printed by: {staffName} ({roleName}) • {timestamp} • Visit #{visit?.visitNumber || 'N/A'}
+    </div>
+  );
+};
+
 /* ─── Root Component ─────────────────────────────────────────────────────── */
 const PrintableVisitSlip = ({ patient, visit, onClose }) => {
+  const { user } = useAuth();
   if (!patient || !visit) return null;
 
   const handlePrint = () => {
@@ -274,9 +292,18 @@ const PrintableVisitSlip = ({ patient, visit, onClose }) => {
 
   const SlipsContent = () => (
     <>
-      <OpdVisitSlip patient={patient} visit={visit} />
-      <PaymentReceipt patient={patient} visit={visit} />
-      <QueueTokenCard patient={patient} visit={visit} />
+      <div className="print-slip-wrapper">
+        <OpdVisitSlip patient={patient} visit={visit} />
+        <PrintWatermark user={user} visit={visit} />
+      </div>
+      <div className="print-slip-wrapper">
+        <PaymentReceipt patient={patient} visit={visit} />
+        <PrintWatermark user={user} visit={visit} />
+      </div>
+      <div className="print-slip-wrapper">
+        <QueueTokenCard patient={patient} visit={visit} />
+        <PrintWatermark user={user} visit={visit} />
+      </div>
     </>
   );
 

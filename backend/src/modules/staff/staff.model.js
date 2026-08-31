@@ -94,8 +94,12 @@ const staffSchema = new mongoose.Schema(
     // Verification documents (optional)
     verificationDocument: {
       url: { type: String, default: null },
+      secureUrl: { type: String, default: null },
+      cloudinaryPublicId: { type: String, default: null },
+      resourceType: { type: String, default: 'image' },
       fileName: { type: String, default: null },
       sizeBytes: { type: Number, default: 0 },
+      mimeType: { type: String, default: null },
       uploadedAt: { type: Date, default: null },
     },
   },

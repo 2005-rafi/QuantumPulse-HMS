@@ -1,0 +1,46 @@
+/* ==========================================================================
+   AdminAuditLogs.css — Pure Material 3 Audit Management Styles
+   ========================================================================== */
+
+.md3-audit-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.md3-audit-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 180ms ease;
+}
+
+.md3-audit-chip-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.md3-audit-chip-btn:hover {
+  background: var(--md-sys-color-surface-container, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.md3-audit-chip-btn.is-active {
+  background: var(--md-sys-color-primary-container, #c2e8ff);
+  color: var(--md-sys-color-on-primary-container, #004d67);
+  border-color: var(--md-sys-color-primary, #00668b);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}

@@ -290,3 +290,96 @@
 .md3-btn-view-profile .material-symbols-rounded {
   font-size: var(--md-comp-action-icon-size, 14px);
 }
+
+/* ── Responsive Adaptations (MD3 Window Size Classes) ── */
+
+/* Medium: Tablet (600px - 1023px) */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .md3-patient-list-table {
+    font-size: 12.5px;
+  }
+
+  .md3-patient-list-table th,
+  .md3-patient-list-table td {
+    padding: 6px 10px;
+  }
+
+  .col-patient {
+    min-width: 170px;
+  }
+
+  .col-age {
+    min-width: 90px;
+  }
+
+  .col-phone {
+    min-width: 120px;
+  }
+
+  .col-location {
+    min-width: 100px;
+  }
+
+  .col-last-visit {
+    min-width: 120px;
+  }
+
+  .col-appointment {
+    min-width: 140px;
+  }
+}
+
+/* Compact: Mobile (< 600px) — Transform Table to Touch-Friendly Cards */
+@media (max-width: 599px) {
+  .md3-patient-list-table-container {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .md3-patient-list-table thead {
+    display: none;
+  }
+
+  .md3-patient-list-table,
+  .md3-patient-list-table tbody {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .md3-patient-list-row {
+    display: flex;
+    flex-direction: column;
+    background: var(--md-sys-color-surface, #ffffff);
+    border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+    border-radius: 14px;
+    padding: 12px 14px;
+    gap: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    box-sizing: border-box;
+  }
+
+  .md3-patient-list-table td {
+    padding: 0;
+    border: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .col-actions {
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .md3-btn-view-profile {
+    width: 100%;
+    height: 34px;
+    min-height: 34px;
+    justify-content: center;
+    font-size: 0.82rem;
+    border-radius: 10px;
+  }
+}

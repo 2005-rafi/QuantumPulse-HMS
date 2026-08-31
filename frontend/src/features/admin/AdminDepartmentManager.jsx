@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router-dom';
 import api from '../../services/api';
 import CreateDepartmentSheet from './CreateDepartmentSheet';
 import CreateLaboratorySheet from './CreateLaboratorySheet';
 import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { Md3SearchBar } from '../../components/md3/AdminControls';
-import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import { Md3TestCatalogConfigurator } from '../../components/md3/Md3TestCatalogConfigurator';
 import { Md3DynamicVitalsConfigurator } from '../../components/md3/Md3DynamicVitalsConfigurator';
 import Md3Pagination from '../../components/md3/Md3Pagination';
 import usePagination from '../../hooks/usePagination';
+import DepartmentCard from '../../components/departments/DepartmentCard';
+import DepartmentListView from '../../components/departments/DepartmentListView';
+import DepartmentDetailSheet from '../../components/departments/DepartmentDetailSheet';
+import { useDepartmentLayoutPreference } from '../../hooks/useDepartmentLayoutPreference';
 
 const TYPE_FILTERS = [
   { value: 'ALL',                  label: 'All' },
@@ -52,9 +56,11 @@ const AdminDepartmentManager = () => {
 
   const [isCreateOpen, setIsCreateOpen]     = useState(false);
   const [editingDept, setEditingDept]       = useState(null);
+  const [inspectingDept, setInspectingDept] = useState(null);
   const [searchQuery, setSearchQuery]       = useState('');
   const [typeFilter, setTypeFilter]         = useState('ALL');
   const [showInactive, setShowInactive]     = useState(false);
+  const { isListView, isCardView, setLayout } = useDepartmentLayoutPreference();
 
   // Vitals schema config state
   const [configuringDept, setConfiguringDept] = useState(null);
@@ -179,6 +185,34 @@ const AdminDepartmentManager = () => {
     });
   };
 
+  const handleToggleDeptStatus = (id, name, currentStatus) => {
+    if (currentStatus === 'Inactive') {
+      openConfirm({
+        title: 'Reactivate Department',
+        message: `Are you sure you want to reactivate the department "${name}"? It will become active in clinical workflows.`,
+        confirmLabel: 'Reactivate',
+        cancelLabel: 'Cancel',
+        variant: 'primary',
+        icon: 'check_circle',
+        onConfirm: async () => {
+          setConfirmLoading(true);
+          try {
+            await api.put(`/departments/${id}`, { status: 'Active' });
+            showSuccess(`Department "${name}" reactivated successfully.`);
+            fetchDepts();
+            if (showInactive) fetchAllDepts();
+            closeConfirm();
+          } catch (err) {
+            showError(err.response?.data?.message || 'Error reactivating department');
+            closeConfirm();
+          }
+        },
+      });
+    } else {
+      handleDeleteDept(id, name);
+    }
+  };
+
   // ── Vitals Schema ────────────────────────────────────────────────────────────
   const handleEditVitals = (dept) => {
     setConfiguringDept(dept);
@@ -202,6 +236,31 @@ const AdminDepartmentManager = () => {
               onChange={setSearchQuery}
               placeholder="Search by name or code..."
             />
+
+            {/* View Mode Toggle: Cards vs List */}
+            <div className="md3-view-toggle-group" role="group" aria-label="Department directory layout view mode">
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isCardView ? 'active' : ''}`}
+                onClick={() => setLayout('cards')}
+                title="Card Grid View"
+                aria-pressed={isCardView}
+              >
+                <span className="material-symbols-rounded">grid_view</span>
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isListView ? 'active' : ''}`}
+                onClick={() => setLayout('list')}
+                title="Tabular List View"
+                aria-pressed={isListView}
+              >
+                <span className="material-symbols-rounded">view_list</span>
+                <span>List</span>
+              </button>
+            </div>
+
             {/* Inactive toggle */}
             <label style={{
               display: 'flex', alignItems: 'center', gap: '8px',
@@ -212,6 +271,7 @@ const AdminDepartmentManager = () => {
               color: showInactive ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)',
               fontSize: '13px', fontWeight: 600,
               userSelect: 'none',
+              height: '44px'
             }}>
               <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} style={{ display: 'none' }} />
               <span className="material-symbols-rounded" style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
@@ -219,6 +279,30 @@ const AdminDepartmentManager = () => {
               </span>
               <span>{showInactive ? 'All' : 'Active'}</span>
             </label>
+
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 20px',
+                background: 'var(--md-sys-color-primary, #00668b)',
+                color: 'var(--md-sys-color-on-primary, #ffffff)',
+                border: 'none',
+                borderRadius: '100px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                transition: 'all 200ms ease',
+                height: '44px',
+                boxShadow: 'var(--md-sys-elevation-1, 0 1px 3px rgba(0,0,0,0.12))'
+              }}
+              className="dept-add-btn"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
+              Add Department
+            </button>
           </div>
         </div>
 
@@ -256,219 +340,64 @@ const AdminDepartmentManager = () => {
           />
         )}
 
-        {/* ── Department Cards Grid ──────────────────────────────────────────── */}
+        {/* ── Department Cards Grid / Tabular List ──────────────────────────────────────────── */}
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="md3-data-grid md3-paginated-content-fade" key={page} style={{ flex: 1, paddingBottom: '20px' }}>
-            {paginatedDepts.length === 0 ? (
-              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
-                <Md3EmptyState
-                  icon="corporate_fare"
-                  title="No departments found"
-                  description="There are no departments matching your search criteria or filter selection."
-                  variant="card"
-                />
+          {paginatedDepts.length === 0 ? (
+            <div style={{ width: '100%', padding: '20px 0' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '48px 24px',
+                textAlign: 'center',
+                background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
+                borderRadius: '16px',
+                border: '1px dashed var(--md-sys-color-outline-variant, #cac4d0)'
+              }}>
+                <span className="material-symbols-rounded" style={{ fontSize: '48px', color: 'var(--md-sys-color-primary, #00668b)', marginBottom: '12px' }}>
+                  corporate_fare
+                </span>
+                <h3 style={{ margin: '0 0 6px', fontSize: '1.1rem', color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>
+                  No departments found
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
+                  There are no departments matching your search criteria or filter selection.
+                </p>
               </div>
-            ) : (
-              paginatedDepts.map((dept) => {
-                const typeColor = TYPE_COLORS[dept.type] || TYPE_COLORS.SUPPORT;
-                const isInactive = dept.status === 'Inactive';
-                const hod = dept.headOfDepartment;
-
+            </div>
+          ) : isListView ? (
+            <div className="md3-paginated-content-fade" key={`list-${page}`} style={{ flex: 1, paddingBottom: '20px' }}>
+              <DepartmentListView
+                departments={paginatedDepts}
+                laboratories={laboratories}
+                onInspect={(dept) => setInspectingDept(dept)}
+                onEdit={(dept) => setEditingDept(dept)}
+                onAssignHod={(dept) => openHodDialog(dept)}
+                onToggleStatus={(id, name, status) => handleToggleDeptStatus(id, name, status)}
+              />
+            </div>
+          ) : (
+            <div className="dept-card-grid md3-paginated-content-fade" key={`cards-${page}`} style={{ flex: 1, paddingBottom: '20px' }}>
+              {paginatedDepts.map((dept) => {
+                const linkedCount = laboratories.filter(
+                  (lab) => (lab.departmentId?._id || lab.departmentId) === dept._id
+                ).length;
                 return (
-                  <div
+                  <DepartmentCard
                     key={dept._id}
-                    className="md3-data-card"
-                    style={{
-                      opacity: isInactive ? 0.65 : 1,
-                      position: 'relative'
-                    }}
-                  >
-                    {/* Inactive overlay badge */}
-                    {isInactive && (
-                      <div className="md3-status-chip md3-card-btn-error" style={{
-                        position: 'absolute', top: '12px', right: '12px',
-                        zIndex: 2, padding: '2px 10px', fontSize: '10px'
-                      }}>
-                        INACTIVE
-                      </div>
-                    )}
-
-                    <div className="md3-data-card-header">
-                      <h3 className="md3-data-card-title">{dept.name}</h3>
-                      <span className="md3-status-chip md3-card-btn-secondary" style={{
-                        letterSpacing: '0.08em', fontFamily: 'monospace', fontSize: '11px', padding: '3px 10px'
-                      }}>
-                        {dept.code || 'N/A'}
-                      </span>
-                    </div>
-
-                    <div className="md3-data-card-body">
-                      {/* Fixed height line-clamp description box */}
-                      <p style={{
-                        margin: 0,
-                        color: 'var(--md-sys-color-on-surface-variant)',
-                        fontSize: '13px',
-                        lineHeight: '1.4',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        minHeight: '54px'
-                      }}>
-                        {dept.description || 'No description provided.'}
-                      </p>
-
-                      {/* Info badge row (Type & Vitals schema) */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span className="md3-status-chip" style={{
-                          background: typeColor.bg, color: typeColor.fg,
-                          fontSize: '11px', fontWeight: 700, padding: '3px 10px'
-                        }}>
-                          {dept.type}
-                        </span>
-                        <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 500 }}>
-                          {(dept.type === 'CLINICAL' || dept.type === 'CLINICAL/DIAGNOSTIC')
-                            ? `${dept.vitalFields?.length || 0} vital field${dept.vitalFields?.length !== 1 ? 's' : ''}`
-                            : '\u00A0'}
-                        </span>
-                      </div>
-
-                      {/* Linked Laboratories section (For Diagnostic or Hybrid) */}
-                      {(dept.type === 'DIAGNOSTIC' || dept.type === 'CLINICAL/DIAGNOSTIC') ? (
-                        <div style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '6px',
-                          padding: '10px 12px',
-                          border: '1.5px dashed var(--md-sys-color-outline-variant)',
-                          borderRadius: '12px',
-                          minHeight: '80px',
-                          background: 'var(--md-sys-color-surface-container-lowest)',
-                          boxSizing: 'border-box'
-                        }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--md-sys-color-primary)' }}>
-                              Linked Labs
-                            </span>
-                            <button
-                              onClick={() => {
-                                setSelectedLabForEdit({ departmentId: dept._id });
-                                setIsCreateLabOpen(true);
-                              }}
-                              style={{
-                                border: 'none', background: 'transparent',
-                                color: 'var(--md-sys-color-primary)', cursor: 'pointer',
-                                fontSize: '11px', fontWeight: 'bold',
-                                display: 'flex', alignItems: 'center', gap: '2px',
-                                padding: 0
-                              }}
-                            >
-                              <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>add</span> Add Lab
-                            </button>
-                          </div>
-                          
-                          <div style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '4px',
-                            maxHeight: '60px',
-                            overflowY: 'auto'
-                          }}>
-                            {laboratories.filter(lab => (lab.departmentId?._id || lab.departmentId) === dept._id).length > 0 ? (
-                              laboratories.filter(lab => (lab.departmentId?._id || lab.departmentId) === dept._id).map(lab => (
-                                <div key={lab._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--md-sys-color-surface-container-high)', padding: '2px 8px', borderRadius: '6px', fontSize: '11px' }}>
-                                  <span style={{ fontWeight: 500, color: 'var(--md-sys-color-on-surface)' }}>{lab.name}</span>
-                                  <button
-                                    onClick={() => handleEditLabCatalog(lab)}
-                                    style={{ border: 'none', background: 'transparent', color: 'var(--md-sys-color-secondary)', cursor: 'pointer', fontSize: '10px', fontWeight: 'bold', padding: '0' }}
-                                  >
-                                    Manage Tests
-                                  </button>
-                                </div>
-                              ))
-                            ) : (
-                              <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', fontStyle: 'italic' }}>
-                                No linked labs. Click Add Lab to create.
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ) : (
-                        /* Empty spacing element for support/admin/clinical departments to keep height identical */
-                        <div style={{ minHeight: '80px' }} />
-                      )}
-
-                      {/* HOD info - Fixed Height Centered Box */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 12px',
-                        background: hod ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-high, #ece6f0)',
-                        borderRadius: '12px',
-                        minHeight: '46px',
-                        boxSizing: 'border-box',
-                        marginTop: 'auto'
-                      }}>
-                        <span className="material-symbols-rounded" style={{ fontSize: '20px', color: hod ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)' }}>
-                          {hod ? 'person' : 'person_off'}
-                        </span>
-                        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
-                          <span style={{ fontSize: '12px', fontWeight: 600, color: hod ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)' }}>
-                            {hod ? hod.fullName : 'No HOD assigned'}
-                          </span>
-                          {hod && (
-                            <span style={{ fontSize: '10px', color: 'var(--md-sys-color-on-primary-container)', opacity: 0.8 }}>
-                              {hod.position}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Symmetric Action Button Grid */}
-                    <div className="md3-data-card-actions">
-                      <button
-                        onClick={() => setEditingDept(dept)}
-                        className="md3-card-btn md3-card-btn-outlined"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => openHodDialog(dept)}
-                        className="md3-card-btn md3-card-btn-outlined"
-                      >
-                        Assign HOD
-                      </button>
-                      {(dept.type === 'CLINICAL' || dept.type === 'CLINICAL/DIAGNOSTIC') && (
-                        <button
-                          onClick={() => handleEditVitals(dept)}
-                          className="md3-card-btn md3-card-btn-primary"
-                          style={{
-                            gridColumn: (isInactive) ? 'span 2' : 'span 1'
-                          }}
-                        >
-                          Vitals
-                        </button>
-                      )}
-                      {!isInactive && (
-                        <button
-                          onClick={() => handleDeleteDept(dept._id, dept.name)}
-                          className="md3-card-btn md3-card-btn-error"
-                          style={{
-                            gridColumn: (dept.type === 'CLINICAL' || dept.type === 'CLINICAL/DIAGNOSTIC') ? 'span 1' : 'span 2'
-                          }}
-                        >
-                          Deactivate
-                        </button>
-                      )}
-                    </div>
-                  </div>
+                    department={dept}
+                    linkedLabsCount={linkedCount}
+                    onInspect={(d) => setInspectingDept(d)}
+                    onEdit={(d) => setEditingDept(d)}
+                    onAssignHod={(d) => openHodDialog(d)}
+                    onConfigureVitals={(d) => handleEditVitals(d)}
+                    onToggleStatus={(id, name, status) => handleToggleDeptStatus(id, name, status)}
+                  />
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
 
           {/* Bottom Pagination */}
           {totalItems > 0 && (
@@ -485,12 +414,18 @@ const AdminDepartmentManager = () => {
         </div>
       </section>
 
-      {/* FAB */}
-      <Md3Fab
-        icon={<Icon.Plus />}
-        label="Add Dept"
-        onClick={() => setIsCreateOpen(true)}
-        style={{ position: 'fixed', bottom: '32px', right: '32px' }}
+      {/* Slide-Over Detail Inspector */}
+      <DepartmentDetailSheet
+        department={inspectingDept}
+        laboratories={laboratories}
+        isOpen={!!inspectingDept}
+        onClose={() => setInspectingDept(null)}
+        onEdit={(dept) => { setInspectingDept(null); setEditingDept(dept); }}
+        onAssignHod={(dept) => { setInspectingDept(null); openHodDialog(dept); }}
+        onConfigureVitals={(dept) => { setInspectingDept(null); handleEditVitals(dept); }}
+        onAddLab={(dept) => { setInspectingDept(null); setSelectedLabForEdit({ departmentId: dept._id }); setIsCreateLabOpen(true); }}
+        onEditLabCatalog={(lab) => { setInspectingDept(null); handleEditLabCatalog(lab); }}
+        onToggleStatus={(id, name, status) => { setInspectingDept(null); handleToggleDeptStatus(id, name, status); }}
       />
 
       {/* Create / Edit Sheet */}
@@ -508,27 +443,30 @@ const AdminDepartmentManager = () => {
       />
 
       {/* ── HOD Assignment Dialog ─────────────────────────────────────────── */}
-      {hodDept && (
+      {hodDept && createPortal(
         <div
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(15, 23, 42, 0.45)',
-            backdropFilter: 'blur(3px)',
-            WebkitBackdropFilter: 'blur(3px)',
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(15, 23, 42, 0.38)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'flex-start',
             justifyContent: 'center',
-            padding: '36px 16px',
+            padding: '48px 16px 24px',
             overflowY: 'auto',
             zIndex: 2000,
+            boxSizing: 'border-box',
           }}
           onClick={() => setHodDept(null)}
         >
           <div
             style={{
-              background: 'var(--md-sys-color-surface-container-low)',
-              color: 'var(--md-sys-color-on-surface)',
+              background: 'var(--md-sys-color-surface, #ffffff)',
+              color: 'var(--md-sys-color-on-surface, #1d1b20)',
               padding: '28px',
               borderRadius: '28px',
               maxWidth: '480px',
@@ -536,15 +474,16 @@ const AdminDepartmentManager = () => {
               margin: '0 auto',
               maxHeight: 'calc(100vh - 72px)',
               overflowY: 'auto',
-              border: '1px solid var(--md-sys-color-outline-variant)',
+              border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
               boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
+              boxSizing: 'border-box',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginTop: 0, color: 'var(--md-sys-color-primary)', fontSize: '18px' }}>
+            <h3 style={{ marginTop: 0, color: 'var(--md-sys-color-primary, #00668b)', fontSize: '18px', fontWeight: 700 }}>
               Assign Head of Department
             </h3>
-            <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+            <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
               Department: <strong>{hodDept.name}</strong> ({hodDept.code})
             </p>
 
@@ -575,7 +514,7 @@ const AdminDepartmentManager = () => {
                         border: `2px solid ${isSelected ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
                         borderRadius: '16px',
                         cursor: 'pointer',
-                        background: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-lowest)',
+                        background: isSelected ? 'var(--md-sys-color-primary-container)' : 'var(--md-sys-color-surface-container-lowest, #ffffff)',
                         boxShadow: isSelected ? '0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent)' : 'none',
                         transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)',
                       }}
@@ -611,22 +550,19 @@ const AdminDepartmentManager = () => {
                           <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>
                             {s.fullName}
                           </span>
-                          {s.roleId?.name && (
-                            <span style={{
-                              fontSize: '10px',
-                              fontWeight: 600,
-                              background: 'var(--md-sys-color-surface-container)',
-                              color: 'var(--md-sys-color-on-surface-variant)',
-                              padding: '2px 8px',
-                              borderRadius: '999px'
-                            }}>
-                              {s.roleId.name}
-                            </span>
-                          )}
+                          <span style={{
+                            fontSize: '11px',
+                            background: 'var(--md-sys-color-surface-container)',
+                            color: 'var(--md-sys-color-on-surface-variant)',
+                            padding: '2px 8px',
+                            borderRadius: '999px'
+                          }}>
+                            {s.roleId?.name || 'Staff'}
+                          </span>
                           {isHodRole && (
                             <span style={{
-                              fontSize: '10px',
-                              fontWeight: 700,
+                              fontSize: '11px',
+                              fontWeight: 600,
                               background: 'var(--md-sys-color-tertiary-container)',
                               color: 'var(--md-sys-color-on-tertiary-container)',
                               padding: '2px 8px',
@@ -685,7 +621,8 @@ const AdminDepartmentManager = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ── Dynamic Vitals Schema Dialog (Pure Material 3) ────────────────── */}

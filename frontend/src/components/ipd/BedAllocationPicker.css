@@ -1,0 +1,275 @@
+/* ==========================================================================
+   BedAllocationPicker.css — Material Design 3 Interactive Bed & Room Allocator
+   Spatial Floor -> Room -> Bed Picker with Real-Time Gender Segregation Guards
+   ========================================================================== */
+
+.md3-bed-picker-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: 16px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.md3-bed-picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.md3-bed-picker-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #00668b);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-bed-picker-patient-gender-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+/* ── Filter / Navigation Bar ── */
+.md3-bed-picker-nav {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f0ebee);
+}
+
+.md3-bed-picker-floor-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease;
+}
+
+.md3-bed-picker-floor-btn:hover {
+  background: var(--md-sys-color-surface-container, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-bed-picker-floor-btn.is-active {
+  background: var(--md-sys-color-primary, #00668b);
+  color: #ffffff;
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+/* ── Room Cards Grid ── */
+.md3-bed-picker-rooms {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.md3-bed-picker-room-card {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md3-bed-picker-room-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.md3-bed-picker-room-name {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-bed-picker-room-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-bed-picker-tier-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--md-sys-color-surface-container-highest, #ece6f0);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-bed-picker-gender-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md3-bed-picker-gender-badge--female {
+  background: #fce7f3;
+  color: #be185d;
+}
+
+.md3-bed-picker-gender-badge--male {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-bed-picker-gender-badge--any {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* ── Beds Row ── */
+.md3-bed-picker-beds-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.md3-bed-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+  cursor: pointer;
+  transition: all 180ms ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.md3-bed-pill.is-vacant:hover {
+  border-color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-surface-container-high, #e6f0f5);
+  transform: translateY(-1px);
+}
+
+.md3-bed-pill.is-selected {
+  background: var(--md-sys-color-primary-container, #c2e8ff) !important;
+  border-color: var(--md-sys-color-primary, #00668b) !important;
+  box-shadow: 0 2px 8px rgba(0, 102, 139, 0.2);
+}
+
+.md3-bed-pill.is-occupied {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
+.md3-bed-pill.is-maintenance {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #fef3c7;
+  border-color: #fcd34d;
+}
+
+.md3-bed-pill.is-gender-mismatch {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.md3-bed-pill-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.md3-bed-pill-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-bed-pill-status {
+  font-size: 0.60rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.md3-bed-pill-status--vacant {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.md3-bed-pill-status--occupied {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.md3-bed-pill-status--maintenance {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.md3-bed-pill-rate {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── Selected Bed Summary Card ── */
+.md3-bed-selected-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--md-sys-color-primary-container, #c2e8ff);
+  color: var(--md-sys-color-on-primary-container, #004d67);
+  border-radius: 10px;
+  font-size: 0.80rem;
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #00668b) 30%, transparent);
+}
+
+.md3-bed-gender-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 600;
+}

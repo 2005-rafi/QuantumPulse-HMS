@@ -35,5 +35,10 @@ router.get('/departments/:id/laboratories', authenticate, requirePermission('LAB
 router.get('/settings/:key', authenticate, controller.getSetting);
 router.put('/settings/:key', authenticate, requirePermission('MANAGE_USERS'), controller.updateSetting);
 
+// ── Storage & Database Analytics Route ──────────────────────────────────────────────────
+const storageAnalyticsController = require('./storageAnalytics.controller');
+router.get('/storage-analytics', authenticate, requirePermission(['MANAGE_USERS', 'VIEW_AUDIT']), storageAnalyticsController.getAnalytics);
+router.get('/admin/storage-analytics', authenticate, requirePermission(['MANAGE_USERS', 'VIEW_AUDIT']), storageAnalyticsController.getAnalytics);
+
 module.exports = router;
 

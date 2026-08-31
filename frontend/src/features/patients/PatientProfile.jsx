@@ -4,6 +4,7 @@ import { patientAPI } from '../../services/patientAPI';
 import { visitAPI } from '../../services/visitAPI';
 import { staffAPI } from '../../services/staffAPI';
 import { appointmentAPI } from '../../services/appointmentAPI';
+import ipdApi from '../../services/ipdApi';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import PrintablePatientIdCard from '../../components/patients/PrintablePatientIdCard';
@@ -59,6 +60,7 @@ const getLatestVitals = (visits) => {
 const PatientHero = ({
   patient,
   visits,
+  activeAdmission,
   userRole,
   onNewVisit,
   onPrintId,
@@ -90,6 +92,11 @@ const PatientHero = ({
             <div className="pp-hero__name-row">
               <h2 className="pp-hero__name">{fullName || 'Unnamed Patient'}</h2>
               {patient.mrn && <span className="pp-hero__mrn-chip">MRN {patient.mrn}</span>}
+              {activeAdmission && (
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#166534', color: '#ffffff', padding: '3px 8px', borderRadius: '6px' }}>
+                  ADMITTED IN IPD
+                </span>
+              )}
             </div>
             <div className="pp-hero__meta-row">
               {age != null && <span>{age} yrs</span>}
@@ -169,7 +176,7 @@ const PatientHero = ({
               </Md3Button>
               <Md3Button variant="filled" onClick={onNewVisit} style={{ width: 'auto' }}>
                 <Icon.Plus />
-                <span>New Visit / Check-In</span>
+                <span>New Visit / Admission</span>
               </Md3Button>
             </>
           )}
@@ -946,6 +953,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
   const { user } = useAuth();
   const [patient, setPatient] = useState(null);
   const [visits, setVisits] = useState([]);
+  const [activeAdmission, setActiveAdmission] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -986,12 +994,17 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
 
   const fetchProfile = useCallback(async () => {
     try {
-      const [patientRes, visitsRes] = await Promise.all([
+      const [patientRes, visitsRes, admRes] = await Promise.allSettled([
         patientAPI.getById(patientId),
         visitAPI.getPatientVisits(patientId),
+        ipdApi.getAdmissions({ patientId, status: 'ADMITTED' }),
       ]);
-      setPatient(patientRes.data);
-      setVisits(visitsRes.data?.data || []);
+      if (patientRes.status === 'fulfilled') setPatient(patientRes.value.data);
+      if (visitsRes.status === 'fulfilled') setVisits(visitsRes.value.data?.data || []);
+      if (admRes.status === 'fulfilled') {
+        const admissions = admRes.value.data?.data || [];
+        setActiveAdmission(Array.isArray(admissions) ? admissions[0] : null);
+      }
     } catch (err) {
       console.error('[PatientProfile] fetch error', err);
     } finally {
@@ -1129,6 +1142,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
       <PatientHero
         patient={patient}
         visits={visits}
+        activeAdmission={activeAdmission}
         userRole={user?.role}
         onNewVisit={() => setIsNewVisitModalOpen(true)}
         onSchedule={() => setIsScheduleModalOpen(true)}
@@ -1136,6 +1150,28 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
         onDirectPharmacy={handleDirectPharmacy}
         userId={user?._id}
       />
+
+      {/* ─── Active Inpatient Stay Banner (if admitted) ─── */}
+      {activeAdmission && (
+        <div className="pp-ipd-active-banner">
+          <div className="pp-ipd-banner-left">
+            <div className="pp-ipd-banner-icon">
+              <span className="material-symbols-rounded" style={{ fontSize: '24px' }}>hotel</span>
+            </div>
+            <div>
+              <h4 className="pp-ipd-banner-title">
+                Active Inpatient Stay: Bed {activeAdmission.currentBedId?.bedLabel || activeAdmission.currentBedId?.bedNumber || 'Assigned'}
+              </h4>
+              <p className="pp-ipd-banner-subtitle">
+                Room {activeAdmission.currentRoomId?.roomNumber || '—'} · {activeAdmission.currentFloorId?.floorName || 'Floor'} · Attending Doctor: {activeAdmission.primaryDoctorId?.fullName || 'Attending Physician'} · Admission #{activeAdmission.admissionNumber}
+              </p>
+            </div>
+          </div>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, background: '#166534', color: '#ffffff', padding: '6px 14px', borderRadius: '100px' }}>
+            Under Active Nursing Care
+          </span>
+        </div>
+      )}
 
       {/* ─── Bento-Box Responsive Grid ─── */}
       <div className="pp-layout">
@@ -1193,47 +1229,23 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
         </div>
       </div>
 
-      {/* ─── SCHEDULE APPOINTMENT DIALOG (Portalled to document.body) ─── */}
-      {isScheduleModalOpen && createPortal(
-        <div className="appt-modal-backdrop" onClick={() => setIsScheduleModalOpen(false)}>
-          <div className="appt-modal-container modal-expanded" onClick={(e) => e.stopPropagation()}>
-            <div className="appt-modal-header">
-              <div className="appt-modal-title-group">
-                <div className="appt-modal-icon booking">
-                  <Icon.Calendar />
-                </div>
-                <div>
-                  <h3 className="appt-modal-title">Schedule Doctor Appointment</h3>
-                  <p className="appt-modal-subtitle">
-                    Book planned consultation for {patient.firstName} {patient.lastName}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="appt-modal-close"
-                onClick={() => setIsScheduleModalOpen(false)}
-                aria-label="Close dialog"
-              >
-                <Icon.X />
-              </button>
-            </div>
-
-            <div className="appt-modal-body no-padding">
-              <AppointmentForm
-                preselectedPatient={patient}
-                onSuccess={(created) => {
-                  setIsScheduleModalOpen(false);
-                  fetchAppointments();
-                  setActiveTab('appointments');
-                }}
-                onCancel={() => setIsScheduleModalOpen(false)}
-              />
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* ─── SCHEDULE APPOINTMENT BOTTOM SHEET ─── */}
+      <Md3BottomSheet
+        isOpen={isScheduleModalOpen}
+        onClose={() => setIsScheduleModalOpen(false)}
+        title="Schedule Doctor Appointment"
+        subtitle={`Book planned consultation for ${patient.firstName} ${patient.lastName}`}
+      >
+        <AppointmentForm
+          preselectedPatient={patient}
+          onSuccess={(created) => {
+            setIsScheduleModalOpen(false);
+            fetchAppointments();
+            setActiveTab('appointments');
+          }}
+          onCancel={() => setIsScheduleModalOpen(false)}
+        />
+      </Md3BottomSheet>
 
       {/* ─── CHECK IN DIALOG ─── */}
       <CheckInDialog

@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const { TARIFF_GRADES } = require('../../core/constants');
 
 const RULE_STATUS = {
@@ -36,6 +36,31 @@ const scopeSchema = new mongoose.Schema({
   appointmentType: {
     type: String,
     enum: ['WALK_IN', 'FOLLOW_UP', 'SCHEDULED', null],
+    default: null,
+  },
+  wardClass: {
+    type: String,
+    enum: [
+      'GENERAL_WARD',
+      'SEMI_PRIVATE',
+      'PRIVATE',
+      'DELUXE_PRIVATE',
+      'ICU',
+      'CCU',
+      'NICU',
+      'PICU',
+      'HDU',
+      'ISOLATION',
+      'POST_OP_RECOVERY',
+      'OT',
+      'EMERGENCY',
+      null,
+    ],
+    default: null,
+  },
+  bedFeature: {
+    type: String,
+    enum: ['VENTILATOR_READY', 'MONITOR_ATTACHED', 'OXYGEN_PIPED', 'SUCTION_READY', null],
     default: null,
   },
 }, { _id: false });

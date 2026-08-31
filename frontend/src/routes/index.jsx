@@ -37,6 +37,7 @@ import UserProfilePage from '../pages/UserProfilePage';
 // Child Views for Named Routing
 import { ReceptionPatientsView, ReceptionAppointmentsView } from '../features/patients/ReceptionViews';
 import { DoctorConsultationView, DoctorAppointmentsView, DoctorDeletionRequestsView } from '../features/doctor/DoctorViews';
+import { NurseTriageView } from '../features/nurse/NurseViews';
 import { LabProcessingView, LabSpecimensView, LabReportedView } from '../features/laboratory/LabViews';
 import {
   ProfileOverviewView,
@@ -56,8 +57,16 @@ import AdminLabManager from '../features/admin/AdminLabManager';
 import AdminSettings from '../features/admin/AdminSettings';
 import AdminAuditLogs from '../features/admin/AdminAuditLogs';
 import AdminTariffBilling from '../features/admin/AdminTariffBilling';
+import StorageAnalyticsTab from '../features/admin/StorageAnalyticsTab';
 import AppointmentDashboard from '../features/appointments/AppointmentDashboard';
+import ReceptionBedMap from '../features/ipd/ReceptionBedMap';
+import AdminFacilityBuilder from '../features/ipd/AdminFacilityBuilder';
+import NurseIpdStation from '../features/ipd/NurseIpdStation';
+import DoctorIpdCockpit from '../features/ipd/DoctorIpdCockpit';
+import IpdLedgerView from '../features/ipd/IpdLedgerView';
+import PharmacyFloorRequisitions from '../features/ipd/PharmacyFloorRequisitions';
 import { useAuth } from '../context/AuthContext';
+import { SessionGuard } from '../components/shell/SessionGuard';
 
 const AdminAppointmentsWrapper = () => {
   const { user } = useAuth();
@@ -65,13 +74,15 @@ const AdminAppointmentsWrapper = () => {
 };
 
 /**
- * ProtectedLayout — Wraps all dashboard routes in ProtectedRoute.
- * Renders AppShell-aware Outlet for all nested dashboard routes.
- * Each dashboard manages its own layout (header, shell) via CommonHeader.
+ * ProtectedLayout — Wraps all dashboard routes in ProtectedRoute and SessionGuard.
+ * Enforces authentication, automatic inactivity logoff (HIPAA § 164.312),
+ * and shoulder-surfing privacy blur.
  */
 const ProtectedLayout = () => (
   <ProtectedRoute>
-    <Outlet />
+    <SessionGuard>
+      <Outlet />
+    </SessionGuard>
   </ProtectedRoute>
 );
 
@@ -106,10 +117,11 @@ export const router = createBrowserRouter([
           { index: true, element: <Navigate to="patients" replace /> },
           { path: 'patients', element: <ReceptionPatientsView /> },
           { path: 'appointments', element: <ReceptionAppointmentsView /> },
+          { path: 'bed-map', element: <ReceptionBedMap /> },
         ],
       },
 
-      // Nurse
+      // Nurse — Named tab routing: /triage, /ipd
       {
         path: 'nurse',
         element: (
@@ -117,9 +129,15 @@ export const router = createBrowserRouter([
             <NurseDashboard />
           </RoleRoute>
         ),
+        children: [
+          { index: true, element: <Navigate to="triage" replace /> },
+          { path: 'triage', element: <NurseTriageView /> },
+          { path: 'ipd', element: <NurseIpdStation /> },
+          { path: 'ipd/:admissionId', element: <NurseIpdStation /> },
+        ],
       },
 
-      // Doctor — Named tab routing: /consultation, /appointments, /deletion-requests
+      // Doctor — Named tab routing: /consultation, /ipd, /appointments, /deletion-requests
       {
         path: 'doctor',
         element: (
@@ -130,6 +148,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="consultation" replace /> },
           { path: 'consultation', element: <DoctorConsultationView /> },
+          { path: 'ipd', element: <DoctorIpdCockpit /> },
+          { path: 'ipd/:admissionId', element: <DoctorIpdCockpit /> },
           { path: 'appointments', element: <DoctorAppointmentsView /> },
           { path: 'deletion-requests', element: <DoctorDeletionRequestsView /> },
         ],
@@ -172,8 +192,10 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="analytics" replace /> },
           { path: 'analytics', element: <AdminAnalytics /> },
+          { path: 'storage', element: <StorageAnalyticsTab /> },
           { path: 'patients', element: <AdminPatientManager /> },
           { path: 'staff', element: <AdminStaffManager /> },
+          { path: 'facility-builder', element: <AdminFacilityBuilder /> },
           { path: 'departments', element: <AdminDepartmentManager /> },
           { path: 'laboratories', element: <AdminLabManager /> },
           { path: 'billing', element: <AdminTariffBilling /> },
@@ -182,10 +204,25 @@ export const router = createBrowserRouter([
           { path: 'appointments', element: <AdminAppointmentsWrapper /> },
         ]
       },
+
+      // ── Dedicated Inpatient Department (IPD) Clinical Workstations ──
+      { path: 'ipd/bed-map', element: <ReceptionBedMap /> },
+      { path: 'ipd/nursing', element: <NurseIpdStation /> },
+      { path: 'ipd/nursing/:admissionId', element: <NurseIpdStation /> },
+      { path: 'ipd/doctor', element: <DoctorIpdCockpit /> },
+      { path: 'ipd/doctor/:admissionId', element: <DoctorIpdCockpit /> },
+      { path: 'ipd/billing', element: <IpdLedgerView /> },
+      { path: 'ipd/billing/:admissionId', element: <IpdLedgerView /> },
+      { path: 'ipd/pharmacy', element: <PharmacyFloorRequisitions /> },
+      { path: 'ipd/facility-builder', element: <AdminFacilityBuilder /> },
       // Profile (Accessible by all authenticated roles) — Named Tab Routing
       {
         path: 'profile',
-        element: <UserProfilePage />,
+        element: (
+          <ProtectedRoute>
+            <UserProfilePage />
+          </ProtectedRoute>
+        ),
         children: [
           { index: true, element: <Navigate to="overview" replace /> },
           { path: 'overview', element: <ProfileOverviewView /> },

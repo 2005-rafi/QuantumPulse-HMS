@@ -1,0 +1,753 @@
+/* ==========================================================================
+   StorageAnalyticsTab.css — Pure Material Design 3 Fluid Storage & Trend Analytics
+   Zero Hardcoded Colors • Professional Multi-Device Scrollability (Desktop, Tablet, Mobile)
+   ========================================================================== */
+
+/* ── Smooth Scrollable Viewport Wrapper ── */
+.storage-analytics-scroll-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background-color: var(--md-sys-color-surface, #fffbfe);
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Fluid Content Canvas ── */
+.storage-analytics-fluid-content {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 24px 28px 32px 28px;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* ── Header ── */
+.storage-analytics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.storage-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.storage-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.storage-header-icon {
+  font-size: 28px;
+  color: var(--md-sys-color-primary);
+}
+
+.storage-title-row h2 {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.storage-badge-live {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.storage-subtitle {
+  font-size: 0.86rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.storage-refresh-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-primary);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.storage-refresh-btn:hover {
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: var(--md-sys-color-primary);
+}
+
+.storage-refresh-btn.is-spinning span {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Fluid Top Metric Grid ── */
+.storage-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.storage-card {
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.storage-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  border-color: var(--md-sys-color-outline);
+}
+
+.storage-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.card-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+}
+
+.card-icon-wrap.primary-icon {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.card-icon-wrap.secondary-icon {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.card-icon-wrap.tertiary-icon {
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.card-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.05em;
+}
+
+.storage-metric-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 16px;
+}
+
+.storage-metric-val {
+  font-size: 1.9rem;
+  font-weight: 900;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.1;
+}
+
+.storage-metric-val small {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.secure-val {
+  font-size: 1.65rem;
+  color: var(--md-sys-color-primary);
+}
+
+.storage-metric-sub {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Progress Bar ── */
+.storage-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.storage-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+.storage-progress-track {
+  height: 6px;
+  width: 100%;
+  background-color: var(--md-sys-color-surface-container-high);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.storage-progress-fill {
+  height: 100%;
+  background-color: var(--md-sys-color-primary);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+/* ── Stat Pills & Badges ── */
+.storage-stat-pills, .storage-security-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stat-pill, .sec-badge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.sec-badge {
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border-color: var(--md-sys-color-outline-variant);
+}
+
+.stat-pill .material-symbols-rounded, .sec-badge .material-symbols-rounded {
+  font-size: 15px;
+}
+
+/* ── Trend Line Chart Card ── */
+.trend-chart-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.trend-chart-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.trend-title-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.trend-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trend-header-icon {
+  font-size: 22px;
+  color: var(--md-sys-color-primary);
+}
+
+.trend-title-row h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+.trend-subtitle {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin: 0;
+}
+
+.trend-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ── MD3 Segmented Control ── */
+.md3-segmented-control {
+  display: flex;
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 999px;
+  padding: 2px;
+}
+
+.md3-segment-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.md3-segment-btn.active {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Trend Range Chips ── */
+.trend-range-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.trend-chip {
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.trend-chip.active {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-color: var(--md-sys-color-outline);
+}
+
+/* ── SVG Chart Viewport ── */
+.trend-svg-wrapper {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background-color: var(--md-sys-color-surface-container-low);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.trend-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-axis-text {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 0.74rem;
+  font-weight: 500;
+  fill: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.01em;
+  user-select: none;
+}
+
+.chart-date-text {
+  font-size: 0.72rem;
+  font-weight: 500;
+}
+
+.chart-data-point {
+  transition: r 0.15s ease, stroke-width 0.15s ease;
+  cursor: pointer;
+}
+
+/* ── Floating Tooltip ── */
+.chart-tooltip {
+  position: absolute;
+  transform: translate(-50%, -120%);
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 10px;
+  padding: 8px 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  pointer-events: none;
+  font-size: 0.75rem;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.tooltip-date {
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.tooltip-metric {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+}
+
+.tooltip-sub {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 2px;
+}
+
+/* ── Section Titles ── */
+.storage-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.storage-section-title .material-symbols-rounded {
+  font-size: 22px;
+  color: var(--md-sys-color-primary);
+}
+
+.storage-section-title h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+}
+
+/* ── Folder Cards Fluid Grid ── */
+.storage-folder-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(440px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+.folder-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.folder-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.folder-icon-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.folder-main-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.folder-title {
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+  margin: 0 0 2px 0;
+}
+
+.folder-path {
+  font-size: 0.72rem;
+  font-family: monospace;
+  background-color: var(--md-sys-color-surface-container-high);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.folder-summary-badge {
+  font-size: 0.76rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* ── Folder Subitems Table ── */
+.folder-subitems-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.folder-table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  align-items: center;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.folder-table-row:last-child {
+  border-bottom: none;
+}
+
+.folder-table-row.header-row {
+  background-color: var(--md-sys-color-surface-container-low);
+  font-weight: 800;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant);
+  letter-spacing: 0.04em;
+}
+
+.subfolder-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.sub-folder-icon {
+  font-size: 16px;
+  color: var(--md-sys-color-primary);
+}
+
+.subfolder-count, .subfolder-size {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.folder-empty-state {
+  padding: 20px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Database Summary Fluid 4-Card Row ── */
+.storage-db-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.db-metric-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  background-color: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.db-metric-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.db-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-primary);
+}
+
+.db-metric-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.db-metric-count {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: var(--md-sys-color-on-surface);
+}
+
+.db-metric-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* ── Dedicated Bottom Safety Spacer ── */
+.storage-bottom-spacer {
+  height: 48px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* ── Responsive Tablet & Mobile Breakpoints ── */
+@media (max-width: 1024px) {
+  .storage-metric-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  .storage-folder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .storage-db-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .trend-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .trend-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 768px) {
+  .storage-analytics-fluid-content {
+    padding: 16px 14px 40px 14px;
+    gap: 16px;
+  }
+
+  .storage-metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .storage-folder-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .storage-db-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .trend-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .md3-segmented-control {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .trend-range-chips {
+    width: 100%;
+    justify-content: space-around;
+  }
+
+  .trend-svg-wrapper {
+    height: 200px;
+  }
+
+  .storage-bottom-spacer {
+    height: 80px;
+  }
+}
+
+/* ── Loading & Error States ── */
+.storage-analytics-loading, .storage-analytics-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 400px;
+  width: 100%;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.storage-loading-spinner {
+  width: 38px;
+  height: 38px;
+  border: 3px solid var(--md-sys-color-primary-container);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.storage-analytics-error .material-symbols-rounded {
+  font-size: 40px;
+  color: var(--md-sys-color-error);
+}
+
+.md3-btn-retry {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  background-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}

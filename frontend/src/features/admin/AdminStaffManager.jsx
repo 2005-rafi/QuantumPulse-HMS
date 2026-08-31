@@ -11,6 +11,9 @@ import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
 import Md3Pagination from '../../components/md3/Md3Pagination';
 import usePagination from '../../hooks/usePagination';
+import StaffCard from '../../components/staff/StaffCard';
+import StaffListView from '../../components/staff/StaffListView';
+import { useStaffLayoutPreference } from '../../hooks/useStaffLayoutPreference';
 
 const AdminStaffManager = () => {
   const { 
@@ -39,6 +42,7 @@ const AdminStaffManager = () => {
   const [isStaffAnalyticsOpen, setIsStaffAnalyticsOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState(null);
   const [progressingStaff, setProgressingStaff] = useState(null);
+  const { isListView, isCardView, setLayout } = useStaffLayoutPreference();
 
   useEffect(() => {
     if (location.state?.statusFilter) {
@@ -185,6 +189,30 @@ const AdminStaffManager = () => {
             </button>
           </div>
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+            {/* View Mode Toggle: Cards vs List */}
+            <div className="md3-view-toggle-group" role="group" aria-label="Staff directory layout view mode">
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isCardView ? 'active' : ''}`}
+                onClick={() => setLayout('cards')}
+                title="Card Grid View"
+                aria-pressed={isCardView}
+              >
+                <span className="material-symbols-rounded">grid_view</span>
+                <span>Cards</span>
+              </button>
+              <button
+                type="button"
+                className={`md3-view-toggle-btn ${isListView ? 'active' : ''}`}
+                onClick={() => setLayout('list')}
+                title="Tabular List View"
+                aria-pressed={isListView}
+              >
+                <span className="material-symbols-rounded">view_list</span>
+                <span>List</span>
+              </button>
+            </div>
+
             <button 
               onClick={() => setIsFilterOpen(true)}
               style={{ 
@@ -225,6 +253,30 @@ const AdminStaffManager = () => {
                 </span>
               )}
             </button>
+
+            <button
+              onClick={() => setIsCreateStaffOpen(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 20px',
+                background: 'var(--md-sys-color-primary, #00668b)',
+                color: 'var(--md-sys-color-on-primary, #ffffff)',
+                border: 'none',
+                borderRadius: '100px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                transition: 'all 200ms ease',
+                height: '44px',
+                boxShadow: 'var(--md-sys-elevation-1, 0 1px 3px rgba(0,0,0,0.12))'
+              }}
+              className="staff-add-btn"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
+              Add Staff
+            </button>
           </div>
         </div>
         
@@ -242,111 +294,39 @@ const AdminStaffManager = () => {
         )}
         
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <div className="md3-data-grid md3-paginated-content-fade" key={page} style={{ flex: 1, paddingBottom: '20px' }}>
-            {paginatedStaff.length === 0 ? (
-              <div style={{ gridColumn: '1 / -1', width: '100%' }}>
-                <Md3EmptyState
-                  icon="badge"
-                  title="No staff members found"
-                  description="There are no staff members matching the selected filters. Try searching with a different keyword or resetting filters."
-                  variant="card"
+          {paginatedStaff.length === 0 ? (
+            <div style={{ width: '100%', padding: '20px 0' }}>
+              <Md3EmptyState
+                icon="badge"
+                title="No staff members found"
+                description="There are no staff members matching the selected filters. Try searching with a different keyword or resetting filters."
+                variant="card"
+              />
+            </div>
+          ) : isListView ? (
+            <div className="md3-paginated-content-fade" key={`list-${page}`} style={{ flex: 1, paddingBottom: '20px' }}>
+              <StaffListView
+                staffList={paginatedStaff}
+                onEdit={(staff) => setEditingStaff(staff)}
+                onProgress={(staff) => setProgressingStaff(staff)}
+                onDisable={(id, name) => handleDisableStaff(id, name)}
+                onEnable={(id, name) => handleEnableStaff(id, name)}
+              />
+            </div>
+          ) : (
+            <div className="staff-card-grid md3-paginated-content-fade" key={`cards-${page}`} style={{ flex: 1, paddingBottom: '20px' }}>
+              {paginatedStaff.map((staff) => (
+                <StaffCard
+                  key={staff._id}
+                  staff={staff}
+                  onEdit={(s) => setEditingStaff(s)}
+                  onProgress={(s) => setProgressingStaff(s)}
+                  onDisable={(id, name) => handleDisableStaff(id, name)}
+                  onEnable={(id, name) => handleEnableStaff(id, name)}
                 />
-              </div>
-            ) : (
-              paginatedStaff.map(staff => (
-                <div key={staff._id} className="md3-data-card">
-                  <div className="md3-data-card-header">
-                    <h3 className="md3-data-card-title">{staff.fullName}</h3>
-                    <span className={`md3-status-chip ${staff.status === 'Active' ? 'md3-card-btn-primary' : 'md3-card-btn-error'}`}>
-                      {staff.status}
-                    </span>
-                  </div>
-                  <div className="md3-data-card-body">
-                    <div className="md3-card-meta-list">
-                      <div className="md3-card-meta-item">
-                        <span className="md3-card-meta-label">Department</span>
-                        <span className="md3-card-meta-value">{staff.departmentId?.name || '—'}</span>
-                      </div>
-                      <div className="md3-card-meta-item">
-                        <span className="md3-card-meta-label">Role</span>
-                        <span className="md3-status-chip md3-card-btn-secondary" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '11px', fontWeight: 600 }}>
-                          {staff.roleId?.name || '—'}
-                        </span>
-                      </div>
-                      <div className="md3-card-meta-item">
-                        <span className="md3-card-meta-label">Position</span>
-                        <span className="md3-status-chip md3-card-btn-primary" style={{ textTransform: 'none', letterSpacing: 'normal', fontSize: '11px', fontWeight: 600 }}>
-                          {staff.position || '—'}
-                        </span>
-                      </div>
-                      {staff.medicalLicenseNumber && (
-                        <div className="md3-card-meta-item">
-                          <span className="md3-card-meta-label">Medical License</span>
-                          <span className="md3-card-meta-value">{staff.medicalLicenseNumber}</span>
-                        </div>
-                      )}
-                      {staff.consultingFee !== undefined && staff.consultingFee > 0 && (
-                        <div className="md3-card-meta-item">
-                          <span className="md3-card-meta-label">Consulting Fee</span>
-                          <span className="md3-card-meta-value">{CURRENCY_SYMBOL}{staff.consultingFee}</span>
-                        </div>
-                      )}
-                      {staff.nursingLicenseNumber && (
-                        <div className="md3-card-meta-item">
-                          <span className="md3-card-meta-label">Nursing License</span>
-                          <span className="md3-card-meta-value">{staff.nursingLicenseNumber}</span>
-                        </div>
-                      )}
-                      {staff.labCertificationCode && (
-                        <div className="md3-card-meta-item">
-                          <span className="md3-card-meta-label">Lab Certification</span>
-                          <span className="md3-card-meta-value">{staff.labCertificationCode}</span>
-                        </div>
-                      )}
-                      {staff.pharmacyLicenseNumber && (
-                        <div className="md3-card-meta-item">
-                          <span className="md3-card-meta-label">Pharmacy License</span>
-                          <span className="md3-card-meta-value">{staff.pharmacyLicenseNumber}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="md3-data-card-actions">
-                    <button
-                      onClick={() => setEditingStaff(staff)}
-                      className="md3-card-btn md3-card-btn-outlined"
-                    >
-                      Edit Profile
-                    </button>
-                    <button
-                      onClick={() => setProgressingStaff(staff)}
-                      className="md3-card-btn md3-card-btn-outlined"
-                    >
-                      Progression
-                    </button>
-                    {staff.status === 'Active' ? (
-                      <button
-                        onClick={() => handleDisableStaff(staff._id, staff.fullName)}
-                        className="md3-card-btn md3-card-btn-error"
-                        style={{ gridColumn: 'span 2' }}
-                      >
-                        Disable Account
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleEnableStaff(staff._id, staff.fullName)}
-                        className="md3-card-btn md3-card-btn-primary"
-                        style={{ gridColumn: 'span 2' }}
-                      >
-                        <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>check_circle</span>
-                        Re-enable
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Bottom Pagination */}
           {totalItems > 0 && (
@@ -362,13 +342,6 @@ const AdminStaffManager = () => {
           )}
         </div>
       </section>
-      
-      <Md3Fab 
-        icon={<Icon.Plus />} 
-        label="Add User" 
-        onClick={() => setIsCreateStaffOpen(true)} 
-        style={{ position: 'fixed', bottom: '32px', right: '32px' }} 
-      />
 
       <CreateStaffSheet 
         isOpen={isCreateStaffOpen || !!editingStaff} 

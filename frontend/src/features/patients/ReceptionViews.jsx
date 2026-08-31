@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { useOutletContext } from 'react-router-dom';
 import PatientList from './PatientList';
 import PatientRegistrationForm from './PatientRegistrationForm';
@@ -64,18 +65,9 @@ export const ReceptionPatientsView = () => {
 
       {viewKey === 'list' && (
         <div key="patients-list" className="reception-view">
-          <PatientList onSelectPatient={handlePatientSelect} />
-        </div>
-      )}
-
-      {/* ─── FAB: Register Patient (Only when not in print view) ─── */}
-      {viewKey !== 'print' && (
-        <div className="reception-fab-dock">
-          <Md3Fab
-            icon={<Icon.Plus />}
-            label="Register Patient"
-            onClick={() => setIsRegSheetOpen(true)}
-            ariaLabel="Register New Patient"
+          <PatientList
+            onSelectPatient={handlePatientSelect}
+            onRegisterPatient={() => setIsRegSheetOpen(true)}
           />
         </div>
       )}

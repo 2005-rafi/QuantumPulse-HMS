@@ -104,8 +104,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1),
-              font-variation-settings 0.2s ease,
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  transition: transform 0.22s cubic-bezier(0.2, 0, 0, 1),
+              font-variation-settings 0.25s cubic-bezier(0.2, 0, 0, 1),
               color 0.2s ease;
 }
 
@@ -138,7 +139,9 @@
 }
 
 .md3-nav-rail__item--active .md3-nav-rail__icon {
+  font-variation-settings: 'FILL' 1, 'wght' 600, 'GRAD' 0, 'opsz' 24;
   color: var(--md-sys-color-on-secondary-container);
+  transform: scale(1.06);
 }
 
 .md3-nav-rail__item--active .md3-nav-rail__label {

@@ -10,6 +10,7 @@ const encryptPatient = (data) => {
   if (clone.phone) clone.phone = encryptDeterministic(clone.phone);
   if (clone.whatsapp) clone.whatsapp = encryptDeterministic(clone.whatsapp);
   if (clone.email) clone.email = encryptDeterministic(clone.email);
+  if (clone.parentsName) clone.parentsName = encryptRandom(clone.parentsName);
   if (clone.allergies) clone.allergies = encryptRandom(clone.allergies);
   if (clone.operations) clone.operations = encryptRandom(clone.operations);
   
@@ -73,6 +74,7 @@ const decryptPatient = (doc) => {
   if (clone.phone) clone.phone = decrypt(clone.phone);
   if (clone.whatsapp) clone.whatsapp = decrypt(clone.whatsapp);
   if (clone.email) clone.email = decrypt(clone.email);
+  if (clone.parentsName) clone.parentsName = decrypt(clone.parentsName);
   if (clone.allergies) clone.allergies = decrypt(clone.allergies);
   if (clone.operations) clone.operations = decrypt(clone.operations);
   

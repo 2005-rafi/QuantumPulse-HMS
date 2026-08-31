@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Md3Select, Md3Checkbox } from './Md3FormComponents';
 
 export const Md3TestCatalogConfigurator = ({ lab, onClose, onSave }) => {
@@ -8,6 +9,18 @@ export const Md3TestCatalogConfigurator = ({ lab, onClose, onSave }) => {
   const [expandedIndices, setExpandedIndices] = useState([0]); // Expand first test by default
   const [saving, setSaving] = useState(false);
   const [errorBanner, setErrorBanner] = useState('');
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !saving) onClose();
+    };
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose, saving]);
 
   // Expand / collapse helpers
   const toggleExpand = (index) => {
@@ -124,28 +137,31 @@ export const Md3TestCatalogConfigurator = ({ lab, onClose, onSave }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.45)',
-        backdropFilter: 'blur(3px)',
-        WebkitBackdropFilter: 'blur(3px)',
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(15, 23, 42, 0.38)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
         padding: '24px 16px',
         overflowY: 'auto',
         zIndex: 2000,
+        boxSizing: 'border-box',
       }}
       onClick={onClose}
     >
       <div
         style={{
-          background: 'var(--md-sys-color-surface-container-high, #f7f2fa)',
-          color: 'var(--md-sys-color-on-surface)',
-          borderRadius: '24px',
+          background: 'var(--md-sys-color-surface, #ffffff)',
+          color: 'var(--md-sys-color-on-surface, #1d1b20)',
+          borderRadius: '28px',
           maxWidth: '1000px',
           width: '95%',
           maxHeight: 'calc(100vh - 48px)',
@@ -529,6 +545,7 @@ export const Md3TestCatalogConfigurator = ({ lab, onClose, onSave }) => {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

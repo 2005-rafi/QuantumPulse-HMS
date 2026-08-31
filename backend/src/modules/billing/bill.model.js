@@ -60,11 +60,12 @@ const adjustmentSchema = new mongoose.Schema({
 const billSchema = new mongoose.Schema({
   billNumber: { type: String, required: true, unique: true, trim: true },
 
-  visitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Visit', required: true },
+  visitId: { type: mongoose.Schema.Types.ObjectId, ref: 'Visit', default: null },
+  admissionId: { type: mongoose.Schema.Types.ObjectId, ref: 'IPDAdmission', default: null },
   patientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
 
   visitType: { type: String, enum: ['OPD', 'EMERGENCY', 'IPD'], default: 'OPD' },
-  serviceDate: { type: Date, required: true },
+  serviceDate: { type: Date, default: Date.now },
   departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', default: null },
 
   // Line items -- append-only, never modified after creation
@@ -79,6 +80,7 @@ const billSchema = new mongoose.Schema({
   // Financial summary (cached totals -- always recomputed on change)
   billedAmount: { type: Number, default: 0 },     // sum of lineItems[].lineTotal
   collectedAmount: { type: Number, default: 0 },  // sum of payments[].amount
+  advanceCollected: { type: Number, default: 0 }, // sum of IPD advance deposits
   adjustedAmount: { type: Number, default: 0 },   // sum of APPROVED adjustments[].amount
   outstandingAmount: { type: Number, default: 0 }, // billedAmount - collectedAmount - adjustedAmount
 
@@ -97,11 +99,12 @@ const billSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // Indexes
-billSchema.index({ visitId: 1 }, { unique: true });  // 1:1 Visit-Bill invariant
+billSchema.index({ visitId: 1 }, { unique: true, partialFilterExpression: { visitId: { $type: 'objectId' } } });
+billSchema.index({ admissionId: 1 }, { unique: true, partialFilterExpression: { admissionId: { $type: 'objectId' } } });
 billSchema.index({ patientId: 1, serviceDate: -1 });
 billSchema.index({ status: 1, serviceDate: -1 });
-billSchema.index({ outstandingAmount: 1 }); // for outstanding dues dashboard
-billSchema.index({ serviceDate: 1 });       // date-range analytics
+billSchema.index({ outstandingAmount: 1 });
+billSchema.index({ serviceDate: 1 });
 billSchema.index({ 'lineItems.category': 1, serviceDate: 1 });
 
 module.exports = mongoose.model('Bill', billSchema);

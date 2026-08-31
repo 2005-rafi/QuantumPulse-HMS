@@ -5,6 +5,8 @@
   flex-direction: column;
   gap: 20px;
   width: 100%;
+  padding-bottom: 72px;
+  box-sizing: border-box;
 }
 
 /* ── Form Section Card ── */
@@ -24,6 +26,14 @@
 .reg-section:nth-child(3) { animation-delay: 0.08s; }
 .reg-section:nth-child(4) { animation-delay: 0.12s; }
 .reg-section:nth-child(5) { animation-delay: 0.16s; }
+
+@media (max-width: 599px) {
+  .reg-section {
+    padding: 12px 10px;
+    gap: 12px;
+    border-radius: 10px;
+  }
+}
 
 @keyframes regSectionIn {
   from {
@@ -76,6 +86,13 @@
   gap: 14px;
 }
 
+@media (max-width: 599px) {
+  .reg-grid-2,
+  .reg-grid-3 {
+    gap: 10px;
+  }
+}
+
 @media (min-width: 560px) {
   .reg-grid-2 {
     grid-template-columns: repeat(2, 1fr);
@@ -114,24 +131,30 @@
   margin-top: 1px;
 }
 
-/* ── Submit Row ── */
+/* ── Submit Row (Horizontal Linear Axis on Mobile & Desktop) ── */
 .reg-submit-row {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 12px;
-  margin-top: 4px;
-  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-bottom: 12px;
 }
 
-@media (max-width: 559px) {
+@media (max-width: 599px) {
   .reg-submit-row {
-    flex-direction: column-reverse;
+    display: grid !important;
+    grid-template-columns: 1fr 2fr !important;
+    gap: 8px !important;
+    width: 100% !important;
+    margin-top: 8px !important;
   }
 
   .reg-submit-row > * {
     width: 100% !important;
-    min-width: unset !important;
+    min-width: 0 !important;
+    font-size: 0.82rem !important;
+    padding: 0 8px !important;
   }
 }
 
@@ -296,14 +319,86 @@
   background-color: color-mix(in srgb, var(--md-sys-color-on-surface-variant) 8%, transparent) !important;
 }
 
-@media (max-width: 600px) {
-  .duplicate-card-main {
-    flex-direction: column;
-    align-items: flex-start;
+/* ── Workflow Selection Segmented Buttons ── */
+.reg-workflow-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.reg-workflow-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 180ms ease;
+  text-align: left;
+}
+
+.reg-workflow-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.reg-workflow-btn.is-active {
+  background: var(--md-sys-color-primary-container, #c2e8ff);
+  color: var(--md-sys-color-on-primary-container, #004d67);
+  border-color: var(--md-sys-color-primary, #00668b);
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0, 102, 139, 0.15);
+}
+
+.reg-workflow-btn .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.reg-workflow-btn-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: block;
+}
+
+.reg-workflow-btn-sub {
+  font-size: 0.68rem;
+  opacity: 0.85;
+  display: block;
+}
+
+@media (max-width: 599px) {
+  .reg-workflow-selector {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
   }
-  .duplicate-global-actions {
-    flex-direction: column;
-    align-items: stretch;
+
+  .reg-workflow-btn {
+    padding: 8px 8px;
+    gap: 6px;
+  }
+
+  .reg-workflow-btn-label {
+    font-size: 0.76rem;
+  }
+
+  .reg-workflow-btn-sub {
+    font-size: 0.64rem;
   }
 }
+
+.reg-ipd-highlight-box {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1.5px dashed var(--md-sys-color-primary, #00668b);
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
 

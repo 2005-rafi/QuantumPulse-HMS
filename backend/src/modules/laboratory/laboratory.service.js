@@ -251,35 +251,81 @@ class LaboratoryService {
     });
   }
 
-  // ── Scan File Management ──────────────────────────────────────────────────────────
+  // ── Scan File Management (Cloudinary Storage) ─────────────────────────
 
-  async uploadScanFile(visitId, orderId, file, technicianId, deptCode) {
-    if (!file) throw new AppError('VALIDATION_001', 'No file was uploaded');
+  async uploadScanFile(paramsOrVisitId, fileOrOrderId, fileParam, technicianIdParam, deptCodeParam) {
+    let visitId, orderId, labId, patientId, labDepartmentId, uploadedBy, deptCode, file;
+
+    if (typeof paramsOrVisitId === 'object' && !fileParam) {
+      visitId = paramsOrVisitId.visitId;
+      orderId = paramsOrVisitId.orderId;
+      labId = paramsOrVisitId.labId;
+      patientId = paramsOrVisitId.patientId;
+      labDepartmentId = paramsOrVisitId.labDepartmentId;
+      uploadedBy = paramsOrVisitId.uploadedBy;
+      deptCode = paramsOrVisitId.deptCode || 'GENERAL';
+      file = fileOrOrderId;
+    } else {
+      visitId = paramsOrVisitId;
+      orderId = fileOrOrderId;
+      file = fileParam;
+      uploadedBy = technicianIdParam;
+      deptCode = deptCodeParam || 'GENERAL';
+    }
+
+    if (!file || !file.buffer) throw new AppError('VALIDATION_001', 'No file buffer was uploaded');
+
+    const CloudinaryStorageService = require('../../core/storage/CloudinaryStorageService');
+
+    const cleanDept = (deptCode || 'GENERAL').toUpperCase();
+    const filename = `${patientId || 'patient'}-${orderId}-${Date.now()}`;
+
+    // Upload in-memory buffer to Cloudinary with retry
+    const uploadResult = await CloudinaryStorageService.uploadBuffer(file.buffer, {
+      folder: `scans/${cleanDept}`,
+      filename,
+      mimeType: file.mimetype,
+      tags: ['lab_scan', cleanDept, orderId.toString()],
+      context: {
+        visitId: visitId ? visitId.toString() : '',
+        orderId: orderId ? orderId.toString() : '',
+        patientId: patientId ? patientId.toString() : '',
+        uploadedBy: uploadedBy ? uploadedBy.toString() : '',
+      },
+      isPrivate: true,
+    });
 
     return await withTransaction(async (session) => {
       const visit = await visitRepository.findById(visitId, { session });
       if (!visit) {
-        StorageService.deleteFile(file.path);
         throw new AppError('NOT_FOUND', 'Visit not found');
       }
 
-      const order = visit.labOrders.find(o => o._id.toString() === orderId.toString());
+      const order = visit.labOrders.find(o => o._id?.toString() === orderId.toString() || o.id?.toString() === orderId.toString());
       if (!order) {
-        StorageService.deleteFile(file.path);
         throw new AppError('NOT_FOUND', 'Lab order not found in this visit');
       }
 
-      const relPath = StorageService.toRelativePath(file.path, deptCode);
+      const resolvedPatientId = patientId || visit.patientId?._id || visit.patientId;
+      const resolvedLabId = labId || order.laboratoryId || null;
+      const resolvedLabDeptId = labDepartmentId || order.labDepartmentId || null;
 
       const scanDoc = new ScanReport({
-        orderId,
+        orderId: orderId.toString(),
         visitId,
-        uploadedBy: technicianId,
-        fileName: file.originalname,
+        patientId: resolvedPatientId,
+        labId: resolvedLabId,
+        labDepartmentId: resolvedLabDeptId,
+        uploadedBy,
+        originalFilename: file.originalname,
+        storedFilename: uploadResult.publicId,
         mimeType: file.mimetype,
-        fileSize: file.size,
-        filePath: relPath,
-        departmentCode: deptCode.toUpperCase(),
+        sizeBytes: file.size,
+        cloudinaryPublicId: uploadResult.publicId,
+        secureUrl: uploadResult.secureUrl,
+        resourceType: uploadResult.resourceType,
+        storageType: 'cloudinary',
+        storagePath: `scans/${cleanDept}/${uploadResult.publicId}`,
       });
       await scanDoc.save({ session });
 
@@ -288,41 +334,47 @@ class LaboratoryService {
       const newResults = { ...existingResults, [fieldKey]: scanDoc._id.toString() };
 
       const updatedLabOrders = visit.labOrders.map(o => {
-        if (o._id.toString() === orderId.toString()) {
+        if (o._id?.toString() === orderId.toString() || o.id?.toString() === orderId.toString()) {
           return { ...o, results: newResults };
         }
         return o;
       });
       await visitRepository.updateById(visitId, { labOrders: updatedLabOrders }, { session });
 
-      logger.info('Scan report uploaded successfully', { scanId: scanDoc._id, orderId, visitId });
+      logger.info('Scan report uploaded successfully to Cloudinary', { scanId: scanDoc._id, publicId: uploadResult.publicId });
       return scanDoc;
     });
   }
 
-  async getScansForOrder(orderId) {
-    return await ScanReport.find({ orderId, status: 'Active' })
+  async getScansForOrder(visitId, orderId) {
+    const query = { status: { $ne: 'Inactive' } };
+    if (orderId) query.orderId = orderId.toString();
+    if (visitId) query.visitId = visitId;
+
+    return await ScanReport.find(query)
       .populate('uploadedBy', 'fullName employeeId')
       .lean();
   }
 
-  async getScanById(scanId, user) {
+  async getScanFile(scanId, user) {
     const scan = await ScanReport.findById(scanId);
     if (!scan) throw new AppError('NOT_FOUND', 'Scan report not found');
 
-    if (user.role !== 'Administrator' && user.role !== 'Doctor' && user.role !== 'Laboratory') {
-      const userDeptCode = user.department?.toUpperCase();
-      if (userDeptCode && scan.departmentCode !== userDeptCode) {
-        throw new AppError('LAB_002', 'Permission not granted to view this scan report');
-      }
+    const CloudinaryStorageService = require('../../core/storage/CloudinaryStorageService');
+    let presignedUrl = scan.secureUrl;
+    if (scan.cloudinaryPublicId) {
+      presignedUrl = CloudinaryStorageService.generatePresignedUrl(scan.cloudinaryPublicId, {
+        expiresInSeconds: 300,
+        resourceType: scan.resourceType || (scan.mimeType === 'application/pdf' ? 'raw' : 'image'),
+        format: scan.mimeType === 'application/pdf' ? 'pdf' : undefined,
+      });
     }
 
-    const fullPath = StorageService.toAbsolutePath(scan.filePath, scan.departmentCode);
-    if (!fs.existsSync(fullPath)) {
-      throw new AppError('NOT_FOUND', 'Scan file does not exist on disk');
-    }
+    return { scan, presignedUrl };
+  }
 
-    return { scan, fullPath };
+  async getScanById(scanId, user) {
+    return await this.getScanFile(scanId, user);
   }
 }
 

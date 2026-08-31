@@ -1,0 +1,303 @@
+/* ==========================================================================
+   DepartmentCard.css — Pure Material 3 Clinical Department Card
+   Compact 5-Column Responsive Multi-Card Grid Component
+   ========================================================================== */
+
+.md3-dept-card {
+  position: relative;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+  height: fit-content;
+  align-self: start;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  user-select: none;
+}
+
+.md3-dept-card:hover {
+  background-color: var(--md-sys-color-surface-container, #f3ede8);
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.md3-dept-card--inactive {
+  opacity: 0.72;
+  background-color: var(--md-sys-color-surface-container-highest, #ece6f0);
+}
+
+.md3-dept-card--selected {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+/* Subtle Interactive Rail */
+.md3-dept-card-rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: transparent;
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 180ms cubic-bezier(0.2, 0, 0, 1), background-color 180ms ease;
+}
+
+.md3-dept-card:hover .md3-dept-card-rail {
+  background-color: var(--md-sys-color-primary, #00668b);
+  transform: scaleY(1);
+}
+
+/* ── HEADER ROW ── */
+.md3-dept-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.md3-dept-card-avatar-wrap {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.md3-dept-card-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.md3-dept-card-name {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-dept-type-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin-top: 2px;
+  width: fit-content;
+  white-space: nowrap;
+}
+
+.md3-dept-card-badges {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.md3-dept-status-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.md3-dept-status-pill--active {
+  background-color: color-mix(in srgb, #2e7d32 15%, transparent);
+  color: #2e7d32;
+  border: 1px solid color-mix(in srgb, #2e7d32 30%, transparent);
+}
+
+.md3-dept-status-pill--inactive {
+  background-color: color-mix(in srgb, #ba1a1a 15%, transparent);
+  color: #ba1a1a;
+  border: 1px solid color-mix(in srgb, #ba1a1a 30%, transparent);
+}
+
+/* ── SUB HEADER: CODE + COUNTER ── */
+.md3-dept-card-sub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 2px;
+}
+
+.md3-dept-code-badge {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-dept-counter-pill {
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: var(--md-sys-color-primary, #00668b);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--md-sys-color-surface-container-highest, #ece6f0);
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.md3-dept-counter-pill span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ── CARD BODY DETAILS ── */
+.md3-dept-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 0;
+  border-top: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+  border-bottom: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+  min-height: 38px;
+  justify-content: center;
+}
+
+.md3-dept-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-dept-hod-row {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.md3-dept-meta-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── ACTION BUTTONS ── */
+.md3-dept-card-actions {
+  display: grid;
+  grid-template-columns: 1.2fr 0.9fr 0.9fr 1fr;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.md3-dept-btn {
+  padding: 5px 6px;
+  border-radius: 8px;
+  font-size: 0.70rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  gap: 2px;
+}
+
+.md3-dept-btn--primary {
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.md3-dept-btn--primary:hover {
+  background: var(--md-sys-color-primary, #00668b);
+  color: #ffffff;
+}
+
+.md3-dept-btn--outlined {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-dept-btn--outlined:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #00668b);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+.md3-dept-btn--error {
+  background: color-mix(in srgb, #ba1a1a 12%, transparent);
+  color: #ba1a1a;
+  border: 1px solid color-mix(in srgb, #ba1a1a 25%, transparent);
+}
+
+.md3-dept-btn--error:hover {
+  background: #ba1a1a;
+  color: #ffffff;
+}
+
+.md3-dept-btn--success {
+  background: color-mix(in srgb, #2e7d32 12%, transparent);
+  color: #2e7d32;
+  border: 1px solid color-mix(in srgb, #2e7d32 25%, transparent);
+}
+
+.md3-dept-btn--success:hover {
+  background: #2e7d32;
+  color: #ffffff;
+}
+
+/* ── Department Card Grid Layout (5-column MD3 Adaptive) ── */
+.dept-card-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  align-items: start;
+  align-content: start;
+}
+
+@media (max-width: 1600px) {
+  .dept-card-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1280px) {
+  .dept-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dept-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 580px) {
+  .dept-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

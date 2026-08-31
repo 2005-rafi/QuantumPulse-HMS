@@ -341,3 +341,156 @@
   color: var(--md-sys-color-on-error-container, #410002);
   opacity: 0.8;
 }
+
+.common-header__menu-trigger {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  display: none; /* hidden by default on desktop */
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.common-header__menu-trigger:hover {
+  background-color: var(--md-sys-color-surface-container, #f3eee3);
+}
+
+.common-header__menu-trigger .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.common-header__quick-action {
+  display: flex;
+  align-items: center;
+  margin-right: 4px;
+}
+
+/* ── Responsive Adaptations for Tablet & Mobile (MD3 Window Size Classes) ── */
+
+/* Medium: Tablet (600px – 1023px) — Clean App Bar with Drawer Navigation */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .common-header {
+    padding: 0 1rem;
+    height: 52px;
+  }
+
+  .common-header__menu-trigger {
+    display: flex;
+  }
+
+  /* Center tabs hidden on tablet because drawer provides unified navigation */
+  .common-header__center {
+    display: none;
+  }
+
+  .common-header__subtitle {
+    display: none;
+  }
+}
+
+/* Compact: Mobile (< 600px) — Menu Drawer Trigger & Clean App Bar */
+@media (max-width: 599px) {
+  .common-header {
+    height: 54px;
+    min-height: 54px;
+    flex-wrap: nowrap;
+    padding: 0 8px;
+  }
+
+  .common-header__menu-trigger {
+    display: flex;
+  }
+
+  .common-header__left {
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .common-header__brand-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .common-header__title {
+    font-size: 0.92rem;
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .common-header__subtitle {
+    display: none;
+  }
+
+  /* Center tabs hidden on mobile because they are accessible in the drawer */
+  .common-header__center {
+    display: none;
+  }
+
+  .common-header__right {
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .common-header__user-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    left: auto;
+    width: 250px;
+    min-width: 230px;
+    max-width: 270px;
+    padding: 0.6rem;
+    gap: 0.25rem;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .common-header__popover-header {
+    padding: 0.4rem 0.3rem;
+    gap: 0.6rem;
+  }
+
+  .common-header__popover-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+  }
+
+  .common-header__popover-name {
+    font-size: 0.86rem;
+  }
+
+  .common-header__popover-role {
+    font-size: 0.68rem;
+  }
+
+  .common-header__menu-item {
+    padding: 0.45rem 0.6rem;
+    border-radius: 10px;
+  }
+
+  .common-header__menu-icon-wrap {
+    width: 28px;
+    height: 28px;
+  }
+
+  .common-header__menu-icon-wrap .material-symbols-rounded {
+    font-size: 16px;
+  }
+
+  .common-header__menu-title {
+    font-size: 0.8rem;
+  }
+
+  .common-header__menu-sub {
+    font-size: 0.68rem;
+  }
+}

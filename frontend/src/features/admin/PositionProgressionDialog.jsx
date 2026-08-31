@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { staffAPI } from '../../services/staffAPI';
 import { useToast } from '../../context/ToastContext';
 import { POSITIONS } from '../../core/constants';
@@ -11,6 +12,20 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
   const [selectedPosition, setSelectedPosition] = useState('');
   const [reason, setReason] = useState('');
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen && !saving) onClose();
+    };
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose, saving]);
 
   useEffect(() => {
     if (isOpen && staff) {
@@ -80,27 +95,30 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
     }
   };
 
-  return (
+  return createPortal(
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(15, 23, 42, 0.45)',
-        backdropFilter: 'blur(3px)',
-        WebkitBackdropFilter: 'blur(3px)',
+        width: '100vw',
+        height: '100vh',
+        background: 'rgba(15, 23, 42, 0.38)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
         display: 'flex',
         alignItems: 'flex-start',
         justifyContent: 'center',
         padding: '24px 16px',
         overflowY: 'auto',
         zIndex: 2000,
+        boxSizing: 'border-box',
       }}
       onClick={onClose}
     >
       <div
         style={{
-          background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
-          color: 'var(--md-sys-color-on-surface)',
+          background: 'var(--md-sys-color-surface, #ffffff)',
+          color: 'var(--md-sys-color-on-surface, #1d1b20)',
           padding: '24px',
           borderRadius: '28px',
           maxWidth: '640px',
@@ -228,7 +246,8 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

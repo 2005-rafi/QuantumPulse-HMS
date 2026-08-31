@@ -3,8 +3,12 @@ import react from '@vitejs/plugin-react';
 import portsConfig from '../config/ports.config.json';
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react()],
+  esbuild: {
+    // Drop console and debugger in production builds for PHI hygiene
+    drop: mode === 'production' ? ['console', 'debugger'] : [],
+  },
   server: {
     port: portsConfig?.FRONTEND?.PORT || 7123,
     strictPort: true,
@@ -22,4 +26,4 @@ export default defineConfig({
     strictPort: true,
     host: true,
   },
-});
+}));

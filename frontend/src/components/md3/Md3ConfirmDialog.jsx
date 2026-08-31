@@ -1,42 +1,46 @@
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import './Md3ConfirmDialog.css';
 
 /**
- * Md3ConfirmDialog — Reusable Material Design 3 Confirmation Dialog
+ * Md3ConfirmDialog — Dedicated Pure Material Design 3 Confirmation & Cancellation Dialog Component.
  *
- * Follows SOLID principles and is fully decoupled from page logic.
- * Replaces all window.confirm / window.alert / window.prompt patterns.
+ * Plug-in architecture:
+ *   - Positioned DEAD CENTER of the screen in a dedicated top layer (z-index: 10000+).
+ *   - Used exclusively for critical action confirmations, destructive deletions, and cancellations.
+ *   - Form dialogs & multi-input editors remain top-centered in the standard modal layer.
  *
  * Props:
- *   isOpen        {boolean}   Controls visibility
- *   onClose       {function}  Called when dialog is dismissed (cancel/backdrop)
- *   onConfirm     {function}  Called when user confirms the action
- *   title         {string}    Dialog headline
- *   message       {string}    Supporting text body
- *   confirmLabel  {string}    Text for the confirm button (default: "Confirm")
- *   cancelLabel   {string}    Text for the cancel button (default: "Cancel")
- *   variant       {string}    "danger" | "warning" | "info" | "success" (default: "info")
+ *   isOpen        {boolean}   Controls dialog visibility
+ *   onClose       {function}  Called when user cancels, dismisses, or presses Escape
+ *   onConfirm     {function}  Called when user confirms the primary action
+ *   title         {string}    Headline prompt (e.g. "Deactivate Tariff Rule?")
+ *   message       {string}    Supporting explanation of consequences
+ *   confirmLabel  {string}    Action button label (default: "Confirm")
+ *   cancelLabel   {string}    Cancel button label (default: "Cancel")
+ *   variant       {string}    "danger" | "warning" | "info" | "success" (default: "danger")
  *   icon          {string}    Material Symbol icon name (optional)
- *   loading       {boolean}   Shows a spinner on confirm button while action runs
+ *   loading       {boolean}   Displays loading spinner on confirm button
+ *   zIndex        {number}    Layer elevation (default: 10000)
  */
-const Md3ConfirmDialog = ({
+export const Md3ConfirmDialog = ({
   isOpen,
   onClose,
   onConfirm,
-  title,
+  title = 'Confirm Action',
   message,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
-  variant = 'info',
+  variant = 'danger',
   icon,
   loading = false,
-  children
+  zIndex = 10000,
+  children,
 }) => {
   const [shouldRender, setShouldRender] = React.useState(isOpen);
   const [isClosing, setIsClosing] = React.useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isOpen) {
       setShouldRender(true);
       setIsClosing(false);
@@ -50,80 +54,95 @@ const Md3ConfirmDialog = ({
     }
   }, [isOpen]);
 
-  // Body scroll lock & Escape key
-  React.useEffect(() => {
+  const handleClose = useCallback(() => {
+    if (!loading && onClose) {
+      onClose();
+    }
+  }, [loading, onClose]);
+
+  // Lock body scroll & listen to Escape key
+  useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape' && isOpen && !loading) onClose?.();
+      if (e.key === 'Escape' && isOpen && !loading) {
+        handleClose();
+      }
     };
     if (isOpen) {
+      const origOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = origOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
     }
-    return () => {
-      document.body.style.overflow = '';
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isOpen, loading, onClose]);
+  }, [isOpen, loading, handleClose]);
 
   if (!shouldRender) return null;
 
   const defaultIcons = {
-    danger: 'delete_forever',
+    danger: 'block',
     warning: 'warning',
     info: 'info',
     success: 'check_circle',
   };
 
-  const resolvedIcon = icon || defaultIcons[variant] || 'info';
+  const resolvedIcon = icon || defaultIcons[variant] || 'help';
 
   return createPortal(
     <div
-      className={`md3-dialog-overlay ${isClosing ? 'md3-dialog-overlay--closing' : 'md3-dialog-overlay--open'}`}
-      onClick={!loading ? onClose : undefined}
-      aria-modal="true"
+      className={`md3-confirm-scrim ${isClosing ? 'md3-confirm-scrim--closing' : 'md3-confirm-scrim--open'}`}
+      style={{ zIndex }}
+      onClick={handleClose}
       role="alertdialog"
-      aria-labelledby="md3-dialog-title"
-      aria-describedby="md3-dialog-message"
+      aria-modal="true"
+      aria-labelledby="md3-confirm-title"
+      aria-describedby="md3-confirm-message"
     >
       <div
-        className={`md3-dialog-surface md3-dialog-surface--${variant} ${isClosing ? 'md3-dialog-surface--closing' : 'md3-dialog-surface--open'}`}
+        className={`md3-confirm-surface md3-confirm-surface--${variant} ${isClosing ? 'md3-confirm-surface--closing' : 'md3-confirm-surface--open'}`}
         onClick={(e) => e.stopPropagation()}
         role="document"
       >
-        {/* Icon header */}
-        <div className={`md3-dialog-icon-wrap md3-dialog-icon-wrap--${variant}`}>
-          <span className="material-symbols-rounded md3-dialog-icon">{resolvedIcon}</span>
+        {/* Icon Pill Header */}
+        <div className={`md3-confirm-icon-wrap md3-confirm-icon-wrap--${variant}`}>
+          <span className="material-symbols-rounded md3-confirm-icon">{resolvedIcon}</span>
         </div>
 
-        {/* Content */}
-        <div className="md3-dialog-content">
+        {/* Content Group */}
+        <div className="md3-confirm-content">
           {title && (
-            <h2 id="md3-dialog-title" className="md3-dialog-title">{title}</h2>
+            <h3 id="md3-confirm-title" className="md3-confirm-title">
+              {title}
+            </h3>
           )}
           {message && (
-            <p id="md3-dialog-message" className="md3-dialog-message">{message}</p>
+            <p id="md3-confirm-message" className="md3-confirm-message">
+              {message}
+            </p>
           )}
           {children}
         </div>
 
-        {/* Actions */}
-        <div className="md3-dialog-actions">
+        {/* Action Button Row */}
+        <div className="md3-confirm-actions">
           <button
             type="button"
-            className="md3-dialog-btn md3-dialog-btn--cancel"
-            onClick={onClose}
+            className="md3-confirm-btn md3-confirm-btn--cancel"
+            onClick={handleClose}
             disabled={loading}
           >
             {cancelLabel}
           </button>
           <button
             type="button"
-            className={`md3-dialog-btn md3-dialog-btn--confirm md3-dialog-btn--confirm-${variant}`}
+            className={`md3-confirm-btn md3-confirm-btn--confirm md3-confirm-btn--confirm-${variant}`}
             onClick={onConfirm}
             disabled={loading}
+            autoFocus
           >
             {loading ? (
-              <span className="md3-dialog-spinner" />
+              <span className="md3-confirm-spinner" />
             ) : (
               confirmLabel
             )}

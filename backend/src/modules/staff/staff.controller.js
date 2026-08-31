@@ -1,5 +1,7 @@
 const service = require('./staff.service');
 const { success } = require('../../core/responses');
+const AppError = require('../../core/errors/AppError');
+const CloudinaryStorageService = require('../../core/storage/CloudinaryStorageService');
 
 const create = async (req, res, next) => {
   try {
@@ -86,45 +88,76 @@ const generateUsername = async (req, res, next) => {
 
 const uploadCertificate = async (req, res, next) => {
   try {
-    const AppError = require('../../core/errors/AppError');
-    if (!req.file) {
-      return next(new AppError('VALIDATION_001', 'No file uploaded'));
+    if (!req.file || !req.file.buffer) {
+      return next(new AppError('VALIDATION_001', 'No file buffer uploaded'));
     }
-    const fileUrl = `${req.protocol}://${req.get('host')}/api/v1/staff/certificates/${req.storedFilename}`;
+
+    const filename = `cert_${Date.now()}`;
+    const uploadResult = await CloudinaryStorageService.uploadBuffer(req.file.buffer, {
+      folder: 'certificates',
+      filename,
+      mimeType: req.file.mimetype,
+      tags: ['staff_certificate', req.user?.role || 'Staff'],
+      context: {
+        uploadedBy: req.user?.staffId || req.user?.userId || '',
+      },
+      isPrivate: true,
+    });
+
+    const presignedUrl = CloudinaryStorageService.generatePresignedUrl(uploadResult.publicId, {
+      expiresInSeconds: 3600,
+      resourceType: uploadResult.resourceType,
+      format: req.file.mimetype === 'application/pdf' ? 'pdf' : undefined,
+    });
+
     const metadata = {
-      url: fileUrl,
+      url: presignedUrl,
+      secureUrl: uploadResult.secureUrl,
+      cloudinaryPublicId: uploadResult.publicId,
+      resourceType: uploadResult.resourceType,
       fileName: req.file.originalname,
       sizeBytes: req.file.size,
-      uploadedAt: new Date()
+      mimeType: req.file.mimetype,
+      uploadedAt: new Date(),
     };
-    return success(res, metadata, 'Certificate document uploaded successfully', 201);
+
+    return success(res, metadata, 'Certificate document uploaded successfully to Cloudinary', 201);
   } catch (err) { next(err); }
 };
 
 const downloadCertificate = async (req, res, next) => {
   try {
-    const fs = require('fs');
-    const path = require('path');
-    const AppError = require('../../core/errors/AppError');
-    const { StorageService } = require('./staff.upload');
-    const { filename } = req.params;
-    
-    const relativePath = `certificates/${filename}`;
-    const absolutePath = StorageService.absolutePath(relativePath);
-    
-    if (!fs.existsSync(absolutePath)) {
-      return next(new AppError('NOT_FOUND', 'Certificate file not found'));
+    const Staff = require('./staff.model');
+    const { filename, id } = req.params;
+    const targetId = id || filename;
+
+    // Check if targetId matches a staff _id or publicId
+    const staff = await Staff.findById(targetId);
+    const cert = staff?.verificationDocument;
+
+    if (cert && cert.cloudinaryPublicId) {
+      const presignedUrl = CloudinaryStorageService.generatePresignedUrl(cert.cloudinaryPublicId, {
+        expiresInSeconds: 300,
+        resourceType: cert.resourceType || (cert.mimeType === 'application/pdf' ? 'raw' : 'image'),
+        format: cert.mimeType === 'application/pdf' ? 'pdf' : undefined,
+      });
+
+      if (req.query.json === 'true' || req.headers.accept?.includes('application/json')) {
+        return success(res, { downloadUrl: presignedUrl, metadata: cert }, 'Certificate URL generated');
+      }
+      return res.redirect(presignedUrl);
     }
-    
-    const ext = path.extname(filename).toLowerCase();
-    let contentType = 'application/octet-stream';
-    if (ext === '.pdf') contentType = 'application/pdf';
-    else if (ext === '.png') contentType = 'image/png';
-    else if (ext === '.jpg' || ext === '.jpeg') contentType = 'image/jpeg';
-    
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Disposition', `inline; filename="${filename}"`);
-    res.sendFile(absolutePath);
+
+    // Direct publicId lookup
+    if (filename) {
+      const presignedUrl = CloudinaryStorageService.generatePresignedUrl(`hms_production/certificates/${filename}`, {
+        expiresInSeconds: 300,
+        resourceType: 'image',
+      });
+      return res.redirect(presignedUrl);
+    }
+
+    return next(new AppError('NOT_FOUND', 'Certificate file not found'));
   } catch (err) { next(err); }
 };
 

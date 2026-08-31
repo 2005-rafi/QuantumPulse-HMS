@@ -6,13 +6,13 @@ const catchAsync = require('../../core/utils/catchAsync');
 const create = catchAsync(async (req, res) => {
   const patient = await service.create(req.body);
 
-  // Log audit event
+  // Log audit event (HIPAA compliant - no PHI in audit logs)
   auditService.logEvent(
     req.user.staffId || req.user.userId,
     req.user.role,
     'PATIENT_REGISTER',
     patient._id,
-    { mrn: patient.mrn, name: `${patient.firstName} ${patient.lastName}` },
+    { resourceType: 'PATIENT', mrn: patient.mrn, action: 'CREATE' },
     req.ip
   );
 
@@ -25,9 +25,9 @@ const search = catchAsync(async (req, res) => {
   auditService.logEvent(
     req.user.staffId || req.user.userId,
     req.user.role,
-    'PATIENT_SEARCH',
+    'PATIENT_LIST_QUERIED',
     null,
-    { query: req.query.q || '', resultsCount: result.total },
+    { resourceType: 'PATIENT', queryParams: Object.keys(req.query), resultsCount: result.total },
     req.ip
   );
 
@@ -40,9 +40,9 @@ const getById = catchAsync(async (req, res) => {
   auditService.logEvent(
     req.user.staffId || req.user.userId,
     req.user.role,
-    'PATIENT_VIEW',
+    'PATIENT_RECORD_ACCESSED',
     patient._id,
-    { mrn: patient.mrn, name: `${patient.firstName} ${patient.lastName}` },
+    { resourceType: 'PATIENT', mrn: patient.mrn, action: 'READ' },
     req.ip
   );
 
@@ -55,9 +55,9 @@ const getByMrn = catchAsync(async (req, res) => {
   auditService.logEvent(
     req.user.staffId || req.user.userId,
     req.user.role,
-    'PATIENT_VIEW',
+    'PATIENT_RECORD_ACCESSED',
     patient._id,
-    { mrn: patient.mrn, name: `${patient.firstName} ${patient.lastName}` },
+    { resourceType: 'PATIENT', mrn: patient.mrn, action: 'READ' },
     req.ip
   );
 
@@ -72,7 +72,7 @@ const update = catchAsync(async (req, res) => {
     req.user.role,
     'PATIENT_UPDATE',
     patient._id,
-    { mrn: patient.mrn, name: `${patient.firstName} ${patient.lastName}` },
+    { resourceType: 'PATIENT', mrn: patient.mrn, changedFields: Object.keys(req.body), action: 'UPDATE' },
     req.ip
   );
 

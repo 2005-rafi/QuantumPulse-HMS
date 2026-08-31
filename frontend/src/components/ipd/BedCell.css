@@ -1,0 +1,125 @@
+/**
+ * components/ipd/BedCell.css
+ * BookMyShow-style Clinical Bed Cell Styles (MD3 Expressive State Layers).
+ */
+
+.ipd-bed-cell {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+  box-sizing: border-box;
+  text-align: center;
+  transition:
+    transform 0.15s cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1),
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  outline: none;
+}
+
+.ipd-bed-cell:focus-visible {
+  box-shadow: 0 0 0 3px var(--md-sys-color-primary, #006a57), 0 0 0 5px #ffffff;
+}
+
+/* 1. Vacant Bed */
+.ipd-bed-cell--vacant {
+  background: var(--md-sys-color-primary-container, #bbf2e1);
+  border: 1.5px solid var(--md-sys-color-primary, #006a57);
+  color: var(--md-sys-color-on-primary-container, #00211a);
+}
+.ipd-bed-cell--vacant:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 16px rgba(0, 106, 87, 0.22);
+  border-color: #004d3e;
+}
+.ipd-bed-cell--vacant:active {
+  transform: scale(0.96);
+}
+
+/* 2. Occupied Bed */
+.ipd-bed-cell--occupied {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  border: 1.5px solid var(--md-sys-color-error, #ba1a1a);
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+.ipd-bed-cell--occupied:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 16px rgba(186, 26, 26, 0.22);
+  border-color: #93000a;
+}
+.ipd-bed-cell--occupied:active {
+  transform: scale(0.96);
+}
+
+/* 3. Reserved Bed */
+.ipd-bed-cell--reserved {
+  background: var(--md-sys-color-tertiary-container, #ffddb3);
+  border: 1.5px dashed var(--md-sys-color-tertiary, #855300);
+  color: var(--md-sys-color-on-tertiary-container, #2b1700);
+}
+.ipd-bed-cell--reserved:hover {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 16px rgba(133, 83, 0, 0.2);
+}
+
+/* 4. Maintenance / Cleaning */
+.ipd-bed-cell--maintenance {
+  background: var(--md-sys-color-surface-container-high, #e0e8e4);
+  border: 1.5px solid var(--md-sys-color-outline, #6f7975);
+  color: var(--md-sys-color-on-surface-variant, #404944);
+}
+.ipd-bed-cell--maintenance:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 5. Selected Bed Indicator */
+.ipd-bed-cell--selected {
+  box-shadow: 0 0 0 3px var(--md-sys-color-primary, #006a57) !important;
+}
+
+.ipd-bed-cell__number {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.ipd-bed-cell__status-tag {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 2px;
+}
+
+.ipd-bed-cell__patient-name {
+  font-size: 0.68rem;
+  font-weight: 600;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.ipd-bed-cell__icons {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+}
+
+.ipd-bed-cell__feature-dot {
+  font-size: 11px;
+  line-height: 1;
+}

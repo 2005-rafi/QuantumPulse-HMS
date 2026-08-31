@@ -1,0 +1,236 @@
+/* ==========================================================================
+   IpdAdmissionSlip.css — Material 3 Clinical Inpatient Admission Slip
+   Print-Optimized Document Layout
+   ========================================================================== */
+
+.ipd-slip-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 2000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 32px 16px;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.ipd-slip-container {
+  background: #ffffff;
+  color: #1d1b20;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 640px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  animation: ipdSlipIn 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+}
+
+@keyframes ipdSlipIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ipd-slip-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: var(--md-sys-color-surface-container, #ece6f0);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.ipd-slip-toolbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: #ffffff;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  transition: all 150ms ease;
+}
+
+.ipd-slip-toolbar-btn--primary {
+  background: var(--md-sys-color-primary, #00668b);
+  color: #ffffff;
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+/* Printable Sheet Content */
+.ipd-slip-sheet {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  color: #1e293b;
+}
+
+.ipd-slip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #0f172a;
+  padding-bottom: 12px;
+}
+
+.ipd-slip-brand h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.ipd-slip-brand p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.ipd-slip-doc-badge {
+  text-align: right;
+}
+
+.ipd-slip-doc-badge .badge-tag {
+  display: inline-block;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.ipd-slip-doc-badge .doc-num {
+  display: block;
+  font-family: monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-top: 4px;
+}
+
+/* Grid Sections */
+.ipd-slip-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ipd-slip-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ipd-slip-box-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ipd-slip-field {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.ipd-slip-field .label {
+  color: #64748b;
+}
+
+.ipd-slip-field .val {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.ipd-slip-location-banner {
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ipd-slip-location-main {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #166534;
+}
+
+.ipd-slip-location-sub {
+  font-size: 0.75rem;
+  color: #15803d;
+  margin-top: 2px;
+}
+
+.ipd-slip-notice {
+  font-size: 0.72rem;
+  color: #64748b;
+  line-height: 1.4;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 10px;
+  margin-top: 4px;
+}
+
+/* Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .ipd-slip-sheet, .ipd-slip-sheet * {
+    visibility: visible;
+  }
+  .ipd-slip-overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    padding: 0;
+    background: transparent;
+  }
+  .ipd-slip-container {
+    box-shadow: none;
+    border-radius: 0;
+    max-width: 100%;
+  }
+  .ipd-slip-toolbar {
+    display: none !important;
+  }
+}

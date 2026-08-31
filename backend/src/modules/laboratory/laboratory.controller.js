@@ -186,7 +186,7 @@ class LaboratoryController {
   });
 
   downloadScan = catchAsync(async (req, res) => {
-    const { scan, absolutePath } = await laboratoryService.getScanFile(
+    const { scan, presignedUrl, absolutePath } = await laboratoryService.getScanFile(
       req.params.scanId,
       req.user
     );
@@ -200,9 +200,20 @@ class LaboratoryController {
       req.ip
     );
 
-    res.setHeader('Content-Type', scan.mimeType);
-    res.setHeader('Content-Disposition', `inline; filename="${scan.originalFilename}"`);
-    res.sendFile(absolutePath);
+    if (presignedUrl) {
+      if (req.query.json === 'true' || req.headers.accept?.includes('application/json')) {
+        return success(res, { downloadUrl: presignedUrl, scan }, 'Scan download URL generated');
+      }
+      return res.redirect(presignedUrl);
+    }
+
+    if (absolutePath) {
+      res.setHeader('Content-Type', scan.mimeType);
+      res.setHeader('Content-Disposition', `inline; filename="${scan.originalFilename}"`);
+      return res.sendFile(absolutePath);
+    }
+
+    throw new AppError('NOT_FOUND', 'Scan file not found');
   });
 
   getScansForOrder = catchAsync(async (req, res) => {

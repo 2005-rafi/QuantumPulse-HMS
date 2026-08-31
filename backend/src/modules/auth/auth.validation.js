@@ -9,4 +9,9 @@ const refreshSchema = Joi.object({
   refreshToken: Joi.string().required(),
 });
 
-module.exports = { loginSchema, refreshSchema };
+const unlockSchema = Joi.object({
+  password: Joi.string().min(1).max(100).required(),
+  username: Joi.string().min(2).max(50).allow('', null).optional(),
+});
+
+module.exports = { loginSchema, refreshSchema, unlockSchema };

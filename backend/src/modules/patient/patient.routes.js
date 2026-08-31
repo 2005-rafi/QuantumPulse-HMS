@@ -1,5 +1,6 @@
 const express = require('express');
 const controller = require('./patient.controller');
+const exportController = require('./patient.export.controller');
 const deletionController = require('./deletionRequest.controller');
 const { validate } = require('../../core/validation/validate');
 const { createPatientSchema, updatePatientSchema, addHistorySchema, createPatientWithVisitSchema } = require('./patient.validation');
@@ -10,6 +11,9 @@ const { PERMISSIONS } = require('../../core/constants');
 const router = express.Router();
 
 router.use(authenticate);
+
+// Export Streaming Route
+router.post('/export', requirePermission(PERMISSIONS.PATIENT_VIEW), exportController.exportData);
 
 router.post('/check-duplicates', requirePermission(PERMISSIONS.PATIENT_REGISTER), controller.checkDuplicates);
 router.post('/register-with-visit', requirePermission(PERMISSIONS.PATIENT_REGISTER), validate(createPatientWithVisitSchema), controller.registerWithVisit);

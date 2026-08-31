@@ -54,6 +54,8 @@ const DoctorDashboard = () => {
   // Derive active tab directly from URL path
   const activeTab = location.pathname.includes('/deletion-requests')
     ? 'deletionRequests'
+    : location.pathname.includes('/ipd')
+    ? 'ipd'
     : location.pathname.includes('/appointments')
     ? 'appointments'
     : 'consultation';
@@ -63,6 +65,16 @@ const DoctorDashboard = () => {
     navigate(`/dashboard/doctor/${routeName}`);
   };
 
+  const headerTabsWithIcons = React.useMemo(() => {
+    return headerTabs.map((t) => {
+      let icon = <Icon.Stethoscope />;
+      if (t.id === 'ipd') icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>hotel</span>;
+      if (t.id === 'appointments') icon = <Icon.Calendar />;
+      if (t.id === 'deletionRequests') icon = <Icon.Trash />;
+      return { ...t, icon };
+    });
+  }, [headerTabs]);
+
   return (
     <div className="doctor-page">
       {/* ─── TOP APP BAR with Tabs ─── */}
@@ -70,7 +82,7 @@ const DoctorDashboard = () => {
         brandTitle={`${config?.SHORT_NAME || 'CareOne-QPT'} Doctor Portal`}
         brandSubtitle={user?.department || 'Department'}
         centerSlot={
-          <Md3Tabs tabs={headerTabs} activeTab={activeTab} onChange={handleTabChange} />
+          <Md3Tabs tabs={headerTabsWithIcons} activeTab={activeTab} onChange={handleTabChange} />
         }
         user={user}
         onLogout={handleLogout}

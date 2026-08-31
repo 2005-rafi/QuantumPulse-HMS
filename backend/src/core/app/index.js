@@ -9,6 +9,7 @@ const requestId = require('../middleware/requestId');
 const errorHandler = require('../middleware/errorHandler');
 const logger = require('../logger');
 const xssClean = require('../middleware/xss');
+const mongoSanitize = require('../middleware/mongoSanitize');
 
 // Route imports
 const authRoutes = require('../../modules/auth/auth.routes');
@@ -23,6 +24,7 @@ const auditRoutes = require('../../modules/audit/audit.routes');
 const appointmentRoutes = require('../../modules/appointments/appointment.routes');
 const tariffRoutes = require('../../modules/tariff/tariff.routes');
 const billRoutes = require('../../modules/billing/bill.routes');
+const ipdRoutes = require('../../modules/ipd/ipd.routes');
 
 const createApp = () => {
   const app = express();
@@ -75,18 +77,63 @@ const createApp = () => {
     legacyHeaders: false,
   });
 
+  const refreshLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 30, // Limit to 30 refresh attempts per IP per 15 minutes
+    skip: (req) => isWhitelistedIp(req.ip),
+    message: {
+      status: 'error',
+      errorCode: 'RATE_LIMIT_EXCEEDED',
+      message: 'Too many token refresh attempts. Please try again later.',
+      timestamp: new Date().toISOString(),
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
   // Apply rate limiters before other handlers
   app.use('/api', apiLimiter);
   app.use('/api/v1/auth/login', loginLimiter);
+  app.use('/api/v1/auth/refresh', refreshLimiter);
 
-  // Security
-  app.use(helmet());
+  // Security Headers via Helmet (CSP, HSTS, X-Content-Type-Options, Frameguard)
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          imgSrc: ["'self'", 'data:', 'blob:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+          formAction: ["'self'"],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      frameguard: { action: 'deny' },
+      noSniff: true,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    })
+  );
 
   // Request parsing
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
 
-  // Input Sanitization
+  // NoSQL operator injection sanitization
+  app.use(mongoSanitize);
+
+  // Input Sanitization (XSS)
   app.use(xssClean);
 
   // Request tracking
@@ -105,6 +152,7 @@ const createApp = () => {
   app.use('/api/v1/auth', authRoutes);
   app.use('/api/v1/staff', staffRoutes);
   app.use('/api/v1/identity', identityRoutes);
+  app.use('/api/v1/admin', administrationRoutes);
   app.use('/api/v1', administrationRoutes);
   app.use('/api/v1/patients', patientRoutes);
   app.use('/api/v1/visits', visitRoutes);
@@ -114,6 +162,7 @@ const createApp = () => {
   app.use('/api/v1/appointments', appointmentRoutes);
   app.use('/api/v1/tariff', tariffRoutes);
   app.use('/api/v1/bills', billRoutes);
+  app.use('/api/v1/ipd', ipdRoutes);
 
   // Health check
   app.get('/api/v1/health', (req, res) => {

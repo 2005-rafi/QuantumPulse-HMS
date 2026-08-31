@@ -1,0 +1,437 @@
+/* ==========================================================================
+   Md3ClinicalDrawer.css — Material Design 3 Clinical Navigation Drawer
+   Pure MD3 Design Tokens, Dynamic Spacing & Spring Physics Motion
+   ========================================================================== */
+
+.md3-drawer-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+}
+
+/* ── Backdrop Scrim ── */
+.md3-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  animation: md3DrawerScrimFadeIn 0.25s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes md3DrawerScrimFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Drawer Surface Container ── */
+.md3-drawer-surface {
+  position: relative;
+  width: 320px;
+  max-width: 85vw;
+  height: 100%;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  border-radius: 0 24px 24px 0;
+  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  overflow: hidden;
+  transform: translateX(-100%);
+  animation: md3DrawerSlideIn 0.3s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
+}
+
+@keyframes md3DrawerSlideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ── Drawer Header ── */
+.md3-drawer-header {
+  padding: 16px 18px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
+  flex-shrink: 0;
+}
+
+.md3-drawer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.md3-drawer-brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background-color: var(--md-sys-color-primary-container, #e8e2d0);
+  color: var(--md-sys-color-primary, #6b5f19);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.md3-drawer-brand-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.md3-drawer-brand-icon--has-logo {
+  width: auto;
+  min-width: 38px;
+  max-width: 140px;
+  background-color: transparent;
+  border-radius: 0;
+  overflow: visible;
+}
+
+.md3-drawer-brand-logo {
+  width: auto;
+  height: 100%;
+  max-height: 36px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.md3-drawer-brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+.md3-drawer-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-drawer-subtitle {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-drawer-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.md3-drawer-close-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ede8dc);
+  color: var(--md-sys-color-on-surface, #1d1b16);
+}
+
+/* ── Action Slot (Register Patient) ── */
+.md3-drawer-action-slot {
+  padding: 14px 18px 6px;
+  flex-shrink: 0;
+}
+
+.md3-drawer-action-slot button,
+.md3-drawer-action-slot a {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ── Drawer Body with Dynamic Spacing ── */
+.md3-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  scrollbar-width: thin;
+}
+
+.md3-drawer-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.md3-drawer-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.md3-drawer-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+}
+
+.md3-drawer-today-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary-container, #e8e2d0);
+  color: var(--md-sys-color-primary, #6b5f19);
+}
+
+.md3-drawer-today-badge svg {
+  width: 13px;
+  height: 13px;
+}
+
+/* ── Navigation Destination Links ── */
+.md3-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.md3-drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 24px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+  box-sizing: border-box;
+}
+
+.md3-drawer-nav-item:hover {
+  background-color: var(--md-sys-color-surface-container, #f3eee3);
+}
+
+.md3-drawer-nav-item--active {
+  background-color: var(--md-sys-color-secondary-container, #e8e2d0);
+  color: var(--md-sys-color-on-secondary-container, #1e1b11);
+  font-weight: 700;
+}
+
+.md3-drawer-nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  color: inherit;
+}
+
+.md3-drawer-nav-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.md3-drawer-nav-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-drawer-nav-badge {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-primary, #6b5f19);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  font-weight: 700;
+}
+
+.md3-drawer-nav-active-check {
+  font-size: 18px;
+  color: var(--md-sys-color-primary, #6b5f19);
+}
+
+/* ── Activities / Today's Pulse List ── */
+.md3-drawer-activities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md3-drawer-activity-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  box-sizing: border-box;
+  gap: 12px;
+  transition: background-color 0.15s ease;
+}
+
+.md3-drawer-activity-card:hover {
+  background-color: var(--md-sys-color-surface-container, #f3eee3);
+}
+
+.md3-drawer-activity-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.md3-drawer-activity-icon-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background-color: var(--md-sys-color-surface-container-high, #ede8dc);
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-drawer-activity-icon-wrap svg {
+  width: 16px;
+  height: 16px;
+}
+
+.md3-drawer-activity-card--primary .md3-drawer-activity-icon-wrap {
+  background-color: var(--md-sys-color-primary-container, #e8e2d0);
+  color: var(--md-sys-color-primary, #6b5f19);
+}
+
+.md3-drawer-activity-card--secondary .md3-drawer-activity-icon-wrap {
+  background-color: var(--md-sys-color-secondary-container, #e8e2d0);
+  color: var(--md-sys-color-on-secondary-container, #1e1b11);
+}
+
+.md3-drawer-activity-card--tertiary .md3-drawer-activity-icon-wrap {
+  background-color: color-mix(in srgb, var(--md-sys-color-tertiary, #655f41) 15%, transparent);
+  color: var(--md-sys-color-tertiary, #655f41);
+}
+
+.md3-drawer-activity-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+  white-space: normal;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.md3-drawer-activity-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+/* ── Footer / User Identity ── */
+.md3-drawer-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.md3-drawer-user-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.md3-drawer-user-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.md3-drawer-user-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b16);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-drawer-user-role {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #797667);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.md3-drawer-logout-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-error, #ba1a1a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.md3-drawer-logout-btn:hover {
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+}
