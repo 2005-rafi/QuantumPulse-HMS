@@ -917,9 +917,9 @@ const CreateStaffSheet = ({ isOpen, onClose, onSuccess, departments = [], roles 
               )}
 
               {/* Reception / Administrator */}
-              {(selectedRoleName === 'Reception' || selectedRoleName === 'Administrator') && (
+              {(selectedRoleName === 'Reception' || selectedRoleName === 'Administrator' || selectedRoleName === 'Ward Operations') && (
                 <div style={{ padding: '16px', background: 'var(--md-sys-color-surface-container)', borderRadius: '12px', marginTop: '8px', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                  No specialized credentials required for this role. Years of experience above is sufficient.
+                  No specialized clinical license required for this role. Years of experience above is sufficient.
                 </div>
               )}
 

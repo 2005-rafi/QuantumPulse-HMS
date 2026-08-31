@@ -22,20 +22,20 @@ const {
 router.get('/map', authenticate, controller.getBedMap);
 
 // ── Floor Routes ──────────────────────────────────────────────
-router.post('/floors', authenticate, requirePermission('MANAGE_USERS'), validate(createFloorSchema), controller.createFloor);
+router.post('/floors', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), validate(createFloorSchema), controller.createFloor);
 router.get('/floors', authenticate, controller.getAllFloors);
-router.patch('/floors/:id', authenticate, requirePermission('MANAGE_USERS'), validate(updateFloorSchema), controller.updateFloor);
+router.patch('/floors/:id', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), validate(updateFloorSchema), controller.updateFloor);
 
 // ── Room Routes ───────────────────────────────────────────────
-router.post('/rooms', authenticate, requirePermission('MANAGE_USERS'), validate(createRoomSchema), controller.createRoom);
+router.post('/rooms', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), validate(createRoomSchema), controller.createRoom);
 router.get('/rooms/:floorId', authenticate, controller.getRoomsByFloor);
-router.patch('/rooms/:id', authenticate, requirePermission('MANAGE_USERS'), validate(updateRoomSchema), controller.updateRoom);
+router.patch('/rooms/:id', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), validate(updateRoomSchema), controller.updateRoom);
 
 // ── Bed Routes ────────────────────────────────────────────────
-router.post('/beds', authenticate, requirePermission('MANAGE_USERS'), validate(createBedSchema), controller.createBed);
+router.post('/beds', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), validate(createBedSchema), controller.createBed);
 router.get('/beds', authenticate, controller.getBeds);
 router.get('/beds/:id', authenticate, controller.getBedById);
-router.patch('/beds/:id', authenticate, requirePermission('MANAGE_USERS'), controller.updateBed);
+router.patch('/beds/:id', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), controller.updateBed);
 router.patch('/beds/:id/status', authenticate, validate(updateBedStatusSchema), controller.updateBedStatus);
 
 // ── Bed Transfer (Atomic Transaction) ─────────────────────────

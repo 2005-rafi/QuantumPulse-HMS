@@ -1,0 +1,33 @@
+/**
+ * components/md3/Md3MarqueeText.css
+ * Material Design 3 Fluid Marquee Text for Dense Clinical Interfaces.
+ */
+
+.md3-marquee-wrapper {
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.md3-marquee-wrapper.is-overflow:hover .md3-marquee-inner {
+  display: inline-block;
+  animation: md3-marquee-scroll 5s linear infinite alternate;
+}
+
+@keyframes md3-marquee-scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  20% {
+    transform: translateX(0%);
+  }
+  80% {
+    transform: translateX(calc(-100% + 100%)); /* Will translate if width difference */
+  }
+  100% {
+    transform: translateX(calc(-100% + 100%));
+  }
+}

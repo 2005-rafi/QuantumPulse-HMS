@@ -44,6 +44,13 @@ export const POSITIONS = {
     { title: 'Receptionist', rank: 2 },
     { title: 'Front Desk Assistant', rank: 1 }
   ],
+  'Ward Operations': [
+    { title: 'Head of Department', rank: 5 },
+    { title: 'Operations Manager', rank: 4 },
+    { title: 'Senior Ward Executive', rank: 3 },
+    { title: 'Junior Ward Executive', rank: 2 },
+    { title: 'Housekeeping', rank: 1 }
+  ],
   Administrator: [
     { title: 'Chief Executive Officer', rank: 4 },
     { title: 'Administrative Director', rank: 3 },

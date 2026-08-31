@@ -4,6 +4,7 @@ const ROLES = {
   DOCTOR: 'Doctor',
   LABORATORY: 'Laboratory',
   PHARMACY: 'Pharmacy',
+  WARD_OPERATIONS: 'Ward Operations',
   ADMINISTRATOR: 'Administrator',
 };
 
@@ -49,6 +50,17 @@ const PERMISSIONS = {
   ADJUSTMENT_REQUEST: 'ADJUSTMENT_REQUEST',
   ADJUSTMENT_APPROVE: 'ADJUSTMENT_APPROVE',
   FINANCIAL_ANALYTICS: 'FINANCIAL_ANALYTICS',
+  // Inpatient & Ward Operations
+  BED_VIEW: 'BED_VIEW',
+  BED_ALLOCATE: 'BED_ALLOCATE',
+  BED_TRANSFER: 'BED_TRANSFER',
+  BED_STATUS_UPDATE: 'BED_STATUS_UPDATE',
+  FACILITY_VIEW: 'FACILITY_VIEW',
+  FACILITY_MANAGE: 'FACILITY_MANAGE',
+  DISCHARGE_VIEW: 'DISCHARGE_VIEW',
+  DISCHARGE_INITIATE: 'DISCHARGE_INITIATE',
+  TIME_MONITOR_VIEW: 'TIME_MONITOR_VIEW',
+  HOUSEKEEPING_UPDATE: 'HOUSEKEEPING_UPDATE',
 };
 
 const ACCOUNT_STATUS = {
@@ -81,12 +93,15 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.APPOINTMENT_CANCEL,
     PERMISSIONS.APPOINTMENT_CHECKIN,
     PERMISSIONS.APPOINTMENT_MARK_MISSED,
+    PERMISSIONS.BED_VIEW,
   ],
   [ROLES.NURSE]: [
     PERMISSIONS.PATIENT_VIEW,
     PERMISSIONS.VISIT_VIEW,
     PERMISSIONS.VITALS_RECORD,
     PERMISSIONS.NOTE_OPEN,
+    PERMISSIONS.BED_VIEW,
+    PERMISSIONS.BED_STATUS_UPDATE,
   ],
   [ROLES.DOCTOR]: [
     PERMISSIONS.PATIENT_VIEW,
@@ -99,6 +114,7 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.LAB_ORDER_CREATE,
     PERMISSIONS.APPROVE_DELETION,
     PERMISSIONS.APPOINTMENT_VIEW,
+    PERMISSIONS.BED_VIEW,
   ],
   [ROLES.LABORATORY]: [
     PERMISSIONS.VISIT_VIEW,
@@ -113,6 +129,20 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.BILL_GENERATE,
     PERMISSIONS.BILL_VIEW,
     PERMISSIONS.MEDICINE_PRICE_MANAGE,
+  ],
+  [ROLES.WARD_OPERATIONS]: [
+    PERMISSIONS.PATIENT_VIEW,
+    PERMISSIONS.VISIT_VIEW,
+    PERMISSIONS.BED_VIEW,
+    PERMISSIONS.BED_ALLOCATE,
+    PERMISSIONS.BED_TRANSFER,
+    PERMISSIONS.BED_STATUS_UPDATE,
+    PERMISSIONS.FACILITY_VIEW,
+    PERMISSIONS.FACILITY_MANAGE,
+    PERMISSIONS.DISCHARGE_VIEW,
+    PERMISSIONS.DISCHARGE_INITIATE,
+    PERMISSIONS.TIME_MONITOR_VIEW,
+    PERMISSIONS.HOUSEKEEPING_UPDATE,
   ],
   [ROLES.ADMINISTRATOR]: [
     PERMISSIONS.PATIENT_VIEW,
@@ -142,6 +172,17 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.ADJUSTMENT_REQUEST,
     PERMISSIONS.ADJUSTMENT_APPROVE,
     PERMISSIONS.FINANCIAL_ANALYTICS,
+    // Inpatient & Ward Operations
+    PERMISSIONS.BED_VIEW,
+    PERMISSIONS.BED_ALLOCATE,
+    PERMISSIONS.BED_TRANSFER,
+    PERMISSIONS.BED_STATUS_UPDATE,
+    PERMISSIONS.FACILITY_VIEW,
+    PERMISSIONS.FACILITY_MANAGE,
+    PERMISSIONS.DISCHARGE_VIEW,
+    PERMISSIONS.DISCHARGE_INITIATE,
+    PERMISSIONS.TIME_MONITOR_VIEW,
+    PERMISSIONS.HOUSEKEEPING_UPDATE,
   ],
 };
 
@@ -176,6 +217,7 @@ const DEPARTMENTS = [
   // Support departments
   { name: 'Pharmacy',         code: 'PHARM', description: 'Medicine dispensing and management',   type: 'SUPPORT' },
   { name: 'Blood Bank',       code: 'BBANK', description: 'Blood storage and transfusion',        type: 'SUPPORT' },
+  { name: 'Ward Operations',  code: 'WARD',  description: 'Inpatient bed allocation, facility & time monitoring', type: 'SUPPORT' },
   // Administrative departments
   { name: 'Reception',        code: 'RECEP', description: 'Patient registration and front desk',  type: 'ADMINISTRATIVE' },
   { name: 'Billing',          code: 'BILL',  description: 'Billing, accounts and payments',       type: 'ADMINISTRATIVE' },
@@ -221,6 +263,13 @@ const POSITIONS = {
     { title: 'Pharmacist', rank: 3 },
     { title: 'Pharmacy Technician', rank: 2 },
     { title: 'Pharmacy Assistant', rank: 1 }
+  ],
+  [ROLES.WARD_OPERATIONS]: [
+    { title: 'Head of Department', rank: 5 },
+    { title: 'Operations Manager', rank: 4 },
+    { title: 'Senior Ward Executive', rank: 3 },
+    { title: 'Junior Ward Executive', rank: 2 },
+    { title: 'Housekeeping', rank: 1 }
   ],
   [ROLES.RECEPTION]: [
     { title: 'Front Office Manager', rank: 5 },

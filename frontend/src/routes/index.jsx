@@ -33,12 +33,15 @@ import DoctorDashboard from '../pages/DoctorDashboard';
 import LabDashboard from '../pages/LabDashboard';
 import PharmacyDashboard from '../pages/PharmacyDashboard';
 import AdministratorDashboard from '../pages/AdministratorDashboard';
+import WardOperationsDashboard from '../pages/WardOperationsDashboard';
 import UserProfilePage from '../pages/UserProfilePage';
 // Child Views for Named Routing
 import { ReceptionPatientsView, ReceptionAppointmentsView } from '../features/patients/ReceptionViews';
 import { DoctorConsultationView, DoctorAppointmentsView, DoctorDeletionRequestsView } from '../features/doctor/DoctorViews';
 import { NurseTriageView } from '../features/nurse/NurseViews';
 import { LabProcessingView, LabSpecimensView, LabReportedView } from '../features/laboratory/LabViews';
+import { WardTimeMonitoringView } from '../features/ipd/WardTimeMonitoringView';
+import { WardTransferLedgerView } from '../features/ipd/WardTransferLedgerView';
 import {
   ProfileOverviewView,
   ProfileEmploymentView,
@@ -203,6 +206,23 @@ export const router = createBrowserRouter([
           { path: 'audit', element: <AdminAuditLogs /> },
           { path: 'appointments', element: <AdminAppointmentsWrapper /> },
         ]
+      },
+
+      // Ward Operations (Bed & Facility Manager) — Named tab routing: /bed-map, /time-monitoring, /facility-builder, /transfers
+      {
+        path: 'ward-operations',
+        element: (
+          <RoleRoute role="Ward Operations">
+            <WardOperationsDashboard />
+          </RoleRoute>
+        ),
+        children: [
+          { index: true, element: <Navigate to="bed-map" replace /> },
+          { path: 'bed-map', element: <ReceptionBedMap /> },
+          { path: 'time-monitoring', element: <WardTimeMonitoringView /> },
+          { path: 'facility-builder', element: <AdminFacilityBuilder /> },
+          { path: 'transfers', element: <WardTransferLedgerView /> },
+        ],
       },
 
       // ── Dedicated Inpatient Department (IPD) Clinical Workstations ──

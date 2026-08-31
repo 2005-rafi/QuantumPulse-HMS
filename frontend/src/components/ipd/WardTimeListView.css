@@ -1,0 +1,79 @@
+/**
+ * components/ipd/WardTimeListView.css
+ * Material Design 3 Table List View for High-Density Inpatient Bed Telemetry & Time Monitoring.
+ */
+
+.md3-ward-list-table-container {
+  width: 100%;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  overflow: hidden;
+  box-shadow: var(--md-sys-elevation-1, 0 1px 3px rgba(0, 0, 0, 0.05));
+}
+
+.md3-ward-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.md3-ward-list-table th {
+  background: var(--md-sys-color-surface-container-low, #f0f5f2);
+  color: var(--md-sys-color-on-surface, #191c1b);
+  font-weight: 700;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  white-space: nowrap;
+}
+
+.md3-ward-list-row {
+  border-bottom: 1px solid var(--md-sys-color-surface-container-highest, #dde5e0);
+  transition: background-color 0.15s ease;
+}
+
+.md3-ward-list-row:hover {
+  background-color: var(--md-sys-color-surface-container-high, #e0e8e4);
+}
+
+.md3-ward-list-row td {
+  padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.md3-ward-cell-bed {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md3-ward-bed-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.md3-ward-bed-loc {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline, #6f7975);
+}
+
+.md3-ward-cell-patient {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md3-ward-patient-title {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.md3-ward-patient-sub {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline, #6f7975);
+}

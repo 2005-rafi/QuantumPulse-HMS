@@ -1,0 +1,237 @@
+/**
+ * components/ipd/WardTimeCard.css
+ * Material Design 3 Telemetry Card for Inpatient Beds.
+ * Scaled for 5-column desktop layout with high clinical legibility, full chip visibility, and marquee support.
+ */
+
+.md3-ward-time-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  padding: 14px 16px;
+  gap: 10px;
+  box-shadow: var(--md-sys-elevation-1, 0 1px 2px rgba(0, 0, 0, 0.04));
+  transition: transform 0.18s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.18s cubic-bezier(0.2, 0, 0, 1), border-color 0.18s ease;
+  overflow: hidden;
+  box-sizing: border-box;
+  min-height: 180px;
+}
+
+.md3-ward-time-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--md-sys-elevation-2, 0 4px 10px rgba(0, 0, 0, 0.08));
+}
+
+.md3-ward-time-card--occupied {
+  border-color: var(--md-sys-color-outline-variant);
+}
+
+.md3-ward-time-card--long-stay {
+  border-color: var(--md-sys-color-error);
+  background: color-mix(in srgb, var(--md-sys-color-error-container) 12%, var(--md-sys-color-surface));
+}
+
+.md3-ward-time-card--cleaning {
+  border-color: var(--md-sys-color-tertiary);
+  background: color-mix(in srgb, var(--md-sys-color-tertiary-container) 15%, var(--md-sys-color-surface));
+}
+
+.md3-ward-time-card--vacant {
+  border-color: var(--md-sys-color-outline-variant);
+}
+
+.md3-ward-time-card--maint {
+  border-color: var(--md-sys-color-outline);
+}
+
+/* Card Accent Rail */
+.md3-ward-time-card-rail {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  border-top-left-radius: 14px;
+  border-bottom-left-radius: 14px;
+}
+
+.md3-ward-time-card--occupied .md3-ward-time-card-rail { background: var(--md-sys-color-error); }
+.md3-ward-time-card--long-stay .md3-ward-time-card-rail { background: var(--md-sys-color-error); }
+.md3-ward-time-card--cleaning .md3-ward-time-card-rail { background: var(--md-sys-color-tertiary); }
+.md3-ward-time-card--vacant .md3-ward-time-card-rail { background: var(--md-sys-color-primary); }
+.md3-ward-time-card--maint .md3-ward-time-card-rail { background: var(--md-sys-color-outline); }
+
+/* Card Header */
+.md3-ward-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.md3-ward-card-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.md3-ward-card-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  margin: 0;
+  line-height: 1.25;
+}
+
+.md3-ward-card-location {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 2px;
+}
+
+/* Status Pill (Fully visible without truncation) */
+.md3-ward-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--md-sys-shape-corner-full, 999px);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.md3-ward-status-pill--occupied {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.md3-ward-status-pill--cleaning {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.md3-ward-status-pill--vacant {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.md3-ward-status-pill--maint {
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Patient / Telemetry Body Block */
+.md3-ward-card-body {
+  padding: 10px 12px;
+  border-radius: var(--md-sys-shape-corner-small, 10px);
+  background: var(--md-sys-color-surface-container-low);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.md3-ward-patient-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.md3-ward-patient-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  flex: 1;
+  min-width: 0;
+}
+
+.md3-ward-stay-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--md-sys-shape-corner-full, 999px);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+}
+
+.md3-ward-stay-chip--alert {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-error);
+}
+
+.md3-ward-meta-text {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.35;
+}
+
+/* Actions Footer */
+.md3-ward-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.md3-ward-btn-compact {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.md3-ward-btn-compact:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.md3-ward-btn-compact--filled-primary {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+}
+.md3-ward-btn-compact--filled-primary:hover:not(:disabled) {
+  box-shadow: var(--md-sys-elevation-1, 0 1px 3px rgba(0, 0, 0, 0.12));
+}
+
+.md3-ward-btn-compact--outlined {
+  background: transparent;
+  border-color: var(--md-sys-color-outline);
+  color: var(--md-sys-color-on-surface);
+}
+.md3-ward-btn-compact--outlined:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.md3-ward-btn-compact--text {
+  background: transparent;
+  border-color: transparent;
+  color: var(--md-sys-color-on-surface-variant);
+}
+.md3-ward-btn-compact--text:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}

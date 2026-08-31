@@ -13,6 +13,7 @@ const ROLE_ROUTES = {
   Doctor: '/dashboard/doctor',
   Laboratory: '/dashboard/laboratory',
   Pharmacy: '/dashboard/pharmacy',
+  'Ward Operations': '/dashboard/ward-operations',
   Administrator: '/dashboard/administrator',
 };
 

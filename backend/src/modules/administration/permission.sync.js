@@ -1,7 +1,8 @@
 const Permission = require('./permission.model');
 const Role = require('./role.model');
 const RolePermission = require('./rolePermission.model');
-const { ROLE_PERMISSIONS } = require('../../core/constants');
+const Department = require('./department.model');
+const { ROLES, ROLE_PERMISSIONS, DEPARTMENTS } = require('../../core/constants');
 const logger = require('../../core/logger');
 
 const ALL_PERMISSION_DEFS = [
@@ -54,45 +55,96 @@ const ALL_PERMISSION_DEFS = [
   { code: 'ADJUSTMENT_REQUEST',    module: 'billing',        description: 'Request financial adjustments and refunds' },
   { code: 'ADJUSTMENT_APPROVE',    module: 'billing',        description: 'Approve or reject financial adjustments' },
   { code: 'FINANCIAL_ANALYTICS',   module: 'billing',        description: 'Access financial revenue charts and analytics' },
+  // Inpatient & Ward Operations
+  { code: 'BED_VIEW',              module: 'ipd-beds',       description: 'View floor, room, and bed layout and live map' },
+  { code: 'BED_ALLOCATE',          module: 'ipd-beds',       description: 'Admit and allocate patients to beds' },
+  { code: 'BED_TRANSFER',          module: 'ipd-beds',       description: 'Transfer admitted patients between beds' },
+  { code: 'BED_STATUS_UPDATE',     module: 'ipd-beds',       description: 'Update bed operational status (Maintenance, Cleaning, Vacant)' },
+  { code: 'FACILITY_VIEW',         module: 'facility',       description: 'View hospital ward and physical facility structures' },
+  { code: 'FACILITY_MANAGE',       module: 'facility',       description: 'Create and configure floors, rooms, and beds' },
+  { code: 'DISCHARGE_VIEW',        module: 'ipd-discharge',  description: 'View inpatient discharge clearance and gate pass' },
+  { code: 'DISCHARGE_INITIATE',    module: 'ipd-discharge',  description: 'Initiate or sign off departmental discharge clearance' },
+  { code: 'TIME_MONITOR_VIEW',     module: 'ipd-monitoring', description: 'Access real-time bed turnaround and length-of-stay telemetry' },
+  { code: 'HOUSEKEEPING_UPDATE',   module: 'housekeeping',   description: 'Execute bed cleaning timers and sanitization status' },
 ];
 
 /**
- * Idempotently synchronizes all system permission definitions and role-permission mappings.
+ * Idempotently synchronizes all system roles, departments, permission definitions, and role-permission mappings.
  * Automatically executed during server bootstrap to ensure zero permission drift.
  */
 async function syncSystemPermissions() {
   try {
-    // 1. Upsert all permission definitions
-    const permMap = {};
-    for (const def of ALL_PERMISSION_DEFS) {
-      const doc = await Permission.findOneAndUpdate(
-        { code: def.code },
-        { $set: def },
-        { upsert: true, returnDocument: 'after' }
-      );
-      permMap[def.code] = doc;
-    }
-
-    // 2. Sync role-permission mappings from ROLE_PERMISSIONS
-    let mappedCount = 0;
-    for (const [roleName, permCodes] of Object.entries(ROLE_PERMISSIONS)) {
-      const role = await Role.findOne({ name: roleName });
-      if (!role) continue;
-
-      for (const code of permCodes) {
-        const permDoc = permMap[code];
-        if (!permDoc) continue;
-
-        await RolePermission.findOneAndUpdate(
-          { roleId: role._id, permissionId: permDoc._id },
-          { $set: { roleId: role._id, permissionId: permDoc._id } },
+    // 1. Ensure all Roles exist
+    for (const roleName of Object.values(ROLES)) {
+      try {
+        await Role.findOneAndUpdate(
+          { name: roleName },
+          { $setOnInsert: { name: roleName, description: `${roleName} operational role` } },
           { upsert: true }
         );
-        mappedCount++;
+      } catch (roleErr) {
+        logger.warn(`Role sync notice for ${roleName}: ${roleErr.message}`);
       }
     }
 
-    logger.info(`System permissions synchronized successfully (${Object.keys(permMap).length} permissions, ${mappedCount} role bindings active)`);
+    // 2. Ensure core Departments exist (check both name and code to avoid index conflicts)
+    for (const dept of DEPARTMENTS) {
+      try {
+        const existing = await Department.findOne({
+          $or: [{ name: dept.name }, { code: dept.code }],
+        });
+        if (existing) {
+          await Department.updateOne(
+            { _id: existing._id },
+            { $set: { description: dept.description || existing.description, type: dept.type || existing.type } }
+          );
+        } else {
+          await Department.create(dept);
+        }
+      } catch (deptErr) {
+        logger.warn(`Department sync notice for ${dept.name} (${dept.code}): ${deptErr.message}`);
+      }
+    }
+
+    // 3. Upsert all permission definitions
+    const permMap = {};
+    for (const def of ALL_PERMISSION_DEFS) {
+      try {
+        const doc = await Permission.findOneAndUpdate(
+          { code: def.code },
+          { $set: def },
+          { upsert: true, returnDocument: 'after' }
+        );
+        permMap[def.code] = doc;
+      } catch (permErr) {
+        logger.warn(`Permission sync notice for ${def.code}: ${permErr.message}`);
+      }
+    }
+
+    // 4. Sync role-permission mappings from ROLE_PERMISSIONS
+    let mappedCount = 0;
+    for (const [roleName, permCodes] of Object.entries(ROLE_PERMISSIONS)) {
+      try {
+        const role = await Role.findOne({ name: roleName });
+        if (!role) continue;
+
+        for (const code of permCodes) {
+          const permDoc = permMap[code] || (await Permission.findOne({ code }));
+          if (!permDoc) continue;
+
+          await RolePermission.findOneAndUpdate(
+            { roleId: role._id, permissionId: permDoc._id },
+            { $set: { roleId: role._id, permissionId: permDoc._id } },
+            { upsert: true }
+          );
+          mappedCount++;
+        }
+      } catch (bindingErr) {
+        logger.warn(`RolePermission binding notice for ${roleName}: ${bindingErr.message}`);
+      }
+    }
+
+    logger.info(`System permissions & roles synchronized successfully (${Object.keys(permMap).length} permissions, ${mappedCount} role bindings active)`);
   } catch (err) {
     logger.error('Failed to synchronize system permissions on bootstrap', { error: err.message, stack: err.stack });
   }

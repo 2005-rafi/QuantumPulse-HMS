@@ -1,0 +1,66 @@
+/**
+ * pages/WardOperationsDashboard.css
+ * Material Design 3 Styling for Ward Operations (Bed & Facility Manager) Workstation.
+ */
+
+.ward-ops-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--md-sys-color-surface, #f8faf9);
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.ward-ops-header-tabs {
+  max-width: 680px;
+}
+
+.ward-ops-main {
+  flex: 1;
+  padding: 16px 28px 36px 28px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 5-Column Responsive Telemetry Grid */
+.ward-telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+}
+
+@media (max-width: 1536px) {
+  .ward-telemetry-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .ward-telemetry-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 860px) {
+  .ward-telemetry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 540px) {
+  .ward-telemetry-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ward-ops-main {
+    padding: 12px 14px 24px 14px;
+  }
+}

@@ -58,7 +58,7 @@ export const ReceptionBedMap = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' }}>
       {/* Top Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>

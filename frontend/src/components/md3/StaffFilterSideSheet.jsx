@@ -27,6 +27,10 @@ const POSITION_ROLE_MAP = {
     'Front Office Manager', 'Reception Supervisor', 'Senior Receptionist',
     'Receptionist', 'Front Desk Assistant'
   ],
+  'Ward Operations': [
+    'Head of Department', 'Operations Manager', 'Senior Ward Executive',
+    'Junior Ward Executive', 'Housekeeping'
+  ],
   'Administrator': [
     'Chief Executive Officer', 'Administrative Director', 'Admin Officer', 'Admin Assistant'
   ]
