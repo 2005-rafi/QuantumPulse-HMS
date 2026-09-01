@@ -28,21 +28,49 @@ export const AdminAuditLogs = () => {
   const [selectedAuditLog, setSelectedAuditLog] = useState(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('ALL');
 
+  // Debounce search query changes by 300ms
   useEffect(() => {
-    fetchAuditLogs(auditPage, auditPageSize);
-  }, [auditPage, auditPageSize]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  const fetchAuditLogs = async (page, limit) => {
+  // Reset to page 1 whenever category or search query changes
+  useEffect(() => {
+    setAuditPage(1);
+  }, [activeCategory, debouncedSearch]);
+
+  // Fetch audit logs when page, pageSize, category, or search changes
+  useEffect(() => {
+    fetchAuditLogs(auditPage, auditPageSize, activeCategory, debouncedSearch);
+  }, [auditPage, auditPageSize, activeCategory, debouncedSearch]);
+
+  const fetchAuditLogs = async (page, limit, category, search) => {
     setLoading(true);
     try {
-      const res = await auditAPI.getLogs({ page, limit });
-      const data = res.data?.data || {};
-      setAuditLogs(data.items || []);
-      setAuditTotalItems(data.totalItems || (data.items || []).length);
+      const params = { page, limit };
+      if (category && category !== 'ALL') {
+        params.category = category;
+      }
+      if (search) {
+        params.q = search;
+      }
+
+      const res = await auditAPI.getLogs(params);
+      const data = res.data?.data || res.data || {};
+      const items = data.items || [];
+      const total = data.total ?? data.totalItems ?? data.totalCount ?? items.length;
+
+      setAuditLogs(items);
+      setAuditTotalItems(total);
     } catch (err) {
       console.error('Failed to fetch audit logs:', err);
+      setAuditLogs([]);
+      setAuditTotalItems(0);
     } finally {
       setLoading(false);
     }
@@ -53,40 +81,10 @@ export const AdminAuditLogs = () => {
     setAuditPage(1);
   };
 
-  // Client-side category and query filtering on the loaded batch for ultra-responsive feedback
-  const filteredLogs = useMemo(() => {
-    return auditLogs.filter((log) => {
-      // Category filter
-      if (activeCategory !== 'ALL') {
-        const act = (log.action || '').toUpperCase();
-        if (activeCategory === 'AUTH' && !(act.includes('LOGIN') || act.includes('LOGOUT') || act.includes('AUTH') || act.includes('TERMINAL') || act.includes('PASSWORD'))) {
-          return false;
-        }
-        if (activeCategory === 'PATIENT' && !(act.includes('PATIENT') || act.includes('ADMISSION') || act.includes('DISCHARGE') || act.includes('CLINICAL') || act.includes('VITALS'))) {
-          return false;
-        }
-        if (activeCategory === 'STAFF' && !(act.includes('STAFF') || act.includes('ROLE') || act.includes('PERMISSION') || act.includes('DEPT') || act.includes('HOD'))) {
-          return false;
-        }
-        if (activeCategory === 'BILLING' && !(act.includes('BILL') || act.includes('PAYMENT') || act.includes('TARIFF') || act.includes('LEDGER') || act.includes('ADJUSTMENT'))) {
-          return false;
-        }
-      }
-
-      // Search query filter
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase();
-        const actorName = (log.actorId?.fullName || log.actorId?.username || '').toLowerCase();
-        const action = (log.action || '').toLowerCase();
-        const targetId = (log.targetId || '').toLowerCase();
-        const role = (log.actorRole || '').toLowerCase();
-        const ip = (log.ipAddress || '').toLowerCase();
-        return actorName.includes(q) || action.includes(q) || targetId.includes(q) || role.includes(q) || ip.includes(q);
-      }
-
-      return true;
-    });
-  }, [auditLogs, activeCategory, searchQuery]);
+  const handleCategoryChange = (catId) => {
+    setActiveCategory(catId);
+    setAuditPage(1);
+  };
 
   return (
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -147,7 +145,7 @@ export const AdminAuditLogs = () => {
                 key={cat.id}
                 type="button"
                 className={`md3-audit-chip-btn ${isActive ? 'is-active' : ''}`}
-                onClick={() => setActiveCategory(cat.id)}
+                onClick={() => handleCategoryChange(cat.id)}
                 role="tab"
                 aria-selected={isActive}
               >
@@ -170,6 +168,7 @@ export const AdminAuditLogs = () => {
               onPageSizeChange={handlePageSizeChange}
               itemLabel="audit events"
               position="top"
+              disabled={loading}
             />
           </div>
         )}
@@ -178,9 +177,10 @@ export const AdminAuditLogs = () => {
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {loading ? (
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Loading audit ledger...
+              <span className="md3-spinner" style={{ display: 'inline-block', marginBottom: '8px' }} />
+              <div>Loading audit ledger...</div>
             </div>
-          ) : filteredLogs.length === 0 ? (
+          ) : auditLogs.length === 0 ? (
             <div style={{ padding: '24px 0', width: '100%' }}>
               <Md3EmptyState
                 icon="history"
@@ -199,7 +199,7 @@ export const AdminAuditLogs = () => {
               key={`cards-${auditPage}-${auditPageSize}`}
               style={{ flex: 1, paddingBottom: '20px' }}
             >
-              {filteredLogs.map((log) => (
+              {auditLogs.map((log) => (
                 <AuditCard
                   key={log._id}
                   log={log}
@@ -214,7 +214,7 @@ export const AdminAuditLogs = () => {
               style={{ flex: 1, paddingBottom: '20px' }}
             >
               <AuditListView
-                auditLogs={filteredLogs}
+                auditLogs={auditLogs}
                 onInspect={(item) => setSelectedAuditLog(item)}
               />
             </div>
@@ -231,6 +231,7 @@ export const AdminAuditLogs = () => {
               onPageSizeChange={handlePageSizeChange}
               itemLabel="audit events"
               position="bottom"
+              disabled={loading}
             />
           )}
         </div>

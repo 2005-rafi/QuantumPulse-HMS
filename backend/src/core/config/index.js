@@ -25,8 +25,11 @@ const config = {
   mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/quantum_careone',
   corsOrigin: process.env.CORS_ORIGIN || centralPorts.FRONTEND?.URL || 'http://localhost:7123',
   rateLimit: {
+    enabled: process.env.RATE_LIMIT_ENABLED !== 'false',
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 15 * 60 * 1000, // 15 mins
-    max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 100, // Limit each IP to 100 requests per window
+    max: parseInt(process.env.RATE_LIMIT_MAX, 10) || 3000, // Limit shared IP to 3,000 requests per window (hospital scale)
+    userMax: parseInt(process.env.RATE_LIMIT_USER_MAX, 10) || 1500, // Limit individual user to 1,500 requests per window
+    loginMax: parseInt(process.env.RATE_LIMIT_LOGIN_MAX, 10) || 120, // Limit shared IP to 120 login attempts per window
   },
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,

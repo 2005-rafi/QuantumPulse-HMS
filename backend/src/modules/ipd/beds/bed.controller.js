@@ -44,6 +44,18 @@ class BedController {
     }
   }
 
+  async getAllRooms(req, res, next) {
+    try {
+      const filter = {};
+      if (req.query.floorId) filter.floorId = req.query.floorId;
+      if (req.query.roomType) filter.roomType = req.query.roomType;
+      const rooms = await bedService.getAllRooms(filter);
+      return success(res, rooms, 'Rooms retrieved successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getRoomsByFloor(req, res, next) {
     try {
       const rooms = await bedService.getRoomsByFloor(req.params.floorId);

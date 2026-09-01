@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useDoctorWorkspace } from '../hooks/useDoctorWorkspace';
 import CommonHeader from '../components/shell/CommonHeader';
-import { Md3Tabs } from '../components/md3/Md3Widgets';
+import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
 import { useConfig } from '../contexts/ConfigContext';
 import '../components/shell/shell.css';
 import './DoctorDashboard.css';
@@ -67,10 +67,10 @@ const DoctorDashboard = () => {
 
   const headerTabsWithIcons = React.useMemo(() => {
     return headerTabs.map((t) => {
-      let icon = <Icon.Stethoscope />;
+      let icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>stethoscope</span>;
       if (t.id === 'ipd') icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>hotel</span>;
-      if (t.id === 'appointments') icon = <Icon.Calendar />;
-      if (t.id === 'deletionRequests') icon = <Icon.Trash />;
+      if (t.id === 'appointments') icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>calendar_month</span>;
+      if (t.id === 'deletionRequests') icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>delete</span>;
       return { ...t, icon };
     });
   }, [headerTabs]);

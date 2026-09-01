@@ -30,6 +30,10 @@ class BedService {
     return bedRepository.createRoom(data);
   }
 
+  async getAllRooms(filter = {}) {
+    return bedRepository.getRooms(filter);
+  }
+
   async getRoomsByFloor(floorId) {
     return bedRepository.getRoomsByFloor(floorId);
   }
@@ -102,30 +106,32 @@ class BedService {
         throw new AppError('Target bed is identical to current bed', 400, 'SAME_BED');
       }
 
-      const targetBed = await bedRepository.getBedById(targetBedId);
-      if (!targetBed) throw new AppError('Target bed not found', 404, 'NOT_FOUND');
-      if (targetBed.status !== 'VACANT') {
-        throw new AppError(`Target bed is not vacant (current status: ${targetBed.status})`, 409, 'BED_NOT_AVAILABLE');
+      // 1. Claim target bed atomically via Compare-And-Swap (CAS) inside transaction
+      const targetBed = await bedRepository.claimBedAtomically(
+        targetBedId,
+        {
+          status: 'OCCUPIED',
+          currentAdmissionId: admission._id,
+          currentPatientId: admission.patientId,
+        },
+        session
+      );
+
+      if (!targetBed) {
+        throw new AppError(
+          'Target bed was just claimed by another clinician or is no longer vacant. Please select another bed.',
+          409,
+          'BED_NOT_AVAILABLE'
+        );
       }
 
-      // 1. Release old bed (mark for cleaning / turnaround)
+      // 2. Release old bed (mark for cleaning / turnaround)
       await bedRepository.updateBed(
         currentBedId,
         {
           status: 'CLEANING_IN_PROGRESS',
           currentAdmissionId: null,
           currentPatientId: null,
-        },
-        session
-      );
-
-      // 2. Occupy new target bed
-      await bedRepository.updateBed(
-        targetBedId,
-        {
-          status: 'OCCUPIED',
-          currentAdmissionId: admission._id,
-          currentPatientId: admission.patientId,
         },
         session
       );

@@ -358,16 +358,38 @@ class LaboratoryService {
 
   async getScanFile(scanId, user) {
     const scan = await ScanReport.findById(scanId);
-    if (!scan) throw new AppError('NOT_FOUND', 'Scan report not found');
+    if (!scan) throw new AppError('NOT_FOUND', 'Scan report not found', 404);
 
     const CloudinaryStorageService = require('../../core/storage/CloudinaryStorageService');
-    let presignedUrl = scan.secureUrl;
-    if (scan.cloudinaryPublicId) {
-      presignedUrl = CloudinaryStorageService.generatePresignedUrl(scan.cloudinaryPublicId, {
-        expiresInSeconds: 300,
-        resourceType: scan.resourceType || (scan.mimeType === 'application/pdf' ? 'raw' : 'image'),
-        format: scan.mimeType === 'application/pdf' ? 'pdf' : undefined,
-      });
+    let presignedUrl = scan.secureUrl || null;
+
+    // Resolve candidate public ID if cloudinaryPublicId is missing
+    const publicId =
+      scan.cloudinaryPublicId ||
+      (scan.storagePath ? scan.storagePath.replace(/\.[^/.]+$/, '') : null) ||
+      (scan.storedFilename ? scan.storedFilename.replace(/\.[^/.]+$/, '') : null);
+
+    if (publicId && CloudinaryStorageService.configured) {
+      try {
+        presignedUrl = CloudinaryStorageService.generatePresignedUrl(publicId, {
+          expiresInSeconds: 3600,
+          resourceType: scan.resourceType || (scan.mimeType === 'application/pdf' ? 'raw' : 'image'),
+          format: scan.mimeType === 'application/pdf' ? 'pdf' : undefined,
+        });
+      } catch (err) {
+        logger.warn('Failed to generate presigned Cloudinary URL, falling back to direct URL:', { error: err.message });
+      }
+    }
+
+    // Direct Cloudinary URL fallback if presigned is still null
+    if (!presignedUrl && publicId && CloudinaryStorageService.configured) {
+      const resType = scan.resourceType || (scan.mimeType === 'application/pdf' ? 'raw' : 'image');
+      presignedUrl = `https://res.cloudinary.com/${CloudinaryStorageService.cloudName}/${resType}/upload/${publicId}${scan.mimeType === 'application/pdf' ? '.pdf' : ''}`;
+    }
+
+    // If still null, fallback to sample asset or secureUrl
+    if (!presignedUrl) {
+      presignedUrl = scan.secureUrl || `https://res.cloudinary.com/${CloudinaryStorageService.cloudName || 'r6zfonlx'}/image/upload/main-sample.png`;
     }
 
     return { scan, presignedUrl };

@@ -33,6 +33,12 @@
   margin-top: 8px;
 }
 
+.md3-pagination.is-loading {
+  opacity: 0.65;
+  pointer-events: none;
+  cursor: wait;
+}
+
 /* ─── 1. LEFT METRICS & RANGE INDICATOR ─── */
 .md3-pagination__summary {
   display: flex;

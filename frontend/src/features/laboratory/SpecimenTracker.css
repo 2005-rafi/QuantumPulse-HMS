@@ -36,14 +36,14 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--md-lab-workbench-gap, 8px);
+  gap: var(--md-lab-workbench-gap, 14px);
   width: 100%;
 }
 
 .specimen-tracker__item {
   display: flex;
   position: relative;
-  gap: var(--md-spacing-s, 8px);
+  gap: var(--md-spacing-s, 12px);
   align-items: stretch;
 }
 
@@ -58,13 +58,13 @@
 }
 
 .specimen-tracker__dot {
-  width: var(--md-lab-specimen-dot-size, 10px);
-  height: var(--md-lab-specimen-dot-size, 10px);
+  width: var(--md-lab-specimen-dot-size, 12px);
+  height: var(--md-lab-specimen-dot-size, 12px);
   border-radius: 50%;
   border: 2px solid var(--md-sys-color-outline-variant);
   background: var(--md-sys-color-surface);
   z-index: 2;
-  margin-top: 12px; /* Aligned with top header of the card */
+  margin-top: 14px; /* Aligned with top header of the card */
   position: relative;
   transition: all var(--md-sys-motion-duration-short, 150ms) ease;
 }
@@ -95,8 +95,8 @@
 .specimen-tracker__connector {
   width: var(--md-lab-specimen-connector-width, 2px);
   position: absolute;
-  top: 22px; /* Below the dot */
-  bottom: -12px; /* Extends to overlap gap to next item */
+  top: 26px; /* Below the dot */
+  bottom: -14px; /* Extends to overlap gap to next item */
   background: var(--md-sys-color-outline-variant);
   z-index: 1;
 }
@@ -114,12 +114,13 @@
   flex: 1;
   background: var(--md-sys-color-surface-container-lowest, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-small, 8px);
-  padding: var(--md-lab-specimen-card-padding, 8px 12px);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  padding: var(--md-lab-specimen-card-padding, 14px 16px);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--md-spacing-xs, 6px);
+  gap: var(--md-spacing-s, 10px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   transition: border-color var(--md-sys-motion-duration-short, 150ms) ease;
 }
 
@@ -132,33 +133,33 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--md-spacing-xs, 6px);
+  gap: var(--md-spacing-s, 8px);
   flex-wrap: wrap;
 }
 
 .specimen-tracker__col-info {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-s, 8px);
+  gap: var(--md-spacing-s, 10px);
   min-width: 0;
 }
 
 .specimen-tracker__title-text {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;
   min-width: 0;
 }
 
 .specimen-tracker__title-line {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .specimen-tracker__title {
-  font: 700 0.82rem/1.2 var(--md-sys-typescale-title-medium-font, 'Inter', sans-serif);
+  font: 700 0.88rem/1.2 var(--md-sys-typescale-title-medium-font, 'Inter', sans-serif);
   color: var(--md-sys-color-on-surface);
   margin: 0;
   overflow: hidden;
@@ -167,40 +168,40 @@
 }
 
 .specimen-tracker__test-panel-tag {
-  font: 600 0.68rem/1 'Inter', sans-serif;
+  font: 600 0.72rem/1 'Inter', sans-serif;
   color: var(--md-sys-color-primary, #6750a4);
   background: var(--md-sys-color-primary-container, #eaddff);
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
 }
 
 .specimen-tracker__token-tag {
-  font: 700 0.65rem/1 'Roboto Mono', monospace;
+  font: 700 0.68rem/1 'Roboto Mono', monospace;
   color: var(--md-sys-color-on-tertiary-container, #31111d);
   background: var(--md-sys-color-tertiary-container, #ffd8e4);
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
   letter-spacing: 0.02em;
 }
 
 .specimen-tracker__mrn-tag {
-  font: 600 0.65rem/1 'Roboto Mono', monospace;
+  font: 600 0.68rem/1 'Roboto Mono', monospace;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   background: var(--md-sys-color-surface-container-high, #ece6f0);
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
 }
 
 .specimen-tracker__blood-tag {
-  font: 700 0.65rem/1 'Inter', sans-serif;
+  font: 700 0.68rem/1 'Inter', sans-serif;
   color: #b3261e;
   background: #f9dedc;
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 2px 7px;
+  border-radius: 6px;
 }
 
 .specimen-tracker__meta {
-  font: 400 0.72rem/1.2 var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
+  font: 400 0.76rem/1.3 var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
   color: var(--md-sys-color-on-surface-variant);
   margin: 0;
 }
@@ -208,7 +209,7 @@
 .specimen-tracker__badges {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-xs, 4px);
+  gap: var(--md-spacing-xs, 6px);
   flex-wrap: wrap;
 }
 
@@ -217,8 +218,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--md-spacing-s, 8px);
-  padding-top: 4px;
+  gap: var(--md-spacing-s, 10px);
+  padding-top: 8px;
   border-top: 1px dashed var(--md-sys-color-surface-container-high, #ece6f0);
   flex-wrap: wrap;
 }
@@ -226,7 +227,7 @@
 .specimen-tracker__details {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-s, 8px);
+  gap: var(--md-spacing-s, 10px);
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -237,18 +238,18 @@
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .specimen-tracker__test-item {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  padding: 1px 6px;
-  border-radius: 4px;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
   background: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  font: 500 0.68rem/1 var(--md-sys-typescale-label-medium-font, 'Inter', sans-serif);
+  font: 500 0.72rem/1 var(--md-sys-typescale-label-medium-font, 'Inter', sans-serif);
   color: var(--md-sys-color-on-surface);
 }
 
@@ -256,25 +257,25 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 140px;
+  max-width: 160px;
 }
 
 .specimen-tracker__ordered-by {
-  font: 400 0.72rem/1.2 'Inter', sans-serif;
+  font: 400 0.76rem/1.3 'Inter', sans-serif;
   color: var(--md-sys-color-on-surface-variant);
 }
 
 .specimen-tracker__timestamp {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font: 500 0.68rem/1.2 var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
+  gap: 6px;
+  font: 500 0.72rem/1.2 var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
   color: var(--md-sys-color-secondary, #625b71);
 }
 
 .specimen-tracker__timestamp svg {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   color: var(--md-sys-color-secondary, #625b71);
 }
 

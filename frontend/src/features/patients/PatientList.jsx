@@ -243,6 +243,7 @@ const PatientList = ({ onSelectPatient, onTotalChange, onRegisterPatient }) => {
             }}
             itemLabel="patients"
             position="top"
+            disabled={loading}
           />
         )}
 
@@ -284,6 +285,7 @@ const PatientList = ({ onSelectPatient, onTotalChange, onRegisterPatient }) => {
             }}
             itemLabel="patients"
             position="bottom"
+            disabled={loading}
           />
         )}
       </div>

@@ -63,6 +63,11 @@ export const patientAPI = {
     return response.data;
   },
 
+  rejectDeletion: async (id, reason = 'Rejected by clinician') => {
+    const response = await api.patch(`/patients/deletion-requests/${id}/reject`, { reason });
+    return response.data;
+  },
+
   rejectDeletionRequest: async (id, reason) => {
     const response = await api.patch(`/patients/deletion-requests/${id}/reject`, { reason });
     return response.data;

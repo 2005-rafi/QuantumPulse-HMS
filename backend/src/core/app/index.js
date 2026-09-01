@@ -1,3 +1,7 @@
+/**
+ * core/app/index.js
+ * Express Application Configuration with Hospital-Grade Rate Limiting & Proxy Ingress Security.
+ */
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -9,6 +13,8 @@ const requestId = require('../middleware/requestId');
 const errorHandler = require('../middleware/errorHandler');
 const logger = require('../logger');
 const xssClean = require('../middleware/xss');
+const { getClientIp } = require('../utils/ipResolver');
+const { verifyAccessToken } = require('../../modules/auth/token.service');
 
 // Route imports
 const authRoutes = require('../../modules/auth/auth.routes');
@@ -23,11 +29,12 @@ const auditRoutes = require('../../modules/audit/audit.routes');
 const appointmentRoutes = require('../../modules/appointments/appointment.routes');
 const tariffRoutes = require('../../modules/tariff/tariff.routes');
 const billRoutes = require('../../modules/billing/bill.routes');
+const ipdRoutes = require('../../modules/ipd/ipd.routes');
 
 const createApp = () => {
   const app = express();
 
-  // Security - Enable CORS first so rate limiter and preflight headers match
+  // 1. Security & CORS configuration
   const allowedCors = (origin, callback) => {
     if (!origin) return callback(null, true);
     if (
@@ -43,31 +50,81 @@ const createApp = () => {
   };
   app.use(cors({ origin: allowedCors, credentials: true }));
 
-  // Enable trust proxy so express-rate-limit reads actual client IP behind Nginx
-  app.set('trust proxy', 1);
+  // 2. Trust proxy headers (Cloudflare Tunnel, Nginx, Load Balancers)
+  app.set('trust proxy', true);
 
-  // Helper to identify and skip intranet/local clinical workstations
-  const isWhitelistedIp = (ip) => {
-    if (!ip) return false;
-    return (
-      ip === '127.0.0.1' ||
-      ip === '::1' ||
-      ip === '::ffff:127.0.0.1' ||
-      ip.startsWith('10.') ||        // Private LAN class A
-      ip.startsWith('192.168.') ||   // Private LAN class C
-      ip.startsWith('172.16.')       // Private LAN class B
-    );
+  // 3. Security headers & body parsing (must precede body-dependent rate limiters)
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          workerSrc: ["'self'", "blob:"],
+          frameSrc: ["'self'", "blob:", "data:", "https://*.cloudinary.com", "https://res.cloudinary.com", "https://api.cloudinary.com"],
+          childSrc: ["'self'", "blob:", "data:", "https://*.cloudinary.com", "https://res.cloudinary.com", "https://api.cloudinary.com"],
+          connectSrc: ["'self'", "https:", "wss:", "ws:"],
+          imgSrc: ["'self'", "data:", "blob:", "https:"],
+          styleSrc: ["'self'", "'unsafe-inline'", "https:"],
+          fontSrc: ["'self'", "https:", "data:"],
+          objectSrc: ["'none'"],
+        },
+      },
+      crossOriginEmbedderPolicy: false,
+    })
+  );
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: true }));
+  app.use(xssClean);
+  app.use(requestId);
+
+  // 4. Rate Limiting Key Generators & Helpers
+  const extractUserIdOrIp = (req) => {
+    const authHeader = req.headers?.['authorization'];
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = verifyAccessToken(token);
+        if (decoded?.userId) {
+          return `user_${decoded.userId}`;
+        }
+      } catch {
+        // Fallback to IP if token is invalid or expired
+      }
+    }
+    return `ip_${getClientIp(req)}`;
   };
 
-  // Rate Limiting
+  const isExemptFromRateLimit = (req) => {
+    if (!config.rateLimit.enabled) return true;
+    const url = req.originalUrl || req.url || '';
+    // Exempt auth login (managed by loginLimiter), health probes, and automated background telemetry polling
+    if (
+      url.includes('/auth/login') ||
+      url.endsWith('/health') ||
+      url.includes('/ipd/bed-map') ||
+      url.includes('/notifications') ||
+      url.includes('/visits/stats')
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  // 5. Hospital-Grade Rate Limiters
   const apiLimiter = rateLimit({
     windowMs: config.rateLimit.windowMs,
-    max: config.rateLimit.max,
-    skip: (req) => isWhitelistedIp(req.ip),
+    max: (req) => {
+      // Authenticated staff members get dedicated user quota; unauthenticated gets shared hospital IP quota
+      const authHeader = req.headers?.['authorization'];
+      return authHeader ? config.rateLimit.userMax : config.rateLimit.max;
+    },
+    keyGenerator: (req) => extractUserIdOrIp(req),
+    skip: (req) => isExemptFromRateLimit(req),
     message: {
       status: 'error',
       errorCode: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many requests from this IP, please try again later.',
+      message: 'Too many requests. Please slow down and try again shortly.',
       timestamp: new Date().toISOString(),
     },
     standardHeaders: true,
@@ -75,44 +132,40 @@ const createApp = () => {
   });
 
   const loginLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 15, // Limit to 15 login attempts per IP per 15 minutes
-    skip: (req) => isWhitelistedIp(req.ip),
+    windowMs: config.rateLimit.windowMs,
+    max: config.rateLimit.loginMax,
+    keyGenerator: (req) => {
+      const ip = getClientIp(req);
+      const username = (req.body?.username || '').trim().toLowerCase();
+      return `login_${ip}_${username || 'anon'}`;
+    },
+    skip: () => !config.rateLimit.enabled,
     message: {
       status: 'error',
       errorCode: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many login attempts. Please try again after 15 minutes.',
+      message: 'Too many login attempts. Please try again after a few minutes or contact Hospital IT.',
       timestamp: new Date().toISOString(),
     },
     standardHeaders: true,
     legacyHeaders: false,
   });
 
-  // Apply rate limiters before other handlers
-  app.use('/api', apiLimiter);
+  // Apply rate limiters
   app.use('/api/v1/auth/login', loginLimiter);
-
-  // Security
-  app.use(helmet());
-
-  // Request parsing
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
-
-  // Input Sanitization
-  app.use(xssClean);
-
-  // Request tracking
-  app.use(requestId);
+  app.use('/api', apiLimiter);
 
   // HTTP logging (dev only)
   if (process.env.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
   }
 
-  // Serve static assets directory
+  // Serve static assets directory & compiled React frontend
   const path = require('path');
+  const fs = require('fs');
+  const frontendDistPath = path.resolve(__dirname, '../../../../frontend/dist');
+
   app.use('/assets', express.static(path.join(__dirname, '../../../../assets')));
+  app.use(express.static(frontendDistPath));
 
   // Routes
   app.use('/api/v1/auth', authRoutes);
@@ -127,20 +180,32 @@ const createApp = () => {
   app.use('/api/v1/appointments', appointmentRoutes);
   app.use('/api/v1/tariff', tariffRoutes);
   app.use('/api/v1/bills', billRoutes);
+  app.use('/api/v1/ipd', ipdRoutes);
 
   // Health check
   app.get('/api/v1/health', (req, res) => {
     res.json({ status: 'success', message: 'HMS API is running', timestamp: new Date().toISOString() });
   });
 
-  // 404 handler
-  app.use((req, res) => {
+  // Dedicated 404 handler for unmatched API routes
+  app.use('/api', (req, res) => {
     res.status(404).json({
       status: 'error',
       errorCode: 'NOT_FOUND',
-      message: `Route ${req.method} ${req.path} not found`,
+      message: `API Route ${req.method} ${req.originalUrl || req.path} not found`,
       timestamp: new Date().toISOString(),
     });
+  });
+
+  // SPA fallback for all non-API web routes
+  app.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
+    const indexPath = path.join(frontendDistPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send('HMS Frontend production build not found. Please run "npm run build" in frontend/');
+    }
   });
 
   // Central error handler (must be last)

@@ -5,14 +5,16 @@
 .md3-file-upload-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--md-spacing-s, 10px);
   width: 100%;
+  margin-top: var(--md-spacing-xs, 4px);
 }
 
 .md3-file-upload-label {
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #1d1b16);
+  font-family: var(--md-sys-typescale-title-small-font, 'Inter', sans-serif);
 }
 
 .md3-required-star {
@@ -26,14 +28,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 24px 20px;
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  gap: var(--md-spacing-s, 12px);
+  padding: var(--md-lab-upload-dropzone-padding, 20px 24px);
+  min-height: var(--md-lab-upload-dropzone-min-height, 64px);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
   border: 2px dashed var(--md-sys-color-outline-variant, #cac4d0);
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .md3-file-dropzone:hover {
@@ -55,7 +59,7 @@
 }
 
 .md3-file-cloud-icon {
-  font-size: 36px;
+  font-size: 38px;
   color: var(--md-sys-color-primary, #6b5f19);
   transition: transform 0.2s ease;
 }
@@ -67,11 +71,11 @@
 .md3-file-dropzone-text {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .md3-file-dropzone-title {
-  font-size: 0.86rem;
+  font-size: 0.90rem;
   color: var(--md-sys-color-on-surface, #1d1b16);
 }
 
@@ -80,7 +84,7 @@
 }
 
 .md3-file-dropzone-hint {
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   color: var(--md-sys-color-on-surface-variant, #797667);
 }
 
@@ -89,7 +93,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 14px;
+  padding: 14px 18px;
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);

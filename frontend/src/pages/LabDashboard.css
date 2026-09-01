@@ -230,9 +230,11 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: var(--md-lab-workbench-gap, 8px);
-  padding: var(--md-spacing-s, 8px) var(--md-spacing-m, 12px);
+  gap: var(--md-lab-workbench-gap, 16px);
+  padding: var(--md-spacing-m, 16px) var(--md-spacing-l, 20px);
   background: var(--md-sys-color-surface);
+  overflow-y: auto;
+  min-height: 0;
 }
 
 .lab-dashboard__single-view {

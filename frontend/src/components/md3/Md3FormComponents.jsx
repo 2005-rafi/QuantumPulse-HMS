@@ -1,6 +1,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import './Md3FormComponents.css';
+export { Md3TextArea } from './Md3Widgets';
 
 export const Md3TextField = (props) => {
   const {

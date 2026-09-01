@@ -11,6 +11,7 @@ const AdvanceDeposit = require('../billing/advance-deposit.model');
 const IPDClearance = require('../discharge/ipd-clearance.model');
 const AppError = require('../../../core/errors/AppError');
 const auditService = require('../../audit/audit.service');
+const sequenceService = require('../../../core/database/sequence.service');
 
 class IPDAdmissionService {
   async admitPatient(data, admittedByStaffId) {
@@ -22,24 +23,37 @@ class IPDAdmissionService {
       const patient = await Patient.findById(data.patientId).session(session);
       if (!patient) throw new AppError('Patient not found', 404, 'NOT_FOUND');
 
-      // Check if patient is already actively admitted
-      const existingAdmission = await ipdAdmissionRepository.getAdmissions({
-        patientId: data.patientId,
-        status: 'ADMITTED',
-      });
+      // Check if patient is already actively admitted inside transaction
+      const existingAdmission = await ipdAdmissionRepository.getAdmissions(
+        {
+          patientId: data.patientId,
+          status: 'ADMITTED',
+        },
+        session
+      );
       if (existingAdmission && existingAdmission.length > 0) {
         throw new AppError('Patient is already actively admitted in IPD', 409, 'ALREADY_ADMITTED');
       }
 
-      // 2. Verify Bed Availability
-      const bed = await bedRepository.getBedById(data.bedId);
-      if (!bed) throw new AppError('Specified bed not found', 404, 'NOT_FOUND');
-      if (bed.status !== 'VACANT') {
-        throw new AppError(`Bed ${bed.bedLabel} is not vacant (status: ${bed.status})`, 409, 'BED_NOT_AVAILABLE');
+      // 2. Atomic Compare-And-Swap (CAS) Bed Claim Guard
+      const bed = await bedRepository.claimBedAtomically(
+        data.bedId,
+        {
+          status: 'OCCUPIED',
+          currentPatientId: patient._id,
+        },
+        session
+      );
+      if (!bed) {
+        throw new AppError(
+          'Selected bed was just claimed by another clinician or is no longer vacant. Please select another bed.',
+          409,
+          'BED_NOT_AVAILABLE'
+        );
       }
 
-      // 3. Generate Unique Admission Number
-      const admissionNumber = await ipdAdmissionRepository.generateAdmissionNumber();
+      // 3. Generate Sequential Admission Number (Atomic Zero-Collision)
+      const admissionNumber = await sequenceService.getNextSequence('admission', 'ADM', session);
 
       // 4. Create Inpatient Master Bill
       const billDocs = await Bill.create(

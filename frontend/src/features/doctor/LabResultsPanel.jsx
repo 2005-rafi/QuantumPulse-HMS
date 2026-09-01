@@ -121,20 +121,28 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                   <div className="lab-results__item-header">
                     <div className="lab-results__title-box">
                       <div className="lab-results__icon">
-                        <Icon.Beaker size={18} />
+                        <span className="material-symbols-rounded">biotech</span>
                       </div>
                       <div>
                         <h4 className="lab-results__title">
                           {order.testName || 'Unknown Test'}
                         </h4>
-                        <span className="lab-results__item-sub">
-                          {order.labName || 'Hospital Laboratory'} • Verified Result
-                        </span>
+                        <div className="lab-results__item-sub">
+                          <span className="clinical-meta-pill">
+                            <span className="material-symbols-rounded">domain</span>
+                            {order.labName || 'Hospital Laboratory'}
+                          </span>
+                          <span className="clinical-meta-pill">
+                            <span className="material-symbols-rounded">verified_user</span>
+                            Verified Result
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <Md3Chip variant="secondary" size="small">
-                      ✓ REPORT READY
-                    </Md3Chip>
+                    <span className="clinical-status-pill clinical-status-pill--ready">
+                      <span className="material-symbols-rounded">verified</span>
+                      Verified &amp; Ready
+                    </span>
                   </div>
 
                   {/* ── Structured Parameters Table ── */}
@@ -166,7 +174,7 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                     <div className="lab-scan-attachment-card">
                       <div className="lab-scan-attachment-info">
                         <span className="lab-scan-icon">
-                          <Icon.FileText size={18} />
+                          <span className="material-symbols-rounded">description</span>
                         </span>
                         <div className="lab-scan-text">
                           <span className="lab-scan-title">Attached Diagnostic Scan / Report Document</span>
@@ -182,7 +190,7 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                           className="lab-scan-btn lab-scan-btn--primary"
                           onClick={() => handleOpenScan(order, scanReportId)}
                         >
-                          <Icon.Eye size={15} />
+                          <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>visibility</span>
                           <span>Preview Document</span>
                         </button>
                       </div>
@@ -190,15 +198,21 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                   )}
 
                   {parameterEntries.length === 0 && !scanReportId && (
-                    <span className="lab-results__empty">
-                      No structured parameter values recorded for this test.
-                    </span>
+                    <div className="lab-results__info-callout">
+                      <span className="material-symbols-rounded lab-results__info-icon">info</span>
+                      <span className="lab-results__info-text">
+                        Qualitative diagnostic evaluation completed. No structured numeric telemetry values registered for this test.
+                      </span>
+                    </div>
                   )}
 
                   {order.notes && (
-                    <div className="lab-results__notes">
-                      <strong className="lab-results__notes-strong">Technician / Pathologist Notes: </strong>
-                      {order.notes}
+                    <div className="lab-results__notes-box">
+                      <div className="lab-results__notes-header">
+                        <span className="material-symbols-rounded">edit_note</span>
+                        <span>Technician / Pathologist Notes</span>
+                      </div>
+                      <p className="lab-results__notes-body">{order.notes}</p>
                     </div>
                   )}
                 </div>

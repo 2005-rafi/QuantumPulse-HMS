@@ -6,6 +6,7 @@ const Patient = require('../patient/patient.model');
 const Role = require('../administration/role.model');
 const AppError = require('../../core/errors/AppError');
 const { withTransaction } = require('../../core/database/transaction');
+const sequenceService = require('../../core/database/sequence.service');
 
 // Helper to convert "HH:mm" to minutes from midnight
 const timeToMinutes = (timeStr) => {
@@ -18,16 +19,6 @@ const minutesToTime = (minutes) => {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-};
-
-// Helper to generate appointment unique number
-const generateAppointmentNumber = (date) => {
-  const dateObj = new Date(date);
-  const y = dateObj.getFullYear();
-  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const d = String(dateObj.getDate()).padStart(2, '0');
-  const rand = Math.floor(1000 + Math.random() * 9000);
-  return `APT-${y}${m}${d}-${rand}`;
 };
 
 class AppointmentService {
@@ -225,8 +216,8 @@ class AppointmentService {
         );
       }
 
-      // 7. Generate Appointment Number & Build Record
-      const appointmentNumber = generateAppointmentNumber(apptDateObj);
+      // 7. Generate Sequential Appointment Number (Atomic Zero-Collision)
+      const appointmentNumber = await sequenceService.getNextSequence('appointment', 'APT', session);
 
       const appointmentData = {
         appointmentNumber,

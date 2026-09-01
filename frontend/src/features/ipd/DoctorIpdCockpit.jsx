@@ -7,7 +7,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import IpdPatientBanner from '../../components/ipd/IpdPatientBanner';
 import DischargeKanban from '../../components/ipd/DischargeKanban';
 import GatePassPrintable from '../../components/ipd/GatePassPrintable';
-import { Md3Button, Md3TextField, Md3Select, Md3BottomSheet } from '../../components/md3/Md3FormComponents';
+import { Md3Button, Md3TextField, Md3TextArea, Md3Select, Md3BottomSheet } from '../../components/md3/Md3FormComponents';
 import { Icon } from '../../components/md3/Md3Widgets';
 import ipdApi from '../../services/ipdApi';
 import api from '../../services/api';
@@ -102,7 +102,7 @@ export const DoctorIpdCockpit = () => {
   useEffect(() => {
     const loadOtRooms = async () => {
       try {
-        const res = await api.get('/ipd/beds/rooms');
+        const res = await ipdApi.getRooms();
         const allRooms = res.data?.data || [];
         const otOnly = allRooms.filter(r => r.roomType === 'OT' || r.roomType === 'OPERATING_THEATRE');
         setOtRooms(otOnly.length > 0 ? otOnly : allRooms);
@@ -344,19 +344,19 @@ export const DoctorIpdCockpit = () => {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px' }}>
+    <div className="doctor-ipd-cockpit">
       {/* Header & Switcher */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
+          <h1 style={{ fontSize: '1.12rem', fontWeight: 700, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
             Doctor Inpatient Clinical Cockpit
           </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', margin: '4px 0 0 0' }}>
+          <p style={{ fontSize: '0.74rem', color: 'var(--md-sys-color-on-surface-variant)', margin: '2px 0 0 0' }}>
             Daily SOAP Ward Rounds • Computerized Physician Order Entry (CPOE) • 3-Way Discharge Governance
           </p>
         </div>
 
-        <div style={{ width: '280px' }}>
+        <div style={{ width: '250px' }}>
           <Md3Select
             label="Select Inpatient"
             value={admissionId || ''}
@@ -375,7 +375,7 @@ export const DoctorIpdCockpit = () => {
       {currentAdmission && <IpdPatientBanner admission={currentAdmission} />}
 
       {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
+      <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
         {[
           { id: 'ROUNDS', label: 'Daily SOAP Rounds', icon: 'edit_note' },
           { id: 'CPOE', label: 'CPOE Physician Orders', icon: 'prescriptions' },
@@ -386,20 +386,20 @@ export const DoctorIpdCockpit = () => {
             type="button"
             onClick={() => setActiveTab(tab.id)}
             style={{
-              padding: '10px 20px',
+              padding: '6px 14px',
               border: 'none',
               background: 'transparent',
-              borderBottom: activeTab === tab.id ? '3px solid var(--md-sys-color-primary, #006a57)' : '3px solid transparent',
-              color: activeTab === tab.id ? 'var(--md-sys-color-primary, #006a57)' : 'var(--md-sys-color-on-surface-variant)',
-              fontWeight: 700,
-              fontSize: '0.9rem',
+              borderBottom: activeTab === tab.id ? '2px solid var(--md-sys-color-primary, #6750a4)' : '2px solid transparent',
+              color: activeTab === tab.id ? 'var(--md-sys-color-primary, #6750a4)' : 'var(--md-sys-color-on-surface-variant)',
+              fontWeight: activeTab === tab.id ? 700 : 500,
+              fontSize: '0.82rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '8px',
+              gap: '6px',
             }}
           >
-            <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>{tab.icon}</span>
+            <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>{tab.icon}</span>
             <span>{tab.label}</span>
           </button>
         ))}
@@ -427,32 +427,40 @@ export const DoctorIpdCockpit = () => {
               </span>
             </div>
 
-            <form onSubmit={handleSaveRound} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <Md3TextField
-                label="[S] Subjective (Patient Symptoms & Feedback) *"
+            <form onSubmit={handleSaveRound} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Md3TextArea
+                label="[S] Subjective (Symptoms & Feedback)"
                 value={subjective}
                 onChange={(e) => setSubjective(e.target.value)}
                 placeholder="e.g. Pain well controlled, afebrile, oral intake resumed"
+                autoGrow={true}
+                minRows={2}
                 required
               />
-              <Md3TextField
+              <Md3TextArea
                 label="[O] Objective (Physical Exam & Diagnostic Data)"
                 value={objective}
                 onChange={(e) => setObjective(e.target.value)}
                 placeholder="e.g. Vitals stable, chest clear bilateral, abdomen soft and non-tender"
+                autoGrow={true}
+                minRows={2}
               />
-              <Md3TextField
-                label="[A] Assessment (Clinical Evaluation & Progress) *"
+              <Md3TextArea
+                label="[A] Assessment (Clinical Evaluation & Progress)"
                 value={assessment}
                 onChange={(e) => setAssessment(e.target.value)}
                 placeholder="e.g. Improving postoperative day 2, no signs of wound infection"
+                autoGrow={true}
+                minRows={2}
                 required
               />
-              <Md3TextField
-                label="[P] Plan (Orders, Diet & Next Milestones) *"
+              <Md3TextArea
+                label="[P] Plan (Orders, Diet & Next Milestones)"
                 value={plan}
                 onChange={(e) => setPlan(e.target.value)}
                 placeholder="e.g. Step down IV to oral antibiotics, mobilize with physio, review evening"
+                autoGrow={true}
+                minRows={2}
                 required
               />
 
@@ -793,53 +801,64 @@ export const DoctorIpdCockpit = () => {
               style={{
                 background: 'var(--md-sys-color-surface, #ffffff)',
                 border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-                borderRadius: '16px',
-                padding: '24px',
+                borderRadius: '12px',
+                padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px',
+                gap: '12px',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
               }}
             >
               <div>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700 }}>Initiate Inpatient Discharge Order</h3>
-                <p style={{ fontSize: '0.82rem', color: 'var(--md-sys-color-outline)', margin: '4px 0 0 0' }}>
+                <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>
+                  Initiate Inpatient Discharge Order
+                </h3>
+                <p style={{ fontSize: '0.74rem', color: 'var(--md-sys-color-on-surface-variant)', margin: '2px 0 0 0' }}>
                   Authorizes patient discharge and opens the 3-Way Clearance Kanban across Pharmacy, Ward Nursing, and Billing.
                 </p>
               </div>
 
-              <form onSubmit={handleInitiateDischarge} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <Md3TextField
-                  label="Final Discharge Diagnosis *"
+              <form onSubmit={handleInitiateDischarge} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <Md3TextArea
+                  label="Final Discharge Diagnosis"
                   value={finalDiagnosis}
                   onChange={(e) => setFinalDiagnosis(e.target.value)}
                   placeholder="e.g. Acute Cholecystitis — S/P Laparoscopic Cholecystectomy"
+                  autoGrow={true}
+                  minRows={2}
                   required
                 />
 
-                <Md3TextField
-                  label="Hospital Course &amp; Treatment Summary *"
+                <Md3TextArea
+                  label="Hospital Course &amp; Treatment Summary"
                   value={courseInHospital}
                   onChange={(e) => setCourseInHospital(e.target.value)}
                   placeholder="e.g. Admitted via ER, managed surgically on Day 2, post-op vitals stable, ambulating independently"
+                  autoGrow={true}
+                  minRows={2}
                   required
                 />
 
-                <Md3TextField
-                  label="Discharge Advice &amp; Take-Home Instructions *"
+                <Md3TextArea
+                  label="Discharge Advice &amp; Take-Home Instructions"
                   value={dischargeAdvice}
                   onChange={(e) => setDischargeAdvice(e.target.value)}
                   placeholder="e.g. Continue oral antibiotics for 5 days, keep surgical dressing dry, low fat diet"
+                  autoGrow={true}
+                  minRows={2}
                   required
                 />
 
-                <Md3TextField
-                  label="Follow-Up Outpatient Review Date"
-                  type="date"
-                  value={followUpDate}
-                  onChange={(e) => setFollowUpDate(e.target.value)}
-                />
+                <div style={{ maxWidth: '260px' }}>
+                  <Md3TextField
+                    label="Follow-Up Outpatient Review Date"
+                    type="date"
+                    value={followUpDate}
+                    onChange={(e) => setFollowUpDate(e.target.value)}
+                  />
+                </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
                   <Md3Button variant="filled" type="submit" loading={initiatingDischarge}>
                     Authorize &amp; Open Clearance Kanban
                   </Md3Button>

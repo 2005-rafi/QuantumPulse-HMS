@@ -25,30 +25,30 @@ export const BedAllocationPicker = ({
   const [activeFloorId, setActiveFloorId] = useState(null);
   const [loadError, setLoadError] = useState(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchBeds = async () => {
-      try {
-        setLoading(true);
-        const res = await ipdApi.getBedMap();
-        const data = res.data?.data || [];
-        if (isMounted) {
-          setFloors(data);
-          if (data.length > 0) {
-            setActiveFloorId(data[0]._id);
-          }
-          setLoading(false);
-        }
-      } catch (err) {
-        if (isMounted) {
-          setLoadError(err.response?.data?.message || err.message || 'Failed to load bed map');
-          setLoading(false);
-        }
+  const fetchBeds = async () => {
+    try {
+      setLoading(true);
+      setLoadError(null);
+      const res = await ipdApi.getBedMap();
+      const data = res.data?.data || [];
+      setFloors(data);
+      if (data.length > 0) {
+        setActiveFloorId(data[0]._id);
       }
-    };
+      setLoading(false);
+    } catch (err) {
+      const friendlyMsg =
+        err.userMessage ||
+        (err.response?.status === 404
+          ? 'Inpatient bed allocation service is synchronizing. Please check with Ward Operations.'
+          : 'Unable to retrieve live bed availability. Please click retry.');
+      setLoadError(friendlyMsg);
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchBeds();
-    return () => { isMounted = false; };
   }, []);
 
   const activeFloor = useMemo(() => {
@@ -110,8 +110,20 @@ export const BedAllocationPicker = ({
           Loading hospital floor layout and live bed status...
         </div>
       ) : loadError ? (
-        <div style={{ padding: '12px', background: '#fee2e2', color: '#b91c1c', borderRadius: '8px', fontSize: '0.78rem' }}>
-          {loadError}
+        <div style={{ padding: '14px', background: 'var(--md-sys-color-error-container, #ffdad6)', color: 'var(--md-sys-color-on-error-container, #410002)', borderRadius: '12px', border: '1px solid var(--md-sys-color-error, #ba1a1a)', display: 'flex', flexDirection: 'column', gap: '8px' }} role="alert">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8125rem', fontWeight: 600 }}>
+            <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>info</span>
+            <span>{loadError}</span>
+          </div>
+          <button
+            type="button"
+            className="md3-ward-btn-compact md3-ward-btn-compact--outlined"
+            onClick={fetchBeds}
+            style={{ alignSelf: 'flex-start', background: 'transparent', borderColor: 'currentColor', color: 'inherit' }}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>refresh</span>
+            Retry Live Bed Map
+          </button>
         </div>
       ) : floors.length === 0 ? (
         <div style={{ padding: '16px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.80rem' }}>

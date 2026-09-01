@@ -75,11 +75,12 @@ class AuditService {
     }
   }
 
-  async getLogs(filters = {}, page = 1, limit = 50) {
+  async getLogs(filters = {}, page = 1, limit = 50, q = null) {
     const { QueryContext, QueryBuilder, AuditQueryConfig } = require('../../core/query');
 
     const queryContext = new QueryContext({
       filters,
+      q,
       page,
       limit,
       cursor: filters.cursor,

@@ -40,9 +40,10 @@ const startServer = async () => {
   setupCronJobs();
 
   // 4. Start HTTP Server
-  const server = app.listen(config.port, () => {
+  const server = app.listen(config.port, '0.0.0.0', () => {
     logger.info(`HMS API server successfully started in ${config.env.toUpperCase()} mode`, {
       port: config.port,
+      host: '0.0.0.0',
       env: config.env,
       database: config.mongoUri ? config.mongoUri.replace(/:([^:@]{3,})@/, ':***@') : 'unknown',
       url: `http://localhost:${config.port}`,

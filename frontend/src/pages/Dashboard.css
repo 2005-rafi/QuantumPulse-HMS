@@ -46,6 +46,8 @@
   min-height: 100%;
   box-sizing: border-box;
   animation: md3TabFadeSlideIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+  will-change: opacity, transform;
+  contain: layout style;
 }
 
 .dashboard-brand {

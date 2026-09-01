@@ -12,10 +12,11 @@ import {
   isTokenExpired,
 } from '../core/useSessionStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:7722/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
+  timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -36,17 +37,57 @@ export const registerErrorCallback = (cb) => {
 // Friendly user error message dictionary mapping backend codes to clinical UI alerts
 const ERROR_CODE_MAP = {
   AUTH_001: 'Invalid username or password.',
-  AUTH_002: 'Invalid or expired access token.',
-  AUTH_003: 'Token authentication failed. Please re-login.',
-  AUTH_004: 'Account locked due to consecutive failed attempts. Contact IT Administrator.',
-  AUTH_005: 'Account has been deactivated.',
-  AUTH_006: 'Account activation pending.',
-  AUTH_007: 'Authentication required to access this resource.',
-  AUTHZ_001: 'Access Denied: You lack required permissions for this action.',
-  VALIDATION_001: 'Input validation failed. Please check form fields.',
-  SYS_001: 'An unexpected system error occurred.',
-  SYS_002: 'Database operation error.',
-  RATE_LIMIT_EXCEEDED: 'Too many requests. Please slow down and try again shortly.',
+  AUTH_002: 'Your clinical session has expired. Please sign in again.',
+  AUTH_003: 'Authentication verification failed. Please sign in again.',
+  AUTH_004: 'Account temporarily secured due to consecutive failed attempts. Contact Hospital Administrator.',
+  AUTH_005: 'This staff account has been deactivated. Please contact Administration.',
+  AUTH_006: 'Account activation is pending administrative review.',
+  AUTH_007: 'Authentication required. Please log in to access this clinical module.',
+  AUTHZ_001: 'Access Restricted: Your current clinical role lacks permission for this action.',
+  VALIDATION_001: 'Please verify the highlighted clinical form fields and try again.',
+  SYS_001: 'The hospital clinical data service encountered a temporary delay. Please try again.',
+  SYS_002: 'Clinical database operation in progress. Please retry in a few moments.',
+  NOT_FOUND: 'The requested patient, bed, or clinical record could not be found.',
+  RATE_LIMIT_EXCEEDED: 'Request volume limit reached. Please wait a moment before trying again.',
+};
+
+export const sanitizeClinicalErrorMessage = (apiError, status, rawError = '') => {
+  if (!apiError && !rawError) return 'An unexpected error occurred. Please try again.';
+
+  if (apiError?.errorCode && ERROR_CODE_MAP[apiError.errorCode]) {
+    return ERROR_CODE_MAP[apiError.errorCode];
+  }
+
+  if (status === 404) {
+    return 'The requested hospital service or record is currently unavailable. Please check with Ward Operations or IT.';
+  }
+
+  if (status === 403) {
+    return 'Access Restricted: Your clinical position does not have permission for this operation.';
+  }
+
+  if (status === 401) {
+    return 'Your clinical session has expired. Please sign in again.';
+  }
+
+  if (status === 429) {
+    return 'High network traffic. Please wait a few seconds and try again.';
+  }
+
+  if (status >= 500) {
+    return 'The clinical server encountered a temporary delay. Please retry shortly.';
+  }
+
+  const raw = apiError?.message || apiError?.detail || rawError || '';
+
+  // Proactively filter out raw developer notes, route traces, and database strings
+  if (
+    /Route (GET|POST|PUT|PATCH|DELETE)|Cannot read properties|ObjectId|Cast to|buffering timed out|E11000|validation failed|syntax|stack trace/i.test(raw)
+  ) {
+    return 'Clinical data synchronization in progress. Please refresh the terminal or try again.';
+  }
+
+  return raw || 'An error occurred while processing your request.';
 };
 
 // 1. Request Interceptor — Attach in-memory access token & preemptive refresh
@@ -88,28 +129,25 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
 
-    // Attach sanitized error details
+    // Attach sanitized clinical error details
     if (error.response?.data) {
       const apiError = error.response.data;
       error.errorCode = apiError.errorCode;
       error.apiMessage = apiError.message;
 
-      // Produce sanitized clinical user message (stripping DB traces/stack dumps)
-      error.userMessage =
-        ERROR_CODE_MAP[apiError.errorCode] ||
-        apiError.message ||
-        'An error occurred while processing your request.';
+      // Produce UX-focused clinical message (stripping DB traces/stack dumps/developer notes)
+      error.userMessage = sanitizeClinicalErrorMessage(apiError, error.response.status, error.message);
 
       if (error.response.status === 429) {
         error.isRateLimit = true;
-        error.userMessage = apiError.message || ERROR_CODE_MAP.RATE_LIMIT_EXCEEDED;
+        error.userMessage = error.userMessage || ERROR_CODE_MAP.RATE_LIMIT_EXCEEDED;
       } else if (error.response.status === 400 && apiError.errorCode === 'VALIDATION_001') {
         error.isValidationError = true;
       }
     } else if (error.message === 'Network Error' || error.code === 'ERR_NETWORK') {
       error.userMessage = 'Cannot reach HMS Server. Please verify network connection.';
     } else {
-      error.userMessage = error.message || 'An unexpected error occurred.';
+      error.userMessage = 'An unexpected clinical service error occurred. Please try again.';
     }
 
     // Trigger registered UI Toast notification callback

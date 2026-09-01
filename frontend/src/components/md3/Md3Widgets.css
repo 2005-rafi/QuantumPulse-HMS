@@ -1123,12 +1123,17 @@
 }
 
 .md3-textarea {
-  min-height: 88px;
-  padding-top: 20px;
-  padding-bottom: 8px;
+  min-height: 52px;
+  padding-top: 18px;
+  padding-bottom: 6px;
   resize: vertical;
   font-family: inherit;
-  line-height: 1.5;
+  line-height: 1.45;
+  transition: height 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-textarea.is-auto-grow {
+  overflow-y: hidden;
 }
 
 .md3-textarea.is-filled ~ .md3-field-label,

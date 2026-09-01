@@ -213,7 +213,7 @@ class LaboratoryController {
       return res.sendFile(absolutePath);
     }
 
-    throw new AppError('NOT_FOUND', 'Scan file not found');
+    throw new AppError('NOT_FOUND', 'Scan file not found', 404);
   });
 
   getScansForOrder = catchAsync(async (req, res) => {

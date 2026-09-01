@@ -2,6 +2,7 @@ const visitRepository = require('./visit.repository');
 const AppError = require('../../core/errors/AppError');
 const { withTransaction } = require('../../core/database/transaction');
 const tokenGenerator = require('./token.generator');
+const sequenceService = require('../../core/database/sequence.service');
 const Department = require('../administration/department.model');
 
 /**
@@ -19,10 +20,8 @@ class VisitService {
 
   async createVisit(data, registeredBy, externalSession = null) {
     const execute = async (session) => {
-      // 1. Generate visit number (legacy identifier)
-      const dateStr = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 12);
-      const randomStr = Math.floor(1000 + Math.random() * 9000).toString();
-      const visitNumber = `VST-${dateStr}-${randomStr}`;
+      // 1. Generate atomic sequential visit number (Zero-Collision)
+      const visitNumber = await sequenceService.getNextSequence('visit', 'VST', session);
 
       // 2. Determine initial status
       let status = 'WAITING_TRIAGE';

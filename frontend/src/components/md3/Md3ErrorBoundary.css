@@ -1,0 +1,132 @@
+/**
+ * components/md3/Md3ErrorBoundary.css
+ * Material Design 3 Clinical Error Boundary & Recovery Interface.
+ */
+
+.md3-error-boundary-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  width: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  background-color: var(--md-sys-color-surface, #f8faf9);
+  color: var(--md-sys-color-on-surface, #191c1b);
+  font-family: var(--md-sys-typescale-body-medium-font, 'Inter', system-ui, sans-serif);
+}
+
+.md3-error-boundary-card {
+  width: 100%;
+  max-width: 640px;
+  background-color: var(--md-sys-color-surface-container-low, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
+  border-radius: var(--md-sys-shape-corner-extra-large, 28px);
+  padding: 36px 32px;
+  box-sizing: border-box;
+  box-shadow: var(--md-sys-elevation-2, 0 4px 8px 3px rgba(0, 0, 0, 0.05));
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: center;
+}
+
+.md3-error-boundary-icon-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.md3-error-boundary-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #191c1b);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.md3-error-boundary-desc {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant, #444746);
+  margin: 0;
+}
+
+.md3-error-boundary-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.md3-error-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.md3-error-btn--primary {
+  background-color: var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-on-primary, #ffffff);
+}
+
+.md3-error-btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+.md3-error-btn--outlined {
+  background-color: transparent;
+  border-color: var(--md-sys-color-outline, #727978);
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.md3-error-btn--outlined:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary) 8%, transparent);
+}
+
+.md3-error-diagnostics-toggle {
+  background: none;
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-outline, #727978);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.md3-error-diagnostics-toggle:hover {
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.md3-error-diagnostics-box {
+  text-align: left;
+  background-color: var(--md-sys-color-surface-container-highest, #e1e3e1);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  padding: 14px 16px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant, #444746);
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c5);
+}

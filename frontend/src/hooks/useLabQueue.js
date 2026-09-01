@@ -321,10 +321,23 @@ export const useLabQueue = () => {
     const out = [];
     queue.forEach((visit) => {
       const patient = visit.patientId || {};
-      const doctor = visit.consultation?.doctorId;
-      const doctorName = doctor
-        ? `${doctor.firstName || ''} ${doctor.lastName || ''}`.trim() || doctor.name || 'Attending Physician'
-        : 'Attending Physician';
+      const doctor = visit.consultation?.doctorId || visit.doctor || visit.assignedDoctor || visit.referredBy;
+      let doctorName = 'Attending Physician';
+      let doctorSpecialty = '';
+
+      if (typeof doctor === 'object' && doctor !== null) {
+        const dName = [doctor.firstName, doctor.lastName].filter(Boolean).join(' ') || doctor.fullName || doctor.name;
+        if (dName) {
+          doctorName = dName.startsWith('Dr.') ? dName : `Dr. ${dName}`;
+        }
+        doctorSpecialty = doctor.specialization || doctor.specialty || '';
+      } else if (typeof doctor === 'string' && doctor.trim()) {
+        doctorName = doctor.startsWith('Dr.') ? doctor : `Dr. ${doctor}`;
+      }
+
+      const deptName = visit.departmentId?.name || visit.departmentName || '';
+      const chiefComplaint = visit.consultation?.chiefComplaint || visit.vitals?.chiefComplaint || visit.reasonForVisit || '';
+      const diagnosis = visit.consultation?.diagnosis || '';
 
       (visit.labOrders || []).forEach((order) => {
         const labName = labNameMap[order.laboratoryId] || order.labName || 'Laboratory';
@@ -334,11 +347,15 @@ export const useLabQueue = () => {
           _patientName: [patient.firstName, patient.lastName].filter(Boolean).join(' ') || 'Unknown patient',
           _mrn: patient.mrn || '—',
           _gender: patient.gender || '—',
+          _age: patient.age || '',
           _bloodGroup: patient.bloodGroup || '',
           _tokenString: visit.tokenString || '',
-          _departmentName: visit.departmentId?.name || '',
+          _departmentName: deptName,
           _visitCreatedAt: visit.createdAt,
           _orderedBy: doctorName,
+          _doctorSpecialty: doctorSpecialty,
+          _chiefComplaint: chiefComplaint,
+          _diagnosis: diagnosis,
           _laboratoryName: labName,
         });
       });
@@ -357,10 +374,23 @@ export const useLabQueue = () => {
 
     const processVisit = (visit) => {
       const patient = visit.patientId || {};
-      const doctor = visit.consultation?.doctorId;
-      const doctorName = doctor
-        ? `${doctor.firstName || ''} ${doctor.lastName || ''}`.trim() || doctor.name || 'Attending Physician'
-        : 'Attending Physician';
+      const doctor = visit.consultation?.doctorId || visit.doctor || visit.assignedDoctor || visit.referredBy;
+      let doctorName = 'Attending Physician';
+      let doctorSpecialty = '';
+
+      if (typeof doctor === 'object' && doctor !== null) {
+        const dName = [doctor.firstName, doctor.lastName].filter(Boolean).join(' ') || doctor.fullName || doctor.name;
+        if (dName) {
+          doctorName = dName.startsWith('Dr.') ? dName : `Dr. ${dName}`;
+        }
+        doctorSpecialty = doctor.specialization || doctor.specialty || '';
+      } else if (typeof doctor === 'string' && doctor.trim()) {
+        doctorName = doctor.startsWith('Dr.') ? doctor : `Dr. ${doctor}`;
+      }
+
+      const deptName = visit.departmentId?.name || visit.departmentName || '';
+      const chiefComplaint = visit.consultation?.chiefComplaint || visit.vitals?.chiefComplaint || visit.reasonForVisit || '';
+      const diagnosis = visit.consultation?.diagnosis || '';
 
       (visit.labOrders || []).forEach((order) => {
         const orderId = String(order._id || order.id || '');
@@ -376,11 +406,15 @@ export const useLabQueue = () => {
           _patientName: [patient.firstName, patient.lastName].filter(Boolean).join(' ') || 'Unknown patient',
           _mrn: patient.mrn || '—',
           _gender: patient.gender || '—',
+          _age: patient.age || '',
           _bloodGroup: patient.bloodGroup || '',
           _tokenString: visit.tokenString || '',
-          _departmentName: visit.departmentId?.name || '',
+          _departmentName: deptName,
           _visitCreatedAt: visit.createdAt,
           _orderedBy: doctorName,
+          _doctorSpecialty: doctorSpecialty,
+          _chiefComplaint: chiefComplaint,
+          _diagnosis: diagnosis,
           _laboratoryName: labName,
         });
       });

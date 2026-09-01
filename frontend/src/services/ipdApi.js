@@ -11,6 +11,7 @@ export const ipdApi = {
   createFloor: (data) => api.post('/ipd/beds/floors', data),
   updateFloor: (id, data) => api.patch(`/ipd/beds/floors/${id}`, data),
 
+  getRooms: (params) => api.get('/ipd/beds/rooms', { params }),
   getRoomsByFloor: (floorId) => api.get(`/ipd/beds/rooms/${floorId}`),
   createRoom: (data) => api.post('/ipd/beds/rooms', data),
   updateRoom: (id, data) => api.patch(`/ipd/beds/rooms/${id}`, data),
@@ -72,6 +73,7 @@ export const ipdApi = {
   // ── 7. Discharge & 3-Way Clearance Kanban ───────────────────
   initiateDischarge: (admissionId, data) => api.post(`/ipd/discharge/${admissionId}/initiate`, data),
   getClearanceStatus: (admissionId) => api.get(`/ipd/discharge/${admissionId}/clearance`),
+  getClearance: (admissionId) => api.get(`/ipd/discharge/${admissionId}/clearance`),
   markClearance: (admissionId, department, data = {}) =>
     api.patch(`/ipd/discharge/${admissionId}/clearance/${department}`, data),
   finalizeDischarge: (admissionId) => api.post(`/ipd/discharge/${admissionId}/finalize`),

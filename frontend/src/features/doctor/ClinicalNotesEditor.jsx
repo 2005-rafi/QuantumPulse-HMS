@@ -14,7 +14,7 @@ const ClinicalNotesEditor = ({ form, onChange, triageComplaint }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--md-spacing-m)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--md-spacing-s, 8px)' }}>
       {/* Chief Complaint — secondary emphasis */}
       <Md3Section
         title="Clinical Assessment"
@@ -36,10 +36,12 @@ const ClinicalNotesEditor = ({ form, onChange, triageComplaint }) => {
           <Md3TextArea
             id="chief-complaint"
             name="chiefComplaint"
-            label="Chief Complaint *"
+            label="Chief Complaint"
             value={form.chiefComplaint || ''}
             onChange={handleChange('chiefComplaint')}
-            rows={3}
+            autoGrow={true}
+            minRows={2}
+            required
           />
           <Md3TextArea
             id="hpi"
@@ -47,7 +49,8 @@ const ClinicalNotesEditor = ({ form, onChange, triageComplaint }) => {
             label="History of Present Illness"
             value={form.hpi || ''}
             onChange={handleChange('hpi')}
-            rows={3}
+            autoGrow={true}
+            minRows={2}
           />
         </div>
       </Md3Section>
@@ -58,29 +61,31 @@ const ClinicalNotesEditor = ({ form, onChange, triageComplaint }) => {
           <div className="clinical-diagnosis-header__icon">
             <Icon.Stethoscope />
           </div>
-          <h3 className="clinical-diagnosis-header__label">Diagnosis *</h3>
+          <h3 className="clinical-diagnosis-header__label">Diagnosis</h3>
         </div>
         <Md3TextArea
           id="diagnosis"
           name="diagnosis"
-          label="Clinical Diagnosis *"
+          label="Clinical Diagnosis"
           value={form.diagnosis || ''}
           onChange={handleChange('diagnosis')}
-          rows={4}
+          autoGrow={true}
+          minRows={2}
           required
         />
       </div>
 
       {/* Treatment Plan — secondary tonal block */}
       <div className="clinical-treatment-block">
-        <span className="clinical-treatment-label">Treatment Plan *</span>
+        <span className="clinical-treatment-label">Treatment Plan</span>
         <Md3TextArea
           id="treatment-plan"
           name="treatmentPlan"
-          label="Treatment Plan *"
+          label="Treatment Plan"
           value={form.treatmentPlan || ''}
           onChange={handleChange('treatmentPlan')}
-          rows={4}
+          autoGrow={true}
+          minRows={2}
           required
         />
       </div>

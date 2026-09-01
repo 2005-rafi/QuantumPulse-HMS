@@ -198,7 +198,11 @@ const AdministratorDashboard = () => {
         <Md3NavigationRail 
           items={NAV_ITEMS}
           activeItem={activeTab === 'administrator' ? 'analytics' : activeTab}
-          onSelect={(id) => navigate(`/dashboard/administrator/${id}`)}
+          onSelect={(id) => {
+            React.startTransition(() => {
+              navigate(`/dashboard/administrator/${id}`);
+            });
+          }}
         />
 
         <main className="dashboard-main" style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>

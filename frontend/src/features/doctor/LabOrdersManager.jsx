@@ -301,6 +301,7 @@ const LabOrdersManager = ({
               const labObj = laboratories.find((l) => l._id === order.laboratoryId);
               const labDisplayName = order.labName || labObj?.name || 'Diagnostic Laboratory';
               const canRemove = !order.status || order.status === 'PENDING_SAMPLE' || order.status === 'PENDING';
+              const isCompleted = order.status === 'COMPLETED';
 
               const priorityVariant =
                 order.priority === 'STAT' ? 'error' :
@@ -309,9 +310,9 @@ const LabOrdersManager = ({
               return (
                 <li key={i} className="lab-order-card">
                   <div className="lab-order-card__left">
-                    <span className="lab-order-card__icon">
-                      <Icon.Beaker size={18} />
-                    </span>
+                    <div className="lab-order-card__icon">
+                      <span className="material-symbols-rounded">biotech</span>
+                    </div>
                     <div className="lab-order-card__details">
                       <div className="lab-order-card__title-row">
                         <span className="lab-order-card__name">{order.testName}</span>
@@ -320,27 +321,31 @@ const LabOrdersManager = ({
                         </Md3Chip>
                       </div>
                       <div className="lab-order-card__meta-row">
-                        <span className="lab-order-card__dept">
-                          <Icon.Building size={12} /> {labDisplayName}
+                        <span className="clinical-meta-pill">
+                          <span className="material-symbols-rounded">domain</span>
+                          {labDisplayName}
                         </span>
-                        <span className="lab-order-card__bullet">•</span>
-                        <span className="lab-order-card__sample">
-                          <Icon.Activity size={12} /> {order.sampleType || 'Specimen'}
+                        <span className="clinical-meta-pill">
+                          <span className="material-symbols-rounded">colorize</span>
+                          {order.sampleType || 'Specimen'}
                         </span>
                         {order.notes && (
-                          <>
-                            <span className="lab-order-card__bullet">•</span>
-                            <span className="lab-order-card__notes" title={order.notes}>
-                              Notes: {order.notes}
-                            </span>
-                          </>
+                          <span className="clinical-notes-pill" title={order.notes}>
+                            <span className="material-symbols-rounded">description</span>
+                            Notes: {order.notes}
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
 
                   <div className="lab-order-card__right">
-                    {order.status && order.status !== 'PENDING_SAMPLE' && order.status !== 'PENDING' ? (
+                    {isCompleted ? (
+                      <span className="clinical-status-pill clinical-status-pill--completed">
+                        <span className="material-symbols-rounded">check_circle</span>
+                        Completed
+                      </span>
+                    ) : order.status && order.status !== 'PENDING_SAMPLE' && order.status !== 'PENDING' ? (
                       <Md3Chip variant="secondary" size="small">
                         {order.status.replace(/_/g, ' ')}
                       </Md3Chip>

@@ -1,30 +1,12 @@
 const repo = require('./patient.repository');
 const AppError = require('../../core/errors/AppError');
 const crypto = require('crypto');
-const Counter = require('../../core/database/counter.model');
+const sequenceService = require('../../core/database/sequence.service');
 const { encryptDeterministic } = require('../../core/utils/encryption');
 
-const generateMRN = async () => {
-  // Atomically increment MRN sequence counter
-  const counter = await Counter.findOneAndUpdate(
-    { id: 'mrn' },
-    { $inc: { seq: 1 } },
-    { new: true, upsert: true }
-  );
-
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hours = String(now.getHours()).padStart(2, '0');
-  const minutes = String(now.getMinutes()).padStart(2, '0');
-  
-  return `PT-${year}${month}${day}-${hours}${minutes}-${String(counter.seq).padStart(6, '0')}`;
-};
-
-const create = async (data) => {
-  const mrn = await generateMRN();
-  return repo.create({ ...data, mrn });
+const create = async (data, session = null) => {
+  const mrn = await sequenceService.getNextPatientMRN(session);
+  return repo.create({ ...data, mrn }, { session });
 };
 
 const getById = async (id) => {

@@ -13,6 +13,36 @@ import App from './App.jsx'
 import { ConfigProvider } from './contexts/ConfigContext.jsx'
 import { ThemeProvider } from './context/ThemeContext.jsx'
 
+// Global Safety Interceptor for Browser Web-Vitals / Cloudflare RUM / DevTools Performance timing race conditions
+if (typeof window !== 'undefined') {
+  const isBenignTelemetryError = (msg, stack) => {
+    const text = String(msg || '') + ' ' + String(stack || '');
+    return (
+      text.includes("Cannot read properties of undefined (reading 'startTime')") ||
+      text.includes('reportAllChanges') ||
+      text.includes('ResizeObserver loop completed with undelivered notifications') ||
+      text.includes('ResizeObserver loop limit exceeded') ||
+      text.includes('PerformanceObserver')
+    );
+  };
+
+  window.addEventListener('error', (event) => {
+    if (isBenignTelemetryError(event?.message, event?.error?.stack)) {
+      event.preventDefault();
+      event.stopPropagation();
+      return true;
+    }
+  }, true);
+
+  window.addEventListener('unhandledrejection', (event) => {
+    const reasonMsg = event?.reason?.message || event?.reason;
+    if (isBenignTelemetryError(reasonMsg, event?.reason?.stack)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  });
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>

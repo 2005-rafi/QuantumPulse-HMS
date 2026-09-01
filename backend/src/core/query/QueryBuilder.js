@@ -146,9 +146,11 @@ class QueryBuilder {
       return {
         items,
         total: total !== null ? total : items.length,
+        totalItems: total !== null ? total : items.length,
         page: compiled.page,
         limit: compiled.limit,
         pages: pages !== null ? pages : 1,
+        totalPages: pages !== null ? pages : 1,
         hasNextPage,
       };
     }

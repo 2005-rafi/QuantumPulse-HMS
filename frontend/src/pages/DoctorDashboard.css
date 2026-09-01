@@ -23,8 +23,21 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   min-height: 0;
+}
+
+/* ─── 1b. Inpatient Department Doctor Cockpit ─── */
+.doctor-ipd-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px 20px 64px;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* ─── 2. Consultation Desk: 2-Pane Workstation (Sidebar + Fluid Desk) ─── */
@@ -2130,9 +2143,9 @@
 .lab-results-workspace {
   background-color: var(--md-sys-color-surface, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
   overflow: hidden;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 3%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, #000) 2%, transparent);
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -2143,24 +2156,24 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 6px 12px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
 .lab-results-title-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .lab-results-header-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   background-color: var(--md-sys-color-secondary-container, #e8def8);
   color: var(--md-sys-color-on-secondary-container, #1d192b);
   display: flex;
@@ -2171,15 +2184,15 @@
 
 .lab-results-heading {
   font-family: 'Inter', sans-serif;
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
 
 .lab-results-subheading {
   font-family: 'Inter', sans-serif;
-  font-size: 0.70rem;
+  font-size: 0.68rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
 }
@@ -2195,35 +2208,35 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 32px 16px;
+  padding: 20px 12px;
   text-align: center;
-  gap: 8px;
+  gap: 6px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .lab-results-empty-heading {
   font-family: 'Inter', sans-serif;
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
 
 .lab-results-empty-sub {
   font-family: 'Inter', sans-serif;
-  font-size: 0.74rem;
+  font-size: 0.70rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
   max-width: 400px;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .lab-pending-section,
 .lab-completed-section {
-  padding: 14px 16px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .lab-pending-title,
@@ -2232,8 +2245,8 @@
   align-items: center;
   gap: 6px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.76rem;
-  font-weight: 700;
+  font-size: 0.72rem;
+  font-weight: 600;
   text-transform: uppercase;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
@@ -2242,15 +2255,15 @@
 .lab-pending-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 
 .lab-pending-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 6px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
 }
@@ -2264,8 +2277,8 @@
 
 .lab-pending-card__name {
   font-family: 'Inter', sans-serif;
-  font-size: 0.80rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
@@ -2274,22 +2287,22 @@
   align-items: center;
   gap: 6px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .lab-results__list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .lab-results__item {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 6px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
 }
@@ -2298,19 +2311,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .lab-results__title-box {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .lab-results__icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
@@ -2320,21 +2333,21 @@
 
 .lab-results__title {
   font-family: 'Inter', sans-serif;
-  font-size: 0.84rem;
-  font-weight: 700;
+  font-size: 0.80rem;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
 
 .lab-results__item-sub {
   font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .lab-results-table-wrap {
   overflow-x: auto;
-  border-radius: 6px;
+  border-radius: 4px;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   background-color: var(--md-sys-color-surface, #ffffff);
 }
@@ -2420,20 +2433,146 @@
   box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
 }
 
+/* ── Clinical Meta Pills & Semantic Badges ── */
+.clinical-meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.clinical-meta-pill .material-symbols-rounded {
+  font-size: 13px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.clinical-notes-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--md-sys-color-tertiary-container, #ffd8e4) 60%, transparent);
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 500;
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.clinical-notes-pill .material-symbols-rounded {
+  font-size: 13px;
+  color: var(--md-sys-color-tertiary, #7d5260);
+}
+
+.clinical-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.70rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.clinical-status-pill--completed,
+.clinical-status-pill--ready {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary-container, #eaddff) 80%, transparent);
+  color: var(--md-sys-color-primary, #6750a4);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 30%, transparent);
+}
+
+.clinical-status-pill .material-symbols-rounded {
+  font-size: 14px;
+}
+
+/* ── Informational Callout & Observation Notes ── */
+.lab-results__info-callout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  border-left: 3px solid var(--md-sys-color-outline, #79747e);
+  margin-top: 4px;
+}
+
+.lab-results__info-icon {
+  font-size: 16px;
+  color: var(--md-sys-color-outline, #79747e);
+  flex-shrink: 0;
+}
+
+.lab-results__info-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.35;
+}
+
+.lab-results__notes-box {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  margin-top: 4px;
+}
+
+.lab-results__notes-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.lab-results__notes-header .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.lab-results__notes-body {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface, #1c1b1f);
+  margin: 0;
+  line-height: 1.4;
+}
+
 /* ==========================================================================
    9. Consultation Tab & Forms (.consultation-layout)
    ========================================================================== */
 .consultation-layout {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
   width: 100%;
 }
 
 .clinical-field-row-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -2448,12 +2587,12 @@
 .clinical-notes-block {
   background-color: var(--md-sys-color-surface, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  padding: 14px 16px;
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 3%, transparent);
+  gap: 6px;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, #000) 2%, transparent);
   width: 100%;
   box-sizing: border-box;
 }
@@ -2461,13 +2600,13 @@
 .clinical-diagnosis-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .clinical-diagnosis-header__icon {
-  width: 26px;
-  height: 26px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
@@ -2478,8 +2617,8 @@
 .clinical-diagnosis-header__label,
 .clinical-treatment-label {
   font-family: 'Inter', sans-serif;
-  font-size: 0.84rem;
-  font-weight: 700;
+  font-size: 0.80rem;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
@@ -2488,9 +2627,9 @@
 .rx-manager-card {
   background-color: var(--md-sys-color-surface, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
   overflow: hidden;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 3%, transparent);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow, #000) 2%, transparent);
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -2501,22 +2640,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 16px;
+  padding: 6px 12px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  gap: 10px;
+  gap: 8px;
 }
 
 .rx-manager-title-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .rx-manager-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
@@ -2527,25 +2666,25 @@
 
 .rx-manager-title {
   font-family: 'Inter', sans-serif;
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
 }
 
 .rx-manager-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 0.70rem;
+  font-size: 0.68rem;
   font-weight: 500;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
 }
 
 .rx-linear-composer {
-  padding: 14px 16px;
+  padding: 8px 12px;
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
@@ -2957,35 +3096,35 @@
 .lab-orders-list {
   list-style: none;
   margin: 0;
-  padding: 14px 18px;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 6px;
 }
 
 .lab-order-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  gap: 12px;
+  gap: 8px;
 }
 
 .lab-order-card__left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
 
 .lab-order-card__icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
@@ -2997,7 +3136,7 @@
 .lab-order-card__details {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
   flex: 1;
 }
@@ -3005,14 +3144,14 @@
 .lab-order-card__title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: wrap;
 }
 
 .lab-order-card__name {
   font-family: 'Inter', sans-serif;
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 0.80rem;
+  font-weight: 600;
   color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 

@@ -108,21 +108,21 @@
   --md-comp-filter-chip-padding: 3px 10px;
   --md-comp-filter-chip-font-size: 0.78rem;
 
-  /* 11. Laboratory Tech Workbench (Small-to-Medium Clinical Density) */
-  --md-lab-header-height: 40px;
-  --md-lab-header-padding: 6px 12px;
-  --md-lab-workbench-gap: 8px;
-  --md-lab-specimen-card-padding: 8px 12px;
-  --md-lab-specimen-dot-size: 10px;
+  /* 11. Laboratory Tech Workbench (Material 3 Spacious Clinical Hierarchy) */
+  --md-lab-header-height: 48px;
+  --md-lab-header-padding: 10px 16px;
+  --md-lab-workbench-gap: 16px;
+  --md-lab-specimen-card-padding: 14px 16px;
+  --md-lab-specimen-dot-size: 12px;
   --md-lab-specimen-connector-width: 2px;
-  --md-lab-order-card-padding: 8px 12px;
-  --md-lab-notes-min-height: 44px;
-  --md-lab-upload-dropzone-padding: 10px 14px;
-  --md-lab-upload-dropzone-min-height: 52px;
-  --md-lab-upload-preview-max-height: 180px;
-  --md-lab-table-cell-padding: 6px 10px;
-  --md-lab-table-cell-font-size: 0.80rem;
-  --md-lab-section-header-padding: 6px 10px;
+  --md-lab-order-card-padding: 14px 16px;
+  --md-lab-notes-min-height: 60px;
+  --md-lab-upload-dropzone-padding: 20px 24px;
+  --md-lab-upload-dropzone-min-height: 64px;
+  --md-lab-upload-preview-max-height: 220px;
+  --md-lab-table-cell-padding: 10px 14px;
+  --md-lab-table-cell-font-size: 0.84rem;
+  --md-lab-section-header-padding: 10px 14px;
 
   /* ── Shape Corners (MD3 Scale) ── */
   --md-sys-shape-corner-none: 0px;

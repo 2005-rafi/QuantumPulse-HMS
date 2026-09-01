@@ -21,15 +21,17 @@ const Md3ScanViewerDialog = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [blobUrl, setBlobUrl] = useState(null);
+  const [docUrl, setDocUrl] = useState(null);
+  const [docTitle, setDocTitle] = useState(testName);
   const [mimeType, setMimeType] = useState('application/pdf');
   const [zoomLevel, setZoomLevel] = useState(100);
   const [rotation, setRotation] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Fetch document blob securely via authenticated API
+  // Fetch document securely via authenticated API
   useEffect(() => {
-    let activeUrl = null;
+    let isCancelled = false;
+    let createdBlobUrl = null;
 
     const fetchScanDocument = async () => {
       if (!isOpen || !scanReportId) return;
@@ -40,42 +42,74 @@ const Md3ScanViewerDialog = ({
         setZoomLevel(100);
         setRotation(0);
 
-        const response = await api.get(`/laboratory/scans/${scanReportId}`, {
-          responseType: 'blob',
-        });
+        // 1. Fetch metadata
+        const metaRes = await api.get(`/laboratory/scans/${scanReportId}?json=true`);
+        const downloadUrl = metaRes.data?.data?.downloadUrl || metaRes.data?.downloadUrl;
+        const scanMeta = metaRes.data?.data?.scan || metaRes.data?.scan;
 
-        const detectedType = response.headers['content-type'] || 'application/pdf';
+        if (isCancelled) return;
+
+        if (scanMeta?.originalFilename) {
+          setDocTitle(scanMeta.originalFilename);
+        }
+        const detectedType = scanMeta?.mimeType || 'application/pdf';
         setMimeType(detectedType);
 
-        const blob = new Blob([response.data], { type: detectedType });
-        activeUrl = URL.createObjectURL(blob);
-        setBlobUrl(activeUrl);
+        const isPdfDoc = detectedType.toLowerCase().includes('pdf');
+
+        if (isPdfDoc) {
+          // For PDFs, fetch binary blob to create a safe same-origin blob: URL for the iframe
+          try {
+            const blobRes = await api.get(`/laboratory/scans/${scanReportId}`, {
+              responseType: 'blob',
+            });
+            if (isCancelled) return;
+            const blob = new Blob([blobRes.data], { type: 'application/pdf' });
+            createdBlobUrl = URL.createObjectURL(blob);
+            setDocUrl(createdBlobUrl);
+          } catch (blobErr) {
+            console.warn('[Md3ScanViewerDialog] Blob fetch fallback to direct URL:', blobErr);
+            if (downloadUrl) {
+              setDocUrl(downloadUrl);
+            } else {
+              throw blobErr;
+            }
+          }
+        } else {
+          // For images, direct Cloudinary CDN URL provides instant high-speed rendering
+          setDocUrl(downloadUrl || `/api/v1/laboratory/scans/${scanReportId}`);
+        }
       } catch (err) {
+        if (isCancelled) return;
         console.error('[Md3ScanViewerDialog] Failed to fetch scan document:', err);
         setError(
           err.response?.data?.message ||
           'Failed to retrieve scanned report from laboratory storage. Please verify permissions or network connection.'
         );
       } finally {
-        setLoading(false);
+        if (!isCancelled) {
+          setLoading(false);
+        }
       }
     };
 
     fetchScanDocument();
 
     return () => {
-      if (activeUrl) {
-        URL.revokeObjectURL(activeUrl);
+      isCancelled = true;
+      if (createdBlobUrl) {
+        URL.revokeObjectURL(createdBlobUrl);
       }
+      setDocUrl(null);
     };
   }, [isOpen, scanReportId]);
 
-  // Clean up blob URL on close
+  // Clean up URL on close
   const handleClose = () => {
-    if (blobUrl) {
-      URL.revokeObjectURL(blobUrl);
-      setBlobUrl(null);
+    if (docUrl && docUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(docUrl);
     }
+    setDocUrl(null);
     onClose();
   };
 
@@ -110,8 +144,8 @@ const Md3ScanViewerDialog = ({
   };
 
   const handlePrint = () => {
-    if (!blobUrl) return;
-    const printWindow = window.open(blobUrl, '_blank');
+    if (!docUrl) return;
+    const printWindow = window.open(docUrl, '_blank');
     if (printWindow) {
       printWindow.addEventListener('load', () => {
         printWindow.print();
@@ -120,16 +154,17 @@ const Md3ScanViewerDialog = ({
   };
 
   const handleOpenExternal = () => {
-    if (blobUrl) {
-      window.open(blobUrl, '_blank');
+    if (docUrl) {
+      window.open(docUrl, '_blank');
     }
   };
 
   const handleDownload = () => {
-    if (!blobUrl) return;
+    if (!docUrl) return;
     const a = document.createElement('a');
-    a.href = blobUrl;
-    a.download = `${testName.replace(/[^a-zA-Z0-9_-]/g, '_')}_Report.${isPdf ? 'pdf' : 'png'}`;
+    a.href = docUrl;
+    a.target = '_blank';
+    a.download = `${(docTitle || testName).replace(/[^a-zA-Z0-9_-]/g, '_')}.${isPdf ? 'pdf' : 'png'}`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -216,7 +251,7 @@ const Md3ScanViewerDialog = ({
               className="md3-viewer-btn"
               onClick={handlePrint}
               title="Print Document"
-              disabled={!blobUrl || loading}
+              disabled={!docUrl || loading}
             >
               <Icon.Print />
               <span className="md3-viewer-btn-label">Print</span>
@@ -227,7 +262,7 @@ const Md3ScanViewerDialog = ({
               className="md3-viewer-btn"
               onClick={handleDownload}
               title="Download File"
-              disabled={!blobUrl || loading}
+              disabled={!docUrl || loading}
             >
               <Icon.Download />
               <span className="md3-viewer-btn-label">Save</span>
@@ -238,7 +273,7 @@ const Md3ScanViewerDialog = ({
               className="md3-viewer-btn"
               onClick={handleOpenExternal}
               title="Open in New Window"
-              disabled={!blobUrl || loading}
+              disabled={!docUrl || loading}
             >
               <Icon.ExternalLink />
             </button>
@@ -262,7 +297,7 @@ const Md3ScanViewerDialog = ({
           {loading && (
             <div className="md3-scan-viewer__loading">
               <span className="md3-viewer-spinner" />
-              <p>Decrypting and loading laboratory document...</p>
+              <p>Decrypting and streaming laboratory document from Cloudinary...</p>
             </div>
           )}
 
@@ -281,18 +316,18 @@ const Md3ScanViewerDialog = ({
             </div>
           )}
 
-          {!loading && !error && blobUrl && (
+          {!loading && !error && docUrl && (
             <div className="md3-scan-viewer__content">
               {isPdf ? (
                 <iframe
-                  src={blobUrl}
+                  src={docUrl}
                   title={`${testName} Scanned PDF`}
                   className="md3-scan-viewer__iframe"
                 />
               ) : isImage ? (
                 <div className="md3-scan-viewer__image-wrapper">
                   <img
-                    src={blobUrl}
+                    src={docUrl}
                     alt={`${testName} Scanned Result`}
                     className="md3-scan-viewer__image"
                     style={{
@@ -302,7 +337,7 @@ const Md3ScanViewerDialog = ({
                 </div>
               ) : (
                 <iframe
-                  src={blobUrl}
+                  src={docUrl}
                   title={`${testName} Document`}
                   className="md3-scan-viewer__iframe"
                 />

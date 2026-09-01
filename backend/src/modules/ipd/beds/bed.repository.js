@@ -30,6 +30,13 @@ class BedRepository {
     return RoomMaster.create(data);
   }
 
+  async getRooms(filter = {}) {
+    return RoomMaster.find({ isActive: true, ...filter })
+      .populate('floorId', 'floorNumber floorName wing')
+      .sort({ roomNumber: 1 })
+      .lean();
+  }
+
   async getRoomsByFloor(floorId) {
     return RoomMaster.find({ floorId, isActive: true }).sort({ roomNumber: 1 }).lean();
   }
@@ -39,7 +46,7 @@ class BedRepository {
   }
 
   async updateRoom(id, update) {
-    return RoomMaster.findByIdAndUpdate(id, update, { new: true }).lean();
+    return RoomMaster.findByIdAndUpdate(id, update, { returnDocument: 'after' }).lean();
   }
 
   // ── 3. Bed Operations ─────────────────────────────────────
@@ -68,9 +75,20 @@ class BedRepository {
   }
 
   async updateBed(id, update, session = null) {
-    const opts = { new: true };
+    const opts = { returnDocument: 'after' };
     if (session) opts.session = session;
     return BedMaster.findByIdAndUpdate(id, update, opts).lean();
+  }
+
+  // Atomic Compare-And-Swap (CAS) Claim Guard to eliminate double-booking
+  async claimBedAtomically(id, updateData, session = null) {
+    const opts = { returnDocument: 'after' };
+    if (session) opts.session = session;
+    return BedMaster.findOneAndUpdate(
+      { _id: id, status: 'VACANT', isActive: true },
+      { $set: updateData },
+      opts
+    ).lean();
   }
 
   // ── 4. Full Spatial Bed Map Aggregation (BookMyShow Engine) ──

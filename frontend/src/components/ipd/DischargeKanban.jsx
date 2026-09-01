@@ -47,73 +47,70 @@ export const DischargeKanban = ({
       style={{
         background: 'var(--md-sys-color-surface, #ffffff)',
         border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-        borderRadius: '16px',
-        padding: '20px',
+        borderRadius: '12px',
+        padding: '14px 16px',
         display: 'flex',
         flexDirection: 'column',
-        gap: '20px',
+        gap: '14px',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
         <div>
-          <h3 style={{ fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>
+          <h3 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
             3-Way Departmental Discharge Clearance
           </h3>
-          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
+          <span style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
             Mandatory Pharmacy, Ward Nursing, and Billing Sign-Offs
           </span>
         </div>
 
         {clearance.gatePassIssued ? (
-          <span
-            style={{
-              padding: '6px 14px',
-              borderRadius: '100px',
-              fontWeight: 700,
-              fontSize: '0.85rem',
-              backgroundColor: 'var(--md-sys-color-primary-container)',
-              color: 'var(--md-sys-color-on-primary-container)',
-            }}
-          >
+          <span className="clinical-status-pill clinical-status-pill--ready">
+            <span className="material-symbols-rounded">verified</span>
             Gate Pass: {clearance.gatePassNumber}
           </span>
         ) : null}
       </div>
 
       {/* 3 Clearance Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
         {/* 1. Pharmacy Clearance */}
         <div
           style={{
-            border: `1.5px solid ${pharm.isCleared ? 'var(--md-sys-color-primary, #006a57)' : 'var(--md-sys-color-outline-variant)'}`,
-            borderRadius: '14px',
-            padding: '16px',
-            background: pharm.isCleared ? 'rgba(0, 106, 87, 0.03)' : 'transparent',
+            border: `1px solid ${pharm.isCleared ? 'var(--md-sys-color-primary, #6750a4)' : 'var(--md-sys-color-outline-variant)'}`,
+            borderRadius: '10px',
+            padding: '12px',
+            background: pharm.isCleared ? 'color-mix(in srgb, var(--md-sys-color-primary-container, #eaddff) 25%, transparent)' : 'var(--md-sys-color-surface-container-low, #f7f2fa)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
+            gap: '8px',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong style={{ fontSize: '0.95rem' }}>1. Pharmacy Clearance</strong>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: pharm.isCleared ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-error)',
-              }}
-            >
-              {pharm.isCleared ? '✓ CLEARED' : '● PENDING'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary)' }}>local_pharmacy</span>
+              <strong style={{ fontSize: '0.84rem', color: 'var(--md-sys-color-on-surface)' }}>1. Pharmacy Clearance</strong>
+            </div>
+            {pharm.isCleared ? (
+              <span className="clinical-status-pill clinical-status-pill--completed">
+                <span className="material-symbols-rounded">check_circle</span> Cleared
+              </span>
+            ) : (
+              <span className="clinical-status-pill" style={{ color: 'var(--md-sys-color-error)', background: 'var(--md-sys-color-error-container)' }}>
+                <span className="material-symbols-rounded">pending</span> Pending
+              </span>
+            )}
           </div>
 
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', margin: 0 }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)', margin: 0, lineHeight: 1.35 }}>
             Reconcile unconsumed ward medications and return unused items to central inventory.
           </p>
 
           {pharm.isCleared ? (
-            <div style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline)' }}>
-              Cleared by {pharm.clearedBy?.firstName || 'Pharmacist'} ({new Date(pharm.clearedAt).toLocaleTimeString('en-IN')})
+            <div style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>badge</span>
+              Cleared by {pharm.clearedBy?.firstName || 'Pharmacist'} ({new Date(pharm.clearedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })})
             </div>
           ) : (
             <>
@@ -133,45 +130,49 @@ export const DischargeKanban = ({
         {/* 2. Ward Nursing Clearance */}
         <div
           style={{
-            border: `1.5px solid ${nurse.isCleared ? 'var(--md-sys-color-primary, #006a57)' : 'var(--md-sys-color-outline-variant)'}`,
-            borderRadius: '14px',
-            padding: '16px',
-            background: nurse.isCleared ? 'rgba(0, 106, 87, 0.03)' : 'transparent',
+            border: `1px solid ${nurse.isCleared ? 'var(--md-sys-color-primary, #6750a4)' : 'var(--md-sys-color-outline-variant)'}`,
+            borderRadius: '10px',
+            padding: '12px',
+            background: nurse.isCleared ? 'color-mix(in srgb, var(--md-sys-color-primary-container, #eaddff) 25%, transparent)' : 'var(--md-sys-color-surface-container-low, #f7f2fa)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
+            gap: '8px',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong style={{ fontSize: '0.95rem' }}>2. Ward Nursing Clearance</strong>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: nurse.isCleared ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-error)',
-              }}
-            >
-              {nurse.isCleared ? '✓ CLEARED' : '● PENDING'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary)' }}>medical_services</span>
+              <strong style={{ fontSize: '0.84rem', color: 'var(--md-sys-color-on-surface)' }}>2. Ward Nursing Clearance</strong>
+            </div>
+            {nurse.isCleared ? (
+              <span className="clinical-status-pill clinical-status-pill--completed">
+                <span className="material-symbols-rounded">check_circle</span> Cleared
+              </span>
+            ) : (
+              <span className="clinical-status-pill" style={{ color: 'var(--md-sys-color-error)', background: 'var(--md-sys-color-error-container)' }}>
+                <span className="material-symbols-rounded">pending</span> Pending
+              </span>
+            )}
           </div>
 
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', margin: 0 }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)', margin: 0, lineHeight: 1.35 }}>
             Remove IV cannula, Foley catheter, check stable vitals, and hand over discharge summary.
           </p>
 
           {nurse.isCleared ? (
-            <div style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline)' }}>
-              Cleared by {nurse.clearedBy?.firstName || 'Nurse'} ({new Date(nurse.clearedAt).toLocaleTimeString('en-IN')})
+            <div style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>badge</span>
+              Cleared by {nurse.clearedBy?.firstName || 'Nurse'} ({new Date(nurse.clearedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })})
             </div>
           ) : (
             <>
-              <label style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <label style={{ fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={cannulaRemoved}
                   onChange={(e) => setCannulaRemoved(e.target.checked)}
                 />
-                IV Cannula & Lines Removed
+                IV Cannula &amp; Lines Removed
               </label>
               <Md3TextField
                 label="Nursing Notes"
@@ -189,35 +190,39 @@ export const DischargeKanban = ({
         {/* 3. Billing & Cashier Clearance */}
         <div
           style={{
-            border: `1.5px solid ${bill.isCleared ? 'var(--md-sys-color-primary, #006a57)' : 'var(--md-sys-color-outline-variant)'}`,
-            borderRadius: '14px',
-            padding: '16px',
-            background: bill.isCleared ? 'rgba(0, 106, 87, 0.03)' : 'transparent',
+            border: `1px solid ${bill.isCleared ? 'var(--md-sys-color-primary, #6750a4)' : 'var(--md-sys-color-outline-variant)'}`,
+            borderRadius: '10px',
+            padding: '12px',
+            background: bill.isCleared ? 'color-mix(in srgb, var(--md-sys-color-primary-container, #eaddff) 25%, transparent)' : 'var(--md-sys-color-surface-container-low, #f7f2fa)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '12px',
+            gap: '8px',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <strong style={{ fontSize: '0.95rem' }}>3. Billing Clearance</strong>
-            <span
-              style={{
-                fontSize: '0.75rem',
-                fontWeight: 700,
-                color: bill.isCleared ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-error)',
-              }}
-            >
-              {bill.isCleared ? '✓ CLEARED' : '● PENDING'}
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary)' }}>receipt_long</span>
+              <strong style={{ fontSize: '0.84rem', color: 'var(--md-sys-color-on-surface)' }}>3. Billing Clearance</strong>
+            </div>
+            {bill.isCleared ? (
+              <span className="clinical-status-pill clinical-status-pill--completed">
+                <span className="material-symbols-rounded">check_circle</span> Cleared
+              </span>
+            ) : (
+              <span className="clinical-status-pill" style={{ color: 'var(--md-sys-color-error)', background: 'var(--md-sys-color-error-container)' }}>
+                <span className="material-symbols-rounded">pending</span> Pending
+              </span>
+            )}
           </div>
 
-          <p style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', margin: 0 }}>
+          <p style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)', margin: 0, lineHeight: 1.35 }}>
             Audit all daily room rents, pharmacy line items, doctor fees, and collect balance dues.
           </p>
 
           {bill.isCleared ? (
-            <div style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline)' }}>
-              Cleared by {bill.clearedBy?.firstName || 'Cashier'} ({new Date(bill.clearedAt).toLocaleTimeString('en-IN')})
+            <div style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>badge</span>
+              Cleared by {bill.clearedBy?.firstName || 'Cashier'} ({new Date(bill.clearedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })})
             </div>
           ) : (
             <>
@@ -238,24 +243,42 @@ export const DischargeKanban = ({
       {/* Gate Pass Issue Banner */}
       <div
         style={{
-          background: 'var(--md-sys-color-surface-container, #f0f5f2)',
-          borderRadius: '14px',
-          padding: '16px 20px',
+          background: 'var(--md-sys-color-surface-container, #f3edf7)',
+          border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
+          borderRadius: '10px',
+          padding: '12px 16px',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '12px',
+          gap: '10px',
         }}
       >
-        <div>
-          <strong style={{ fontSize: '1rem' }}>Hospital Gate Pass Authorization</strong>
-          <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-            {clearance.gatePassIssued
-              ? `Gate Pass #${clearance.gatePassNumber} issued on ${new Date(clearance.gatePassGeneratedAt).toLocaleString('en-IN')}`
-              : isAllCleared
-              ? 'All 3 departmental clearances completed! Ready for Gate Pass generation.'
-              : 'Requires all 3 departmental clearances before Gate Pass can be authorized.'}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div
+            style={{
+              width: '28px',
+              height: '28px',
+              borderRadius: '6px',
+              background: 'var(--md-sys-color-primary-container, #eaddff)',
+              color: 'var(--md-sys-color-primary, #6750a4)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>exit_to_app</span>
+          </div>
+          <div>
+            <strong style={{ fontSize: '0.88rem', color: 'var(--md-sys-color-on-surface)' }}>Hospital Gate Pass Authorization</strong>
+            <div style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+              {clearance.gatePassIssued
+                ? `Gate Pass #${clearance.gatePassNumber} issued on ${new Date(clearance.gatePassGeneratedAt).toLocaleString('en-IN')}`
+                : isAllCleared
+                ? 'All 3 departmental clearances completed! Ready for Gate Pass generation.'
+                : 'Requires all 3 departmental clearances before Gate Pass can be authorized.'}
+            </div>
           </div>
         </div>
 

@@ -706,30 +706,41 @@ export const Md3Tabs = ({
   activeTab,
   onChange,
   className = '',
-}) => (
-  <div className={`md3-tabs ${className}`} role="tablist">
-    {tabs.map((tab) => (
-      <button
-        key={tab.id}
-        type="button"
-        role="tab"
-        aria-selected={activeTab === tab.id}
-        className={`md3-tab ${activeTab === tab.id ? 'md3-tab--active' : ''}`}
-        onClick={() => onChange(tab.id)}
-      >
-        {tab.icon && <span className="md3-tab__icon">{tab.icon}</span>}
-        <span className="md3-tab__label">{tab.label}</span>
-      </button>
-    ))}
-    <span
-      className="md3-tabs__indicator"
-      style={{
-        width: `${100 / tabs.length}%`,
-        transform: `translateX(${tabs.findIndex((t) => t.id === activeTab) * 100}%)`,
-      }}
-    />
-  </div>
-);
+}) => {
+  const handleTabClick = (tabId) => {
+    if (activeTab === tabId) return;
+    React.startTransition(() => {
+      onChange && onChange(tabId);
+    });
+  };
+
+  const activeIndex = Math.max(0, tabs.findIndex((t) => t.id === activeTab));
+
+  return (
+    <div className={`md3-tabs ${className}`} role="tablist">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          type="button"
+          role="tab"
+          aria-selected={activeTab === tab.id}
+          className={`md3-tab ${activeTab === tab.id ? 'md3-tab--active' : ''}`}
+          onClick={() => handleTabClick(tab.id)}
+        >
+          {tab.icon && <span className="md3-tab__icon">{tab.icon}</span>}
+          <span className="md3-tab__label">{tab.label}</span>
+        </button>
+      ))}
+      <span
+        className="md3-tabs__indicator"
+        style={{
+          width: `${100 / Math.max(1, tabs.length)}%`,
+          transform: `translateX(${activeIndex * 100}%)`,
+        }}
+      />
+    </div>
+  );
+};
 
 /* ─── Md3Badge: Single Responsibility — Count/notification badge ─── */
 export const Md3Badge = ({
@@ -861,34 +872,66 @@ export const Md3TextArea = ({
   placeholder,
   error,
   disabled,
-  rows = 3,
+  rows = 2,
+  minRows = 2,
+  maxRows,
+  autoGrow = false,
   required,
   className = '',
   style = {},
 }) => {
   const isFilled = value !== '' && value !== null && value !== undefined;
   const isError = !!error;
+  const textareaRef = React.useRef(null);
+
+  React.useLayoutEffect(() => {
+    if (autoGrow && textareaRef.current) {
+      const el = textareaRef.current;
+      el.style.height = 'auto';
+      const scrollHeight = el.scrollHeight;
+      if (scrollHeight > 0) {
+        el.style.height = `${scrollHeight}px`;
+      }
+    }
+  }, [value, autoGrow]);
+
+  const handleInput = (e) => {
+    if (autoGrow && textareaRef.current) {
+      const el = textareaRef.current;
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  };
+
+  const showRequiredStar = required && !String(label || '').trim().endsWith('*');
 
   return (
     <div
-      className={`md3-text-field-container ${isError ? 'md3-error' : ''} ${disabled ? 'md3-disabled' : ''} md3-textarea-container ${className}`}
+      className={`md3-text-field-container ${isError ? 'md3-error' : ''} ${disabled ? 'md3-disabled' : ''} md3-textarea-container ${autoGrow ? 'md3-textarea--auto-grow' : ''} ${className}`}
       style={style}
     >
       <div className="md3-field-wrapper md3-textarea-wrapper">
         <textarea
+          ref={textareaRef}
           id={id}
           name={name}
-          className={`md3-field-input md3-textarea ${isFilled ? 'is-filled' : ''}`}
+          className={`md3-field-input md3-textarea ${isFilled ? 'is-filled' : ''} ${autoGrow ? 'is-auto-grow' : ''}`}
           value={value}
           onChange={onChange}
+          onInput={handleInput}
           placeholder=" "
           disabled={disabled}
           required={required}
-          rows={rows}
+          rows={rows || minRows}
           aria-invalid={isError}
           aria-describedby={isError ? `${id}-error` : undefined}
         />
-        {label && <label htmlFor={id} className="md3-field-label">{label}{required && ' *'}</label>}
+        {label && (
+          <label htmlFor={id} className="md3-field-label">
+            {label}
+            {showRequiredStar && ' *'}
+          </label>
+        )}
       </div>
       {isError && (
         <span id={`${id}-error`} className="md3-field-error-text">{error}</span>

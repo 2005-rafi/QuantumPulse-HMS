@@ -71,6 +71,8 @@ import PharmacyFloorRequisitions from '../features/ipd/PharmacyFloorRequisitions
 import { useAuth } from '../context/AuthContext';
 import { SessionGuard } from '../components/shell/SessionGuard';
 
+import { Md3RouteErrorBoundary } from '../components/md3/Md3ErrorBoundary';
+
 const AdminAppointmentsWrapper = () => {
   const { user } = useAuth();
   return <AppointmentDashboard user={user} />;
@@ -98,12 +100,14 @@ export const router = createBrowserRouter([
         <LoginPage />
       </GuestRoute>
     ),
+    errorElement: <Md3RouteErrorBoundary />,
   },
 
   // ── Protected Dashboard Routes ───────────────────────────────
   {
     path: '/dashboard',
     element: <ProtectedLayout />,
+    errorElement: <Md3RouteErrorBoundary />,
     children: [
       // Default /dashboard → redirect to login (role redirect handled by AppRouter)
       { index: true, element: <Navigate to="/login" replace /> },

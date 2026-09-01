@@ -28,6 +28,7 @@ router.patch('/floors/:id', authenticate, requirePermission(['FACILITY_MANAGE', 
 
 // ── Room Routes ───────────────────────────────────────────────
 router.post('/rooms', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), validate(createRoomSchema), controller.createRoom);
+router.get('/rooms', authenticate, controller.getAllRooms);
 router.get('/rooms/:floorId', authenticate, controller.getRoomsByFloor);
 router.patch('/rooms/:id', authenticate, requirePermission(['FACILITY_MANAGE', 'MANAGE_USERS']), validate(updateRoomSchema), controller.updateRoom);
 

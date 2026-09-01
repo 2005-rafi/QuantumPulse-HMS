@@ -19,7 +19,8 @@ const DoctorNotesEditor = ({ notes, onChange }) => {
         label="Notes (Optional)"
         value={notes || ''}
         onChange={handleChange}
-        rows={3}
+        autoGrow={true}
+        minRows={2}
         placeholder="Record any additional observations, follow-up instructions, or clinical context..."
       />
     </Md3Section>
