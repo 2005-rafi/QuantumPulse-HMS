@@ -517,7 +517,7 @@ const PharmacyDashboard = () => {
 
                   {/* High-Fidelity Print Portal */}
                   {createPortal(
-                    <div className="print-only-document">
+                    <div className="billing-print-portal">
                       <BillingTemplate
                         visit={selectedVisit}
                         medications={medications}

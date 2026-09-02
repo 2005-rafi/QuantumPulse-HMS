@@ -10,8 +10,56 @@ if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
 
+// HIPAA PHI (Protected Health Information) Redaction Formatter (45 CFR § 164.514)
+const PHI_SENSITIVE_KEYS = new Set([
+  'password',
+  'token',
+  'refreshtoken',
+  'accesstoken',
+  'secret',
+  'phone',
+  'mobile',
+  'ssn',
+  'nationalid',
+  'aadhaar',
+  'cardnumber',
+  'cvv',
+  'creditcard',
+  'accountnumber',
+]);
+
+const redactPhiInPlace = (obj, depth = 0, seen = new WeakSet()) => {
+  if (!obj || typeof obj !== 'object' || depth > 5) return obj;
+  if (seen.has(obj)) return obj;
+  seen.add(obj);
+
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      if (typeof obj[i] === 'object' && obj[i] !== null) {
+        redactPhiInPlace(obj[i], depth + 1, seen);
+      }
+    }
+    return obj;
+  }
+
+  for (const key of Object.keys(obj)) {
+    if (PHI_SENSITIVE_KEYS.has(key.toLowerCase())) {
+      obj[key] = '[REDACTED_PHI]';
+    } else if (typeof obj[key] === 'object' && obj[key] !== null) {
+      redactPhiInPlace(obj[key], depth + 1, seen);
+    }
+  }
+  return obj;
+};
+
+const hipaaSanitizer = winston.format((info) => {
+  redactPhiInPlace(info);
+  return info;
+});
+
 // Custom log format for readable console output during development
 const consoleFormat = winston.format.combine(
+  hipaaSanitizer(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
   winston.format.colorize(),
   winston.format.printf(({ timestamp, level, message, errorCode, requestId, httpStatus, ...meta }) => {
@@ -35,6 +83,7 @@ const consoleFormat = winston.format.combine(
 
 // Structured JSON format for file logging (ELK / Datadog / CloudWatch compatible)
 const fileFormat = winston.format.combine(
+  hipaaSanitizer(),
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
   winston.format.errors({ stack: true }),
   winston.format.json()
@@ -77,5 +126,7 @@ const logger = winston.createLogger({
   transports,
   exitOnError: false,
 });
+
+logger.redactPhi = redactPhiInPlace;
 
 module.exports = logger;

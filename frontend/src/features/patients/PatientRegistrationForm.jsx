@@ -52,11 +52,12 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     chiefComplaints: '',
     carePlan: '',
     dietTier: 'REGULAR_DIET',
-    initialDepositAmount: 5000,
+    initialDepositAmount: 0,
     depositPaymentMethod: 'Cash',
   };
 
   const [form, setForm] = useState(initialFormData);
+  const [resolvedBedTariff, setResolvedBedTariff] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -140,6 +141,42 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       return String(docDeptId) === String(form.departmentId);
     });
   }, [doctors, form.departmentId]);
+
+  // Auto-resolve authoritative bed tariff and minimum advance deposit for IPD Admissions
+  useEffect(() => {
+    if (form.encounterType !== 'IPD' || !form.selectedBedId) {
+      setResolvedBedTariff(null);
+      return;
+    }
+
+    let isMounted = true;
+    const resolveBedPricing = async () => {
+      try {
+        const res = await ipdApi.resolveBedTariff({
+          bedId: form.selectedBedId,
+          wardClass: form.selectedBed?.wardClass,
+          comfortTier: form.selectedBed?.comfortTier,
+          sharingType: form.selectedBed?.sharingType,
+          floorId: form.selectedBed?.floorId?._id || form.selectedBed?.floorId,
+        });
+        const tariff = res.data?.data;
+        if (isMounted && tariff) {
+          setResolvedBedTariff(tariff);
+          setForm((prev) => ({
+            ...prev,
+            initialDepositAmount: tariff.minAdvanceDeposit != null ? tariff.minAdvanceDeposit : 0,
+          }));
+        }
+      } catch (err) {
+        console.warn('[PatientRegistrationForm] Bed tariff resolution error:', err);
+      }
+    };
+
+    resolveBedPricing();
+    return () => {
+      isMounted = false;
+    };
+  }, [form.encounterType, form.selectedBedId, form.selectedBed]);
 
   const handleCountryChange = (e) => {
     const iso = e.target.value;
@@ -999,6 +1036,45 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 patientGender={form.gender}
                 error={fieldErrors.selectedBedId}
               />
+
+              {/* Authoritative Live Bed Tariff Banner */}
+              {resolvedBedTariff && (
+                <div
+                  style={{
+                    background: 'var(--md-sys-color-surface-container-low, #f7fbf8)',
+                    border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: '12px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary, #006a57)', fontSize: '20px' }}>
+                      price_check
+                    </span>
+                    <div>
+                      <strong style={{ fontSize: '0.88rem', color: 'var(--md-sys-color-on-surface)' }}>
+                        Authoritative Bed Tariff: {CURRENCY_SYMBOL}{resolvedBedTariff.dailyRate}/day
+                      </strong>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                        Hourly: {CURRENCY_SYMBOL}{resolvedBedTariff.hourlyRate}/hr • Grace: {resolvedBedTariff.gracePeriodMinutes || 60}m
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                      Required Min Advance Deposit
+                    </span>
+                    <strong style={{ fontSize: '0.92rem', color: resolvedBedTariff.minAdvanceDeposit > 0 ? '#b45309' : 'inherit' }}>
+                      {CURRENCY_SYMBOL}{resolvedBedTariff.minAdvanceDeposit ?? 0}
+                    </strong>
+                  </div>
+                </div>
+              )}
 
               {/* Diagnosis, Care Plan & Diet */}
               <div className="reg-grid-2">

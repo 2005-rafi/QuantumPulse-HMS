@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const config = require('../../config');
 
 /**
  * PaginationStrategy
@@ -87,9 +88,11 @@ class PaginationStrategy {
    * @param {number} limit
    * @returns {{ skip: number, limit: number }}
    */
-  static buildOffset(page = 1, limit = 20) {
+  static buildOffset(page = 1, limit = null) {
+    const defaultLimit = config.query?.defaultLimit || 20;
+    const maxLimit = config.query?.maxLimit || 100;
     const p = Math.max(1, parseInt(page, 10) || 1);
-    const l = Math.max(1, Math.min(100, parseInt(limit, 10) || 20));
+    const l = Math.max(1, Math.min(maxLimit, parseInt(limit, 10) || defaultLimit));
     return {
       skip: (p - 1) * l,
       limit: l,

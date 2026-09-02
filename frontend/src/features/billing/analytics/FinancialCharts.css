@@ -9,50 +9,52 @@
   flex-direction: column;
   background: var(--md-sys-color-surface, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: 12px;
-  padding: 14px 18px;
+  border-radius: 16px;
+  padding: 20px 24px;
   box-sizing: border-box;
   transition: all 160ms ease;
   position: relative;
 }
 
 .fin-card:hover {
-  border-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 40%, var(--md-sys-color-outline-variant, #cac4d0));
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.04);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 30%, var(--md-sys-color-outline-variant, #cac4d0));
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
 .fin-card-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
+  gap: 16px;
+  margin-bottom: 14px;
   flex-wrap: wrap;
 }
 
 .fin-card-title-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
 .fin-card-title {
-  font-size: 0.94rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--md-sys-color-on-surface, #1d1b20);
   margin: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .fin-card-title .material-symbols-rounded {
-  font-size: 18px;
+  font-size: 20px;
   color: var(--md-sys-color-primary, #6750a4);
 }
 
 .fin-card-subtitle {
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
+  font-weight: 400;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
 }
@@ -60,7 +62,7 @@
 .fin-card-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -68,12 +70,12 @@
 .fin-timeseries-metrics-bar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 12px;
-  border-radius: 8px;
+  gap: 16px;
+  padding: 10px 16px;
+  border-radius: 12px;
   background: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
@@ -81,22 +83,22 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.72rem;
+  font-size: 0.8125rem;
 }
 
 .fin-ts-metric-label {
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .fin-ts-metric-value {
-  font-weight: 800;
+  font-weight: 700;
   color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .fin-ts-divider {
   width: 1px;
-  height: 14px;
+  height: 16px;
   background: var(--md-sys-color-outline-variant, #cac4d0);
 }
 
@@ -104,14 +106,17 @@
 .fin-timeseries-container {
   position: relative;
   width: 100%;
-  height: 230px;
+  height: 380px;
+  min-height: 360px;
   user-select: none;
+  margin: 4px 0;
 }
 
 .fin-timeseries-svg {
   width: 100%;
   height: 100%;
   overflow: visible;
+  display: block;
 }
 
 .fin-grid-line {
@@ -121,24 +126,26 @@
 }
 
 .fin-axis-label {
-  font-size: 10px;
-  font-family: inherit;
+  font-size: 11px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   fill: var(--md-sys-color-on-surface-variant, #79747e);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .fin-axis-label-left {
   text-anchor: end;
-  font-size: 9.5px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   fill: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .fin-axis-label-right {
   text-anchor: start;
-  font-size: 9.5px;
-  font-weight: 700;
-  fill: #2e7d32;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  fill: #006a57;
 }
 
 .fin-spline-path {

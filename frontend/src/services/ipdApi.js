@@ -65,10 +65,12 @@ export const ipdApi = {
   getConsumables: (sessionId) => api.get(`/ipd/ot/sessions/${sessionId}/consumables`),
 
   // ── 6. Inpatient Billing & Ledger ───────────────────────────
+  resolveBedTariff: (params) => api.get('/ipd/billing/resolve-tariff', { params }),
   getRunningLedger: (admissionId) => api.get(`/ipd/billing/${admissionId}/ledger`),
   recordAdvanceDeposit: (admissionId, data) => api.post(`/ipd/billing/${admissionId}/deposits`, data),
   getAdvanceDeposits: (admissionId) => api.get(`/ipd/billing/${admissionId}/deposits`),
   ingestDailyCharges: (admissionId) => api.post(`/ipd/billing/${admissionId}/ingest-charges`),
+  finalizeSettlement: (admissionId, data) => api.post(`/ipd/billing/${admissionId}/finalize-settlement`, data),
 
   // ── 7. Discharge & 3-Way Clearance Kanban ───────────────────
   initiateDischarge: (admissionId, data) => api.post(`/ipd/discharge/${admissionId}/initiate`, data),

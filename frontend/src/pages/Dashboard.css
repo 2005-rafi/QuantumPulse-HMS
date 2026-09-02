@@ -25,6 +25,26 @@
   box-shadow: none;
 }
 
+/* ── Admin Dashboard Layout Shell (MD3 Responsive Multi-Axis Scroll Architecture) ── */
+.admin-dashboard-page {
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--md-sys-color-background, #f6fafe);
+  color: var(--md-sys-color-on-background, #171c1f);
+}
+
+.admin-body-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+
 /* ── Butter-Smooth Tab Content Animation ── */
 @keyframes md3TabFadeSlideIn {
   0% {
@@ -42,12 +62,10 @@
   flex-direction: column;
   gap: 20px;
   width: 100%;
-  flex: 1;
-  min-height: 100%;
+  flex: 1 0 auto;
+  min-height: min-content;
   box-sizing: border-box;
   animation: md3TabFadeSlideIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
-  will-change: opacity, transform;
-  contain: layout style;
 }
 
 .dashboard-brand {
@@ -119,8 +137,9 @@
 }
 
 /* ── Main ── */
-.dashboard-main {
-  padding: 24px 28px;
+.dashboard-main,
+.admin-dashboard-main {
+  padding: 24px 28px 64px 28px;
   max-width: 100%;
   width: 100%;
   margin: 0;
@@ -131,6 +150,12 @@
   box-sizing: border-box;
   background: var(--md-sys-color-background, #f6fafe);
   color: var(--md-sys-color-on-background, #171c1f);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant, #cac4d0) transparent;
 }
 
 .dashboard-welcome {
@@ -493,7 +518,10 @@
 .analytics-section {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  width: 100%;
+  box-sizing: border-box;
+  padding-bottom: 32px;
 }
 
 .analytics-header {

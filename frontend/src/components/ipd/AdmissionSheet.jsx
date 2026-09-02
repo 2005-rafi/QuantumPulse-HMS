@@ -5,8 +5,10 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Md3Button, Md3TextField, Md3Select } from '../md3/Md3FormComponents';
+import { Md3BedComfortBadge } from '../md3/Md3BedComfortBadge';
 import api from '../../services/api';
 import ipdApi from '../../services/ipdApi';
+import { CURRENCY_SYMBOL } from '../../constants/currency';
 import './BedDetailDrawer.css';
 
 export const AdmissionSheet = ({
@@ -30,8 +32,38 @@ export const AdmissionSheet = ({
   const [paymentMethod, setPaymentMethod] = useState('UPI');
   const [transactionReference, setTransactionReference] = useState('');
 
+  const [resolvedTariff, setResolvedTariff] = useState(null);
+  const [tariffLoading, setTariffLoading] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Fetch Authoritative Bed Tariff on load
+  useEffect(() => {
+    if (bed) {
+      setTariffLoading(true);
+      ipdApi.resolveBedTariff({
+        bedId: bed._id,
+        floorId: bed.floorId?._id || bed.floorId,
+        wardClass: bed.wardClass,
+        comfortTier: bed.comfortTier,
+        sharingType: bed.sharingType,
+      })
+        .then((res) => {
+          const t = res.data?.data || res.data;
+          setResolvedTariff(t);
+          if (t?.minAdvanceDeposit > 0) {
+            setInitialDepositAmount(String(t.minAdvanceDeposit));
+          }
+        })
+        .catch((err) => {
+          console.warn('Could not resolve dynamic tariff:', err);
+        })
+        .finally(() => {
+          setTariffLoading(false);
+        });
+    }
+  }, [bed]);
 
   // Fetch initial master data
   useEffect(() => {
@@ -129,7 +161,14 @@ export const AdmissionSheet = ({
       <div className="ipd-drawer-panel" style={{ maxWidth: '520px' }} onClick={(e) => e.stopPropagation()}>
         <div className="ipd-drawer-header">
           <div>
-            <h2 className="ipd-drawer-title">Inpatient Bed Admission</h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+              <h2 className="ipd-drawer-title" style={{ margin: 0 }}>Inpatient Bed Admission</h2>
+              <Md3BedComfortBadge
+                tier={bed.comfortTier || resolvedTariff?.comfortTier || 'STANDARD'}
+                sharing={bed.sharingType}
+                size="small"
+              />
+            </div>
             <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
               Allocating {bed.bedLabel} ({bed.wardClass})
             </span>
@@ -153,6 +192,55 @@ export const AdmissionSheet = ({
               {error}
             </div>
           )}
+
+          {/* Dynamic Bed Tariff Banner */}
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: '12px',
+              background: 'var(--md-sys-color-surface-container-low, #f7fbf8)',
+              border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--md-sys-color-primary)' }}>
+                Authoritative Bed Tariff
+              </span>
+              {tariffLoading ? (
+                <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Resolving...</span>
+              ) : (
+                <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
+                  {resolvedTariff?.explanation || 'Active Pricing Policy'}
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '4px' }}>
+              <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--md-sys-color-outline-variant, #e0e0e0)' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>Daily Rate</span>
+                <strong style={{ fontSize: '0.92rem', color: 'var(--md-sys-color-primary)' }}>
+                  {CURRENCY_SYMBOL}{resolvedTariff?.dailyRate ?? bed.dailyRateOverride ?? 0}/day
+                </strong>
+              </div>
+
+              <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--md-sys-color-outline-variant, #e0e0e0)' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>Hourly Rate</span>
+                <strong style={{ fontSize: '0.92rem', color: 'var(--md-sys-color-on-surface)' }}>
+                  {CURRENCY_SYMBOL}{resolvedTariff?.hourlyRate ?? bed.hourlyRateOverride ?? 0}/hr
+                </strong>
+              </div>
+
+              <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--md-sys-color-outline-variant, #e0e0e0)' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>Min Advance</span>
+                <strong style={{ fontSize: '0.92rem', color: resolvedTariff?.minAdvanceDeposit > 0 ? '#b45309' : 'inherit' }}>
+                  {CURRENCY_SYMBOL}{resolvedTariff?.minAdvanceDeposit ?? 0}
+                </strong>
+              </div>
+            </div>
+          </div>
 
           {/* 1. Patient Selection */}
           <div className="ipd-drawer-section">

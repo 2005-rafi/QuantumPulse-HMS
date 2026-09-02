@@ -1,4 +1,4 @@
-﻿const Joi = require('joi');
+const Joi = require('joi');
 
 const createServiceMasterSchema = Joi.object({
   code: Joi.string().required().uppercase().trim(),
@@ -11,16 +11,24 @@ const createServiceMasterSchema = Joi.object({
 const createTariffRuleSchema = Joi.object({
   serviceMasterId: Joi.string().allow(null, ''),
   testCode: Joi.string().allow(null, '').trim(),
-  category: Joi.string().valid('REGISTRATION', 'CONSULTATION', 'DIAGNOSTICS', 'PROCEDURE', 'PACKAGE').required(),
+  category: Joi.string().valid('REGISTRATION', 'CONSULTATION', 'DIAGNOSTICS', 'PROCEDURE', 'PACKAGE', 'BED_CHARGES').required(),
   scope: Joi.object({
     departmentId: Joi.string().allow(null, ''),
     tariffGrade: Joi.string().valid('GRADE_1', 'GRADE_2', 'GRADE_3', 'GRADE_4', 'GRADE_5').allow(null),
     staffId: Joi.string().allow(null, ''),
     visitType: Joi.string().valid('OPD', 'EMERGENCY', 'IPD').allow(null),
     appointmentType: Joi.string().valid('WALK_IN', 'FOLLOW_UP', 'SCHEDULED').allow(null),
+    wardClass: Joi.string().allow(null, ''),
+    floorId: Joi.string().allow(null, ''),
+    comfortTier: Joi.string().valid('STANDARD', 'COMFORT', 'DELUXE', 'SUPER_DELUXE_SUITE', 'EXECUTIVE_PRESIDENTIAL').allow(null, ''),
+    sharingType: Joi.string().valid('GENERAL_WARD', 'SEMI_PRIVATE', 'PRIVATE_SINGLE', 'VIP_ISOLATION').allow(null, ''),
+    bedFeature: Joi.string().valid('VENTILATOR_READY', 'MONITOR_ATTACHED', 'OXYGEN_PIPED', 'SUCTION_READY').allow(null, ''),
+    hourlyRate: Joi.number().min(0).allow(null),
+    minAdvanceDeposit: Joi.number().min(0).default(0),
+    gracePeriodMinutes: Joi.number().min(0).default(60),
   }).default({}),
   amount: Joi.number().min(0).required(),
-  unit: Joi.string().valid('PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_DAY').default('PER_VISIT'),
+  unit: Joi.string().valid('PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_DAY', 'PER_HOUR').default('PER_VISIT'),
   effectiveFrom: Joi.date().required(),
   effectiveTo: Joi.date().allow(null),
 });

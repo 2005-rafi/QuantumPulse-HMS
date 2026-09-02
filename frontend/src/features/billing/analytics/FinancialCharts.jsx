@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { CURRENCY_SYMBOL } from '../../../constants/currency';
 import './FinancialCharts.css';
 
@@ -129,14 +129,34 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
   const [showTable, setShowTable] = useState(false);
   const [hoverIndex, setHoverIndex] = useState(null);
   const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(1100);
 
-  // SVG Coordinates
-  const width = 720;
-  const height = 210;
-  const padLeft = 52;
-  const padRight = 44;
-  const padTop = 22;
-  const padBottom = 30;
+  // Responsive dimension tracking
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth;
+        if (w > 0) setContainerWidth(w);
+      }
+    };
+    updateWidth();
+    const observer = new ResizeObserver((entries) => {
+      if (entries[0]?.contentRect?.width) {
+        setContainerWidth(Math.round(entries[0].contentRect.width));
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // SVG Coordinates — generous vertical height with 1:1 true pixel aspect ratio
+  const width = Math.max(760, containerWidth);
+  const height = 360;
+  const padLeft = 68;
+  const padRight = 56;
+  const padTop = 28;
+  const padBottom = 42;
 
   const chartW = width - padLeft - padRight;
   const chartH = height - padTop - padBottom;
@@ -176,7 +196,7 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
   const pointsData = useMemo(() => {
     if (normalizedTimeline.length === 0) return [];
     
-    // Scale max value with 10% headroom
+    // Scale max value with 15% headroom
     const rawMax = Math.max(
       ...normalizedTimeline.map((d) => Math.max(d.billed || 0, d.collected || 0)),
       100
@@ -251,10 +271,10 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
 
   // Grid tick levels
   const yTicks = [
-    { pct: 1.0, label: formatCompactNum(currentMax), eff: '100%' },
-    { pct: 0.66, label: formatCompactNum(currentMax * 0.66), eff: '66%' },
-    { pct: 0.33, label: formatCompactNum(currentMax * 0.33), eff: '33%' },
-    { pct: 0.0, label: '₹0', eff: '0%' },
+    { pct: 1.0, label: `${CURRENCY_SYMBOL}${formatCompactNum(currentMax)}`, eff: '100%' },
+    { pct: 0.66, label: `${CURRENCY_SYMBOL}${formatCompactNum(currentMax * 0.66)}`, eff: '66%' },
+    { pct: 0.33, label: `${CURRENCY_SYMBOL}${formatCompactNum(currentMax * 0.33)}`, eff: '33%' },
+    { pct: 0.0, label: `${CURRENCY_SYMBOL}0`, eff: '0%' },
   ];
 
   return (
@@ -364,15 +384,15 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoverIndex(null)}
       >
-        <svg viewBox={`0 0 ${width} ${height}`} className="fin-timeseries-svg" preserveAspectRatio="none">
+        <svg viewBox={`0 0 ${width} ${height}`} className="fin-timeseries-svg">
           <defs>
             <linearGradient id="billedGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#6750a4" stopOpacity="0.28" />
+              <stop offset="0%" stopColor="#6750a4" stopOpacity="0.22" />
               <stop offset="100%" stopColor="#6750a4" stopOpacity="0.00" />
             </linearGradient>
             <linearGradient id="collectedGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#2e7d32" stopOpacity="0.32" />
-              <stop offset="100%" stopColor="#2e7d32" stopOpacity="0.00" />
+              <stop offset="0%" stopColor="#006a57" stopOpacity="0.25" />
+              <stop offset="100%" stopColor="#006a57" stopOpacity="0.00" />
             </linearGradient>
           </defs>
 
@@ -383,11 +403,11 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
               <g key={i}>
                 <line x1={padLeft} y1={y} x2={width - padRight} y2={y} className="fin-grid-line" />
                 {/* Left Y Axis Label (Currency) */}
-                <text x={padLeft - 6} y={y + 3} className="fin-axis-label-left">
+                <text x={padLeft - 10} y={y + 4} className="fin-axis-label-left">
                   {tick.label}
                 </text>
                 {/* Right Y Axis Label (Efficiency %) */}
-                <text x={width - padRight + 6} y={y + 3} className="fin-axis-label-right">
+                <text x={width - padRight + 10} y={y + 4} className="fin-axis-label-right">
                   {tick.eff}
                 </text>
               </g>
@@ -415,31 +435,31 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
 
           {/* Chart Mode: Grouped Column Bars */}
           {chartType === 'BAR' && pointsData.map((p, i) => {
-            const colW = Math.max(2, Math.min(10, chartW / pointsData.length / 2 - 2));
+            const colW = Math.max(3, Math.min(14, chartW / pointsData.length / 2 - 3));
             const billedH = padTop + chartH - p.billedY;
             const collH = padTop + chartH - p.collY;
             return (
               <g key={i}>
                 {(viewMode === 'ALL' || viewMode === 'BILLED') && (
                   <rect
-                    x={p.x - colW}
+                    x={p.x - colW - 1}
                     y={p.billedY}
                     width={colW}
                     height={billedH}
                     fill="#6750a4"
-                    rx={2}
-                    opacity={hoverIndex === i ? 1 : 0.8}
+                    rx={3}
+                    opacity={hoverIndex === i ? 1 : 0.85}
                   />
                 )}
                 {(viewMode === 'ALL' || viewMode === 'COLLECTED') && (
                   <rect
-                    x={p.x}
+                    x={p.x + 1}
                     y={p.collY}
                     width={colW}
                     height={collH}
-                    fill="#2e7d32"
-                    rx={2}
-                    opacity={hoverIndex === i ? 1 : 0.8}
+                    fill="#006a57"
+                    rx={3}
+                    opacity={hoverIndex === i ? 1 : 0.85}
                   />
                 )}
               </g>
@@ -461,11 +481,11 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
           {pointsData.map((p, i) => {
             const isHovered = hoverIndex === i;
             const hasData = p.billed > 0 || p.collected > 0;
-            const showLabel = pointsData.length <= 10 
-              ? true 
-              : pointsData.length <= 20 
-                ? i % 2 === 0 
-                : i % Math.ceil(pointsData.length / 8) === 0 || i === pointsData.length - 1;
+            
+            // Smart step calculation based on container width
+            const maxLabels = Math.max(4, Math.floor(chartW / 90));
+            const step = Math.max(1, Math.ceil(pointsData.length / maxLabels));
+            const showLabel = i === 0 || i === pointsData.length - 1 || i % step === 0;
 
             return (
               <g key={i}>
@@ -473,8 +493,8 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
                   <circle
                     cx={p.x}
                     cy={p.billedY}
-                    r={isHovered ? 6 : hasData ? 4 : 2}
-                    fill={isHovered ? '#6750a4' : hasData ? '#ffffff' : '#cac4d0'}
+                    r={isHovered ? 6 : hasData ? 4 : 2.5}
+                    fill={isHovered ? '#6750a4' : hasData ? '#ffffff' : 'var(--md-sys-color-surface-container-high, #e6e0e9)'}
                     stroke="#6750a4"
                     strokeWidth={isHovered ? 2.5 : hasData ? 2 : 1}
                     className="fin-data-point"
@@ -484,16 +504,16 @@ export const TimeSeriesSplineChart = ({ data = [], range = '30days' }) => {
                   <circle
                     cx={p.x}
                     cy={p.collY}
-                    r={isHovered ? 6 : hasData ? 4 : 2}
-                    fill={isHovered ? '#2e7d32' : hasData ? '#ffffff' : '#cac4d0'}
-                    stroke="#2e7d32"
+                    r={isHovered ? 6 : hasData ? 4 : 2.5}
+                    fill={isHovered ? '#006a57' : hasData ? '#ffffff' : 'var(--md-sys-color-surface-container-high, #e6e0e9)'}
+                    stroke="#006a57"
                     strokeWidth={isHovered ? 2.5 : hasData ? 2 : 1}
                     className="fin-data-point"
                   />
                 )}
                 {/* X Axis Date Label */}
                 {showLabel && (
-                  <text x={p.x} y={height - 8} textAnchor="middle" className="fin-axis-label">
+                  <text x={p.x} y={height - 12} textAnchor="middle" className="fin-axis-label">
                     {p.label}
                   </text>
                 )}

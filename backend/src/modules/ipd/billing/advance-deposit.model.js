@@ -50,6 +50,22 @@ const advanceDepositSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    depositType: {
+      type: String,
+      enum: ['ADMISSION_ADVANCE', 'INTERIM_TOP_UP', 'SURGERY_ADVANCE', 'EMERGENCY_DEPOSIT'],
+      default: 'ADMISSION_ADVANCE',
+      required: true,
+    },
+    idempotencyKey: {
+      type: String,
+      trim: true,
+      default: null,
+      index: true,
+    },
+    isAllocatedToFinalBill: {
+      type: Boolean,
+      default: true,
+    },
     isRefunded: {
       type: Boolean,
       default: false,
@@ -65,5 +81,6 @@ const advanceDepositSchema = new mongoose.Schema(
 );
 
 advanceDepositSchema.index({ admissionId: 1, createdAt: -1 });
+advanceDepositSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('AdvanceDeposit', advanceDepositSchema);

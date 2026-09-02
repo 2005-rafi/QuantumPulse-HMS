@@ -6,15 +6,12 @@
 /* ── Smooth Scrollable Viewport Wrapper ── */
 .storage-analytics-scroll-container {
   width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
   background-color: var(--md-sys-color-surface, #fffbfe);
   color: var(--md-sys-color-on-surface, #1d1b16);
-  -webkit-overflow-scrolling: touch;
 }
 
 /* ── Fluid Content Canvas ── */
@@ -22,7 +19,7 @@
   display: flex;
   flex-direction: column;
   gap: 22px;
-  padding: 24px 28px 32px 28px;
+  padding: 0 0 32px 0;
   width: 100%;
   box-sizing: border-box;
   flex-shrink: 0;

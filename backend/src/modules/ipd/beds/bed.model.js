@@ -50,6 +50,16 @@ const bedSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    comfortTier: {
+      type: String,
+      enum: ['STANDARD', 'COMFORT', 'DELUXE', 'SUPER_DELUXE_SUITE', 'EXECUTIVE_PRESIDENTIAL'],
+      default: 'STANDARD',
+    },
+    sharingType: {
+      type: String,
+      enum: ['GENERAL_WARD', 'SEMI_PRIVATE', 'PRIVATE_SINGLE', 'VIP_ISOLATION'],
+      default: 'GENERAL_WARD',
+    },
     features: [
       {
         type: String,
@@ -63,6 +73,16 @@ const bedSchema = new mongoose.Schema(
       required: true,
     },
     dailyRateOverride: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    hourlyRateOverride: {
+      type: Number,
+      default: null,
+      min: 0,
+    },
+    minAdvanceDepositOverride: {
       type: Number,
       default: null,
       min: 0,

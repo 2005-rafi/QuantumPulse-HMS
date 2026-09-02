@@ -2,6 +2,7 @@ const service = require('./staff.service');
 const { success } = require('../../core/responses');
 const AppError = require('../../core/errors/AppError');
 const CloudinaryStorageService = require('../../core/storage/CloudinaryStorageService');
+const config = require('../../core/config');
 
 const create = async (req, res, next) => {
   try {
@@ -13,6 +14,7 @@ const create = async (req, res, next) => {
 const getById = async (req, res, next) => {
   try {
     const staff = await service.getById(req.params.id);
+    if (!staff) throw new AppError('NOT_FOUND', 'Staff record not found');
     return success(res, staff, 'Staff record retrieved successfully');
   } catch (err) { next(err); }
 };
@@ -27,9 +29,12 @@ const update = async (req, res, next) => {
 const list = async (req, res, next) => {
   try {
     const { page, limit, status, departmentId, roleId, role } = req.query;
+    const maxLimit = config.query?.maxLimit || 100;
+    const safeLimit = limit ? Math.min(Math.max(1, parseInt(limit, 10)), maxLimit) : 50;
+
     const result = await service.list({ 
-      page: +page || 1, 
-      limit: +limit || 1000, 
+      page: Math.max(1, parseInt(page, 10) || 1), 
+      limit: safeLimit, 
       status, 
       departmentId, 
       roleId, 

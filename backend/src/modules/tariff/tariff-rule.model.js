@@ -20,6 +20,23 @@ const publishHistorySchema = new mongoose.Schema({
   prevAmount: { type: Number, default: null },
 }, { _id: true });
 
+const COMFORT_TIERS = [
+  'STANDARD',
+  'COMFORT',
+  'DELUXE',
+  'SUPER_DELUXE_SUITE',
+  'EXECUTIVE_PRESIDENTIAL',
+  null,
+];
+
+const SHARING_TYPES = [
+  'GENERAL_WARD',
+  'SEMI_PRIVATE',
+  'PRIVATE_SINGLE',
+  'VIP_ISOLATION',
+  null,
+];
+
 const scopeSchema = new mongoose.Schema({
   departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', default: null },
   tariffGrade: {
@@ -58,11 +75,25 @@ const scopeSchema = new mongoose.Schema({
     ],
     default: null,
   },
+  floorId: { type: mongoose.Schema.Types.ObjectId, ref: 'FloorMaster', default: null },
+  comfortTier: {
+    type: String,
+    enum: COMFORT_TIERS,
+    default: null,
+  },
+  sharingType: {
+    type: String,
+    enum: SHARING_TYPES,
+    default: null,
+  },
   bedFeature: {
     type: String,
     enum: ['VENTILATOR_READY', 'MONITOR_ATTACHED', 'OXYGEN_PIPED', 'SUCTION_READY', null],
     default: null,
   },
+  hourlyRate: { type: Number, default: null, min: 0 },
+  minAdvanceDeposit: { type: Number, default: 0, min: 0 },
+  gracePeriodMinutes: { type: Number, default: 60, min: 0 },
 }, { _id: false });
 
 const tariffRuleSchema = new mongoose.Schema({
@@ -72,17 +103,17 @@ const tariffRuleSchema = new mongoose.Schema({
 
   category: {
     type: String,
-    enum: ['REGISTRATION', 'CONSULTATION', 'DIAGNOSTICS', 'PROCEDURE', 'PACKAGE'],
+    enum: ['REGISTRATION', 'CONSULTATION', 'DIAGNOSTICS', 'PROCEDURE', 'PACKAGE', 'BED_CHARGES'],
     required: true,
   },
 
   scope: { type: scopeSchema, default: () => ({}) },
 
   // Pricing
-  amount: { type: Number, required: true, min: 0 },
+  amount: { type: Number, required: true, min: 0 }, // Daily rate when category === 'BED_CHARGES'
   unit: {
     type: String,
-    enum: ['PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_DAY'],
+    enum: ['PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_DAY', 'PER_HOUR'],
     default: 'PER_VISIT',
   },
 
@@ -108,8 +139,12 @@ tariffRuleSchema.index({ category: 1, status: 1, effectiveFrom: 1 });
 tariffRuleSchema.index({ 'scope.departmentId': 1, category: 1, status: 1 });
 tariffRuleSchema.index({ 'scope.tariffGrade': 1, category: 1, status: 1 });
 tariffRuleSchema.index({ 'scope.staffId': 1, category: 1, status: 1 });
+tariffRuleSchema.index({ 'scope.wardClass': 1, category: 1, status: 1 });
+tariffRuleSchema.index({ 'scope.floorId': 1, category: 1, status: 1 });
 tariffRuleSchema.index({ testCode: 1, status: 1 });
 tariffRuleSchema.index({ serviceMasterId: 1, status: 1 });
 
 module.exports = mongoose.model('TariffRule', tariffRuleSchema);
 module.exports.RULE_STATUS = RULE_STATUS;
+module.exports.COMFORT_TIERS = COMFORT_TIERS;
+module.exports.SHARING_TYPES = SHARING_TYPES;

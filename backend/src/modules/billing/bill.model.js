@@ -9,11 +9,11 @@ const BILL_STATUS = {
 const lineItemSchema = new mongoose.Schema({
   eventType: {
     type: String,
-    enum: ['VISIT_REGISTERED', 'CONSULTATION_COMPLETED', 'LAB_ORDER_ACCEPTED', 'MEDICINE_DISPENSED', 'PROCEDURE_PERFORMED'],
+    enum: ['VISIT_REGISTERED', 'CONSULTATION_COMPLETED', 'LAB_ORDER_ACCEPTED', 'MEDICINE_DISPENSED', 'PROCEDURE_PERFORMED', 'BED_STAY_BILLED', 'BED_TRANSFERRED'],
   },
   category: {
     type: String,
-    enum: ['REGISTRATION', 'CONSULTATION', 'DIAGNOSTICS', 'PHARMACY', 'PROCEDURE'],
+    enum: ['REGISTRATION', 'CONSULTATION', 'DIAGNOSTICS', 'PHARMACY', 'PROCEDURE', 'BED_CHARGES'],
     required: true,
   },
   description: { type: String, required: true, trim: true },

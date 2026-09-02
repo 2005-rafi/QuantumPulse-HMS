@@ -187,14 +187,14 @@ const AdministratorDashboard = () => {
   ];
 
   return (
-    <div className="dashboard-page" style={{ height: '100vh', overflow: 'hidden' }}>
+    <div className="dashboard-page admin-dashboard-page">
       <CommonHeader 
         brandTitle={`${config.SHORT_NAME} Portal`}
         user={user}
         onLogout={handleLogout}
       />
 
-      <div style={{ display: 'flex', flex: 1, minHeight: 0, width: '100%', overflow: 'hidden' }}>
+      <div className="admin-body-container">
         <Md3NavigationRail 
           items={NAV_ITEMS}
           activeItem={activeTab === 'administrator' ? 'analytics' : activeTab}
@@ -205,8 +205,8 @@ const AdministratorDashboard = () => {
           }}
         />
 
-        <main className="dashboard-main" style={{ flex: 1, minHeight: 0, width: '100%', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
-          <div key={activeTab} className="admin-tab-content-fade" style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: '100%', width: '100%' }}>
+        <main className="dashboard-main admin-dashboard-main">
+          <div key={activeTab} className="admin-tab-content-fade">
             <Outlet context={{
               stats,
               lastUpdated,

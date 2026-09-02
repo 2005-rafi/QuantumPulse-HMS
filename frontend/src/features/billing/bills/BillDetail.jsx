@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Md3Button } from '../../../components/md3/Md3FormComponents';
 import { Icon } from '../../../components/md3/Md3Widgets';
 import Md3ConfirmDialog from '../../../components/md3/Md3ConfirmDialog';
 import { useToast } from '../../../context/ToastContext';
 import { billingAPI } from '../../../services/billingAPI';
+import { adminAPI } from '../../../services/adminAPI';
 import PaymentRecordForm from './PaymentRecordForm';
 import AdjustmentForm from './AdjustmentForm';
+import BillingTemplate from '../BillingTemplate';
 import { CURRENCY_SYMBOL } from '../../../constants/currency';
 
 export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
@@ -14,6 +16,21 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
   const [payOpen, setPayOpen] = useState(false);
   const [adjOpen, setAdjOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [templateConfig, setTemplateConfig] = useState(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      adminAPI.getSetting('billing_template')
+        .then(res => {
+          if (res.data?.data?.value) {
+            setTemplateConfig(res.data.data.value);
+          }
+        })
+        .catch(() => {
+          // Fallback to default
+        });
+    }
+  }, [isOpen]);
   const [confirmDialog, setConfirmDialog] = useState({
     isOpen: false,
     title: '',
@@ -325,7 +342,11 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
             </div>
 
             {/* Footer Actions */}
-            <div className="appt-modal-actions">
+            <div className="appt-modal-actions" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+              <Md3Button type="button" variant="secondary" onClick={() => window.print()}>
+                <span className="material-symbols-rounded">print</span>
+                <span>Print Official Invoice</span>
+              </Md3Button>
               <Md3Button type="button" variant="secondary" onClick={onClose}>
                 Close
               </Md3Button>
@@ -337,6 +358,35 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
               )}
             </div>
           </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Hidden Printable Invoice Portal (renders when window.print() is invoked) */}
+      {createPortal(
+        <div className="billing-print-portal">
+          <BillingTemplate
+            hospitalInfo={templateConfig?.hospitalInfo || { name: 'GLOBAL HEALTH HOSPITAL' }}
+            labels={templateConfig?.templates?.[bill.visitType || 'OPD']?.labels || templateConfig?.labels || {}}
+            fieldVisibility={templateConfig?.templates?.[bill.visitType || 'OPD']?.fieldVisibility || templateConfig?.fieldVisibility || {}}
+            customFields={templateConfig?.templates?.[bill.visitType || 'OPD']?.customFields || templateConfig?.customFields || []}
+            workflowType={bill.visitType || (bill.admissionId ? 'IPD' : 'OPD')}
+            visit={{
+              _id: bill.billNumber || bill._id,
+              visitType: bill.visitType,
+              createdAt: bill.createdAt,
+              patientId: bill.patientId,
+            }}
+            admission={bill.admissionId}
+            lineItems={bill.lineItems || []}
+            financials={{
+              grossBilled: bill.totalAmount || 0,
+              advancePaid: (bill.payments || []).filter(p => p.type === 'ADVANCE_DEPOSIT').reduce((acc, p) => acc + (p.amount || 0), 0),
+              insuranceApproved: (bill.payments || []).filter(p => p.type === 'INSURANCE_CLAIM').reduce((acc, p) => acc + (p.amount || 0), 0),
+              adjustments: (bill.adjustments || []).filter(a => a.status === 'APPROVED').reduce((acc, a) => acc + (a.amount || 0), 0),
+            }}
+            total={bill.totalAmount}
+          />
         </div>,
         document.body
       )}

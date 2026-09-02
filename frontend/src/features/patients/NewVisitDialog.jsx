@@ -62,10 +62,11 @@ export const NewVisitDialog = ({
     chiefComplaints: '',
     carePlan: '',
     dietTier: 'REGULAR_DIET',
-    initialDepositAmount: 5000,
+    initialDepositAmount: 0,
     depositPaymentMethod: 'Cash',
   });
 
+  const [resolvedBedTariff, setResolvedBedTariff] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [generatedAdmission, setGeneratedAdmission] = useState(null);
@@ -93,9 +94,10 @@ export const NewVisitDialog = ({
         chiefComplaints: '',
         carePlan: '',
         dietTier: 'REGULAR_DIET',
-        initialDepositAmount: 5000,
+        initialDepositAmount: 0,
         depositPaymentMethod: 'Cash',
       });
+      setResolvedBedTariff(null);
       setFormError(null);
     }
   }, [isOpen, initialDepartmentId, initialDoctorId]);
@@ -187,6 +189,42 @@ export const NewVisitDialog = ({
       isMounted = false;
     };
   }, [isOpen, mode, visitForm.departmentId, visitForm.doctorId]);
+
+  // Auto-resolve authoritative bed tariff and minimum advance deposit for IPD Admissions
+  useEffect(() => {
+    if (!isOpen || (mode !== 'IPD_MEDICAL' && mode !== 'IPD_SURGICAL') || !visitForm.selectedBedId) {
+      setResolvedBedTariff(null);
+      return;
+    }
+
+    let isMounted = true;
+    const resolveBedPricing = async () => {
+      try {
+        const res = await ipdApi.resolveBedTariff({
+          bedId: visitForm.selectedBedId,
+          wardClass: visitForm.selectedBed?.wardClass,
+          comfortTier: visitForm.selectedBed?.comfortTier,
+          sharingType: visitForm.selectedBed?.sharingType,
+          floorId: visitForm.selectedBed?.floorId?._id || visitForm.selectedBed?.floorId,
+        });
+        const tariff = res.data?.data;
+        if (isMounted && tariff) {
+          setResolvedBedTariff(tariff);
+          setVisitForm((prev) => ({
+            ...prev,
+            initialDepositAmount: tariff.minAdvanceDeposit != null ? tariff.minAdvanceDeposit : 0,
+          }));
+        }
+      } catch (err) {
+        console.warn('[NewVisitDialog] Bed tariff resolution error:', err);
+      }
+    };
+
+    resolveBedPricing();
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, mode, visitForm.selectedBedId, visitForm.selectedBed]);
 
   if (!isOpen || !patient) return null;
 
@@ -543,6 +581,45 @@ export const NewVisitDialog = ({
                   }}
                   patientGender={patient.gender}
                 />
+
+                {/* Authoritative Live Bed Tariff Banner */}
+                {resolvedBedTariff && (
+                  <div
+                    style={{
+                      background: 'var(--md-sys-color-surface-container-low, #f7fbf8)',
+                      border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
+                      borderRadius: '12px',
+                      padding: '12px 16px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary, #006a57)', fontSize: '20px' }}>
+                        price_check
+                      </span>
+                      <div>
+                        <strong style={{ fontSize: '0.88rem', color: 'var(--md-sys-color-on-surface)' }}>
+                          Authoritative Bed Tariff: {CURRENCY_SYMBOL}{resolvedBedTariff.dailyRate}/day
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                          Hourly: {CURRENCY_SYMBOL}{resolvedBedTariff.hourlyRate}/hr • Grace: {resolvedBedTariff.gracePeriodMinutes || 60}m
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                        Required Min Advance Deposit
+                      </span>
+                      <strong style={{ fontSize: '0.92rem', color: resolvedBedTariff.minAdvanceDeposit > 0 ? '#b45309' : 'inherit' }}>
+                        {CURRENCY_SYMBOL}{resolvedBedTariff.minAdvanceDeposit ?? 0}
+                      </strong>
+                    </div>
+                  </div>
+                )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                   <Md3TextField

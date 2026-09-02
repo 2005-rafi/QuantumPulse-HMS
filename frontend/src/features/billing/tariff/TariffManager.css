@@ -121,6 +121,12 @@
   color: #e65100;
 }
 
+.tariff-cat-pill--bed_charges {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
 .tariff-code-badge {
   display: inline-block;
   margin-left: 6px;

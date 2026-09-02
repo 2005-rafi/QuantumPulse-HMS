@@ -1,4 +1,5 @@
 const TariffRule = require('./tariff-rule.model');
+const config = require('../../core/config');
 
 /**
  * TariffResolver -- Single authority for price resolution.
@@ -38,6 +39,11 @@ class TariffResolver {
       staffId,
       visitType,
       appointmentType,
+      wardClass,
+      floorId,
+      comfortTier,
+      sharingType,
+      bedFeature,
     } = context;
 
     const now = new Date();
@@ -66,7 +72,18 @@ class TariffResolver {
     // Score each rule by specificity -- higher score = more specific = wins
     const scored = rules.map(rule => ({
       rule,
-      score: this._scoreRule(rule, { departmentId, tariffGrade, staffId, visitType, appointmentType }),
+      score: this._scoreRule(rule, {
+        departmentId,
+        tariffGrade,
+        staffId,
+        visitType,
+        appointmentType,
+        wardClass,
+        floorId,
+        comfortTier,
+        sharingType,
+        bedFeature,
+      }),
     }));
 
     // Sort by score descending -- highest specificity wins
@@ -74,9 +91,20 @@ class TariffResolver {
     const winner = scored[0];
 
     const explanation = this._buildExplanation(winner.rule, winner.score);
+    const scope = winner.rule.scope || {};
+
+    const dailyRate = winner.rule.amount;
+    const hourlyRate = scope.hourlyRate != null && scope.hourlyRate > 0
+      ? scope.hourlyRate
+      : Math.round(dailyRate / 24);
 
     return {
-      amount: winner.rule.amount,
+      amount: dailyRate,
+      dailyRate,
+      hourlyRate,
+      minAdvanceDeposit: scope.minAdvanceDeposit || 0,
+      gracePeriodMinutes: scope.gracePeriodMinutes || 60,
+      unit: winner.rule.unit || 'PER_VISIT',
       ruleId: winner.rule._id,
       explanation,
       resolvedScope: winner.rule.scope,
@@ -94,6 +122,26 @@ class TariffResolver {
     let score = 0;
 
     // Check each scope field: if rule has a constraint and it doesn't match -- disqualify
+    if (s.floorId) {
+      if (!context.floorId || String(s.floorId) !== String(context.floorId)) return -Infinity;
+      score += 10;
+    }
+    if (s.comfortTier) {
+      if (!context.comfortTier || s.comfortTier !== context.comfortTier) return -Infinity;
+      score += 8;
+    }
+    if (s.sharingType) {
+      if (!context.sharingType || s.sharingType !== context.sharingType) return -Infinity;
+      score += 6;
+    }
+    if (s.wardClass) {
+      if (!context.wardClass || s.wardClass !== context.wardClass) return -Infinity;
+      score += 6;
+    }
+    if (s.bedFeature) {
+      if (!context.bedFeature || s.bedFeature !== context.bedFeature) return -Infinity;
+      score += 4;
+    }
     if (s.departmentId) {
       if (!context.departmentId || String(s.departmentId) !== String(context.departmentId)) return -Infinity;
       score += 8;
@@ -114,14 +162,6 @@ class TariffResolver {
       if (!context.appointmentType || s.appointmentType !== context.appointmentType) return -Infinity;
       score += 1;
     }
-    if (s.wardClass) {
-      if (!context.wardClass || s.wardClass !== context.wardClass) return -Infinity;
-      score += 6;
-    }
-    if (s.bedFeature) {
-      if (!context.bedFeature || s.bedFeature !== context.bedFeature) return -Infinity;
-      score += 3;
-    }
 
     return score;
   }
@@ -129,10 +169,13 @@ class TariffResolver {
   _buildExplanation(rule, score) {
     const parts = [];
     const s = rule.scope || {};
-    if (s.staffId) parts.push(`Doctor override`);
-    if (s.departmentId) parts.push(`dept: ${rule.scope.departmentId}`);
+    if (s.floorId) parts.push(`Floor specific`);
+    if (s.comfortTier) parts.push(`tier: ${s.comfortTier}`);
+    if (s.sharingType) parts.push(`sharing: ${s.sharingType}`);
     if (s.wardClass) parts.push(`ward: ${s.wardClass}`);
     if (s.bedFeature) parts.push(`feature: ${s.bedFeature}`);
+    if (s.staffId) parts.push(`Doctor override`);
+    if (s.departmentId) parts.push(`dept: ${rule.scope.departmentId}`);
     if (s.tariffGrade) parts.push(`grade: ${s.tariffGrade}`);
     if (s.visitType) parts.push(`visit: ${s.visitType}`);
     if (s.appointmentType) parts.push(`appt: ${s.appointmentType}`);
@@ -146,13 +189,14 @@ class TariffResolver {
    */
   async previewImpact(newRuleData) {
     const Visit = require('../visits/visit.model');
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const query = { createdAt: { $gte: thirtyDaysAgo }, status: { $ne: 'CANCELLED' } };
+    const lookbackDays = config.tariff?.lookbackWindowDays || 30;
+    const lookbackAgo = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000);
+    const query = { createdAt: { $gte: lookbackAgo }, status: { $ne: 'CANCELLED' } };
     if (newRuleData.scope && newRuleData.scope.departmentId) {
       query.departmentId = newRuleData.scope.departmentId;
     }
     const count = await Visit.countDocuments(query);
-    return { affectedVisitsEstimate: count, period: '30 days' };
+    return { affectedVisitsEstimate: count, period: `${lookbackDays} days` };
   }
 }
 

@@ -3,9 +3,12 @@ const identityService = require('../../modules/identity/identity.service');
 const { error: sendError } = require('../responses');
 const logger = require('../logger');
 
-// Fast 30-second in-memory TTL cache for user account status to avoid DB connection pool starvation
+const config = require('../config');
+
+// Fast in-memory TTL cache for user account status to avoid DB connection pool starvation
 const userStatusCache = new Map();
-const CACHE_TTL_MS = 30000;
+const CACHE_TTL_MS = config.auth?.statusCacheTtlMs || 30000;
+const MAX_CACHE_SIZE = config.auth?.statusCacheMaxSize || 1000;
 
 const getCachedUserStatus = async (userId) => {
   const now = Date.now();
@@ -16,6 +19,13 @@ const getCachedUserStatus = async (userId) => {
   try {
     const identity = await identityService.getById(userId);
     const status = identity ? identity.accountStatus : null;
+    
+    // Prune oldest entries if cache exceeds max size
+    if (userStatusCache.size >= MAX_CACHE_SIZE) {
+      const firstKey = userStatusCache.keys().next().value;
+      if (firstKey) userStatusCache.delete(firstKey);
+    }
+
     userStatusCache.set(userId, { status, timestamp: now });
     return status;
   } catch (err) {

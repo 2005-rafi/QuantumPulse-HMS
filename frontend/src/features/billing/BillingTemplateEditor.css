@@ -138,7 +138,7 @@
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   padding: var(--md-spacing-m, 16px);
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 100px);
 }
 
 .billing-preview-header {
@@ -159,56 +159,65 @@
 
 .billing-preview-desk {
   background-color: #cbd5e1;
+  background-image: radial-gradient(#94a3b8 1.2px, transparent 1.2px);
+  background-size: 16px 16px;
   border-radius: var(--md-sys-shape-corner-small, 8px);
-  padding: var(--md-spacing-m, 16px);
+  padding: 24px 16px;
   overflow-y: auto;
   flex: 1;
   display: flex;
   justify-content: center;
-  align-items: start;
+  align-items: flex-start;
+  min-height: 520px;
 }
 
+/* Exact ISO 216 A4 Portrait Paper Simulation (1 : 1.4142) */
 .billing-preview-sheet {
-  background-color: white;
+  background-color: #ffffff;
   width: 100%;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
-  border-radius: 4px;
+  max-width: 595px; /* 210mm proportional Web preview scale */
+  min-height: 842px; /* 297mm proportional Web preview scale */
+  aspect-ratio: 210 / 297;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  border-radius: 2px;
   overflow: hidden;
-  transform-origin: top center;
+  box-sizing: border-box;
+  margin: 0 auto;
 }
 
 .billing-preview-sheet .billing-template-container {
-  padding: var(--md-spacing-m, 16px);
-  font-size: 13px;
+  padding: 24px 28px;
+  font-size: 11px;
+  min-height: 842px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .billing-preview-sheet .hospital-name {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .billing-preview-sheet .billing-title h2 {
-  font-size: 15px;
+  font-size: 12.5px;
 }
 
 .billing-preview-sheet .patient-info {
-  padding: 10px 12px;
-  margin-bottom: 14px;
+  padding: 6px 10px;
+  margin-bottom: 8px;
 }
 
 .billing-preview-sheet .billing-table {
-  margin-bottom: 18px;
+  margin-bottom: 8px;
 }
 
 .billing-preview-sheet .signature-area {
-  margin-top: 30px;
-}
-
-.billing-preview-sheet .signature-block {
-  width: 120px;
+  margin-top: 14px;
 }
 
 .billing-preview-sheet .footer-note {
-  margin-top: 20px;
+  margin-top: 8px;
 }
 
 @media (max-width: 1024px) {

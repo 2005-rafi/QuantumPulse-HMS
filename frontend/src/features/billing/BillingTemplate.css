@@ -1,149 +1,378 @@
+/* ============================================================
+   BILLING TEMPLATE — High-Density Hospital Invoice Stylesheet
+   Typography: 11px Base, Compact Vertical Rhythm, Paper-Conserving A4
+   ============================================================ */
+
 .billing-template-container {
-  padding: 40px;
-  font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  color: #1e293b;
+  padding: 16px 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #0f172a;
   background: white;
-  max-width: 800px;
+  max-width: 780px;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
+/* ── 1. Hospital Header ── */
 .billing-header {
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 6px;
 }
 
 .hospital-name {
-  font-size: 28px;
+  font-size: 16px;
   font-weight: 800;
   color: #0f172a;
-  margin: 0 0 5px 0;
+  margin: 0 0 2px 0;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
 }
 
-.hospital-address, .hospital-contact {
-  margin: 2px 0;
+.hospital-address {
+  margin: 1px 0;
   color: #475569;
-  font-size: 14px;
+  font-size: 10px;
+  line-height: 1.25;
+}
+
+.hospital-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 1px;
+}
+
+.hospital-contact {
+  color: #475569;
+  font-size: 9.5px;
+}
+
+.hospital-tax-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #1e293b;
+  background: #f1f5f9;
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid #e2e8f0;
 }
 
 .divider {
   border: 0;
-  height: 2px;
+  height: 1px;
   background: #cbd5e1;
-  margin: 25px 0;
+  margin: 6px 0 8px 0;
 }
 
+/* ── 2. Invoice Title & Encounter Bar ── */
 .billing-title {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
-  margin-bottom: 30px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.billing-title h2 {
+.billing-title-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.billing-title-left h2 {
   margin: 0;
-  font-size: 22px;
+  font-size: 12.5px;
+  font-weight: 800;
   color: #0f172a;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
 }
 
-.billing-title p {
-  margin: 2px 0;
-  font-size: 14px;
-  color: #475569;
-}
-
-.patient-info {
-  display: flex;
-  justify-content: space-between;
-  background: #f8fafc;
-  padding: 20px;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 30px;
-}
-
-.info-column p {
-  margin: 5px 0;
-  font-size: 15px;
-}
-
-.info-column p strong {
-  color: #64748b;
+.workflow-badge-tag {
   display: inline-block;
-  min-width: 120px;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #e0e7ff;
+  color: #3730a3;
 }
 
+.billing-title-right {
+  display: flex;
+  gap: 12px;
+  text-align: right;
+}
+
+.title-meta-item {
+  font-size: 10px;
+}
+
+.title-meta-item .meta-label {
+  color: #64748b;
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.title-meta-item .meta-val {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+/* ── 3. High-Density Patient & Clinical Demographics Grid ── */
+.patient-info {
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 8px;
+}
+
+.patient-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px 14px;
+}
+
+.patient-info-row {
+  display: flex;
+  align-items: baseline;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.patient-info-row .info-label {
+  color: #64748b;
+  font-weight: 600;
+  font-size: 9.5px;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.patient-info-row .info-value {
+  color: #0f172a;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+/* ── 4. Itemized Ledger Table ── */
 .billing-table {
   width: 100%;
   border-collapse: collapse;
-  margin-bottom: 40px;
+  margin-bottom: 8px;
 }
 
 .billing-table th {
   background: #f1f5f9;
-  padding: 12px 15px;
+  padding: 4px 6px;
   text-align: left;
+  font-size: 9.5px;
   font-weight: 700;
   color: #334155;
-  border-bottom: 2px solid #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  border-top: 1px solid #cbd5e1;
+  border-bottom: 1.5px solid #cbd5e1;
 }
 
 .billing-table td {
-  padding: 12px 15px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: 3.5px 6px;
+  border-bottom: 1px solid #f1f5f9;
   color: #0f172a;
+  font-size: 10.5px;
+  vertical-align: top;
+}
+
+.item-name-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.item-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.item-notes-text {
+  font-size: 9px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.item-date-text {
+  font-size: 9.5px;
+  color: #475569;
+}
+
+.item-category-tag {
+  display: inline-block;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  padding: 0 4px;
+  border-radius: 2px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+
+/* Tabularized Dosage Schedule Strip */
+.dosage-tabular-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 0 4px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.dosage-pill-badge {
+  font-size: 9px;
+  font-weight: 700;
+  color: #0284c7;
+  letter-spacing: 0.5px;
+}
+
+.dosage-timing-text {
+  font-size: 8.5px;
+  color: #64748b;
+  font-weight: 500;
 }
 
 .amount-col {
   text-align: right !important;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
-.total-label {
+/* ── 5. Financial Reconciliation Summary Block ── */
+.financial-reconciliation-section {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.reconciliation-table-wrapper {
+  width: 100%;
+  max-width: 320px;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  padding: 4px 8px;
+}
+
+.reconciliation-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.reconciliation-table td {
+  padding: 2px 0;
+  font-size: 10px;
+  color: #1e293b;
+  border: none;
+}
+
+.recon-label {
+  font-weight: 600;
+  color: #475569;
+}
+
+.recon-value {
+  text-align: right;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.recon-deduction td {
+  color: #b91c1c;
+}
+
+.recon-deduction .recon-label {
+  color: #dc2626;
+  font-size: 9.5px;
+}
+
+.recon-net-total td {
+  border-top: 1.5px solid #0f172a;
+  padding-top: 4px;
+  margin-top: 2px;
+}
+
+.recon-label-highlight {
+  font-weight: 800;
+  font-size: 11px;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.recon-value-highlight {
   text-align: right;
   font-weight: 800;
-  font-size: 18px;
-  padding: 15px;
+  font-size: 12.5px;
+  color: #047857;
+  white-space: nowrap;
 }
 
-.total-amount {
-  text-align: right;
-  font-weight: 800;
-  font-size: 20px;
-  color: #059669;
-  padding: 15px;
-}
-
+/* ── 6. Compact Signatures & Hospital Seals ── */
 .signature-area {
   display: flex;
   justify-content: space-between;
-  margin-top: 80px;
+  margin-top: 14px;
+  gap: 16px;
 }
 
 .signature-block {
   text-align: center;
-  width: 250px;
+  flex: 1;
+  max-width: 160px;
 }
 
 .signature-line {
   border-top: 1px solid #94a3b8;
-  margin-bottom: 10px;
+  margin-bottom: 3px;
 }
 
 .signature-block p {
   margin: 0;
-  color: #64748b;
-  font-size: 14px;
+  color: #334155;
+  font-weight: 600;
+  font-size: 9.5px;
 }
 
+.signature-subtext {
+  display: block;
+  font-size: 8px;
+  color: #64748b;
+  margin-top: 1px;
+  line-height: 1.15;
+}
+
+/* ── 7. Footer Note ── */
 .footer-note {
   text-align: center;
-  margin-top: 50px;
-  color: #94a3b8;
-  font-size: 12px;
-  font-style: italic;
+  margin-top: 8px;
+  color: #64748b;
+  font-size: 8.5px;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 4px;
+}
+
+.footer-note p {
+  margin: 1px 0;
 }
 
 /* ── Screen & Print Styles ────────────────────────────────── */
@@ -153,86 +382,156 @@
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.05);
   border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
   overflow: hidden;
-  max-width: 850px;
+  max-width: 800px;
   margin: 0 auto;
+}
+
+.billing-print-portal {
+  display: none;
 }
 
 @media print {
   @page {
-    margin: 12mm 15mm;
+    margin: 8mm 10mm;
     size: A4 portrait;
   }
   
+  /* Hide all screen React UI and app shells */
+  #root,
+  .screen-only-preview,
+  .billing-editor-layout,
+  .billing-preview-panel,
+  .admin-tariff-billing,
+  .pharmacy-dashboard-container,
+  header,
+  nav,
+  aside {
+    display: none !important;
+  }
+
   html, body {
     background: white !important;
     color: black !important;
     margin: 0 !important;
     padding: 0 !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
   }
 
-  /* Reveal bill in print portal */
+  /* Reveal bill in dedicated billing print portal */
+  .billing-print-portal,
+  .print-only-document {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    visibility: visible !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    z-index: 999999 !important;
+  }
+
+  .billing-print-portal *,
+  .print-only-document * {
+    visibility: visible !important;
+  }
+
+  .billing-print-portal .billing-template-container,
   .print-only-document .billing-template-container {
     padding: 0 !important;
     max-width: 100% !important;
     margin: 0 !important;
     width: 100% !important;
     background: transparent !important;
+    font-size: 10.5pt !important;
+    line-height: 1.3 !important;
   }
 
+  .billing-print-portal .hospital-name,
   .print-only-document .hospital-name {
     color: black !important;
-    font-size: 24pt !important;
+    font-size: 15pt !important;
   }
 
-  .print-only-document .billing-title h2 {
+  .billing-print-portal .billing-title-left h2,
+  .print-only-document .billing-title-left h2 {
     color: black !important;
-    font-size: 16pt !important;
+    font-size: 12pt !important;
   }
 
+  .billing-print-portal .patient-info,
   .print-only-document .patient-info {
+    background: #f8fafc !important;
+    border: 1px solid #cbd5e1 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .billing-print-portal .billing-table,
+  .print-only-document .billing-table {
+    page-break-inside: auto !important;
+  }
+
+  .billing-print-portal .billing-table tr,
+  .print-only-document .billing-table tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .billing-print-portal .billing-table th,
+  .print-only-document .billing-table th {
+    background: #f1f5f9 !important;
+    color: black !important;
+    border-bottom: 1.5px solid #94a3b8 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .billing-print-portal .billing-table td,
+  .print-only-document .billing-table td {
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: black !important;
+  }
+
+  .billing-print-portal .financial-reconciliation-section,
+  .print-only-document .financial-reconciliation-section {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .billing-print-portal .reconciliation-table-wrapper,
+  .print-only-document .reconciliation-table-wrapper {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .print-only-document .billing-table th {
-    background: #f1f5f9 !important;
-    color: black !important;
-    border-bottom: 2px solid #94a3b8 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  .print-only-document .billing-table td {
-    border-bottom: 1px solid #cbd5e1 !important;
-    color: black !important;
-  }
-
-  .print-only-document .total-amount {
+  .billing-print-portal .recon-value-highlight,
+  .print-only-document .recon-value-highlight {
     color: #047857 !important;
-    font-size: 16pt !important;
     font-weight: 800 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  .billing-print-portal .signature-area,
+  .print-only-document .signature-area {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 18px !important;
   }
 
   /* Ensure colors print correctly */
   * {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-  }
-
-  /* Prevent page breaks inside table rows, signature block, and headers */
-  .billing-table tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .signature-area {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-    margin-top: 50px !important;
   }
 
   /* Hide scrollbars */

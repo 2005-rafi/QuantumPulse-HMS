@@ -13,6 +13,7 @@ const requestId = require('../middleware/requestId');
 const errorHandler = require('../middleware/errorHandler');
 const logger = require('../logger');
 const xssClean = require('../middleware/xss');
+const mongoSanitize = require('../middleware/mongoSanitize');
 const { getClientIp } = require('../utils/ipResolver');
 const { verifyAccessToken } = require('../../modules/auth/token.service');
 
@@ -34,7 +35,7 @@ const ipdRoutes = require('../../modules/ipd/ipd.routes');
 const createApp = () => {
   const app = express();
 
-  // 1. Security & CORS configuration
+  // 1. Security & CORS configuration (Optimized for Cloudflare Tunnels & Local Dev)
   const allowedCors = (origin, callback) => {
     if (!origin) return callback(null, true);
     if (
@@ -73,8 +74,9 @@ const createApp = () => {
       crossOriginEmbedderPolicy: false,
     })
   );
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(express.json({ limit: config.jsonLimit || '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: config.jsonLimit || '10mb' }));
+  app.use(mongoSanitize);
   app.use(xssClean);
   app.use(requestId);
 

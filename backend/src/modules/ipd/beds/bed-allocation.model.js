@@ -39,6 +39,34 @@ const bedAllocationSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    comfortTier: {
+      type: String,
+      default: 'STANDARD',
+    },
+    sharingType: {
+      type: String,
+      default: 'GENERAL_WARD',
+    },
+    dailyRateApplied: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    hourlyRateApplied: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalHoursBilled: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    totalBilledAmount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     allocatedFrom: {
       type: Date,
       default: Date.now,
