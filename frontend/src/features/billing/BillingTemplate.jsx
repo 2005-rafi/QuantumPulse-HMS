@@ -62,12 +62,22 @@ const BillingTemplate = React.forwardRef(({
   const insuranceProvider = admission?.insuranceDetails?.provider || visit?.insuranceProvider || (effectiveWorkflow === 'COMPREHENSIVE' || isVisible('insuranceTpa') ? 'Star Health & Allied Insurance' : null);
   const policyNo = admission?.insuranceDetails?.policyNumber || visit?.policyNumber || (effectiveWorkflow === 'COMPREHENSIVE' || isVisible('policyNo') ? 'POL-SH-9928194' : null);
 
-  // Clean invoice number
-  const cleanInvoiceNo = visit?.billNumber || (
-    visit?._id
-      ? visit._id.replace(/^_+/, '').replace(/^visit_mock_/, '').toUpperCase()
-      : 'INV-2026-0894'
-  );
+  // Clean invoice number (convert raw 24-char ObjectId to clean INV-2026-XXXX)
+  const formatInvoiceNumber = (rawId, vType) => {
+    if (!rawId) return 'INV-2026-0894';
+    const str = String(rawId);
+    if (str.startsWith('INV-') || str.startsWith('OPD-') || str.startsWith('IPD-') || str.startsWith('EMG-')) {
+      return str;
+    }
+    const clean = str.replace(/^[_\W]+/, '').replace(/^visit_mock_/, '');
+    if (clean.length === 24) {
+      const prefix = vType ? `${vType}-` : 'INV-';
+      return `${prefix}${new Date().getFullYear()}-${clean.substring(clean.length - 8).toUpperCase()}`;
+    }
+    return `INV-${clean.toUpperCase()}`;
+  };
+
+  const cleanInvoiceNo = visit?.billNumber || formatInvoiceNumber(visit?._id, effectiveWorkflow);
 
   const getDynamicValue = (fieldPath) => {
     if (!fieldPath) return '';
@@ -94,23 +104,125 @@ const BillingTemplate = React.forwardRef(({
     );
   };
 
+  // Canonical clinical category registry
+  const CLINICAL_CATEGORIES = [
+    { id: 'CONSULTATION', title: 'Doctor Consultations & Specialist Reviews' },
+    { id: 'BED_CHARGES', title: 'Room, Bed & Inpatient Nursing Accommodation' },
+    { id: 'PROCEDURE', title: 'Surgical Procedures & Operative Services' },
+    { id: 'DIAGNOSTICS', title: 'Laboratory & Diagnostic Investigations' },
+    { id: 'PHARMACY', title: 'Pharmacy Medications & Dispensed Drugs' },
+    { id: 'CONSUMABLES', title: 'Medical Consumables & Surgical Disposables' },
+    { id: 'REGISTRATION', title: 'Clinical Registration & Administrative Services' },
+    { id: 'OTHER', title: 'General Hospital Services & Sundry Charges' },
+  ];
+
   // Compile itemized rows
   const effectiveLineItems = lineItems && lineItems.length > 0
     ? lineItems
     : null;
+
+  // Build segregated category groups
+  const getCategorizedGroups = () => {
+    if (effectiveLineItems && effectiveLineItems.length > 0) {
+      const map = {};
+      CLINICAL_CATEGORIES.forEach(cat => {
+        map[cat.id] = { ...cat, items: [], subtotal: 0 };
+      });
+
+      effectiveLineItems.forEach(item => {
+        const catKey = (item.category && map[item.category]) ? item.category : 'OTHER';
+        const cost = Number(item.lineTotal != null ? item.lineTotal : item.amount || 0);
+        map[catKey].items.push(item);
+        map[catKey].subtotal += cost;
+      });
+
+      return CLINICAL_CATEGORIES
+        .filter(cat => map[cat.id].items.length > 0)
+        .map((cat, idx) => ({
+          ...map[cat.id],
+          sectionIndex: String.fromCharCode(65 + idx), // A, B, C...
+        }));
+    }
+
+    // Direct OPD / Pharmacy dispensation props
+    const active = [];
+    if (isVisible('consultationFee') && Number(consultationFee) > 0) {
+      active.push({
+        id: 'CONSULTATION',
+        title: 'Doctor Consultations & Specialist Reviews',
+        sectionIndex: String.fromCharCode(65 + active.length),
+        subtotal: Number(consultationFee),
+        items: [{
+          description: labels.consultationFee || 'Doctor Consultation Fee',
+          dateRange: new Date().toLocaleDateString('en-IN'),
+          quantity: '1 Visit',
+          amount: Number(consultationFee),
+          category: 'CONSULTATION',
+        }],
+      });
+    }
+
+    if (isVisible('labCharges') && Number(labCharges) > 0) {
+      active.push({
+        id: 'DIAGNOSTICS',
+        title: 'Laboratory & Diagnostic Investigations',
+        sectionIndex: String.fromCharCode(65 + active.length),
+        subtotal: Number(labCharges),
+        items: [{
+          description: labels.labCharges || 'Laboratory Diagnostic Investigation',
+          dateRange: new Date().toLocaleDateString('en-IN'),
+          quantity: '1 Panel',
+          amount: Number(labCharges),
+          category: 'DIAGNOSTICS',
+        }],
+      });
+    }
+
+    if (medications && medications.length > 0) {
+      const medSubtotal = medications.reduce((sum, m) => sum + Number(m.amount || 0), 0);
+      active.push({
+        id: 'PHARMACY',
+        title: 'Pharmacy Medications & Dispensed Drugs',
+        sectionIndex: String.fromCharCode(65 + active.length),
+        subtotal: medSubtotal,
+        items: medications.map(med => ({
+          description: med.recommended + (med.alternativeGiven ? ` (Given: ${med.alternativeGiven})` : ''),
+          dosageSchedule: med.dosageSchedule,
+          dateRange: new Date().toLocaleDateString('en-IN'),
+          quantity: med.quantity,
+          amount: Number(med.amount || 0),
+          category: 'PHARMACY',
+        })),
+      });
+    }
+
+    if (active.length === 0) {
+      active.push({
+        id: 'CONSULTATION',
+        title: 'Clinical Consultation (Nil Charge)',
+        sectionIndex: 'A',
+        subtotal: 0,
+        items: [{
+          description: 'Clinical Review & Consultation',
+          dateRange: new Date().toLocaleDateString('en-IN'),
+          quantity: 1,
+          amount: 0,
+          category: 'CONSULTATION',
+        }],
+      });
+    }
+
+    return active;
+  };
+
+  const categorizedGroups = getCategorizedGroups();
 
   // Compute subtotal and financials
   const grossBilled = financials?.grossBilled != null
     ? financials.grossBilled
     : total != null
     ? Number(total)
-    : effectiveLineItems
-    ? effectiveLineItems.reduce((sum, item) => sum + (Number(item.lineTotal) || Number(item.amount) || 0), 0)
-    : (
-        (isVisible('consultationFee') ? Number(consultationFee || 0) : 0) +
-        (isVisible('labCharges') ? Number(labCharges || 0) : 0) +
-        (medications || []).reduce((acc, m) => acc + (Number(m.amount) || 0), 0)
-      );
+    : categorizedGroups.reduce((sum, g) => sum + g.subtotal, 0);
 
   const advanceDeposits = financials?.advancePaid || (effectiveWorkflow === 'IPD' || effectiveWorkflow === 'COMPREHENSIVE' ? 10000 : 0);
   const insuranceApproved = financials?.insuranceApproved || (effectiveWorkflow === 'COMPREHENSIVE' ? 15000 : 0);
@@ -273,91 +385,44 @@ const BillingTemplate = React.forwardRef(({
         </div>
       </div>
 
-      {/* 4. HIGH-DENSITY ITEMIZED CHARGES TABLE */}
+      {/* 4. HIGH-DENSITY SEGREGATED ITEMIZED CHARGES TABLE */}
       <table className="billing-table">
         <thead>
           <tr>
-            <th style={{ width: '48%' }}>{labels.description || 'Description'}</th>
-            <th style={{ width: '22%' }}>{labels.serviceDate || 'Service Period / Date'}</th>
-            <th style={{ width: '12%', textAlign: 'center' }}>{labels.quantity || 'Qty'}</th>
+            <th style={{ width: '50%' }}>{labels.description || 'Clinical Service / Medication Description'}</th>
+            <th style={{ width: '20%' }}>{labels.serviceDate || 'Service Date'}</th>
+            <th style={{ width: '12%', textAlign: 'center' }}>{labels.quantity || 'Qty / Units'}</th>
             <th className="amount-col" style={{ width: '18%' }}>{labels.amount || 'Amount'}</th>
           </tr>
         </thead>
         <tbody>
-          {/* Case A: Rich Itemized Line Items (IPD / Surgical / Consolidated / Live Bills) */}
-          {effectiveLineItems && effectiveLineItems.length > 0 ? (
-            effectiveLineItems.map((item, idx) => (
-              <tr key={idx}>
-                <td>
-                  <div className="item-name-row">
-                    <span className="item-title">{item.description || item.name}</span>
-                    {item.category && (
-                      <span className="item-category-tag">{item.category}</span>
-                    )}
-                  </div>
-                  {item.notes && (
-                    <div className="item-notes-text">{item.notes}</div>
-                  )}
+          {categorizedGroups.map((group) => (
+            <React.Fragment key={group.id}>
+              {/* Category Subheader Banner with Subtotal */}
+              <tr className="billing-category-header-row">
+                <td colSpan="3" className="billing-category-title-cell">
+                  <span className="billing-category-index-badge">{group.sectionIndex}</span>
+                  <span className="billing-category-title-text">{group.title}</span>
+                  <span className="billing-category-count-tag">({group.items.length} {group.items.length === 1 ? 'charge' : 'charges'})</span>
                 </td>
-                <td className="item-date-text">
-                  {item.dateRange || (item.addedAt ? new Date(item.addedAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'))}
-                </td>
-                <td style={{ textAlign: 'center' }}>{item.quantity || 1}</td>
-                <td className="amount-col">
-                  {currency}{Number(item.lineTotal != null ? item.lineTotal : item.amount || 0).toFixed(2)}
+                <td className="billing-category-subtotal-cell amount-col">
+                  <span className="billing-category-subtotal-label">Subtotal:</span>{' '}
+                  <span className="billing-category-subtotal-val">{currency}{group.subtotal.toFixed(2)}</span>
                 </td>
               </tr>
-            ))
-          ) : (
-            /* Case B: Direct OPD / Pharmacy Dispense Rows */
-            <>
-              {/* Doctor Consultation */}
-              {isVisible('consultationFee') && Number(consultationFee) > 0 && (
-                <tr>
-                  <td>
-                    <div className="item-name-row">
-                      <span className="item-title">{labels.consultationFee || 'Doctor Consultation Fee'}</span>
-                      <span className="item-category-tag">CONSULTATION</span>
-                    </div>
-                  </td>
-                  <td className="item-date-text">
-                    {new Date().toLocaleDateString('en-IN')}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>1 Visit</td>
-                  <td className="amount-col">{currency}{Number(consultationFee).toFixed(2)}</td>
-                </tr>
-              )}
 
-              {/* Lab Diagnostic Tests */}
-              {isVisible('labCharges') && Number(labCharges) > 0 && (
-                <tr>
-                  <td>
-                    <div className="item-name-row">
-                      <span className="item-title">{labels.labCharges || 'Laboratory Diagnostic Investigation'}</span>
-                      <span className="item-category-tag">DIAGNOSTICS</span>
-                    </div>
-                  </td>
-                  <td className="item-date-text">
-                    {new Date().toLocaleDateString('en-IN')}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>1 Panel</td>
-                  <td className="amount-col">{currency}{Number(labCharges).toFixed(2)}</td>
-                </tr>
-              )}
-
-              {/* Tabularized Pharmacy Medications */}
-              {medications && medications.length > 0 && medications.map((med, idx) => {
-                const dsInfo = formatDosageSchedule(med.dosageSchedule);
+              {/* Categorized Line Items */}
+              {group.items.map((item, idx) => {
+                const dsInfo = item.dosageSchedule ? formatDosageSchedule(item.dosageSchedule) : null;
                 return (
-                  <tr key={idx}>
-                    <td>
+                  <tr key={idx} className="billing-item-row">
+                    <td className="billing-item-desc-cell">
                       <div className="item-name-row">
-                        <span className="item-title">
-                          {med.recommended}
-                          {med.alternativeGiven ? ` (Given: ${med.alternativeGiven})` : ''}
-                        </span>
-                        <span className="item-category-tag">PHARMACY</span>
+                        <span className="item-title">{item.description || item.name}</span>
                       </div>
+                      {item.notes && (
+                        <div className="item-notes-text">{item.notes}</div>
+                      )}
                       {dsInfo && (
                         <div className="dosage-tabular-strip">
                           <span className="dosage-pill-badge">{dsInfo.pill}</span>
@@ -366,30 +431,17 @@ const BillingTemplate = React.forwardRef(({
                       )}
                     </td>
                     <td className="item-date-text">
-                      {new Date().toLocaleDateString('en-IN')}
+                      {item.dateRange || (item.addedAt ? new Date(item.addedAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'))}
                     </td>
-                    <td style={{ textAlign: 'center' }}>{med.quantity}</td>
-                    <td className="amount-col">{currency}{Number(med.amount || 0).toFixed(2)}</td>
+                    <td style={{ textAlign: 'center' }}>{item.quantity || 1}</td>
+                    <td className="amount-col">
+                      {currency}{Number(item.lineTotal != null ? item.lineTotal : item.amount || 0).toFixed(2)}
+                    </td>
                   </tr>
                 );
               })}
-
-              {/* Nil Charges Fallback */}
-              {Number(consultationFee) === 0 && Number(labCharges) === 0 && (!medications || medications.length === 0) && (
-                <tr>
-                  <td>
-                    <div className="item-name-row">
-                      <span className="item-title">Clinical Review &amp; Consultation (Nil Charge)</span>
-                      <span className="item-category-tag">CONSULTATION</span>
-                    </div>
-                  </td>
-                  <td className="item-date-text">{new Date().toLocaleDateString('en-IN')}</td>
-                  <td style={{ textAlign: 'center' }}>1</td>
-                  <td className="amount-col">{currency}0.00</td>
-                </tr>
-              )}
-            </>
-          )}
+            </React.Fragment>
+          ))}
         </tbody>
       </table>
 

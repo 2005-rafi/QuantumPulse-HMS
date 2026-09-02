@@ -57,6 +57,7 @@ const mapPrescribedMedication = (med) => {
     quantity: '',
     amount: '',
     dosageSchedule: isObj ? (med.dosageSchedule || DEFAULT_DOSAGE_SCHEDULE) : DEFAULT_DOSAGE_SCHEDULE,
+    isDoctorPrescribed: true,
   };
 };
 
@@ -196,9 +197,38 @@ export const usePharmacyDispense = () => {
         alternativeGiven: '',
         quantity: medData ? '1' : '',
         amount: medData ? String(medData.unitPrice + (medData.dispensingFee || 0)) : '',
-        dosageSchedule: DEFAULT_DOSAGE_SCHEDULE,
+        dosageSchedule: {
+          morning:   { count: 1, timing: 'AFTER_FOOD' },
+          afternoon: { count: 0, timing: 'N/A' },
+          night:     { count: 1, timing: 'AFTER_FOOD' },
+        },
+        isDoctorPrescribed: false,
       },
     ]);
+  }, []);
+
+  const handleDosageChange = useCallback((index, period, field, value) => {
+    setMedications((prev) => {
+      const next = [...prev];
+      if (!next[index] || next[index].isDoctorPrescribed) return prev; // Do not alter doctor prescribed dosage
+      const currentSchedule = next[index].dosageSchedule || {
+        morning: { count: 0, timing: 'N/A' },
+        afternoon: { count: 0, timing: 'N/A' },
+        night: { count: 0, timing: 'N/A' },
+      };
+      const currentPeriod = currentSchedule[period] || { count: 0, timing: 'N/A' };
+      next[index] = {
+        ...next[index],
+        dosageSchedule: {
+          ...currentSchedule,
+          [period]: {
+            ...currentPeriod,
+            [field]: field === 'count' ? Math.max(0, parseInt(value, 10) || 0) : value,
+          },
+        },
+      };
+      return next;
+    });
   }, []);
 
   const handleRemoveMedication = useCallback((index) => {
@@ -366,6 +396,7 @@ export const usePharmacyDispense = () => {
     handleAddMedication,
     handleRemoveMedication,
     handleMedChange,
+    handleDosageChange,
     handleGeneratePreview,
     handleFinalize,
     directDispenseOpen,
