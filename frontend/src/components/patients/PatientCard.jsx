@@ -36,6 +36,30 @@ export const PatientCard = ({
   const lastVisit = formatVisitDate(patient.lastVisitDate);
   const nextAppt = patient.latestAppointment?.date ? formatVisitDate(patient.latestAppointment.date) : null;
 
+  const rawType = String(typeIndicator || patient.currentState || patient.lastVisitType || 'IDLE').toUpperCase();
+  const isIpd = rawType === 'IPD' || !!patient.activeAdmission;
+  const isEmergency = rawType === 'EMERGENCY' || patient.activeAdmission?.admissionType === 'EMERGENCY';
+  const isOpd = !isIpd && !isEmergency && (rawType === 'OPD' || patient.lastVisitType === 'OPD');
+  const isIdle = !isIpd && !isEmergency && !isOpd;
+
+  const typeClassModifier = isEmergency
+    ? 'md3-patient-type-pill--emergency'
+    : isIpd
+    ? 'md3-patient-type-pill--ipd'
+    : isOpd
+    ? 'md3-patient-type-pill--opd'
+    : 'md3-patient-type-pill--idle';
+
+  const displayTypeLabel = isEmergency
+    ? 'EMERGENCY'
+    : isIpd
+    ? patient.activeAdmission?.bedNumber
+      ? `IPD • ${patient.activeAdmission.bedNumber}`
+      : 'IPD'
+    : isOpd
+    ? 'OPD'
+    : 'REGISTERED';
+
   return (
     <div
       className={`md3-patient-card ${isSelected ? 'md3-patient-card--selected' : ''}`}
@@ -69,9 +93,9 @@ export const PatientCard = ({
         </div>
 
         <div className="md3-patient-card-badges">
-          {typeIndicator && (
-            <span className="md3-patient-type-pill">{typeIndicator}</span>
-          )}
+          <span className={`md3-patient-type-pill ${typeClassModifier}`}>
+            {displayTypeLabel}
+          </span>
           {statusBadge && (
             <span className="md3-patient-status-pill">{statusBadge}</span>
           )}
@@ -107,14 +131,21 @@ export const PatientCard = ({
           </div>
         )}
 
-        {lastVisit && (
-          <div className="md3-patient-meta-row md3-patient-meta-row--timeline" title={`Last OPD Visit: ${lastVisit}`}>
+        {isIpd && patient.activeAdmission ? (
+          <div className="md3-patient-meta-row md3-patient-meta-row--timeline" title={`Inpatient Stay: ${patient.activeAdmission.admissionNumber || ''}`}>
+            <Icon.Hospital />
+            <span className="md3-patient-meta-text">
+              Admitted: <strong>{patient.activeAdmission.bedNumber ? `Bed ${patient.activeAdmission.bedNumber}` : 'Inpatient'}</strong>
+            </span>
+          </div>
+        ) : lastVisit ? (
+          <div className="md3-patient-meta-row md3-patient-meta-row--timeline" title={`Last Visit: ${lastVisit}`}>
             <Icon.Calendar />
             <span className="md3-patient-meta-text">
               Last Visit: <strong>{lastVisit}</strong>
             </span>
           </div>
-        )}
+        ) : null}
 
         {nextAppt && (
           <div className="md3-patient-meta-row md3-patient-meta-row--appt" title={`Upcoming Appointment: ${nextAppt}`}>

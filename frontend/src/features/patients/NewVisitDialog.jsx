@@ -298,7 +298,7 @@ export const NewVisitDialog = ({
         title="Patient Check-In &amp; Inpatient Admission"
         subtitle="Create an OPD consultation queue token or directly admit as Inpatient (IPD)"
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '4px 0 10px 0' }}>
           {formError && (
             <div className="appt-dialog-error" role="alert">
               <Icon.Alert />
@@ -336,21 +336,21 @@ export const NewVisitDialog = ({
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '10px',
-              padding: '12px 16px',
+              gap: '12px',
+              padding: '14px 18px',
               background: 'var(--md-sys-color-secondary-container)',
               color: 'var(--md-sys-color-on-secondary-container)',
-              borderRadius: '14px',
+              borderRadius: '16px',
               border: '1px solid var(--md-sys-color-outline-variant)',
               fontSize: '0.8125rem',
-              lineHeight: '1.4'
+              lineHeight: '1.45'
             }}>
               <span className="material-symbols-rounded" style={{ fontSize: '20px', flexShrink: 0, marginTop: '1px' }}>info</span>
               <div>
                 <div style={{ fontWeight: 700 }}>
                   Patient has {activeVisits.length} Active Clinical Encounter{activeVisits.length > 1 ? 's' : ''}
                 </div>
-                <div style={{ marginTop: '2px', opacity: 0.9 }}>
+                <div style={{ marginTop: '3px', opacity: 0.9 }}>
                   {activeVisits.map(v => `${v.tokenString || v.visitNumber} (${v.departmentId?.name || 'General OPD'} · ${v.status.replace(/_/g, ' ')})`).join(', ')}
                 </div>
               </div>
@@ -358,7 +358,7 @@ export const NewVisitDialog = ({
           )}
 
           {/* Workflow Mode Selector */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
             <button
               type="button"
               className={`reg-workflow-btn ${mode === 'OPD' ? 'is-active' : ''}`}
@@ -396,12 +396,12 @@ export const NewVisitDialog = ({
             </button>
           </div>
 
-          <form id="new-visit-bottom-sheet-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} noValidate>
+          <form id="new-visit-bottom-sheet-form" onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }} noValidate>
             
             {/* ── OPD MODE ── */}
             {mode === 'OPD' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                   <Md3Select
                     id="nv-departmentId"
                     name="departmentId"
@@ -448,7 +448,7 @@ export const NewVisitDialog = ({
                     placeholder="e.g. High fever, headache, routine review"
                     disabled={formLoading}
                   />
-                  <div className="new-visit-chips-row" style={{ marginTop: '8px' }}>
+                  <div className="new-visit-chips-row" style={{ marginTop: '10px' }}>
                     {QUICK_COMPLAINTS.map((c) => (
                       <button
                         key={c}
@@ -462,7 +462,7 @@ export const NewVisitDialog = ({
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                   <Md3TextField
                     id="nv-consultationFee"
                     name="consultationFee"
@@ -492,8 +492,8 @@ export const NewVisitDialog = ({
 
             {/* ── IPD MODE ── */}
             {(mode === 'IPD_MEDICAL' || mode === 'IPD_SURGICAL') && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                   <Md3Select
                     id="nv-ipd-departmentId"
                     name="departmentId"
@@ -544,7 +544,7 @@ export const NewVisitDialog = ({
                   patientGender={patient.gender}
                 />
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
                   <Md3TextField
                     id="nv-provisionalDiagnosis"
                     name="provisionalDiagnosis"
@@ -575,7 +575,7 @@ export const NewVisitDialog = ({
                   />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                   <Md3TextField
                     id="nv-initialDepositAmount"
                     name="initialDepositAmount"
@@ -604,7 +604,7 @@ export const NewVisitDialog = ({
             )}
 
             {/* Bottom Sheet Actions */}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '12px', borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '14px', marginTop: '16px', borderTop: '1px solid var(--md-sys-color-outline-variant)', paddingTop: '18px' }}>
               <Md3Button
                 type="button"
                 variant="secondary"

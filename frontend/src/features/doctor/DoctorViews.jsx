@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import ConsultationDesk from './ConsultationDesk';
 import DeletionRequestsView from './DeletionRequestsView';
 import DoctorAppointmentView from '../appointments/DoctorAppointmentView';
+import DoctorConsultationHistory from './DoctorConsultationHistory';
 
 /**
  * DoctorConsultationView — Main clinical consultation workspace & patient queue.
@@ -73,6 +74,13 @@ export const DoctorAppointmentsView = () => {
       }}
     />
   );
+};
+
+/**
+ * DoctorConsultationHistoryView — Doctor's personal consultation encounters and immutable notes history.
+ */
+export const DoctorConsultationHistoryView = () => {
+  return <DoctorConsultationHistory />;
 };
 
 /**

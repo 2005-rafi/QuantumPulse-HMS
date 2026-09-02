@@ -37,7 +37,7 @@ import WardOperationsDashboard from '../pages/WardOperationsDashboard';
 import UserProfilePage from '../pages/UserProfilePage';
 // Child Views for Named Routing
 import { ReceptionPatientsView, ReceptionAppointmentsView } from '../features/patients/ReceptionViews';
-import { DoctorConsultationView, DoctorAppointmentsView, DoctorDeletionRequestsView } from '../features/doctor/DoctorViews';
+import { DoctorConsultationView, DoctorAppointmentsView, DoctorDeletionRequestsView, DoctorConsultationHistoryView } from '../features/doctor/DoctorViews';
 import { NurseTriageView } from '../features/nurse/NurseViews';
 import { LabProcessingView, LabSpecimensView, LabReportedView } from '../features/laboratory/LabViews';
 import { WardTimeMonitoringView } from '../features/ipd/WardTimeMonitoringView';
@@ -155,6 +155,7 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="consultation" replace /> },
           { path: 'consultation', element: <DoctorConsultationView /> },
+          { path: 'history', element: <DoctorConsultationHistoryView /> },
           { path: 'ipd', element: <DoctorIpdCockpit /> },
           { path: 'ipd/:admissionId', element: <DoctorIpdCockpit /> },
           { path: 'appointments', element: <DoctorAppointmentsView /> },

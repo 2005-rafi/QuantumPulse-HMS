@@ -12,7 +12,24 @@ import {
   isTokenExpired,
 } from '../core/useSessionStore';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+/**
+ * Dynamic API Base URL resolution:
+ * On remote devices, mobile phones, or public tunnels (*.trycloudflare.com, LAN IP 10.x.x.x),
+ * always use the same-origin relative path '/api/v1'.
+ * This prevents hardcoded localhost URLs from leaking to remote clients,
+ * completely resolving Content Security Policy (CSP) and Mixed Content blocking.
+ */
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (host !== 'localhost' && host !== '127.0.0.1') {
+      return '/api/v1';
+    }
+  }
+  return import.meta.env.VITE_API_URL || '/api/v1';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 const api = axios.create({
   baseURL: API_BASE_URL,

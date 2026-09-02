@@ -606,107 +606,185 @@ const LabOrdersSection = ({ visits }) => {
   );
 };
 
-/* ─── Sub-Component: Visit History Table ─── */
+/* ─── Sub-Component: Patient Care & Consultation History Timeline ─── */
 const VisitHistorySection = ({ visits, userRole, onCancelVisit }) => {
-  const columns = [
-    { key: 'visitNumber', header: 'Token / Visit No.',
-      render: (row) => (
-        <span style={{ fontFamily: 'monospace', fontWeight: 700 }}>
-          {row.tokenString || row.visitNumber}
-        </span>
-      )
-    },
-    { key: 'createdAt', header: 'Date',
-      render: (row) => new Date(row.createdAt).toLocaleDateString('en-IN', {
-        day: 'numeric', month: 'short', year: 'numeric'
-      })
-    },
-    { key: 'status', header: 'Status',
-      render: (row) => {
-        const variant = row.status === 'COMPLETED' ? 'tertiary'
-          : row.status === 'CANCELLED' ? 'error'
-          : 'secondary';
-        return (
-          <div>
-            <Md3Chip variant={variant} size="small">
-              {row.status.replace(/_/g, ' ')}
-            </Md3Chip>
-            {row.status === 'CANCELLED' && row.cancellationReason && (
-              <div style={{ fontSize: '11px', color: 'var(--md-sys-color-error)', marginTop: '2px' }}>
-                Reason: {row.cancellationReason}
-              </div>
-            )}
-          </div>
-        );
-      }
-    },
-    { key: 'department', header: 'Department',
-      render: (row) => row.departmentId?.name || 'General OPD'
-    },
-    { key: 'doctor', header: 'Doctor',
-      render: (row) => row.consultation?.doctorId ? 'Consulted' : 'N/A (Direct)'
-    },
-    { key: 'totalAmount', header: `Total Bill (${CURRENCY_SYMBOL})`, align: 'right',
-      render: (row) => {
-        const reg = row.receptionPayment?.registrationFee || 0;
-        const cons = row.receptionPayment?.consultationFee || 0;
-        const total = reg + cons;
-        return total > 0 ? `${CURRENCY_SYMBOL}${total.toFixed(2)}` : '—';
-      }
-    },
-    ...(userRole === 'Reception' ? [{
-      key: 'actions',
-      header: 'Actions',
-      align: 'right',
-      render: (row) => {
-        const canCancel = (row.status === 'WAITING_TRIAGE' || row.status === 'CALLED') && !row.vitals?.recordedAt;
-        if (canCancel) {
-          return (
-            <button
-              onClick={() => onCancelVisit(row)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px',
-                padding: '4px 10px',
-                background: 'var(--md-sys-color-error-container)',
-                color: 'var(--md-sys-color-on-error-container)',
-                border: 'none',
-                borderRadius: '999px',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-              title="Cancel this visit before nursing triage and revoke queue token"
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>cancel</span>
-              Cancel
-            </button>
-          );
-        }
-        if (row.status === 'CANCELLED') {
-          return <span style={{ fontSize: '11px', color: 'var(--md-sys-color-error)' }}>Revoked</span>;
-        }
-        return <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)' }}>—</span>;
-      }
-    }] : [])
-  ];
+  const sorted = [...visits].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  if (sorted.length === 0) {
+    return (
+      <Md3Section
+        title="Care &amp; Consultation History"
+        subtitle="0 encounters on record"
+        icon={<Icon.History />}
+      >
+        <Md3EmptyState
+          icon={<Icon.FileText />}
+          title="No clinical encounters on record"
+          subtitle="This patient currently has no past OPD visits, emergency consultations, or inpatient admissions."
+        />
+      </Md3Section>
+    );
+  }
 
   return (
     <Md3Section
-      title="Visit & Billing History"
-      subtitle={`${visits.length} visit${visits.length !== 1 ? 's' : ''} on record`}
-      icon={<Icon.History />}
+      title="Care &amp; Consultation History"
+      subtitle={`${sorted.length} clinical encounter${sorted.length !== 1 ? 's' : ''} on record`}
+      icon={<span className="material-symbols-rounded">medical_information</span>}
     >
-      {visits.length > 0 ? (
-        <Md3DataTable columns={columns} rows={visits} />
-      ) : (
-        <Md3EmptyState
-          icon={<Icon.FileText />}
-          title="No visit history yet"
-          subtitle="This patient's journey begins with their first check-in. Create a new visit to get started."
-        />
-      )}
+      <div className="pp-care-history-deck">
+        {sorted.map((v) => {
+          const doc = v.consultation?.doctorId;
+          const docName = doc?.fullName ? formatDoctorName(doc.fullName) : (v.consultation?.doctorName || 'Attending Physician');
+          const deptName = v.departmentId?.name || doc?.departmentId?.name || 'General Medicine';
+          const specialization = doc?.specialization || doc?.primarySpecialization || 'Clinical Specialist';
+          const consultDate = v.consultation?.recordedAt || v.createdAt;
+          const dateFormatted = new Date(consultDate).toLocaleDateString('en-IN', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
+          const modality = (v.visitType || 'OPD').toLowerCase();
+          const diagnosis = v.consultation?.diagnosis || 'Clinical assessment completed';
+          const symptoms = v.vitals?.chiefComplaint || v.consultation?.chiefComplaint || v.reasonForVisit;
+          const meds = Array.isArray(v.prescribedMedications) ? v.prescribedMedications : (Array.isArray(v.consultation?.prescribedMedications) ? v.consultation.prescribedMedications : []);
+          const labs = Array.isArray(v.labOrders) ? v.labOrders : [];
+          const token = v.tokenString || v.visitNumber || 'N/A';
+          const canCancel = (v.status === 'WAITING_TRIAGE' || v.status === 'CALLED') && !v.vitals?.recordedAt;
+          const reg = v.receptionPayment?.registrationFee || 0;
+          const cons = v.receptionPayment?.consultationFee || 0;
+          const totalFee = reg + cons;
+
+          return (
+            <div key={v._id} className="pp-care-encounter-card">
+              {/* Encounter Header */}
+              <div className="pp-care-card-header">
+                <div className="pp-care-doctor-badge">
+                  <div className="pp-care-doctor-avatar">
+                    <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>stethoscope</span>
+                  </div>
+                  <div className="pp-care-doctor-info">
+                    <h4>{docName}</h4>
+                    <span>{deptName} • {specialization}</span>
+                  </div>
+                </div>
+
+                <div className="pp-care-meta-right">
+                  <span className={`pp-care-modality-badge ${modality}`}>
+                    {v.visitType || 'OPD'}
+                  </span>
+                  <span style={{ fontFamily: 'monospace', fontWeight: 800, fontSize: '12px', background: 'var(--md-sys-color-surface-container-high)', padding: '3px 8px', borderRadius: '6px' }}>
+                    {token}
+                  </span>
+                  <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 600 }}>
+                    {dateFormatted}
+                  </span>
+                </div>
+              </div>
+
+              {/* Diagnosis & Clinical Reason */}
+              <div className="pp-care-diagnosis-row">
+                <span className="pp-care-diag-label">
+                  <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>clinical_notes</span>
+                  <span>Clinical Diagnosis</span>
+                </span>
+                <span className="pp-care-diag-title">{diagnosis}</span>
+                {symptoms && (
+                  <span className="pp-care-symptoms-text">
+                    <strong>Reason for Consultation:</strong> {symptoms}
+                  </span>
+                )}
+                {v.consultation?.treatmentPlan && (
+                  <span className="pp-care-symptoms-text" style={{ marginTop: '2px' }}>
+                    <strong>Care Advice:</strong> {v.consultation.treatmentPlan}
+                  </span>
+                )}
+              </div>
+
+              {/* Prescriptions & Dosing Schedule */}
+              {meds.length > 0 && (
+                <div className="pp-care-rx-deck">
+                  <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--md-sys-color-primary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>pill</span>
+                    <span>Prescriptions ({meds.length} items)</span>
+                  </span>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px' }}>
+                    {meds.map((med, mIdx) => (
+                      <div key={mIdx} className="pp-care-rx-tile">
+                        <div>
+                          <div className="pp-care-rx-name">{med.name || med.medicineName || 'Medication'}</div>
+                          {med.instructions && (
+                            <div style={{ fontSize: '0.70rem', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '2px' }}>
+                              {med.instructions}
+                            </div>
+                          )}
+                        </div>
+                        <div className="pp-care-rx-meta">
+                          <span className="pp-care-rx-timing">
+                            {med.dosage || ''} {med.frequency ? `• ${med.frequency}` : ''} {med.duration ? `• ${med.duration}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Diagnostic Orders (if present) */}
+              {labs.length > 0 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 12px', background: 'var(--md-sys-color-surface-container)', borderRadius: '8px', fontSize: '0.75rem' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                    <span className="material-symbols-rounded" style={{ fontSize: '15px', color: 'var(--md-sys-color-primary)' }}>science</span>
+                    <span>Diagnostics: {labs.map(l => l.testName).join(', ')}</span>
+                  </span>
+                  <span style={{ fontWeight: 700, color: 'var(--md-sys-color-primary)' }}>
+                    {labs.every(l => l.status === 'COMPLETED') ? 'Tests Completed' : 'Pending Processing'}
+                  </span>
+                </div>
+              )}
+
+              {/* Encounter Footer */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid var(--md-sys-color-outline-variant, #f1eee1)', fontSize: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontWeight: 700, color: v.status === 'COMPLETED' ? '#166534' : v.status === 'CANCELLED' ? '#ba1a1a' : 'var(--md-sys-color-primary)' }}>
+                    Status: {v.status.replace(/_/g, ' ')}
+                  </span>
+                  {totalFee > 0 && (
+                    <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+                      Consultation Fee: <strong>{CURRENCY_SYMBOL}{totalFee.toFixed(2)}</strong>
+                    </span>
+                  )}
+                </div>
+
+                {userRole === 'Reception' && canCancel && (
+                  <button
+                    type="button"
+                    onClick={() => onCancelVisit(v)}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '4px 12px',
+                      background: 'var(--md-sys-color-error-container)',
+                      color: 'var(--md-sys-color-on-error-container)',
+                      border: 'none',
+                      borderRadius: '999px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>cancel</span>
+                    <span>Cancel Visit</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </Md3Section>
   );
 };
@@ -1188,8 +1266,8 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
             onChange={setActiveTab}
             tabs={[
               { id: 'overview', label: 'Clinical Overview', icon: <Icon.Person /> },
+              { id: 'history', label: 'Care & Consultation History', icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>medical_information</span> },
               { id: 'appointments', label: 'Appointments', icon: <Icon.Calendar /> },
-              { id: 'history', label: 'Visit History', icon: <Icon.History /> },
               { id: 'labs', label: 'Lab Reports', icon: <Icon.Beaker /> },
               { id: 'idcard', label: 'Print ID Card', icon: <Icon.Print /> },
             ]}

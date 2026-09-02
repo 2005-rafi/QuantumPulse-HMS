@@ -20,6 +20,8 @@ export const visitAPI = {
       : (data?.cancellationReason ? data : { cancellationReason: data?.reason || '' });
     return api.patch(`/visits/${id}/cancel`, payload);
   },
+  // Doctor consultation history (Isolated per-doctor)
+  getDoctorConsultationHistory: (params) => api.get('/visits/doctor/history', { params }),
   // Lab & Pharmacy
   processLab:          (id, labData)      => api.patch(`/laboratory/visits/${id}/process`, labData),
   dispenseMedicine:    (id, pharmacyData) => api.patch(`/pharmacy/visits/${id}/dispense`, pharmacyData),

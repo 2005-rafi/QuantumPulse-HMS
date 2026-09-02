@@ -1,0 +1,1221 @@
+/* ==========================================================================
+   DoctorConsultationHistory.css — Pure Material 3 Clinical Tracking Hub
+   Path: frontend/src/features/doctor/DoctorConsultationHistory.css
+   Full infinite horizontal & vertical expansion across desktop, tablet, mobile
+   ========================================================================== */
+
+/* ── 1. MAIN PAGE CONTAINER (FLUID INFINITE EXPANSION) ── */
+.md3-doc-history-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 24px 48px 24px;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: var(--md-sys-color-surface, #fdf8fd);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+/* ── 2. HERO WORKSPACE & TELEMETRY BANNER ── */
+.md3-doc-history-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: linear-gradient(135deg, var(--md-sys-color-surface-container-low, #f7f2fa) 0%, var(--md-sys-color-surface-container, #f3edf7) 100%);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-large, 20px);
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.md3-doc-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.md3-doc-hero-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 30%, transparent);
+}
+
+.md3-doc-hero-avatar .material-symbols-rounded {
+  font-size: 28px;
+}
+
+.md3-doc-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md3-doc-hero-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-doc-hero-subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.4;
+}
+
+.md3-doc-hero-subtitle strong {
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* Telemetry Stats Deck */
+.md3-doc-telemetry-deck {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.md3-doc-telemetry-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 160ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+              background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+  outline: none;
+}
+
+.md3-doc-telemetry-card:focus-visible {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
+}
+
+.md3-doc-telemetry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.md3-doc-telemetry-card:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.md3-telemetry-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.md3-doc-telemetry-card:hover .md3-telemetry-icon {
+  transform: scale(1.05);
+}
+
+.md3-telemetry-icon .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.md3-telemetry-icon.primary {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.md3-telemetry-icon.success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.md3-telemetry-icon.opd {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-telemetry-icon.ipd {
+  background-color: #ccfbf1;
+  color: #0f766e;
+}
+
+.md3-telemetry-icon.emergency {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.md3-telemetry-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.md3-telemetry-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.1;
+}
+
+.md3-telemetry-lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── 3. CONTROLS MATRIX (SEARCH, MODALITIES, DATES & STATUS) ── */
+.md3-doc-controls-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 16px);
+  padding: 14px 18px;
+}
+
+.md3-doc-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.md3-doc-search-box {
+  flex: 1;
+  min-width: 320px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.md3-search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 20px;
+  pointer-events: none;
+}
+
+.md3-search-input {
+  width: 100%;
+  padding: 10px 38px 10px 42px;
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.88rem;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.md3-search-input:focus {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 20%, transparent);
+}
+
+.md3-search-clear-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 50%;
+}
+
+.md3-search-clear-btn:hover {
+  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+/* Modality Segmented Control */
+.md3-modality-segment-group {
+  display: flex;
+  align-items: center;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  padding: 3px;
+  border-radius: 12px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  gap: 2px;
+}
+
+.md3-modality-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+}
+
+.md3-modality-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.md3-modality-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-surface-container-highest, #e6e0e9) 80%, transparent);
+}
+
+.md3-modality-btn.active {
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.md3-modality-btn.active.opd {
+  color: #0284c7;
+}
+
+.md3-modality-btn.active.ipd {
+  color: #0d9488;
+}
+
+.md3-modality-btn.active.emergency {
+  color: #dc2626;
+}
+
+/* Controls Secondary: Date & Status Filters */
+.md3-doc-controls-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #cac4d0) 50%, transparent);
+}
+
+.md3-date-filter-deck,
+.md3-status-filter-deck {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.md3-filter-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-right: 4px;
+}
+
+.md3-filter-group-label .material-symbols-rounded {
+  font-size: 15px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-date-chip,
+.md3-status-chip {
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.md3-date-chip:hover,
+.md3-status-chip:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.md3-date-chip.active,
+.md3-status-chip.active {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-custom-date-inputs {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-date-input {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  font-size: 0.75rem;
+  outline: none;
+}
+
+.md3-timeline-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.md3-text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-primary, #6750a4);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.md3-text-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 10%, transparent);
+}
+
+/* ── 4. TIMELINE FEED & DATE-WISE SECTIONS ── */
+.md3-doc-timeline-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+}
+
+.md3-date-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Sticky Date Header */
+.md3-date-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 18px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.md3-date-header:hover {
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+}
+
+.md3-date-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.md3-date-badge-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-date-badge-icon .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.md3-date-title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.md3-date-heading {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-date-subtext {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-date-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.md3-date-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-modality-mini-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.md3-modality-mini-pill.opd {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-modality-mini-pill.ipd {
+  background-color: #ccfbf1;
+  color: #0f766e;
+}
+
+.md3-modality-mini-pill.emg {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.md3-collapse-chevron {
+  font-size: 22px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: transform 200ms ease;
+}
+
+.md3-collapse-chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+/* ── 5. FLUID MASONRY/GRID OF PATIENT ENCOUNTERS (INFINITE WIDTH) ── */
+.md3-encounters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+/* Encounter Card */
+.md3-encounter-card {
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 16px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.md3-encounter-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 4px;
+  background-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-encounter-card.opd-accent::before {
+  background-color: #0284c7;
+}
+
+.md3-encounter-card.ipd-accent::before {
+  background-color: #0d9488;
+}
+
+.md3-encounter-card.emergency-accent::before {
+  background-color: #dc2626;
+}
+
+.md3-encounter-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* Card Top: Identity & Token/Time */
+.md3-ec-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.md3-ec-patient-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.md3-ec-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.md3-ec-name {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-ec-demographics {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-ec-token-time {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.md3-ec-token {
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: 0.02em;
+}
+
+.md3-ec-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* Sub-header: MRN, Blood Group & Modality */
+.md3-ec-sub-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px dashed var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-ec-mrn {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-ec-sub-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.md3-ec-blood-pill {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #ba1a1a;
+  background: rgba(186, 26, 26, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md3-ec-modality-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.md3-ec-modality-pill .material-symbols-rounded {
+  font-size: 13px;
+}
+
+.md3-ec-modality-pill.opd {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-ec-modality-pill.ipd {
+  background-color: #ccfbf1;
+  color: #0f766e;
+}
+
+.md3-ec-modality-pill.emergency {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+/* Clinical Diagnosis Block */
+.md3-ec-diagnosis-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-left: 3px solid var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ec-section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ec-section-label .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.md3-ec-diagnosis-text {
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.3;
+}
+
+.md3-ec-complaint {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: 2px;
+}
+
+/* 🔒 Immutable Doctor Notes Box */
+.md3-ec-notes-box {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md3-ec-notes-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.md3-ec-notes-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #166534;
+  text-transform: uppercase;
+}
+
+.md3-ec-locked-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #166534;
+  background-color: #dcfce7;
+  padding: 1px 6px;
+  border-radius: 100px;
+}
+
+.md3-ec-locked-pill .material-symbols-rounded {
+  font-size: 11px;
+}
+
+.md3-ec-notes-body {
+  font-size: 0.78rem;
+  color: #14532d;
+  line-height: 1.35;
+  font-style: italic;
+}
+
+/* Prescriptions Deck */
+.md3-ec-rx-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.md3-ec-rx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md3-ec-rx-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  font-size: 0.74rem;
+}
+
+.md3-ec-rx-drug {
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-ec-rx-schedule {
+  font-weight: 600;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ec-rx-more {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #6750a4);
+  padding-left: 4px;
+}
+
+/* Lab Bar */
+.md3-ec-lab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  font-size: 0.74rem;
+}
+
+.md3-ec-lab-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-ec-lab-label .material-symbols-rounded {
+  font-size: 15px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ec-lab-status {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.md3-ec-lab-status.ready {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.md3-ec-lab-status.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Card Footer */
+.md3-ec-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 6px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-ec-status-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.md3-ec-status-badge.finalized {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.md3-ec-status-badge.active {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.md3-ec-doctor-tag {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* ── 6. CLINICAL ENCOUNTER MODAL DIALOG ── */
+.md3-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 16px;
+}
+
+.md3-dialog-card {
+  width: 100%;
+  max-width: 680px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: var(--md-sys-shape-corner-large, 24px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  animation: md3DialogFadeIn 180ms cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes md3DialogFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.md3-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-dialog-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.md3-dialog-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.md3-dialog-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-dialog-subtitle {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-dialog-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+}
+
+.md3-dialog-close-btn:hover {
+  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+.md3-dialog-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  font-size: 0.85rem;
+}
+
+.md3-dialog-section {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-dialog-section-title {
+  margin: 0 0 10px 0;
+  font-size: 0.80rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-dialog-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.md3-dialog-notes-content {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 10px 12px;
+  border: 1px solid #bbf7d0;
+  color: #14532d;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+.md3-dialog-rx-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.md3-dialog-rx-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-dialog-labs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.md3-dialog-lab-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: #ffffff;
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-dialog-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 14px 24px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-dialog-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  border: none;
+  cursor: pointer;
+}
+
+.md3-dialog-btn.secondary {
+  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-dialog-btn.secondary:hover {
+  background-color: var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+/* ── 7. EMPTY & LOADING STATES ── */
+.md3-feed-loading-box,
+.md3-feed-empty-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  border-radius: 20px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+  text-align: center;
+}
+
+.md3-empty-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-empty-icon-wrap .material-symbols-rounded {
+  font-size: 32px;
+}
+
+.md3-empty-title {
+  margin: 0 0 6px 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-empty-subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  max-width: 480px;
+  line-height: 1.4;
+}
+
+.md3-reset-filter-btn {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  font-size: 0.80rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ── 8. RESPONSIVE BREAKPOINTS (DESKTOP, TABLET, MOBILE) ── */
+@media (max-width: 1024px) {
+  .md3-encounters-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .md3-doc-history-page {
+    padding: 12px 14px 36px 14px;
+  }
+
+  .md3-doc-hero-main {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .md3-doc-telemetry-deck {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .md3-doc-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .md3-doc-search-box {
+    min-width: 100%;
+  }
+
+  .md3-modality-segment-group {
+    overflow-x: auto;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .md3-encounters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .md3-dialog-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .md3-doc-telemetry-deck {
+    grid-template-columns: 1fr;
+  }
+
+  .md3-date-header-left {
+    gap: 8px;
+  }
+
+  .md3-date-pills-row {
+    display: none;
+  }
+}

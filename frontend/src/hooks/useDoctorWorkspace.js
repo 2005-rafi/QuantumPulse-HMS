@@ -19,29 +19,38 @@ import { appointmentAPI } from '../services/appointmentAPI';
 import api from '../services/api';
 import { Icon } from '../components/md3/Md3Widgets';
 
-const CONSULTATION_TAB = {
-  id: 'consultation',
-  label: 'Consultation Desk',
-  icon: null, // Rendered in DoctorDashboard
-};
-
-const IPD_TAB = {
-  id: 'ipd',
-  label: 'Inpatient Ward',
-  icon: null,
-};
-
-const APPOINTMENTS_TAB = {
-  id: 'appointments',
-  label: 'Appointments',
-  icon: null,
-};
-
-const DELETION_TAB = {
-  id: 'deletionRequests',
-  label: 'Deletion Requests',
-  icon: null,
-};
+export const DOCTOR_NAV_TABS = [
+  {
+    id: 'consultation',
+    path: 'consultation',
+    label: 'Consultation Desk',
+    iconName: 'stethoscope',
+  },
+  {
+    id: 'history',
+    path: 'history',
+    label: 'Consultation History',
+    iconName: 'history_edu',
+  },
+  {
+    id: 'ipd',
+    path: 'ipd',
+    label: 'Inpatient Ward',
+    iconName: 'hotel',
+  },
+  {
+    id: 'appointments',
+    path: 'appointments',
+    label: 'Appointments',
+    iconName: 'calendar_month',
+  },
+  {
+    id: 'deletion-requests',
+    path: 'deletion-requests',
+    label: 'Deletion Requests',
+    iconName: 'delete',
+  },
+];
 
 const DEFAULT_LABORATORIES = [
   {
@@ -431,17 +440,14 @@ export const useDoctorWorkspace = () => {
     return counts;
   }, [queue]);
 
-  const headerTabs = useMemo(() => [
-    CONSULTATION_TAB,
-    IPD_TAB,
-    APPOINTMENTS_TAB,
-    {
-      ...DELETION_TAB,
-      label: deletionRequests.length > 0
-        ? `${DELETION_TAB.label} (${deletionRequests.length})`
-        : DELETION_TAB.label,
-    },
-  ], [deletionRequests.length]);
+  const headerTabs = useMemo(() => {
+    return DOCTOR_NAV_TABS.map((tab) => ({
+      ...tab,
+      label: tab.id === 'deletion-requests' && deletionRequests.length > 0
+        ? `${tab.label} (${deletionRequests.length})`
+        : tab.label,
+    }));
+  }, [deletionRequests.length]);
 
   return {
     queue,

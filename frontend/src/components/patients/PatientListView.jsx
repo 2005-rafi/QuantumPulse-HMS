@@ -149,15 +149,33 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
                   </div>
                 </td>
 
-                {/* 5. Last Visit Date */}
+                {/* 5. Last Visit / Inpatient State */}
                 <td className="col-last-visit">
-                  {patient.lastVisitDate ? (
+                  {patient.activeAdmission ? (
+                    <div className="md3-visit-cell">
+                      <span className="material-symbols-rounded">hotel</span>
+                      <span className="md3-visit-date">
+                        {patient.activeAdmission.bedNumber ? `Bed ${patient.activeAdmission.bedNumber}` : 'Admitted'}
+                      </span>
+                      <span className={`md3-visit-type-chip ${patient.activeAdmission.admissionType === 'EMERGENCY' ? 'md3-visit-type-chip--emergency' : 'md3-visit-type-chip--ipd'}`}>
+                        {patient.activeAdmission.admissionType === 'EMERGENCY' ? 'EMERGENCY' : 'IPD'}
+                      </span>
+                    </div>
+                  ) : patient.lastVisitDate ? (
                     <div className="md3-visit-cell">
                       <span className="material-symbols-rounded">event_available</span>
                       <span className="md3-visit-date">{lastVisit}</span>
-                      {patient.lastVisitType && (
-                        <span className="md3-visit-type-chip">{patient.lastVisitType}</span>
-                      )}
+                      <span
+                        className={`md3-visit-type-chip ${
+                          patient.lastVisitType === 'EMERGENCY'
+                            ? 'md3-visit-type-chip--emergency'
+                            : patient.lastVisitType === 'IPD'
+                            ? 'md3-visit-type-chip--ipd'
+                            : 'md3-visit-type-chip--opd'
+                        }`}
+                      >
+                        {patient.lastVisitType || 'OPD'}
+                      </span>
                     </div>
                   ) : (
                     <span className="md3-badge-none">No past visits</span>

@@ -206,9 +206,34 @@
   border-radius: 6px;
   font-size: 10.5px;
   font-weight: 600;
+  text-transform: uppercase;
   background: var(--md-sys-color-surface-container, #f3eee3);
   color: var(--md-sys-color-on-surface-variant, #4a4539);
   border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+}
+
+.md3-visit-type-chip--ipd {
+  background: var(--md-sys-color-tertiary-container, #ffd8e4);
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary, #7d5260) 25%, transparent);
+}
+
+.md3-visit-type-chip--emergency {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 30%, transparent);
+}
+
+.md3-visit-type-chip--opd {
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
+}
+
+.md3-visit-type-chip--idle {
+  background: var(--md-sys-color-surface-container-highest, #ece6f0);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
 }
 
 /* ── Cell: Latest Appointment ── */

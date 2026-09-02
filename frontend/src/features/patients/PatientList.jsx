@@ -96,25 +96,50 @@ const PatientList = ({ onSelectPatient, onTotalChange, onRegisterPatient }) => {
   const fetchPatients = useCallback(async (searchQuery, currentPage, activeFilters) => {
     setLoading(true);
     try {
-      // Map multi-select arrays to comma-separated lists for cleaner querystring serialization
-      const apiFilters = { ...activeFilters };
+      const filterSource = activeFilters?.filters || activeFilters || {};
+      const apiFilters = { ...filterSource };
+
       if (Array.isArray(apiFilters.visitType)) {
-        apiFilters.visitType = apiFilters.visitType.join(',');
+        apiFilters.visitType = apiFilters.visitType.filter(Boolean).join(',');
+      }
+      if (Array.isArray(apiFilters.departmentId)) {
+        apiFilters.departmentId = apiFilters.departmentId.filter(Boolean).join(',');
+      }
+      if (Array.isArray(apiFilters.doctorId)) {
+        apiFilters.doctorId = apiFilters.doctorId.filter(Boolean).join(',');
+      }
+      if (Array.isArray(apiFilters.roleId)) {
+        apiFilters.roleId = apiFilters.roleId.filter(Boolean).join(',');
+      }
+      if (Array.isArray(apiFilters.city)) {
+        apiFilters.city = apiFilters.city.filter(Boolean).join(',');
       }
       if (Array.isArray(apiFilters.patientType)) {
-        apiFilters.patientType = apiFilters.patientType.join(',');
+        apiFilters.patientType = apiFilters.patientType.filter(Boolean).join(',');
       }
       if (Array.isArray(apiFilters.gender)) {
-        apiFilters.gender = apiFilters.gender.join(',');
+        apiFilters.gender = apiFilters.gender.filter(Boolean).join(',');
       }
       if (Array.isArray(apiFilters.bloodGroup)) {
-        apiFilters.bloodGroup = apiFilters.bloodGroup.join(',');
+        apiFilters.bloodGroup = apiFilters.bloodGroup.filter(Boolean).join(',');
       }
+
+      // Strip empty values and empty arrays
+      Object.keys(apiFilters).forEach((k) => {
+        if (
+          apiFilters[k] === '' ||
+          apiFilters[k] === undefined ||
+          apiFilters[k] === null ||
+          (Array.isArray(apiFilters[k]) && apiFilters[k].length === 0)
+        ) {
+          delete apiFilters[k];
+        }
+      });
 
       const res = await patientAPI.list(currentPage, limit, searchQuery, apiFilters);
       const data = res.data?.data || res.data || {};
       const items = data.patients || data.items || [];
-      const total = data.total || data.totalCount || items.length;
+      const total = data.total !== undefined ? data.total : (data.totalCount || items.length);
       const pages = data.pages || data.totalPages || Math.ceil(total / limit) || 1;
 
       setPatients(items);
@@ -132,10 +157,12 @@ const PatientList = ({ onSelectPatient, onTotalChange, onRegisterPatient }) => {
     }
   }, [limit, onTotalChange]);
 
-  const handleFiltersChange = useCallback((newFilters) => {
-    const { query: newQuery, ...rest } = newFilters;
-    setQuery(newQuery || '');
-    setFilters(rest);
+  const handleFiltersChange = useCallback((incoming) => {
+    if (!incoming) return;
+    const newQuery = incoming.query !== undefined ? incoming.query : (typeof incoming === 'string' ? incoming : '');
+    const filterObj = incoming.filters || (typeof incoming === 'object' && !incoming.query ? incoming : {});
+    setQuery(newQuery);
+    setFilters(filterObj);
     setPage(1);
   }, []);
 
@@ -264,7 +291,7 @@ const PatientList = ({ onSelectPatient, onTotalChange, onRegisterPatient }) => {
                 <PatientCard
                   key={p._id || p.id}
                   patient={p}
-                  typeIndicator="OPD"
+                  typeIndicator={p.currentState || p.lastVisitType || 'IDLE'}
                   onClick={onSelectPatient}
                 />
               ))}

@@ -63,7 +63,7 @@ const createApp = () => {
           workerSrc: ["'self'", "blob:"],
           frameSrc: ["'self'", "blob:", "data:", "https://*.cloudinary.com", "https://res.cloudinary.com", "https://api.cloudinary.com"],
           childSrc: ["'self'", "blob:", "data:", "https://*.cloudinary.com", "https://res.cloudinary.com", "https://api.cloudinary.com"],
-          connectSrc: ["'self'", "https:", "wss:", "ws:"],
+          connectSrc: ["'self'", "http:", "https:", "wss:", "ws:", "https://*.cloudinary.com", "https://res.cloudinary.com", "https://api.cloudinary.com"],
           imgSrc: ["'self'", "data:", "blob:", "https:"],
           styleSrc: ["'self'", "'unsafe-inline'", "https:"],
           fontSrc: ["'self'", "https:", "data:"],

@@ -20,6 +20,9 @@ router.post('/', requirePermission('VISIT_CREATE'), validate(createVisitSchema),
 // ── Cancel visit & revoke queue token (Reception / Admin - before triage only) ─
 router.patch('/:id/cancel', requirePermission(['VISIT_CLOSE', 'VISIT_CREATE', 'MANAGE_USERS']), validate(cancelVisitSchema), visitController.cancelVisit);
 
+// ── Doctor consultation history (Isolated to logged-in doctor) ───────────────
+router.get('/doctor/history', requirePermission(['NOTE_UPDATE', 'VISIT_VIEW']), visitController.getDoctorConsultationHistory);
+
 // ── Patient visit history ────────────────────────────────────────────────────
 router.get('/patient/:patientId', requirePermission('VISIT_VIEW'), visitController.getVisitsByPatientId);
 

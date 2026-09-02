@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Icon, Md3Chip, Md3EmptyState,
 } from '../../components/md3/Md3Widgets';
@@ -11,6 +11,23 @@ const decodeHtml = (str) => {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#039;/g, "'");
+};
+
+const STANDARD_VITAL_KEYS = new Set([
+  'BP', 'BLOODPRESSURE', 'BLOOD_PRESSURE',
+  'PULSE', 'PULSERATE', 'PULSE_RATE', 'HEART_RATE',
+  'TEMP', 'TEMPERATURE',
+  'SPO2', 'SPO2LEVEL', 'SPO2_LEVEL', 'OXYGEN_SATURATION', 'OXYGENSATURATION',
+  'RESP_RATE', 'RESPIRATORY_RATE', 'RESPIRATORYRATE',
+  'HEIGHT', 'WEIGHT', 'BODY_WEIGHT', 'BODYWEIGHT',
+  'BMI', 'CALCULATED_BMI',
+  'CHIEF_COMPLAINT', 'CHIEFCOMPLAINT'
+]);
+
+const isStandardVitalKey = (rawKey) => {
+  if (!rawKey) return false;
+  const clean = String(rawKey).toUpperCase().replace(/[\s_\-]/g, '');
+  return STANDARD_VITAL_KEYS.has(clean) || STANDARD_VITAL_KEYS.has(String(rawKey).toUpperCase());
 };
 
 const formatVitalKey = (key) => {
@@ -26,6 +43,12 @@ const formatVitalKey = (key) => {
     HEIGHT: 'Height',
     WEIGHT: 'Weight',
     CHIEF_COMPLAINT: 'Chief Complaint',
+    PAIN_SCALE: 'Pain Scale (0-10)',
+    PAINSCALE: 'Pain Scale (0-10)',
+    BLOOD_SUGAR: 'Blood Glucose (Sugar)',
+    SUGAR: 'Blood Glucose (Sugar)',
+    RBS: 'Random Blood Sugar (RBS)',
+    FBS: 'Fasting Blood Sugar (FBS)',
   };
   if (map[keyUpper]) return map[keyUpper];
 
@@ -34,6 +57,16 @@ const formatVitalKey = (key) => {
     .replace(/([A-Z])/g, ' $1')
     .replace(/^./, (s) => s.toUpperCase())
     .trim();
+};
+
+const formatVitalValue = (key, value) => {
+  if (value === null || value === undefined || value === '') return '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  const k = key.toLowerCase();
+  const v = String(value).trim();
+  if (k.includes('pain') && !v.includes('/')) return `${v} / 10`;
+  if ((k.includes('sugar') || k.includes('glucose') || k.includes('rbs') || k.includes('fbs')) && !v.toLowerCase().includes('mg')) return `${v} mg/dL`;
+  return v;
 };
 
 const calculateBmi = (weightKg, heightCm) => {
@@ -66,7 +99,17 @@ const TriageVitalsPanel = ({ vitals = {} }) => {
   const hasVitals = vitals && Object.keys(vitals).some((key) => vitals[key] !== null && vitals[key] !== undefined && vitals[key] !== '');
 
   const bmiData = calculateBmi(vitals.weight, vitals.height);
-  const hasDynamic = vitals.dynamicVitals && Object.keys(vitals.dynamicVitals).length > 0;
+
+  // Filter department-specific vitals that are not already present in the standard 2x4 matrix
+  const dynamicEntries = useMemo(() => {
+    if (!vitals?.dynamicVitals || typeof vitals.dynamicVitals !== 'object') return [];
+    return Object.entries(vitals.dynamicVitals).filter(([key, val]) => {
+      if (val === null || val === undefined || val === '') return false;
+      return !isStandardVitalKey(key);
+    });
+  }, [vitals?.dynamicVitals]);
+
+  const hasDynamic = dynamicEntries.length > 0;
 
   return (
     <div className="summary-card">
@@ -76,7 +119,7 @@ const TriageVitalsPanel = ({ vitals = {} }) => {
             <Icon.Heart size={18} />
           </span>
           <div>
-            <h4 className="summary-card__title">Triage Vitals & Clinical Measurements</h4>
+            <h4 className="summary-card__title">Triage Vitals &amp; Clinical Measurements</h4>
             <p className="summary-card__subtitle">Recorded at check-in triage by nursing staff</p>
           </div>
         </div>
@@ -208,23 +251,20 @@ const TriageVitalsPanel = ({ vitals = {} }) => {
             </div>
           )}
 
-          {/* ── Dynamic Department Vitals (if any) ── */}
+          {/* ── Dynamic Department Specific Vitals (if any) ── */}
           {hasDynamic && (
             <div className="summary-dynamic-box">
-              <span className="summary-dynamic-title">Department Specific Assessment</span>
+              <span className="summary-dynamic-title">
+                <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>assignment</span>
+                Department Specific Assessment
+              </span>
               <div className="summary-dynamic-grid">
-                {Object.entries(vitals.dynamicVitals).map(([key, value]) => {
-                  const displayValue =
-                    typeof value === 'boolean'
-                      ? value ? 'Yes' : 'No'
-                      : value !== null && value !== undefined ? String(value) : '—';
-                  return (
-                    <div key={key} className="summary-dynamic-item">
-                      <span className="summary-dynamic-key">{formatVitalKey(key)}</span>
-                      <span className="summary-dynamic-val">{displayValue}</span>
-                    </div>
-                  );
-                })}
+                {dynamicEntries.map(([key, value]) => (
+                  <div key={key} className="summary-dynamic-item">
+                    <span className="summary-dynamic-key">{formatVitalKey(key)}</span>
+                    <span className="summary-dynamic-val">{formatVitalValue(key, value)}</span>
+                  </div>
+                ))}
               </div>
             </div>
           )}

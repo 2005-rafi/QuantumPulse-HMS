@@ -774,3 +774,170 @@
   }
 }
 
+/* ──────────────────────────────────────────────────────
+   6. CARE & CONSULTATION HISTORY TIMELINE
+   ────────────────────────────────────────────────────── */
+.pp-care-history-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.pp-care-encounter-card {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: all 180ms ease;
+}
+
+.pp-care-encounter-card:hover {
+  border-color: var(--md-sys-color-primary, #196584);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+.pp-care-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f1eee1);
+}
+
+.pp-care-doctor-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pp-care-doctor-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--md-sys-color-primary-container, #c1e8ff);
+  color: var(--md-sys-color-on-primary-container, #001e2b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.pp-care-doctor-info h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+.pp-care-doctor-info span {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+  font-weight: 600;
+}
+
+.pp-care-meta-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-care-modality-badge {
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+.pp-care-modality-badge.opd {
+  background: var(--md-sys-color-primary-container, #c1e8ff);
+  color: var(--md-sys-color-on-primary-container, #001e2b);
+}
+
+.pp-care-modality-badge.emergency {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+
+.pp-care-modality-badge.ipd {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.pp-care-diagnosis-row {
+  background: var(--md-sys-color-surface-container-low, #f8f6ea);
+  border-left: 3px solid var(--md-sys-color-primary, #196584);
+  padding: 10px 14px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pp-care-diag-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary, #196584);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pp-care-diag-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+.pp-care-symptoms-text {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+}
+
+.pp-care-rx-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-care-rx-tile {
+  background: var(--md-sys-color-surface-container, #f1eee1);
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pp-care-rx-name {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+.pp-care-rx-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pp-care-rx-timing {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #196584);
+  background: var(--md-sys-color-surface, #ffffff);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+

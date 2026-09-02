@@ -1,0 +1,1066 @@
+/* ==========================================================================
+   DoctorIpdCockpit.css — Pure Material 3 Inpatient Clinical Cockpit
+   Path: frontend/src/features/ipd/DoctorIpdCockpit.css
+   Full infinite horizontal & vertical expansion across desktop, tablet, mobile
+   ========================================================================== */
+
+/* ── 1. MAIN COCKPIT CONTAINER (FLUID INFINITE EXPANSION) ── */
+.doctor-ipd-cockpit {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 16px 24px 48px 24px;
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: var(--md-sys-color-surface, #fdf8fd);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+/* ── 2. HERO WORKSPACE & INPATIENT TELEMETRY BANNER ── */
+.md3-ipd-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: linear-gradient(135deg, var(--md-sys-color-surface-container-low, #f7f2fa) 0%, var(--md-sys-color-surface-container, #f3edf7) 100%);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-large, 20px);
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.md3-ipd-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.md3-ipd-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.md3-ipd-hero-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 30%, transparent);
+}
+
+.md3-ipd-hero-avatar .material-symbols-rounded {
+  font-size: 28px;
+}
+
+.md3-ipd-hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md3-ipd-hero-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-ipd-hero-subtitle {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.4;
+}
+
+.md3-ipd-hero-subtitle strong {
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* Inpatient Selector Control */
+.md3-ipd-switcher-box {
+  min-width: 300px;
+  max-width: 380px;
+  flex: 1;
+}
+
+/* Telemetry Stats Bar */
+.md3-ipd-telemetry-deck {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.md3-ipd-telemetry-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1),
+              box-shadow 160ms cubic-bezier(0.2, 0, 0, 1),
+              border-color 160ms cubic-bezier(0.2, 0, 0, 1),
+              background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+  position: relative;
+  outline: none;
+}
+
+.md3-ipd-telemetry-card:focus-visible {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
+}
+
+.md3-ipd-telemetry-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.md3-ipd-telemetry-card:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.md3-ipd-telemetry-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.md3-ipd-telemetry-chevron {
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0.4;
+  transition: opacity 160ms ease, transform 160ms ease;
+  flex-shrink: 0;
+}
+
+.md3-ipd-telemetry-card:hover .md3-ipd-telemetry-chevron {
+  opacity: 1;
+  transform: translateX(2px);
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ipd-telemetry-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 160ms ease;
+}
+
+.md3-ipd-telemetry-card:hover .md3-ipd-telemetry-icon {
+  transform: scale(1.05);
+}
+
+.md3-ipd-telemetry-icon .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.md3-ipd-telemetry-icon.primary {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.md3-ipd-telemetry-icon.critical {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.md3-ipd-telemetry-icon.rounds {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-ipd-telemetry-icon.discharge {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.md3-ipd-telemetry-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.md3-ipd-telemetry-val {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.1;
+}
+
+.md3-ipd-telemetry-lbl {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── 3. PATIENT SWITCHER CONTROLS & WARD FILTERS ── */
+.md3-ipd-filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  padding: 10px 16px;
+  flex-wrap: wrap;
+}
+
+.md3-ipd-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.md3-ipd-filter-lbl {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 4px;
+}
+
+.md3-ipd-filter-lbl .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ipd-filter-chip {
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.md3-ipd-filter-chip:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.md3-ipd-filter-chip.active {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* ── 4. WORKSPACE TAB NAVIGATION ── */
+.md3-ipd-tabs-nav {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding-bottom: 2px;
+  overflow-x: auto;
+}
+
+.md3-ipd-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 160ms ease;
+  white-space: nowrap;
+  border-radius: 8px 8px 0 0;
+}
+
+.md3-ipd-tab-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.md3-ipd-tab-btn:hover {
+  background-color: color-mix(in srgb, var(--md-sys-color-surface-container-high, #ece6f0) 60%, transparent);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-ipd-tab-btn.active {
+  color: var(--md-sys-color-primary, #6750a4);
+  border-bottom-color: var(--md-sys-color-primary, #6750a4);
+  font-weight: 800;
+}
+
+.md3-ipd-tab-badge {
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 1px 7px;
+  border-radius: 100px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-ipd-tab-btn.active .md3-ipd-tab-badge {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+/* ── 5. FLUID 2-COLUMN WORKSPACE GRIDS (INFINITE WIDTH) ── */
+.md3-ipd-workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(400px, 1.2fr);
+  gap: 20px;
+  width: 100%;
+}
+
+/* Material 3 Card Container */
+.md3-ipd-card {
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 16px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.md3-ipd-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-ipd-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.md3-ipd-card-title-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.md3-ipd-card-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-ipd-card-subtitle {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-ipd-pill-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.md3-ipd-pill-badge.success {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.md3-ipd-pill-badge.info {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+/* ── 6. SOAP ROUNDS WORKSPACE ── */
+.md3-ipd-soap-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.md3-ipd-timeline-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 700px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.md3-ipd-round-item {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.md3-ipd-round-item:hover {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.md3-ipd-round-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-ipd-round-num {
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ipd-round-time {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-ipd-soap-segment {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 0.82rem;
+}
+
+.md3-ipd-soap-key {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-ipd-soap-val {
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.35;
+}
+
+/* ── 7. CPOE ORDERS WORKSPACE ── */
+.md3-cpoe-subtabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.md3-cpoe-subtab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 100px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.md3-cpoe-subtab-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.md3-cpoe-subtab-btn.active {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: #ffffff;
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-cpoe-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.md3-cpoe-orders-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 700px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.md3-cpoe-order-card {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.md3-cpoe-order-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.md3-cpoe-order-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-cpoe-order-status {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.md3-cpoe-order-status.active {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.md3-cpoe-order-status.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.md3-cpoe-order-status.completed {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-cpoe-order-meta {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── 8. DISCHARGE WORKSPACE ── */
+.md3-ipd-discharge-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* ── 9. TELEMETRY DETAIL OVERLAY DIALOG ── */
+.md3-telemetry-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: md3DialogFadeIn 180ms cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+.md3-telemetry-dialog-card {
+  width: 100%;
+  max-width: 860px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: var(--md-sys-shape-corner-large, 24px);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.md3-telemetry-dialog-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  gap: 16px;
+}
+
+.md3-telemetry-dialog-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.md3-telemetry-dialog-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-telemetry-dialog-icon .material-symbols-rounded {
+  font-size: 24px;
+}
+
+.md3-telemetry-dialog-icon.primary {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.md3-telemetry-dialog-icon.critical {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.md3-telemetry-dialog-icon.rounds {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-telemetry-dialog-icon.discharge {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.md3-telemetry-dialog-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: -0.01em;
+}
+
+.md3-telemetry-dialog-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 0.76rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-telemetry-dialog-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  flex-wrap: wrap;
+}
+
+.md3-telemetry-search-wrap {
+  flex: 1;
+  min-width: 260px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.md3-telemetry-search-icon {
+  position: absolute;
+  left: 12px;
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  pointer-events: none;
+}
+
+.md3-telemetry-subfilter-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.md3-telemetry-subchip {
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.md3-telemetry-subchip:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.md3-telemetry-subchip.active {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: #ffffff;
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-telemetry-dialog-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 60vh;
+}
+
+/* Patients Grid in Dialog */
+.md3-telemetry-patients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 14px;
+}
+
+.md3-telemetry-patient-card {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
+}
+
+.md3-telemetry-patient-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+.md3-telemetry-patient-card.selected {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  background-color: color-mix(in srgb, var(--md-sys-color-primary-container, #eaddff) 35%, white);
+}
+
+.md3-telemetry-patient-card.critical-border {
+  border-left: 4px solid #dc2626;
+}
+
+.md3-tpc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.md3-tpc-avatar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.md3-tpc-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.92rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.md3-tpc-avatar.primary {
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.md3-tpc-avatar.critical {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.md3-tpc-name {
+  margin: 0;
+  font-size: 0.94rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-tpc-demographics {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-tpc-bed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.md3-tpc-bed-badge.primary {
+  background-color: #ccfbf1;
+  color: #0f766e;
+}
+
+.md3-tpc-bed-badge.critical {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.md3-tpc-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--md-sys-color-outline-variant, #ece6f0);
+}
+
+.md3-tpc-lbl {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: block;
+}
+
+.md3-tpc-val {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-tpc-diagnosis {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.md3-tpc-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #ece6f0);
+}
+
+.md3-tpc-status {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+
+.md3-tpc-status.admitted {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.md3-tpc-status.discharge {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.md3-tpc-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: none;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.md3-tpc-action-btn:hover {
+  background-color: var(--md-sys-color-on-primary-container, #21005d);
+  transform: translateY(-1px);
+}
+
+.md3-tpc-action-btn:active {
+  transform: scale(0.96);
+}
+
+/* Rounds in Dialog */
+.md3-telemetry-rounds-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.md3-telemetry-round-card {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md3-telemetry-round-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--md-sys-color-outline-variant, #e7e0ec);
+}
+
+.md3-telemetry-round-doc {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-telemetry-round-time {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-telemetry-soap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.80rem;
+}
+
+.md3-telemetry-soap-block {
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-telemetry-soap-block strong {
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-telemetry-empty-state {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-telemetry-empty-state .material-symbols-rounded {
+  font-size: 40px;
+  opacity: 0.4;
+  margin-bottom: 8px;
+}
+
+.md3-telemetry-empty-state h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-telemetry-empty-state p {
+  margin: 4px 0 0 0;
+  font-size: 0.78rem;
+}
+
+.md3-telemetry-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.md3-telemetry-footer-count {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── 10. RESPONSIVE BREAKPOINTS (DESKTOP, TABLET, MOBILE) ── */
+@media (max-width: 1100px) {
+  .md3-ipd-workspace-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-ipd-cockpit {
+    padding: 12px 14px 36px 14px;
+    gap: 14px;
+  }
+
+  .md3-ipd-hero-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .md3-ipd-switcher-box {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .md3-ipd-telemetry-deck {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .md3-telemetry-patients-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .md3-tpc-details-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .md3-ipd-telemetry-deck {
+    grid-template-columns: 1fr;
+  }
+}
+

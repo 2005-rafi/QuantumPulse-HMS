@@ -322,53 +322,69 @@
 /* ── Workflow Selection Segmented Buttons ── */
 .reg-workflow-selector {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 8px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .reg-workflow-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  border-radius: 12px;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
   border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
   background: var(--md-sys-color-surface-container-lowest, #ffffff);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: all 180ms cubic-bezier(0.2, 0, 0, 1);
   text-align: left;
+  user-select: none;
+  outline: none;
+}
+
+.reg-workflow-btn:focus-visible {
+  border-color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
 }
 
 .reg-workflow-btn:hover {
   background: var(--md-sys-color-surface-container-high, #ece6f0);
   color: var(--md-sys-color-on-surface, #1d1b20);
-  border-color: var(--md-sys-color-outline, #79747e);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  transform: translateY(-1px);
+}
+
+.reg-workflow-btn:active {
+  transform: scale(0.98);
 }
 
 .reg-workflow-btn.is-active {
-  background: var(--md-sys-color-primary-container, #c2e8ff);
-  color: var(--md-sys-color-on-primary-container, #004d67);
-  border-color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border-color: var(--md-sys-color-primary, #6750a4);
   font-weight: 700;
-  box-shadow: 0 2px 6px rgba(0, 102, 139, 0.15);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 20%, transparent);
 }
 
 .reg-workflow-btn .material-symbols-rounded {
-  font-size: 20px;
+  font-size: 22px;
+  flex-shrink: 0;
 }
 
 .reg-workflow-btn-label {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 700;
   display: block;
+  margin-bottom: 2px;
+  line-height: 1.2;
 }
 
 .reg-workflow-btn-sub {
-  font-size: 0.68rem;
-  opacity: 0.85;
+  font-size: 0.72rem;
+  opacity: 0.88;
   display: block;
+  line-height: 1.25;
 }
 
 @media (max-width: 599px) {

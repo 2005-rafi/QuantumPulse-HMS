@@ -159,13 +159,29 @@ class VisitController {
 
   // ── STATS & HISTORY ──────────────────────────────────────────────────────────
 
+  getDoctorConsultationHistory = catchAsync(async (req, res) => {
+    const doctorId = req.user.staffId || req.user.userId || req.user.id;
+    const history = await visitService.getDoctorConsultationHistory(doctorId, req.query);
+
+    auditService.logEvent(
+      req.user.staffId || req.user.userId,
+      req.user.role,
+      'DOCTOR_CONSULTATION_HISTORY_VIEWED',
+      null,
+      { doctorId, resultsCount: history.total },
+      req.ip
+    );
+
+    return success(res, history, 'Doctor consultation history retrieved successfully', 200);
+  });
+
   getHospitalStats = catchAsync(async (req, res) => {
     const stats = await visitService.getHospitalStats();
     return success(res, stats, 'Hospital stats retrieved successfully', 200);
   });
 
   getVisitsByPatientId = catchAsync(async (req, res) => {
-    const visits = await visitService.getVisitsByPatientId(req.params.patientId);
+    const visits = await visitService.getVisitsByPatientId(req.params.patientId, req.user?.role);
     return success(res, visits, 'Patient visits retrieved successfully', 200);
   });
 }

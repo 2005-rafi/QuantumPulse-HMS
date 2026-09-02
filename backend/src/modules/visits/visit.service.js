@@ -523,12 +523,123 @@ class VisitService {
       inProgress,
       skipped,
       departmentLoads,
-      laboratoryPressures
+      laboratoryPressures,
     };
   }
 
-  async getVisitsByPatientId(patientId) {
-    return visitRepository.find({ patientId });
+  /**
+   * Doctor Consultation History (Strictly scoped to logged-in doctor)
+   * Returns finalized and completed patient encounters with medications & immutable doctor notes.
+   */
+  async getDoctorConsultationHistory(doctorId, queryParams = {}) {
+    const { page = 1, limit = 50, q = '', startDate, endDate, status, visitType } = queryParams;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const mongoose = require('mongoose');
+    const doctorObjectId = mongoose.Types.ObjectId.isValid(doctorId)
+      ? new mongoose.Types.ObjectId(doctorId)
+      : doctorId;
+
+    const matchConditions = {
+      'consultation.doctorId': doctorObjectId,
+    };
+
+    if (status && status !== 'ALL' && status !== 'all') {
+      matchConditions.status = status;
+    }
+
+    if (visitType && visitType !== 'ALL' && visitType !== 'all') {
+      matchConditions.visitType = visitType.toUpperCase();
+    }
+
+    if (startDate || endDate) {
+      matchConditions.createdAt = {};
+      if (startDate) {
+        const start = new Date(startDate);
+        if (!isNaN(start.getTime())) {
+          start.setHours(0, 0, 0, 0);
+          matchConditions.createdAt.$gte = start;
+        }
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        if (!isNaN(end.getTime())) {
+          end.setHours(23, 59, 59, 999);
+          matchConditions.createdAt.$lte = end;
+        }
+      }
+    }
+
+    // Query visits matching doctor with populated fields
+    const visits = await visitRepository.find(matchConditions, { 'consultation.recordedAt': -1, createdAt: -1 });
+
+    // Client-side text filter on populated patient fields if search string `q` is provided
+    let filteredVisits = visits;
+    if (q && q.trim()) {
+      const queryTerm = q.trim().toLowerCase();
+      filteredVisits = visits.filter((v) => {
+        const p = v.patientId || {};
+        const pName = `${p.firstName || ''} ${p.lastName || ''} ${p.fullName || ''}`.toLowerCase();
+        const mrn = (p.mrn || '').toLowerCase();
+        const phone = (p.phone || '').toLowerCase();
+        const token = (v.tokenString || v.visitNumber || '').toLowerCase();
+        const diag = (v.consultation?.diagnosis || '').toLowerCase();
+        const reason = (v.reasonForVisit || v.vitals?.chiefComplaint || '').toLowerCase();
+        return (
+          pName.includes(queryTerm) ||
+          mrn.includes(queryTerm) ||
+          phone.includes(queryTerm) ||
+          token.includes(queryTerm) ||
+          diag.includes(queryTerm) ||
+          reason.includes(queryTerm)
+        );
+      });
+    }
+
+    const total = filteredVisits.length;
+    const paginatedItems = filteredVisits.slice(skip, skip + Number(limit));
+
+    return {
+      items: paginatedItems,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / Number(limit)) || 1,
+    };
+  }
+
+  /**
+   * Patient Care & Consultation History across all encounters
+   * Implements role-based privacy abstraction between clinical staff and reception/patient view.
+   */
+  async getVisitsByPatientId(patientId, userRole = null) {
+    const visits = await visitRepository.find({ patientId }, { createdAt: -1 });
+
+    // Privacy barrier: Non-clinical roles (Reception/Patient) see patient-facing clinical data,
+    // but internal clinical scratch notes are abstracted.
+    const isClinicalRole = ['Doctor', 'Nurse', 'Admin', 'SuperAdmin', 'Administrator'].includes(userRole);
+
+    if (!isClinicalRole) {
+      return visits.map((v) => {
+        const clone = { ...v };
+        if (clone.consultation) {
+          clone.consultation = {
+            doctorId: clone.consultation.doctorId,
+            diagnosis: clone.consultation.diagnosis,
+            treatmentPlan: clone.consultation.treatmentPlan,
+            status: clone.consultation.status,
+            recordedAt: clone.consultation.recordedAt,
+            // Abstract confidential doctor scratch notes from non-clinical reception screen
+            notes: clone.consultation.notes ? 'Consultation completed and documented by attending clinician.' : '',
+            differentials: undefined,
+            prognosis: clone.consultation.prognosis,
+          };
+        }
+        return clone;
+      });
+    }
+
+    return visits;
   }
 }
 

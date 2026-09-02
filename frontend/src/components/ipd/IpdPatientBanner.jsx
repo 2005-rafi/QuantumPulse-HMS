@@ -1,10 +1,11 @@
 /**
  * components/ipd/IpdPatientBanner.jsx
- * Sticky Inpatient Clinical Identity & Encounter Banner.
+ * Pure Material 3 Inpatient Clinical Identity & Encounter Banner.
  */
 import React from 'react';
 import PhiField from '../patients/PhiField';
 import News2Badge from './News2Badge';
+import { formatPatientName, getPatientInitials, formatDoctorName } from '../../utils/patientFormatters';
 
 export const IpdPatientBanner = ({
   admission,
@@ -14,10 +15,14 @@ export const IpdPatientBanner = ({
 }) => {
   if (!admission) return null;
 
-  const patient = admission.patientId;
+  const patient = admission.patientId || {};
   const bed = admission.currentBedId;
   const room = admission.currentRoomId;
   const doctor = admission.primaryDoctorId;
+
+  const patientFullName = formatPatientName(patient);
+  const initials = getPatientInitials(patient);
+  const attendingDoctorName = formatDoctorName(doctor?.fullName || `${doctor?.firstName || ''} ${doctor?.lastName || ''}`.trim() || 'Physician');
 
   // Day of stay calculation
   let dayOfStay = 1;
@@ -26,92 +31,118 @@ export const IpdPatientBanner = ({
     dayOfStay = Math.max(1, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   }
 
+  const bedLabel = bed?.bedLabel || bed?.bedNumber || '—';
+  const wardLabel = bed?.wardClass || bed?.wardType || 'General Ward';
+
   return (
     <div
       style={{
-        background: 'var(--md-sys-color-surface, #ffffff)',
-        border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-        borderRadius: '10px',
-        padding: '8px 14px',
-        marginBottom: '10px',
+        background: 'var(--md-sys-color-surface-container-lowest, #ffffff)',
+        border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
+        borderRadius: '16px',
+        padding: '14px 20px',
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '12px',
-        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.03)',
+        gap: '16px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.04)',
+        width: '100%',
+        boxSizing: 'border-box',
       }}
     >
-      {/* 1. Patient Demographics & Bed */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+      {/* 1. Patient Demographics & Bed Badge */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap', minWidth: 0 }}>
         <div
           style={{
-            width: '34px',
-            height: '34px',
-            borderRadius: '8px',
+            width: '42px',
+            height: '42px',
+            borderRadius: '12px',
             background: 'var(--md-sys-color-primary-container, #eaddff)',
-            color: 'var(--md-sys-color-primary, #6750a4)',
+            color: 'var(--md-sys-color-on-primary-container, #21005d)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '0.95rem',
-            fontWeight: 700,
+            fontSize: '1rem',
+            fontWeight: 800,
+            flexShrink: 0,
           }}
         >
-          {patient?.firstName ? patient.firstName[0] : 'P'}
+          {initials}
         </div>
 
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <h2 style={{ fontSize: '0.96rem', fontWeight: 700, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
-              {patient?.firstName} {patient?.lastName}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <h2 style={{ fontSize: '1.05rem', fontWeight: 800, margin: 0, color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>
+              {patientFullName}
             </h2>
-            <span className="clinical-meta-pill">
-              <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>hotel</span>
-              Bed {bed?.bedNumber || '—'} ({bed?.wardClass || 'General'})
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                background: '#ccfbf1',
+                color: '#0f766e',
+                padding: '2px 8px',
+                borderRadius: '100px',
+              }}
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>hotel</span>
+              Bed {bedLabel} ({wardLabel})
             </span>
             {latestVitals && (
               <News2Badge score={latestVitals.news2Score || 0} riskLevel={latestVitals.news2RiskLevel || 'LOW'} />
             )}
           </div>
 
-          <div style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '2px' }}>
-            MRN: <strong>{patient?.mrn}</strong> • {patient?.age}y / {patient?.gender} • Blood: {patient?.bloodGroup || 'N/A'} • Room {room?.roomNumber || '—'}
+          <div style={{ fontSize: '0.76rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)', marginTop: '3px' }}>
+            MRN: <strong>{patient.mrn || 'N/A'}</strong> • {patient.age ? `${patient.age}y` : ''}{patient.gender ? ` / ${patient.gender}` : ''} • Blood: <span style={{ color: '#ba1a1a', fontWeight: 700 }}>{patient.bloodGroup || 'N/A'}</span> • Room {room?.roomNumber || '—'}
           </div>
         </div>
       </div>
 
-      {/* 2. Clinical Encounter Overview */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', fontSize: '0.76rem' }}>
+      {/* 2. Clinical Encounter Overview Telemetry */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', fontSize: '0.78rem' }}>
         <div>
-          <span style={{ color: 'var(--md-sys-color-on-surface-variant)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', fontWeight: 600 }}>
+          <span style={{ color: 'var(--md-sys-color-on-surface-variant, #49454f)', display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>
             Attending Doctor
           </span>
-          <strong style={{ color: 'var(--md-sys-color-on-surface)' }}>Dr. {doctor?.firstName} {doctor?.lastName || ''}</strong>
+          <strong style={{ color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>{attendingDoctorName}</strong>
         </div>
 
         <div>
-          <span style={{ color: 'var(--md-sys-color-on-surface-variant)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', fontWeight: 600 }}>
+          <span style={{ color: 'var(--md-sys-color-on-surface-variant, #49454f)', display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>
             Admission Date &amp; Stay
           </span>
-          <strong style={{ color: 'var(--md-sys-color-on-surface)' }}>Day {dayOfStay}</strong> ({new Date(admission.admissionDate).toLocaleDateString('en-IN')})
+          <strong style={{ color: 'var(--md-sys-color-primary, #6750a4)' }}>Day {dayOfStay}</strong> {admission.admissionDate && `(${new Date(admission.admissionDate).toLocaleDateString('en-IN')})`}
         </div>
 
         <div>
-          <span style={{ color: 'var(--md-sys-color-on-surface-variant)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', fontWeight: 600 }}>
+          <span style={{ color: 'var(--md-sys-color-on-surface-variant, #49454f)', display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>
             Diet Plan
           </span>
-          <span style={{ fontWeight: 600, color: 'var(--md-sys-color-primary)' }}>
-            {(admission.dietTier || 'REGULAR_DIET').replace('_', ' ')}
+          <span style={{ fontWeight: 700, color: 'var(--md-sys-color-primary, #6750a4)' }}>
+            {(admission.dietTier || 'REGULAR_DIET').replace(/_/g, ' ')}
           </span>
         </div>
 
         <div>
-          <span style={{ color: 'var(--md-sys-color-on-surface-variant)', display: 'block', fontSize: '0.66rem', textTransform: 'uppercase', fontWeight: 600 }}>
+          <span style={{ color: 'var(--md-sys-color-on-surface-variant, #49454f)', display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>
             Status
           </span>
-          <span className="clinical-status-pill clinical-status-pill--completed">
-            {admission.status}
+          <span
+            style={{
+              fontSize: '0.70rem',
+              fontWeight: 800,
+              padding: '2px 10px',
+              borderRadius: '100px',
+              background: admission.status === 'ADMITTED' ? '#dcfce7' : '#e0f2fe',
+              color: admission.status === 'ADMITTED' ? '#166534' : '#0369a1',
+            }}
+          >
+            {admission.status || 'ADMITTED'}
           </span>
         </div>
       </div>

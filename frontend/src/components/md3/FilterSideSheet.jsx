@@ -294,16 +294,18 @@ export const FilterSideSheet = ({
               </div>
             </div>
 
-            {/* 2. Visit Modality Card */}
+            {/* 2. Patient State & Care Modality Card */}
             <div className="md3-ssf-card">
               <div className="md3-ssf-card-header">
                 <Icon.Activity />
-                <span className="md3-ssf-card-title">Visit Modality</span>
+                <span className="md3-ssf-card-title">Patient State &amp; Care Modality</span>
               </div>
               <div className="md3-ssf-chips-deck">
                 {[
                   { value: 'OPD', label: 'OPD (Outpatient)' },
-                  { value: 'IPD', label: 'IPD (Inpatient)' },
+                  { value: 'IPD', label: 'IPD (Inpatient / Admitted)' },
+                  { value: 'EMERGENCY', label: 'Emergency' },
+                  { value: 'IDLE', label: 'Just Registered (No Visits)' },
                 ].map((opt) => {
                   const isSelected = selectedVisitTypes.includes(opt.value);
                   return (

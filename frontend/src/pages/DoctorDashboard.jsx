@@ -51,26 +51,31 @@ const DoctorDashboard = () => {
     navigate('/login', { replace: true });
   };
 
-  // Derive active tab directly from URL path
-  const activeTab = location.pathname.includes('/deletion-requests')
-    ? 'deletionRequests'
+  // Centralized active tab resolution derived directly from URL path
+  const pathParts = location.pathname.split('/').filter(Boolean);
+  const currentSubPath = pathParts[pathParts.length - 1];
+  const matchedTab = headerTabs.find((t) => t.path === currentSubPath || t.id === currentSubPath);
+  const activeTab = matchedTab
+    ? matchedTab.id
     : location.pathname.includes('/ipd')
     ? 'ipd'
-    : location.pathname.includes('/appointments')
-    ? 'appointments'
     : 'consultation';
 
   const handleTabChange = (tabId) => {
-    const routeName = tabId === 'deletionRequests' ? 'deletion-requests' : tabId;
-    navigate(`/dashboard/doctor/${routeName}`);
+    const target = headerTabs.find((t) => t.id === tabId || t.path === tabId);
+    const routePath = target?.path || tabId;
+    React.startTransition(() => {
+      navigate(`/dashboard/doctor/${routePath}`);
+    });
   };
 
   const headerTabsWithIcons = React.useMemo(() => {
     return headerTabs.map((t) => {
-      let icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>stethoscope</span>;
-      if (t.id === 'ipd') icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>hotel</span>;
-      if (t.id === 'appointments') icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>calendar_month</span>;
-      if (t.id === 'deletionRequests') icon = <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>delete</span>;
+      const icon = (
+        <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>
+          {t.iconName || 'stethoscope'}
+        </span>
+      );
       return { ...t, icon };
     });
   }, [headerTabs]);

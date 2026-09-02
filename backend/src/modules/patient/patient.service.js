@@ -23,54 +23,135 @@ const getByMrn = async (mrn) => {
 
 const Visit = require('../visits/visit.model');
 const Appointment = require('../appointments/appointment.model');
+const IPDAdmission = require('../ipd/admission/ipd-admission.model');
+require('../ipd/beds/bed.model');
+require('../ipd/beds/room.model');
+require('../ipd/beds/floor.model');
+require('../administration/department.model');
+const mongoose = require('mongoose');
 
 const enrichPatientsWithHistory = async (items) => {
   if (!items || items.length === 0) return items;
-  const patientIds = items.map(p => p._id).filter(Boolean);
+  const patientIds = items.map((p) => p._id).filter(Boolean);
   if (patientIds.length === 0) return items;
 
   try {
-    const [latestVisits, latestAppointments] = await Promise.all([
+    const [latestVisits, latestAppointments, activeAdmissions] = await Promise.all([
       Visit.aggregate([
         { $match: { patientId: { $in: patientIds } } },
         { $sort: { createdAt: -1 } },
-        { $group: {
+        {
+          $group: {
             _id: '$patientId',
             lastVisitDate: { $first: '$createdAt' },
             lastVisitStatus: { $first: '$status' },
-            lastVisitType: { $first: '$visitType' }
-        }}
+            lastVisitType: { $first: '$visitType' },
+            activeVisit: {
+              $first: {
+                $cond: [
+                  {
+                    $in: [
+                      '$status',
+                      [
+                        'WAITING_TRIAGE',
+                        'CALLED',
+                        'WAITING_DOCTOR',
+                        'IN_PROGRESS',
+                        'WAITING_LAB',
+                        'WAITING_DOCTOR_REVIEW',
+                        'WAITING_PHARMACY',
+                        'WAITING_BILLING',
+                      ],
+                    ],
+                  },
+                  {
+                    visitNumber: '$visitNumber',
+                    visitType: '$visitType',
+                    status: '$status',
+                    tokenString: '$tokenString',
+                  },
+                  null,
+                ],
+              },
+            },
+          },
+        },
       ]),
       Appointment.aggregate([
         { $match: { patientId: { $in: patientIds } } },
         { $sort: { appointmentDate: -1, startTime: -1 } },
-        { $group: {
+        {
+          $group: {
             _id: '$patientId',
             appointmentDate: { $first: '$appointmentDate' },
             startTime: { $first: '$startTime' },
             endTime: { $first: '$endTime' },
-            status: { $first: '$status' }
-        }}
-      ])
+            status: { $first: '$status' },
+          },
+        },
+      ]),
+      IPDAdmission.find({
+        patientId: { $in: patientIds },
+        status: { $in: ['ADMITTED', 'DISCHARGE_INITIATED'] },
+      })
+        .populate('currentBedId', 'bedNumber bedType')
+        .populate('currentRoomId', 'roomNumber roomType')
+        .populate('currentFloorId', 'floorNumber floorName')
+        .populate('admittingDepartmentId', 'name code')
+        .lean(),
     ]);
 
-    const visitMap = new Map(latestVisits.map(v => [String(v._id), v]));
-    const apptMap = new Map(latestAppointments.map(a => [String(a._id), a]));
+    const visitMap = new Map(latestVisits.map((v) => [String(v._id), v]));
+    const apptMap = new Map(latestAppointments.map((a) => [String(a._id), a]));
+    const admissionMap = new Map(activeAdmissions.map((adm) => [String(adm.patientId), adm]));
 
-    return items.map(p => {
+    return items.map((p) => {
       const v = visitMap.get(String(p._id));
       const a = apptMap.get(String(p._id));
+      const adm = admissionMap.get(String(p._id));
+
+      let currentState = 'IDLE';
+      let activeAdmission = null;
+
+      if (adm) {
+        currentState = adm.admissionType === 'EMERGENCY' ? 'EMERGENCY' : 'IPD';
+        activeAdmission = {
+          admissionNumber: adm.admissionNumber,
+          admissionType: adm.admissionType,
+          status: adm.status,
+          admissionDate: adm.admissionDate,
+          bedNumber: adm.currentBedId?.bedNumber || '',
+          roomNumber: adm.currentRoomId?.roomNumber || '',
+          floorName: adm.currentFloorId?.floorName || '',
+          department: adm.admittingDepartmentId?.name || '',
+          diagnosis: adm.provisionalDiagnosis || '',
+        };
+      } else if (v?.activeVisit?.visitType === 'EMERGENCY' || v?.lastVisitType === 'EMERGENCY') {
+        currentState = 'EMERGENCY';
+      } else if (v?.activeVisit?.visitType === 'OPD' || v?.lastVisitType === 'OPD') {
+        currentState = 'OPD';
+      } else if (v?.activeVisit?.visitType === 'IPD' || v?.lastVisitType === 'IPD') {
+        currentState = 'IPD';
+      } else {
+        currentState = 'IDLE';
+      }
+
       return {
         ...p,
-        lastVisitDate: v ? v.lastVisitDate : (p.lastVisitDate || null),
+        currentState,
+        activeAdmission,
+        activeVisit: v?.activeVisit || null,
+        lastVisitDate: v ? v.lastVisitDate : p.lastVisitDate || null,
         lastVisitStatus: v ? v.lastVisitStatus : null,
         lastVisitType: v ? v.lastVisitType : null,
-        latestAppointment: a ? {
-          date: a.appointmentDate,
-          startTime: a.startTime,
-          endTime: a.endTime,
-          status: a.status
-        } : null
+        latestAppointment: a
+          ? {
+              date: a.appointmentDate,
+              startTime: a.startTime,
+              endTime: a.endTime,
+              status: a.status,
+            }
+          : null,
       };
     });
   } catch (err) {
@@ -81,51 +162,29 @@ const enrichPatientsWithHistory = async (items) => {
 const { QueryContext, QueryBuilder, PatientQueryConfig } = require('../../core/query');
 
 const search = async (queryParams = {}, securityScope = {}) => {
-  const queryContext = QueryContext.fromRequest({ query: queryParams }, securityScope);
+  // Support nested queryParams.filters if passed by certain querystring formats
+  const rawFilters = typeof queryParams.filters === 'object' && queryParams.filters !== null ? queryParams.filters : {};
+  const normalizedParams = {
+    ...rawFilters,
+    ...queryParams,
+  };
 
-  const { visitType, startDate, endDate, departmentId, doctorId } = queryParams;
+  const visitType = normalizedParams.visitType || rawFilters.visitType;
+  const startDate = normalizedParams.startDate || rawFilters.startDate;
+  const endDate = normalizedParams.endDate || rawFilters.endDate;
+  const departmentId = normalizedParams.departmentId || rawFilters.departmentId;
+  const doctorId = normalizedParams.doctorId || rawFilters.doctorId;
+
+  const queryContext = QueryContext.fromRequest({ query: normalizedParams }, securityScope);
   const compiled = QueryBuilder.compile(queryContext, PatientQueryConfig);
 
-  // 1. Resolve Visit Filters if present
-  const visitFilter = {};
-  if (visitType) {
-    const types = Array.isArray(visitType) ? visitType : visitType.split(',').filter(Boolean);
-    if (types.length > 0) visitFilter.visitType = { $in: types };
-  }
-  if (departmentId) {
-    const depts = Array.isArray(departmentId) ? departmentId : departmentId.split(',').filter(Boolean);
-    if (depts.length > 0) {
-      const mongoose = require('mongoose');
-      visitFilter.departmentId = { $in: depts.map(id => new mongoose.Types.ObjectId(id)) };
-    }
-  }
-  if (doctorId) {
-    const docs = Array.isArray(doctorId) ? doctorId : doctorId.split(',').filter(Boolean);
-    if (docs.length > 0) {
-      const mongoose = require('mongoose');
-      visitFilter['consultation.doctorId'] = { $in: docs.map(id => new mongoose.Types.ObjectId(id)) };
-    }
-  }
-  if (startDate || endDate) {
-    visitFilter.createdAt = {};
-    if (startDate) {
-      const start = new Date(startDate);
-      if (!isNaN(start.getTime())) {
-        start.setHours(0, 0, 0, 0);
-        visitFilter.createdAt.$gte = start;
-      }
-    }
-    if (endDate) {
-      const end = new Date(endDate);
-      if (!isNaN(end.getTime())) {
-        end.setHours(23, 59, 59, 999);
-        visitFilter.createdAt.$lte = end;
-      }
-    }
-  }
+  // 1. Resolve Visit & Admission Filters if present
+  const types = visitType
+    ? (Array.isArray(visitType) ? visitType : visitType.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean))
+    : [];
 
-  // Determine whether to use aggregate lookup join vs direct indexed search
-  const hasVisitFilters = Object.keys(visitFilter).length > 0;
+  const hasVisitFilters = types.length > 0 || departmentId || doctorId || startDate || endDate;
+
   if (hasVisitFilters) {
     const pipeline = [];
 
@@ -134,34 +193,113 @@ const search = async (queryParams = {}, securityScope = {}) => {
       pipeline.push({ $match: compiled.filter });
     }
 
-    // Stage 2: Lookup visits to join (bounded by $limit: 1 per patient)
+    // Stage 2: Prepare visit matching criteria
+    const visitMatch = {};
+    if (departmentId) {
+      const depts = Array.isArray(departmentId) ? departmentId : departmentId.split(',').filter(Boolean);
+      if (depts.length > 0) {
+        visitMatch.departmentId = { $in: depts.map((id) => new mongoose.Types.ObjectId(id)) };
+      }
+    }
+    if (doctorId) {
+      const docs = Array.isArray(doctorId) ? doctorId : doctorId.split(',').filter(Boolean);
+      if (docs.length > 0) {
+        visitMatch['consultation.doctorId'] = { $in: docs.map((id) => new mongoose.Types.ObjectId(id)) };
+      }
+    }
+    if (startDate || endDate) {
+      visitMatch.createdAt = {};
+      if (startDate) {
+        const start = new Date(startDate);
+        if (!isNaN(start.getTime())) {
+          start.setHours(0, 0, 0, 0);
+          visitMatch.createdAt.$gte = start;
+        }
+      }
+      if (endDate) {
+        const end = new Date(endDate);
+        if (!isNaN(end.getTime())) {
+          end.setHours(23, 59, 59, 999);
+          visitMatch.createdAt.$lte = end;
+        }
+      }
+    }
+
+    // Lookup visits
     pipeline.push({
       $lookup: {
         from: 'visits',
-        let: { patientId: '$_id' },
+        let: { pId: '$_id' },
         pipeline: [
           {
             $match: {
-              $expr: { $eq: ['$patientId', '$$patientId'] },
-              ...visitFilter,
+              $expr: { $eq: ['$patientId', '$$pId'] },
+              ...visitMatch,
             },
           },
-          { $limit: 1 },
+          { $limit: 10 },
         ],
         as: 'matchingVisits',
       },
     });
 
-    // Stage 3: Keep only patients with matches
+    // Lookup active IPD admissions
     pipeline.push({
-      $match: {
-        'matchingVisits.0': { $exists: true },
+      $lookup: {
+        from: 'ipdadmissions',
+        let: { pId: '$_id' },
+        pipeline: [
+          {
+            $match: {
+              $expr: { $eq: ['$patientId', '$$pId'] },
+              status: { $in: ['ADMITTED', 'DISCHARGE_INITIATED'] },
+            },
+          },
+          { $limit: 1 },
+        ],
+        as: 'activeAdmissions',
       },
     });
 
-    // Stage 4: Project out joined array to keep memory footprint minimal
+    // Stage 3: Match based on selected modality types
+    if (types.length > 0) {
+      const typeConditions = [];
+      if (types.includes('IPD')) {
+        typeConditions.push({ 'activeAdmissions.0': { $exists: true } });
+        typeConditions.push({ 'matchingVisits.visitType': 'IPD' });
+      }
+      if (types.includes('EMERGENCY')) {
+        typeConditions.push({ 'activeAdmissions.admissionType': 'EMERGENCY' });
+        typeConditions.push({ 'matchingVisits.visitType': 'EMERGENCY' });
+      }
+      if (types.includes('OPD')) {
+        typeConditions.push({ 'matchingVisits.visitType': 'OPD' });
+      }
+      if (types.includes('IDLE') || types.includes('REGISTERED')) {
+        typeConditions.push({
+          matchingVisits: { $size: 0 },
+          activeAdmissions: { $size: 0 },
+        });
+      }
+
+      if (typeConditions.length > 0) {
+        pipeline.push({ $match: { $or: typeConditions } });
+      }
+    } else {
+      // General visit filter match (if department/doctor/date was specified without type)
+      pipeline.push({
+        $match: {
+          $or: [
+            { 'matchingVisits.0': { $exists: true } },
+            { 'activeAdmissions.0': { $exists: true } },
+          ],
+        },
+      });
+    }
+
+    // Stage 4: Project out temporary lookup arrays
     pipeline.push({
-      $project: { matchingVisits: 0 },
+      $project: { matchingVisits: 0, activeAdmissions: 0 },
     });
 
     // Stage 5: Sort deterministically

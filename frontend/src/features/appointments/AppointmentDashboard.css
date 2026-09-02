@@ -2691,31 +2691,33 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  background: var(--md-sys-color-surface-container-low, #f8f6ea);
-  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   border-radius: var(--md-sys-shape-corner-medium, 16px);
-  padding: 12px 18px;
+  padding: 14px 20px;
   flex-wrap: wrap;
 }
 
 .new-visit-patient-info {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
 .new-visit-patient-name {
   font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--md-sys-color-on-surface, #1c1c14);
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: -0.01em;
 }
 
 .new-visit-patient-meta {
   font-size: 0.8125rem;
-  color: var(--md-sys-color-on-surface-variant, #48473a);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 .new-visit-section-title {
@@ -2723,26 +2725,27 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--md-sys-color-primary, #196584);
+  color: var(--md-sys-color-primary, #6750a4);
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 6px;
 }
 
 .new-visit-chips-wrap {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .new-visit-chips-label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant, #48473a);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
-.new-visit-chips-list {
+.new-visit-chips-list,
+.new-visit-chips-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -2750,22 +2753,28 @@
 }
 
 .new-visit-chip {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
-  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
-  background: var(--md-sys-color-surface-container, #f1eee1);
-  color: var(--md-sys-color-on-surface-variant, #48473a);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: all 150ms cubic-bezier(0.2, 0, 0, 1);
   user-select: none;
+  outline: none;
 }
 
 .new-visit-chip:hover {
-  background: var(--md-sys-color-primary-container, #c2e8ff);
-  color: var(--md-sys-color-on-primary-container, #004d67);
-  border-color: var(--md-sys-color-primary, #196584);
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  transform: translateY(-1px);
+}
+
+.new-visit-chip:active {
+  transform: scale(0.96);
 }
 
 .new-visit-fee-summary {

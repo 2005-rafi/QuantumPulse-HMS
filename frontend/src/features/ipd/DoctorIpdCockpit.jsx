@@ -1,16 +1,18 @@
 /**
  * features/ipd/DoctorIpdCockpit.jsx
- * Physician Inpatient Clinical Cockpit (CPOE Orders, SOAP Ward Rounds, OT Booking, Discharge Workflow).
+ * Enterprise Material 3 Inpatient Clinical Workstation & Cockpit
+ * (CPOE Orders, SOAP Ward Rounds, OT Booking, 3-Way Discharge Governance).
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import IpdPatientBanner from '../../components/ipd/IpdPatientBanner';
 import DischargeKanban from '../../components/ipd/DischargeKanban';
 import GatePassPrintable from '../../components/ipd/GatePassPrintable';
-import { Md3Button, Md3TextField, Md3TextArea, Md3Select, Md3BottomSheet } from '../../components/md3/Md3FormComponents';
-import { Icon } from '../../components/md3/Md3Widgets';
+import IpdTelemetryDetailDialog from './IpdTelemetryDetailDialog';
+import { Md3Button, Md3TextField, Md3TextArea, Md3Select } from '../../components/md3/Md3FormComponents';
+import { formatPatientName, formatDoctorName } from '../../utils/patientFormatters';
 import ipdApi from '../../services/ipdApi';
-import api from '../../services/api';
+import './DoctorIpdCockpit.css';
 
 const LAB_CATALOG_SAMPLE = [
   { code: 'CBC', name: 'Complete Blood Count (CBC)', dept: 'HAEMATOLOGY' },
@@ -36,6 +38,13 @@ export const DoctorIpdCockpit = () => {
   const [clearance, setClearance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showGatePassModal, setShowGatePassModal] = useState(false);
+
+  // Active Telemetry Drilldown Modal: null | 'ADMITTED' | 'CRITICAL' | 'ROUNDS' | 'DISCHARGE'
+  const [activeTelemetryModal, setActiveTelemetryModal] = useState(null);
+
+  // Ward filter & search
+  const [selectedWardFilter, setSelectedWardFilter] = useState('ALL'); // ALL, ICU_CCU, HDU, GENERAL
+  const [patientSearch, setPatientSearch] = useState('');
 
   // Tabs: 'ROUNDS' | 'CPOE' | 'DISCHARGE'
   const [activeTab, setActiveTab] = useState('ROUNDS');
@@ -150,6 +159,54 @@ export const DoctorIpdCockpit = () => {
   useEffect(() => {
     loadData();
   }, [admissionId]);
+
+  // Telemetry metric counters
+  const telemetry = useMemo(() => {
+    const totalAdmitted = admissionList.length;
+    let criticalCount = 0;
+    let dischargePendingCount = 0;
+
+    admissionList.forEach((adm) => {
+      const ward = (adm.currentBedId?.wardClass || adm.currentBedId?.wardType || '').toUpperCase();
+      if (ward.includes('ICU') || ward.includes('CCU') || ward.includes('HDU')) {
+        criticalCount++;
+      }
+      if (adm.status === 'DISCHARGE_INITIATED' || adm.dischargeSummary?.finalDiagnosis) {
+        dischargePendingCount++;
+      }
+    });
+
+    return {
+      totalAdmitted,
+      criticalCount,
+      roundsCount: wardRounds.length,
+      dischargePendingCount,
+    };
+  }, [admissionList, wardRounds]);
+
+  // Filtered admissions based on search & ward chip
+  const filteredAdmissions = useMemo(() => {
+    return admissionList.filter((adm) => {
+      const patient = adm.patientId || {};
+      const fullName = formatPatientName(patient).toLowerCase();
+      const mrn = (patient.mrn || '').toLowerCase();
+      const bedLabel = (adm.currentBedId?.bedLabel || adm.currentBedId?.bedNumber || '').toLowerCase();
+      const ward = (adm.currentBedId?.wardClass || adm.currentBedId?.wardType || '').toUpperCase();
+
+      const matchesSearch = !patientSearch || fullName.includes(patientSearch.toLowerCase()) || mrn.includes(patientSearch.toLowerCase()) || bedLabel.includes(patientSearch.toLowerCase());
+
+      let matchesWard = true;
+      if (selectedWardFilter === 'ICU_CCU') {
+        matchesWard = ward.includes('ICU') || ward.includes('CCU');
+      } else if (selectedWardFilter === 'HDU') {
+        matchesWard = ward.includes('HDU');
+      } else if (selectedWardFilter === 'GENERAL') {
+        matchesWard = !ward.includes('ICU') && !ward.includes('CCU') && !ward.includes('HDU');
+      }
+
+      return matchesSearch && matchesWard;
+    });
+  }, [admissionList, patientSearch, selectedWardFilter]);
 
   // Submit SOAP Round
   const handleSaveRound = async (e) => {
@@ -337,134 +394,254 @@ export const DoctorIpdCockpit = () => {
 
   if (!admissionId && admissionList.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px', color: 'var(--md-sys-color-outline)' }}>
-        No active inpatient admissions found. Admit a patient to access the Doctor Cockpit.
+      <div className="doctor-ipd-cockpit">
+        <div style={{ textAlign: 'center', padding: '64px 20px', background: 'var(--md-sys-color-surface-container-low)', borderRadius: '20px', border: '1px dashed var(--md-sys-color-outline-variant)' }}>
+          <span className="material-symbols-rounded" style={{ fontSize: '48px', color: 'var(--md-sys-color-on-surface-variant)' }}>hotel</span>
+          <h3 style={{ margin: '12px 0 4px', fontSize: '1.15rem', fontWeight: 800 }}>No active inpatient admissions found</h3>
+          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
+            Admit a patient from the Reception or OPD module to access the Doctor Inpatient Clinical Cockpit.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="doctor-ipd-cockpit">
-      {/* Header & Switcher */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-        <div>
-          <h1 style={{ fontSize: '1.12rem', fontWeight: 700, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
-            Doctor Inpatient Clinical Cockpit
-          </h1>
-          <p style={{ fontSize: '0.74rem', color: 'var(--md-sys-color-on-surface-variant)', margin: '2px 0 0 0' }}>
-            Daily SOAP Ward Rounds • Computerized Physician Order Entry (CPOE) • 3-Way Discharge Governance
-          </p>
+      {/* ── 1. HERO WORKSPACE & INPATIENT TELEMETRY BANNER ── */}
+      <div className="md3-ipd-hero">
+        <div className="md3-ipd-hero-top">
+          <div className="md3-ipd-hero-main">
+            <div className="md3-ipd-hero-avatar">
+              <span className="material-symbols-rounded">hotel</span>
+            </div>
+            <div className="md3-ipd-hero-content">
+              <h1 className="md3-ipd-hero-title">Doctor Inpatient Clinical Cockpit</h1>
+              <p className="md3-ipd-hero-subtitle">
+                Daily SOAP Ward Rounds • Computerized Physician Order Entry (CPOE) • 3-Way Discharge Governance
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Inpatient Selector */}
+          <div className="md3-ipd-switcher-box">
+            <Md3Select
+              label="Select Inpatient"
+              value={admissionId || ''}
+              onChange={(e) => navigate(`/dashboard/doctor/ipd/${e.target.value}`)}
+            >
+              {filteredAdmissions.map((a) => (
+                <option key={a._id} value={a._id}>
+                  {formatPatientName(a.patientId)} (Bed: {a.currentBedId?.bedLabel || a.currentBedId?.bedNumber || '—'})
+                </option>
+              ))}
+            </Md3Select>
+          </div>
         </div>
 
-        <div style={{ width: '250px' }}>
-          <Md3Select
-            label="Select Inpatient"
-            value={admissionId || ''}
-            onChange={(e) => navigate(`/dashboard/doctor/ipd/${e.target.value}`)}
+        {/* Telemetry Stats Bar with OnTap interactive drilldowns */}
+        <div className="md3-ipd-telemetry-deck" role="region" aria-label="Inpatient Telemetry Metrics">
+          <div
+            className="md3-ipd-telemetry-card"
+            onClick={() => setActiveTelemetryModal('ADMITTED')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('ADMITTED')}
+            title="Click to view full admitted inpatients directory"
           >
-            {admissionList.map((a) => (
-              <option key={a._id} value={a._id}>
-                {a.patientId?.firstName} {a.patientId?.lastName} (Bed: {a.currentBedId?.bedLabel || a.currentBedId?.bedNumber || '—'})
-              </option>
-            ))}
-          </Md3Select>
+            <div className="md3-ipd-telemetry-card-left">
+              <span className="md3-ipd-telemetry-icon primary">
+                <span className="material-symbols-rounded">hotel</span>
+              </span>
+              <div className="md3-ipd-telemetry-text">
+                <span className="md3-ipd-telemetry-val">{telemetry.totalAdmitted}</span>
+                <span className="md3-ipd-telemetry-lbl">Admitted Patients</span>
+              </div>
+            </div>
+            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
+          </div>
+
+          <div
+            className="md3-ipd-telemetry-card"
+            onClick={() => setActiveTelemetryModal('CRITICAL')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('CRITICAL')}
+            title="Click to view ICU, CCU & HDU high dependency patients"
+          >
+            <div className="md3-ipd-telemetry-card-left">
+              <span className="md3-ipd-telemetry-icon critical">
+                <span className="material-symbols-rounded">e911_emergency</span>
+              </span>
+              <div className="md3-ipd-telemetry-text">
+                <span className="md3-ipd-telemetry-val">{telemetry.criticalCount}</span>
+                <span className="md3-ipd-telemetry-lbl">ICU / CCU / HDU</span>
+              </div>
+            </div>
+            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
+          </div>
+
+          <div
+            className="md3-ipd-telemetry-card"
+            onClick={() => setActiveTelemetryModal('ROUNDS')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('ROUNDS')}
+            title="Click to view chronological ward rounds ledger"
+          >
+            <div className="md3-ipd-telemetry-card-left">
+              <span className="md3-ipd-telemetry-icon rounds">
+                <span className="material-symbols-rounded">edit_note</span>
+              </span>
+              <div className="md3-ipd-telemetry-text">
+                <span className="md3-ipd-telemetry-val">{telemetry.roundsCount}</span>
+                <span className="md3-ipd-telemetry-lbl">Ward Rounds (Active Stay)</span>
+              </div>
+            </div>
+            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
+          </div>
+
+          <div
+            className="md3-ipd-telemetry-card"
+            onClick={() => setActiveTelemetryModal('DISCHARGE')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('DISCHARGE')}
+            title="Click to view inpatients undergoing 3-way discharge clearance"
+          >
+            <div className="md3-ipd-telemetry-card-left">
+              <span className="md3-ipd-telemetry-icon discharge">
+                <span className="material-symbols-rounded">door_front</span>
+              </span>
+              <div className="md3-ipd-telemetry-text">
+                <span className="md3-ipd-telemetry-val">{telemetry.dischargePendingCount}</span>
+                <span className="md3-ipd-telemetry-lbl">Discharges in Progress</span>
+              </div>
+            </div>
+            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
+          </div>
         </div>
       </div>
 
-      {/* Sticky Patient Hero Banner */}
+      {/* ── 2. WARD FILTER & SEARCH BAR ── */}
+      <div className="md3-ipd-filter-bar">
+        <div className="md3-ipd-filter-chips">
+          <span className="md3-ipd-filter-lbl">
+            <span className="material-symbols-rounded">filter_alt</span>
+            <span>Ward Unit:</span>
+          </span>
+          {[
+            { id: 'ALL', label: 'All Inpatients' },
+            { id: 'ICU_CCU', label: 'ICU & CCU' },
+            { id: 'HDU', label: 'HDU High Care' },
+            { id: 'GENERAL', label: 'General Ward' },
+          ].map((chip) => (
+            <button
+              key={chip.id}
+              type="button"
+              className={`md3-ipd-filter-chip ${selectedWardFilter === chip.id ? 'active' : ''}`}
+              onClick={() => setSelectedWardFilter(chip.id)}
+            >
+              {chip.label}
+            </button>
+          ))}
+        </div>
+
+        <div style={{ minWidth: '220px', flex: 1, maxWidth: '320px' }}>
+          <input
+            type="text"
+            className="md3-search-input"
+            placeholder="Search inpatient name, MRN, bed…"
+            value={patientSearch}
+            onChange={(e) => setPatientSearch(e.target.value)}
+            style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+          />
+        </div>
+      </div>
+
+      {/* ── 3. PATIENT HERO BANNER ── */}
       {currentAdmission && <IpdPatientBanner admission={currentAdmission} />}
 
-      {/* Tab Navigation */}
-      <div style={{ display: 'flex', gap: '4px', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
+      {/* ── 4. WORKSPACE TAB NAVIGATION ── */}
+      <div className="md3-ipd-tabs-nav" role="tablist">
         {[
-          { id: 'ROUNDS', label: 'Daily SOAP Rounds', icon: 'edit_note' },
-          { id: 'CPOE', label: 'CPOE Physician Orders', icon: 'prescriptions' },
-          { id: 'DISCHARGE', label: 'Discharge & Clearance Kanban', icon: 'door_front' },
+          { id: 'ROUNDS', label: 'Daily SOAP Rounds', icon: 'edit_note', badge: wardRounds.length },
+          { id: 'CPOE', label: 'CPOE Physician Orders', icon: 'prescriptions', badge: orders.length },
+          { id: 'DISCHARGE', label: 'Discharge & Clearance Kanban', icon: 'door_front', badge: clearance?.isDischarged ? 'Cleared' : null },
         ].map((tab) => (
           <button
             key={tab.id}
             type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={`md3-ipd-tab-btn ${activeTab === tab.id ? 'active' : ''}`}
             onClick={() => setActiveTab(tab.id)}
-            style={{
-              padding: '6px 14px',
-              border: 'none',
-              background: 'transparent',
-              borderBottom: activeTab === tab.id ? '2px solid var(--md-sys-color-primary, #6750a4)' : '2px solid transparent',
-              color: activeTab === tab.id ? 'var(--md-sys-color-primary, #6750a4)' : 'var(--md-sys-color-on-surface-variant)',
-              fontWeight: activeTab === tab.id ? 700 : 500,
-              fontSize: '0.82rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
           >
-            <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>{tab.icon}</span>
+            <span className="material-symbols-rounded">{tab.icon}</span>
             <span>{tab.label}</span>
+            {tab.badge !== null && tab.badge !== undefined && (
+              <span className="md3-ipd-tab-badge">{tab.badge}</span>
+            )}
           </button>
         ))}
       </div>
 
-      {/* ── TAB 1: SOAP WARD ROUNDS ── */}
+      {/* ── 5. TAB 1: DAILY SOAP WARD ROUNDS ── */}
       {activeTab === 'ROUNDS' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-          {/* New Round Form */}
-          <div
-            style={{
-              background: 'var(--md-sys-color-surface, #ffffff)',
-              border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-              borderRadius: '16px',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Record Daily SOAP Ward Round</h3>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#166534', background: '#dcfce7', padding: '4px 8px', borderRadius: '100px' }}>
-                Attending Round
-              </span>
+        <div className="md3-ipd-workspace-grid">
+          {/* Left Column: Record Daily Round Form */}
+          <div className="md3-ipd-card">
+            <div className="md3-ipd-card-header">
+              <div className="md3-ipd-card-title-group">
+                <span className="md3-ipd-card-title-icon">
+                  <span className="material-symbols-rounded">edit_document</span>
+                </span>
+                <div>
+                  <h3 className="md3-ipd-card-title">Record Daily SOAP Ward Round</h3>
+                  <p className="md3-ipd-card-subtitle">Document subjective findings, physical exam, assessment &amp; treatment plan</p>
+                </div>
+              </div>
+              <span className="md3-ipd-pill-badge success">Attending Round</span>
             </div>
 
-            <form onSubmit={handleSaveRound} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <form onSubmit={handleSaveRound} className="md3-ipd-soap-form">
               <Md3TextArea
-                label="[S] Subjective (Symptoms & Feedback)"
+                label="[S] Subjective (Symptoms, Pain Score & Patient Feedback) *"
                 value={subjective}
                 onChange={(e) => setSubjective(e.target.value)}
-                placeholder="e.g. Pain well controlled, afebrile, oral intake resumed"
+                placeholder="e.g. Pain well controlled, afebrile, oral intake resumed, tolerating light diet"
                 autoGrow={true}
                 minRows={2}
                 required
               />
               <Md3TextArea
-                label="[O] Objective (Physical Exam & Diagnostic Data)"
+                label="[O] Objective (Physical Exam, Vitals & Diagnostic Data)"
                 value={objective}
                 onChange={(e) => setObjective(e.target.value)}
-                placeholder="e.g. Vitals stable, chest clear bilateral, abdomen soft and non-tender"
+                placeholder="e.g. Vitals stable: BP 120/80, HR 76, SpO2 98% RA. Chest clear bilaterally, abdomen soft, surgical wound clean"
                 autoGrow={true}
                 minRows={2}
               />
               <Md3TextArea
-                label="[A] Assessment (Clinical Evaluation & Progress)"
+                label="[A] Assessment (Clinical Evaluation, Response & Progress) *"
                 value={assessment}
                 onChange={(e) => setAssessment(e.target.value)}
-                placeholder="e.g. Improving postoperative day 2, no signs of wound infection"
+                placeholder="e.g. Post-operative Day 2 following laparoscopic procedure, recovering well, no signs of sepsis"
                 autoGrow={true}
                 minRows={2}
                 required
               />
               <Md3TextArea
-                label="[P] Plan (Orders, Diet & Next Milestones)"
+                label="[P] Plan (Orders, Medication Changes & Next Milestones) *"
                 value={plan}
                 onChange={(e) => setPlan(e.target.value)}
-                placeholder="e.g. Step down IV to oral antibiotics, mobilize with physio, review evening"
+                placeholder="e.g. Step down IV antibiotics to oral, encourage full ambulation, remove surgical drain tomorrow, discharge target Day 4"
                 autoGrow={true}
                 minRows={2}
                 required
               />
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
                 <Md3Button variant="filled" type="submit" loading={savingRound}>
                   Save SOAP Ward Round Note
                 </Md3Button>
@@ -472,109 +649,109 @@ export const DoctorIpdCockpit = () => {
             </form>
           </div>
 
-          {/* Historical Rounds Timeline */}
-          <div
-            style={{
-              background: 'var(--md-sys-color-surface, #ffffff)',
-              border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-              borderRadius: '16px',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              maxHeight: '600px',
-              overflowY: 'auto',
-            }}
-          >
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
-              Chronological Ward Rounds History ({wardRounds.length})
-            </h3>
-            {wardRounds.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '32px', color: 'var(--md-sys-color-outline)' }}>
-                No prior ward rounds logged yet for this inpatient stay.
-              </div>
-            ) : (
-              wardRounds.map((r, i) => (
-                <div
-                  key={r._id || i}
-                  style={{
-                    border: '1px solid var(--md-sys-color-outline-variant)',
-                    borderRadius: '12px',
-                    padding: '14px',
-                    fontSize: '0.85rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '6px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--md-sys-color-primary)' }}>
-                    <span>Round #{wardRounds.length - i} · {r.doctorId?.fullName || 'Attending Physician'}</span>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline)' }}>
-                      {new Date(r.createdAt || r.roundDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                    </span>
-                  </div>
-                  <div><strong>S:</strong> {r.subjective}</div>
-                  {r.objective && <div><strong>O:</strong> {r.objective}</div>}
-                  <div><strong>A:</strong> {r.assessment}</div>
-                  <div><strong>P:</strong> {r.plan}</div>
+          {/* Right Column: Historical Ward Rounds Timeline */}
+          <div className="md3-ipd-card">
+            <div className="md3-ipd-card-header">
+              <div className="md3-ipd-card-title-group">
+                <span className="md3-ipd-card-title-icon">
+                  <span className="material-symbols-rounded">history_edu</span>
+                </span>
+                <div>
+                  <h3 className="md3-ipd-card-title">Chronological Ward Rounds History</h3>
+                  <p className="md3-ipd-card-subtitle">{wardRounds.length} notes logged during current inpatient stay</p>
                 </div>
-              ))
-            )}
+              </div>
+            </div>
+
+            <div className="md3-ipd-timeline-feed">
+              {wardRounds.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '40px', opacity: 0.5, marginBottom: '8px' }}>clinical_notes</span>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>No prior ward rounds recorded yet</div>
+                  <div style={{ fontSize: '0.78rem', marginTop: '4px' }}>Fill out the SOAP form on the left to record the patient's first ward round note.</div>
+                </div>
+              ) : (
+                wardRounds.map((r, i) => (
+                  <div key={r._id || i} className="md3-ipd-round-item">
+                    <div className="md3-ipd-round-header">
+                      <span className="md3-ipd-round-num">
+                        Round #{wardRounds.length - i} • {formatDoctorName(r.doctorId?.fullName || 'Attending Physician')}
+                      </span>
+                      <span className="md3-ipd-round-time">
+                        {new Date(r.createdAt || r.roundDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </span>
+                    </div>
+                    <div className="md3-ipd-soap-segment">
+                      <span className="md3-ipd-soap-key">[S] Subjective:</span>
+                      <span className="md3-ipd-soap-val">{r.subjective}</span>
+                    </div>
+                    {r.objective && (
+                      <div className="md3-ipd-soap-segment">
+                        <span className="md3-ipd-soap-key">[O] Objective:</span>
+                        <span className="md3-ipd-soap-val">{r.objective}</span>
+                      </div>
+                    )}
+                    <div className="md3-ipd-soap-segment">
+                      <span className="md3-ipd-soap-key">[A] Assessment:</span>
+                      <span className="md3-ipd-soap-val">{r.assessment}</span>
+                    </div>
+                    <div className="md3-ipd-soap-segment">
+                      <span className="md3-ipd-soap-key">[P] Plan:</span>
+                      <span className="md3-ipd-soap-val">{r.plan}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── TAB 2: CPOE PHYSICIAN ORDERS ── */}
+      {/* ── 6. TAB 2: CPOE PHYSICIAN ORDERS ── */}
       {activeTab === 'CPOE' && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '20px' }}>
-          {/* Order Placement Panel */}
-          <div
-            style={{
-              background: 'var(--md-sys-color-surface, #ffffff)',
-              border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-              borderRadius: '16px',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
+        <div className="md3-ipd-workspace-grid">
+          {/* Left Column: Order Placement Console */}
+          <div className="md3-ipd-card">
+            <div className="md3-ipd-card-header">
+              <div className="md3-ipd-card-title-group">
+                <span className="md3-ipd-card-title-icon">
+                  <span className="material-symbols-rounded">prescriptions</span>
+                </span>
+                <div>
+                  <h3 className="md3-ipd-card-title">Computerized Physician Order Entry</h3>
+                  <p className="md3-ipd-card-subtitle">Direct order transmission to Nursing e-MAR, Laboratory &amp; OT</p>
+                </div>
+              </div>
+            </div>
+
             {/* CPOE Sub-tabs */}
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <div className="md3-cpoe-subtabs">
               {[
-                { id: 'MEDICATION', label: 'Inpatient Rx' },
-                { id: 'LAB', label: 'Diagnostic / Lab' },
-                { id: 'DIET', label: 'Clinical Diet' },
-                { id: 'OT', label: 'OT Booking' },
+                { id: 'MEDICATION', label: 'Inpatient Rx', icon: 'pill' },
+                { id: 'LAB', label: 'Diagnostic / Lab', icon: 'science' },
+                { id: 'DIET', label: 'Clinical Diet', icon: 'restaurant' },
+                { id: 'OT', label: 'OT Booking', icon: 'medical_services' },
               ].map((sub) => (
                 <button
                   key={sub.id}
                   type="button"
                   onClick={() => setCpoeSubTab(sub.id)}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '100px',
-                    border: '1px solid var(--md-sys-color-outline-variant)',
-                    background: cpoeSubTab === sub.id ? 'var(--md-sys-color-primary)' : 'transparent',
-                    color: cpoeSubTab === sub.id ? '#ffffff' : 'var(--md-sys-color-on-surface)',
-                    fontWeight: 700,
-                    fontSize: '0.8rem',
-                    cursor: 'pointer',
-                  }}
+                  className={`md3-cpoe-subtab-btn ${cpoeSubTab === sub.id ? 'active' : ''}`}
                 >
-                  {sub.label}
+                  <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>{sub.icon}</span>
+                  <span>{sub.label}</span>
                 </button>
               ))}
             </div>
 
             {/* Sub-form 1: Inpatient Medication */}
             {cpoeSubTab === 'MEDICATION' && (
-              <form onSubmit={handleSaveMedOrder} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form onSubmit={handleSaveMedOrder} className="md3-cpoe-form">
                 <Md3TextField
                   label="Medication Name & Salt *"
                   value={medName}
                   onChange={(e) => setMedName(e.target.value)}
-                  placeholder="e.g. Inj. Ceftriaxone, Tab. Paracetamol"
+                  placeholder="e.g. Inj. Ceftriaxone, Tab. Paracetamol, Infusion Normal Saline"
                   required
                 />
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
@@ -582,7 +759,7 @@ export const DoctorIpdCockpit = () => {
                     label="Dosage (Strength) *"
                     value={dosage}
                     onChange={(e) => setDosage(e.target.value)}
-                    placeholder="e.g. 1g, 500mg"
+                    placeholder="e.g. 1g, 500mg, 100ml/hr"
                     required
                   />
                   <Md3Select label="Route *" value={route} onChange={(e) => setRoute(e.target.value)}>
@@ -590,7 +767,7 @@ export const DoctorIpdCockpit = () => {
                     <option value="IV">Intravenous (IV)</option>
                     <option value="IM">Intramuscular (IM)</option>
                     <option value="SC">Subcutaneous (SC)</option>
-                    <option value="INHALATION">Inhalation</option>
+                    <option value="INHALATION">Inhalation / Nebulization</option>
                     <option value="TOPICAL">Topical</option>
                   </Md3Select>
                 </div>
@@ -608,18 +785,20 @@ export const DoctorIpdCockpit = () => {
                   label="Special Administration Notes"
                   value={medInstructions}
                   onChange={(e) => setMedInstructions(e.target.value)}
-                  placeholder="e.g. Infuse in 100ml NS over 30 mins"
+                  placeholder="e.g. Infuse in 100ml NS over 30 mins, check BP before administering"
                 />
 
-                <Md3Button variant="filled" type="submit" loading={savingOrder}>
-                  Order &amp; Transcribe to e-MAR
-                </Md3Button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                  <Md3Button variant="filled" type="submit" loading={savingOrder}>
+                    Order &amp; Transcribe to e-MAR
+                  </Md3Button>
+                </div>
               </form>
             )}
 
             {/* Sub-form 2: Diagnostic / Lab Order */}
             {cpoeSubTab === 'LAB' && (
-              <form onSubmit={handleSaveLabOrder} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form onSubmit={handleSaveLabOrder} className="md3-cpoe-form">
                 <Md3Select
                   label="Select Investigation *"
                   value={selectedLabTest}
@@ -644,18 +823,20 @@ export const DoctorIpdCockpit = () => {
                   label="Clinical Indication / Notes"
                   value={labClinicalNotes}
                   onChange={(e) => setLabClinicalNotes(e.target.value)}
-                  placeholder="e.g. Rule out sepsis, monitor electrolytes"
+                  placeholder="e.g. Rule out post-op sepsis, monitor renal profile"
                 />
 
-                <Md3Button variant="filled" type="submit" loading={savingOrder}>
-                  Submit Inpatient Lab Order
-                </Md3Button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                  <Md3Button variant="filled" type="submit" loading={savingOrder}>
+                    Submit Inpatient Lab Order
+                  </Md3Button>
+                </div>
               </form>
             )}
 
             {/* Sub-form 3: Clinical Diet */}
             {cpoeSubTab === 'DIET' && (
-              <form onSubmit={handleSaveDietOrder} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form onSubmit={handleSaveDietOrder} className="md3-cpoe-form">
                 <Md3Select
                   label="Inpatient Diet Tier *"
                   value={selectedDietTier}
@@ -677,15 +858,17 @@ export const DoctorIpdCockpit = () => {
                   placeholder="e.g. Strict fluid restriction 1.2L/day, salt-free"
                 />
 
-                <Md3Button variant="filled" type="submit" loading={savingOrder}>
-                  Prescribe Clinical Diet
-                </Md3Button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                  <Md3Button variant="filled" type="submit" loading={savingOrder}>
+                    Prescribe Clinical Diet
+                  </Md3Button>
+                </div>
               </form>
             )}
 
             {/* Sub-form 4: OT Booking */}
             {cpoeSubTab === 'OT' && (
-              <form onSubmit={handleSaveOtBooking} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <form onSubmit={handleSaveOtBooking} className="md3-cpoe-form">
                 <Md3TextField
                   label="Surgical Procedure Name *"
                   value={otProcedureName}
@@ -726,130 +909,131 @@ export const DoctorIpdCockpit = () => {
                   label="Surgical &amp; Pre-Op Notes"
                   value={otSpecialNotes}
                   onChange={(e) => setOtSpecialNotes(e.target.value)}
-                  placeholder="e.g. Keep 2 units PRBC cross-matched, pre-op cefazolin"
+                  placeholder="e.g. Keep 2 units PRBC cross-matched, pre-op antibiotic prophylaxis"
                 />
 
-                <Md3Button variant="filled" type="submit" loading={savingOrder}>
-                  Book Operating Theatre Session
-                </Md3Button>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                  <Md3Button variant="filled" type="submit" loading={savingOrder}>
+                    Book Operating Theatre Session
+                  </Md3Button>
+                </div>
               </form>
             )}
           </div>
 
-          {/* Active Orders List */}
-          <div
-            style={{
-              background: 'var(--md-sys-color-surface, #ffffff)',
-              border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-              borderRadius: '16px',
-              padding: '20px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              maxHeight: '600px',
-              overflowY: 'auto',
-            }}
-          >
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>
-              Active Inpatient Physician Orders ({orders.length})
-            </h3>
-            {orders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '32px', color: 'var(--md-sys-color-outline)' }}>
-                No active CPOE physician orders recorded for this admission.
-              </div>
-            ) : (
-              orders.map((o) => (
-                <div
-                  key={o._id}
-                  style={{
-                    border: '1px solid var(--md-sys-color-outline-variant)',
-                    borderRadius: '12px',
-                    padding: '12px',
-                    fontSize: '0.85rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700 }}>
-                    <span>{o.orderType}: {o.medication?.name || o.testName || o.dietTier || 'Physician Order'}</span>
-                    <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '100px', background: '#dcfce7', color: '#166534' }}>
-                      {o.status}
-                    </span>
-                  </div>
-                  {o.medication && (
-                    <div style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
-                      {o.medication.dosage} • {o.medication.route} • {o.medication.frequency}
-                    </div>
-                  )}
-                  <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-                    Ordered: {new Date(o.createdAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
-                  </div>
+          {/* Right Column: Active Inpatient Orders Timeline */}
+          <div className="md3-ipd-card">
+            <div className="md3-ipd-card-header">
+              <div className="md3-ipd-card-title-group">
+                <span className="md3-ipd-card-title-icon">
+                  <span className="material-symbols-rounded">checklist</span>
+                </span>
+                <div>
+                  <h3 className="md3-ipd-card-title">Active Inpatient Orders</h3>
+                  <p className="md3-ipd-card-subtitle">{orders.length} orders on record for this admission</p>
                 </div>
-              ))
-            )}
+              </div>
+            </div>
+
+            <div className="md3-cpoe-orders-feed">
+              {orders.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '48px 16px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '40px', opacity: 0.5, marginBottom: '8px' }}>prescriptions</span>
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem' }}>No CPOE orders placed yet</div>
+                  <div style={{ fontSize: '0.78rem', marginTop: '4px' }}>Use the order console on the left to prescribe medications, labs, or clinical diet.</div>
+                </div>
+              ) : (
+                orders.map((o) => (
+                  <div key={o._id} className="md3-cpoe-order-card">
+                    <div className="md3-cpoe-order-top">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary)' }}>
+                          {o.orderType === 'MEDICATION' ? 'pill' : o.orderType === 'DIAGNOSTIC' ? 'science' : o.orderType === 'DIET' ? 'restaurant' : 'medical_services'}
+                        </span>
+                        <span className="md3-cpoe-order-name">
+                          {o.orderType}: {o.medication?.name || o.testName || (o.dietTier ? o.dietTier.replace(/_/g, ' ') : null) || o.procedureName || 'Order'}
+                        </span>
+                      </div>
+                      <span className={`md3-cpoe-order-status ${o.status === 'COMPLETED' ? 'completed' : o.status === 'ACTIVE' ? 'active' : 'pending'}`}>
+                        {o.status || 'ACTIVE'}
+                      </span>
+                    </div>
+
+                    {o.medication && (
+                      <div className="md3-cpoe-order-meta">
+                        {o.medication.dosage} • {o.medication.route} • {o.medication.frequency} {o.medication.instructions && `(${o.medication.instructions})`}
+                      </div>
+                    )}
+
+                    {o.instructions && !o.medication && (
+                      <div className="md3-cpoe-order-meta">
+                        {o.instructions}
+                      </div>
+                    )}
+
+                    <div style={{ fontSize: '0.70rem', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '2px' }}>
+                      Ordered: {new Date(o.createdAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* ── TAB 3: DISCHARGE & CLEARANCE KANBAN ── */}
+      {/* ── 7. TAB 3: DISCHARGE & CLEARANCE KANBAN ── */}
       {activeTab === 'DISCHARGE' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Discharge Initiation Form (Only if not yet initiated) */}
+        <div className="md3-ipd-discharge-stack">
+          {/* Discharge Initiation Card (if not yet initiated or finalized) */}
           {(!currentAdmission?.dischargeSummary?.finalDiagnosis || currentAdmission?.status === 'ADMITTED') && (
-            <div
-              style={{
-                background: 'var(--md-sys-color-surface, #ffffff)',
-                border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-                borderRadius: '12px',
-                padding: '16px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '12px',
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.02)',
-              }}
-            >
-              <div>
-                <h3 style={{ margin: 0, fontSize: '0.98rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>
-                  Initiate Inpatient Discharge Order
-                </h3>
-                <p style={{ fontSize: '0.74rem', color: 'var(--md-sys-color-on-surface-variant)', margin: '2px 0 0 0' }}>
-                  Authorizes patient discharge and opens the 3-Way Clearance Kanban across Pharmacy, Ward Nursing, and Billing.
-                </p>
+            <div className="md3-ipd-card">
+              <div className="md3-ipd-card-header">
+                <div className="md3-ipd-card-title-group">
+                  <span className="md3-ipd-card-title-icon">
+                    <span className="material-symbols-rounded">door_front</span>
+                  </span>
+                  <div>
+                    <h3 className="md3-ipd-card-title">Initiate Inpatient Discharge Order</h3>
+                    <p className="md3-ipd-card-subtitle">
+                      Authorizes patient discharge and opens the 3-Way Clearance Kanban across Pharmacy, Ward Nursing, and Billing
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <form onSubmit={handleInitiateDischarge} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <form onSubmit={handleInitiateDischarge} className="md3-ipd-soap-form">
                 <Md3TextArea
-                  label="Final Discharge Diagnosis"
+                  label="Final Discharge Diagnosis *"
                   value={finalDiagnosis}
                   onChange={(e) => setFinalDiagnosis(e.target.value)}
-                  placeholder="e.g. Acute Cholecystitis — S/P Laparoscopic Cholecystectomy"
+                  placeholder="e.g. Acute Cholecystitis — S/P Laparoscopic Cholecystectomy (Resolved)"
                   autoGrow={true}
                   minRows={2}
                   required
                 />
 
                 <Md3TextArea
-                  label="Hospital Course &amp; Treatment Summary"
+                  label="Hospital Course & Treatment Summary *"
                   value={courseInHospital}
                   onChange={(e) => setCourseInHospital(e.target.value)}
-                  placeholder="e.g. Admitted via ER, managed surgically on Day 2, post-op vitals stable, ambulating independently"
+                  placeholder="e.g. Admitted via ER, managed surgically on Day 2, post-op vitals stable, ambulating independently, surgical drain removed"
                   autoGrow={true}
                   minRows={2}
                   required
                 />
 
                 <Md3TextArea
-                  label="Discharge Advice &amp; Take-Home Instructions"
+                  label="Discharge Advice & Take-Home Instructions *"
                   value={dischargeAdvice}
                   onChange={(e) => setDischargeAdvice(e.target.value)}
-                  placeholder="e.g. Continue oral antibiotics for 5 days, keep surgical dressing dry, low fat diet"
+                  placeholder="e.g. Continue oral antibiotics for 5 days, keep surgical dressing dry, low-fat diet, emergency review if fever > 100.4F"
                   autoGrow={true}
                   minRows={2}
                   required
                 />
 
-                <div style={{ maxWidth: '260px' }}>
+                <div style={{ maxWidth: '280px' }}>
                   <Md3TextField
                     label="Follow-Up Outpatient Review Date"
                     type="date"
@@ -888,6 +1072,19 @@ export const DoctorIpdCockpit = () => {
           onClose={() => setShowGatePassModal(false)}
         />
       )}
+
+      {/* Interactive Inpatient Telemetry Drilldown Dialog */}
+      <IpdTelemetryDetailDialog
+        isOpen={Boolean(activeTelemetryModal)}
+        type={activeTelemetryModal}
+        onClose={() => setActiveTelemetryModal(null)}
+        admissionList={admissionList}
+        wardRounds={wardRounds}
+        currentAdmission={currentAdmission}
+        onSelectInpatient={(newAdmId) => {
+          navigate(`/dashboard/doctor/ipd/${newAdmId}`);
+        }}
+      />
     </div>
   );
 };
