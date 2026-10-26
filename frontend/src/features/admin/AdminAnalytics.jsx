@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useOutletContext, useNavigate } from 'react-router-dom';
 import CommandCenterDetailDialog from './CommandCenterDetailDialog';
+import { formatTodayLabel } from '../../utils/dateFormatting';
 
 const AdminAnalytics = () => {
   const { 
@@ -16,6 +17,7 @@ const AdminAnalytics = () => {
   } = useOutletContext();
   const navigate = useNavigate();
   const [activeDetailType, setActiveDetailType] = useState(null);
+  const [activeFlowTab, setActiveFlowTab] = useState('ALL');
 
   // Department Topography filter & search state
   const [selectedDeptType, setSelectedDeptType] = useState('ALL');
@@ -29,6 +31,7 @@ const AdminAnalytics = () => {
   const totalRegisteredVisits = stats?.totalVisits || stats?.patientIn || 0;
   const totalCompletedVisits = stats?.totalCompleted || stats?.patientOut || 0;
   const totalStaffCount = staffList.length;
+  const activeStaffCount = staffList.filter(s => s.status === 'ACTIVE').length || staffList.length || 0;
 
   // Icon mapping for clinical specialties
   const getDeptIcon = (dept) => {
@@ -128,16 +131,15 @@ const AdminAnalytics = () => {
 
   return (
     <section className="analytics-section">
-      <div className="analytics-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
+      <div className="analytics-header">
+        <div className="analytics-header-titles">
           <h2 className="analytics-title">Hospital Command Center</h2>
-          <p className="analytics-subtitle">Real-time operational metrics, live queue pipeline, and clinical workforce telemetry</p>
         </div>
 
         {/* Live System Telemetry & Refresh Action */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 16px', background: 'var(--md-sys-color-surface-container-high)', border: '1px solid var(--md-sys-color-outline-variant)', borderRadius: '999px', fontSize: '12px', color: 'var(--md-sys-color-on-surface)' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--md-sys-color-primary)', display: 'inline-block', boxShadow: '0 0 8px var(--md-sys-color-primary)' }} />
+        <div className="analytics-header-actions">
+          <div className="telemetry-live-badge">
+            <span className="telemetry-live-dot" />
             <span style={{ fontWeight: 600 }}>Live Telemetry</span>
             <span style={{ opacity: 0.7, marginLeft: '2px' }}>· Sync: {formatLastUpdated()}</span>
           </div>
@@ -146,204 +148,781 @@ const AdminAnalytics = () => {
             onClick={() => fetchStats && fetchStats(false)}
             disabled={isRefreshingStats}
             title="Refresh All Real-time Metrics"
-            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 18px', background: 'var(--md-sys-color-primary)', color: 'var(--md-sys-color-on-primary)', border: 'none', borderRadius: '100px', cursor: isRefreshingStats ? 'wait' : 'pointer', fontSize: '12px', fontWeight: 700, boxShadow: '0 2px 8px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent)', transition: 'all 180ms cubic-bezier(0.2, 0, 0, 1)' }}
+            className="telemetry-refresh-btn"
           >
-            <span className={`material-symbols-rounded ${isRefreshingStats ? 'spin-animation' : ''}`} style={{ fontSize: '16px' }}>
+            <span className={`material-symbols-rounded ${isRefreshingStats ? 'spin-animation' : ''}`} style={{ fontSize: '15px' }}>
               refresh
             </span>
-            {isRefreshingStats ? 'Updating...' : 'Refresh'}
+            <span>{isRefreshingStats ? 'Updating...' : 'Refresh'}</span>
           </button>
         </div>
       </div>
 
-      {/* KPI Bento Grid */}
+      {/* ── Today's Operational Pulse: Linear Horizontal Strip ── */}
+      <div className="analytics-pulse-container">
+        <div className="analytics-pulse-header">
+          <div className="analytics-pulse-title-group">
+            <span className="material-symbols-rounded analytics-pulse-icon">monitor_heart</span>
+            <span className="analytics-pulse-heading">Today's Operational Pulse</span>
+          </div>
+          <span className="analytics-pulse-date-badge">
+            <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>calendar_today</span>
+            <span>{formatTodayLabel()}</span>
+          </span>
+        </div>
+
+        <div className="analytics-pulse-grid">
+          {/* Pulse Card 1: Today's Patient Visits */}
+          <div
+            className="analytics-pulse-card analytics-pulse-card--primary clickable-card"
+            onClick={() => setActiveDetailType('today_visits')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('today_visits')}
+            title="Click to view today's registered patient visits"
+          >
+            <div className="analytics-pulse-card-left">
+              <div className="analytics-pulse-card-icon">
+                <span className="material-symbols-rounded">groups</span>
+              </div>
+              <div className="analytics-pulse-card-meta">
+                <span className="analytics-pulse-card-label">Today's Patient Visits</span>
+                <span className="analytics-pulse-card-sub">OPD & IPD arrivals</span>
+              </div>
+            </div>
+            <span className="analytics-pulse-card-val">{(stats?.patientIn || 0) + (stats?.patientOut || 0)}</span>
+          </div>
+
+          {/* Pulse Card 2: Active Staff On-Duty */}
+          <div
+            className="analytics-pulse-card analytics-pulse-card--success clickable-card"
+            onClick={() => navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Active' } })}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Active' } })}
+            title="Click to manage active staff on-duty"
+          >
+            <div className="analytics-pulse-card-left">
+              <div className="analytics-pulse-card-icon">
+                <span className="material-symbols-rounded">badge</span>
+              </div>
+              <div className="analytics-pulse-card-meta">
+                <span className="analytics-pulse-card-label">Active Staff On-Duty</span>
+                <span className="analytics-pulse-card-sub">Clinicians & Nurses</span>
+              </div>
+            </div>
+            <span className="analytics-pulse-card-val">{activeStaffCount}</span>
+          </div>
+
+          {/* Pulse Card 3: Pending Lab Orders */}
+          <div
+            className="analytics-pulse-card analytics-pulse-card--warning clickable-card"
+            onClick={() => setActiveDetailType('pending_lab')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('pending_lab')}
+            title="Click to view pending diagnostic lab queue"
+          >
+            <div className="analytics-pulse-card-left">
+              <div className="analytics-pulse-card-icon">
+                <span className="material-symbols-rounded">biotech</span>
+              </div>
+              <div className="analytics-pulse-card-meta">
+                <span className="analytics-pulse-card-label">Pending Lab Orders</span>
+                <span className="analytics-pulse-card-sub">Diagnostic worklist</span>
+              </div>
+            </div>
+            <span className="analytics-pulse-card-val">{stats?.pendingLab || 0}</span>
+          </div>
+
+          {/* Pulse Card 4: Pending Rx Fulfillments */}
+          <div
+            className="analytics-pulse-card analytics-pulse-card--info clickable-card"
+            onClick={() => setActiveDetailType('pending_pharmacy')}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('pending_pharmacy')}
+            title="Click to view pending pharmacy queue"
+          >
+            <div className="analytics-pulse-card-left">
+              <div className="analytics-pulse-card-icon">
+                <span className="material-symbols-rounded">prescriptions</span>
+              </div>
+              <div className="analytics-pulse-card-meta">
+                <span className="analytics-pulse-card-label">Pending Rx Fulfillments</span>
+                <span className="analytics-pulse-card-sub">Pharmacy dispensing</span>
+              </div>
+            </div>
+            <span className="analytics-pulse-card-val">{stats?.pendingPharmacy || 0}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI Bento Grid - 5 cards per row */}
       <div className="kpi-grid">
-        <div className="kpi-card kpi-blue clickable-card" onClick={() => setActiveDetailType('today_visits')} style={{ cursor: 'pointer' }}>
+        {/* Row 1, Card 1: Today's Visits */}
+        <div 
+          className="kpi-card kpi-blue clickable-card" 
+          onClick={() => setActiveDetailType('today_visits')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('today_visits')}
+          title="Click to view today's registered patient list"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-blue">groups</span>
             <span className="kpi-label">Today's Visits</span>
+            <span className="material-symbols-rounded icon-blue">groups</span>
           </div>
           <div className="kpi-value">{stats?.patientIn ?? 0}</div>
           <div className="kpi-footer">
             {stats?.patientIn > 0 
-              ? 'Total patients registered today (Click to view)' 
-              : `Total All-Time: ${stats?.totalVisits || 0} (Click to view)`}
+              ? 'Patients registered today' 
+              : `Total All-Time: ${stats?.totalVisits || 0}`}
           </div>
         </div>
 
-        <div className="kpi-card kpi-green clickable-card" onClick={() => setActiveDetailType('completed_visits')} style={{ cursor: 'pointer' }}>
+        {/* Row 1, Card 2: Completed Visits */}
+        <div 
+          className="kpi-card kpi-green clickable-card" 
+          onClick={() => setActiveDetailType('completed_visits')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('completed_visits')}
+          title="Click to view completed patient discharges"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-green">task_alt</span>
             <span className="kpi-label">Completed Visits</span>
+            <span className="material-symbols-rounded icon-green">task_alt</span>
           </div>
           <div className="kpi-value">{stats?.patientOut ?? stats?.totalCompleted ?? 0}</div>
           <div className="kpi-footer">
             {stats?.patientOut > 0 
-              ? 'Patients discharged today (Click to view)' 
-              : `Total Discharged: ${stats?.totalCompleted || 0} (Click to view)`}
+              ? 'Patients discharged today' 
+              : `Total Discharged: ${stats?.totalCompleted || 0}`}
           </div>
         </div>
 
-        <div className="kpi-card kpi-orange clickable-card" onClick={() => setActiveDetailType('pending_lab')} style={{ cursor: 'pointer' }}>
+        {/* Row 1, Card 3: Pending Lab Queue */}
+        <div 
+          className="kpi-card kpi-orange clickable-card" 
+          onClick={() => setActiveDetailType('pending_lab')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('pending_lab')}
+          title="Click to view pending diagnostic lab queue"
+        >
           <div className="kpi-header">
+            <span className="kpi-label">Pending Lab</span>
             <span className="material-symbols-rounded icon-orange">biotech</span>
-            <span className="kpi-label">Pending Lab Queue</span>
           </div>
           <div className="kpi-value">{stats?.pendingLab ?? 0}</div>
-          <div className="kpi-footer">Specimens waiting for diagnostic runs (Click to view)</div>
+          <div className="kpi-footer">Specimens in diagnostic queue</div>
         </div>
 
-        <div className="kpi-card kpi-teal clickable-card" onClick={() => setActiveDetailType('pending_pharmacy')} style={{ cursor: 'pointer' }}>
+        {/* Row 1, Card 4: Pending Pharmacy */}
+        <div 
+          className="kpi-card kpi-teal clickable-card" 
+          onClick={() => setActiveDetailType('pending_pharmacy')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('pending_pharmacy')}
+          title="Click to view pending pharmacy orders"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-teal">prescriptions</span>
             <span className="kpi-label">Pending Pharmacy</span>
+            <span className="material-symbols-rounded icon-teal">prescriptions</span>
           </div>
           <div className="kpi-value">{stats?.pendingPharmacy ?? 0}</div>
-          <div className="kpi-footer">Prescriptions waiting to be filled (Click to view)</div>
+          <div className="kpi-footer">Prescriptions queued to dispense</div>
         </div>
 
-        <div className="kpi-card kpi-purple clickable-card" onClick={() => navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Active' } })} style={{ cursor: 'pointer' }}>
+        {/* Row 1, Card 5: Pending Billing */}
+        <div 
+          className="kpi-card kpi-orange clickable-card" 
+          onClick={() => setActiveDetailType('pending_billing')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setActiveDetailType('pending_billing')}
+          title="Click to view pending patient settlements"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-purple">badge</span>
+            <span className="kpi-label">Pending Billing</span>
+            <span className="material-symbols-rounded icon-orange">point_of_sale</span>
+          </div>
+          <div className="kpi-value">{stats?.pendingBilling ?? 0}</div>
+          <div className="kpi-footer">Invoices awaiting settlement</div>
+        </div>
+
+        {/* Row 2, Card 1: Active Staff */}
+        <div 
+          className="kpi-card kpi-purple clickable-card" 
+          onClick={() => navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Active' } })}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Active' } })}
+          title="Click to manage active staff directory"
+        >
+          <div className="kpi-header">
             <span className="kpi-label">Active Staff</span>
+            <span className="material-symbols-rounded icon-purple">badge</span>
           </div>
           <div className="kpi-value">{staffList.filter(s => s.status === 'Active').length}</div>
-          <div className="kpi-footer">Active personnel in system (Click to view)</div>
+          <div className="kpi-footer">On-duty hospital personnel</div>
         </div>
 
-        <div className="kpi-card kpi-indigo clickable-card" onClick={() => navigate('/dashboard/administrator/staff', { state: { statusFilter: 'All' } })} style={{ cursor: 'pointer' }}>
+        {/* Row 2, Card 2: Total Staff */}
+        <div 
+          className="kpi-card kpi-indigo clickable-card" 
+          onClick={() => navigate('/dashboard/administrator/staff', { state: { statusFilter: 'All' } })}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/dashboard/administrator/staff', { state: { statusFilter: 'All' } })}
+          title="Click to view full staff roster"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-indigo">groups</span>
             <span className="kpi-label">Total Staff</span>
+            <span className="material-symbols-rounded icon-indigo">groups</span>
           </div>
           <div className="kpi-value">{staffList.length}</div>
-          <div className="kpi-footer">Total registered employee accounts (Click to view)</div>
+          <div className="kpi-footer">Total employee accounts</div>
         </div>
 
-        <div className="kpi-card kpi-red clickable-card" onClick={() => navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Disabled' } })} style={{ cursor: 'pointer' }}>
+        {/* Row 2, Card 3: Disabled Accounts */}
+        <div 
+          className="kpi-card kpi-red clickable-card" 
+          onClick={() => navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Disabled' } })}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/dashboard/administrator/staff', { state: { statusFilter: 'Disabled' } })}
+          title="Click to view disabled/suspended staff accounts"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-red">no_accounts</span>
             <span className="kpi-label">Disabled Accounts</span>
+            <span className="material-symbols-rounded icon-red">no_accounts</span>
           </div>
           <div className="kpi-value">{staffList.filter(s => s.status !== 'Active').length}</div>
-          <div className="kpi-footer">Disabled/inactive staff accounts (Click to view)</div>
+          <div className="kpi-footer">Inactive or suspended accounts</div>
         </div>
 
-        <div className="kpi-card kpi-blue clickable-card" onClick={() => navigate('/dashboard/administrator/departments')} style={{ cursor: 'pointer' }}>
+        {/* Row 2, Card 4: Departments */}
+        <div 
+          className="kpi-card kpi-blue clickable-card" 
+          onClick={() => navigate('/dashboard/administrator/departments')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/dashboard/administrator/departments')}
+          title="Click to configure departments"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-blue">corporate_fare</span>
             <span className="kpi-label">Departments</span>
+            <span className="material-symbols-rounded icon-blue">corporate_fare</span>
           </div>
           <div className="kpi-value">{departments.length}</div>
-          <div className="kpi-footer">Configured clinical units (Click to view)</div>
+          <div className="kpi-footer">Clinical & support units</div>
         </div>
 
-        <div className="kpi-card kpi-cyan clickable-card" onClick={() => navigate('/dashboard/administrator/laboratories')} style={{ cursor: 'pointer' }}>
+        {/* Row 2, Card 5: Laboratories */}
+        <div 
+          className="kpi-card kpi-cyan clickable-card" 
+          onClick={() => navigate('/dashboard/administrator/laboratories')}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && navigate('/dashboard/administrator/laboratories')}
+          title="Click to configure laboratories"
+        >
           <div className="kpi-header">
-            <span className="material-symbols-rounded icon-cyan">science</span>
             <span className="kpi-label">Laboratories</span>
+            <span className="material-symbols-rounded icon-cyan">science</span>
           </div>
           <div className="kpi-value">{laboratories.length}</div>
-          <div className="kpi-footer">Active diagnostic lab facilities (Click to view)</div>
+          <div className="kpi-footer">Operational diagnostic labs</div>
         </div>
       </div>
 
-      {/* Patient Flow Tracker */}
-      <div className="insights-card" style={{ marginTop: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-          <h3 className="insights-card-title" style={{ margin: 0 }}>Live Patient Flow Pipeline</h3>
-          <span style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)' }}>Click any queue stage to inspect patient ledger</span>
+      {/* Live Patient Workflow Hub */}
+      <div className="insights-card workflow-hub-card">
+        
+        {/* Header & Segmented Track Filter */}
+        <div className="workflow-hub-header">
+          <div className="workflow-hub-title-group">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: '20px', color: 'var(--md-sys-color-primary)' }}>alt_route</span>
+              <h3 className="insights-card-title workflow-hub-title">Live Patient Workflow Hub</h3>
+            </div>
+          </div>
+
+          {/* M3 Segmented Tab Filter */}
+          <div className="workflow-segmented-tabs">
+            {[
+              { id: 'ALL', label: 'All Tracks', icon: 'dashboard_customize' },
+              { id: 'OPD', label: 'OPD Flow', icon: 'stethoscope' },
+              { id: 'IPD', label: 'IPD Inpatients', icon: 'hotel' },
+              { id: 'SURGERIES', label: 'OT Surgeries', icon: 'medical_services' },
+              { id: 'BEDS', label: 'Bed Capacity', icon: 'single_bed' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                className={`workflow-tab-btn ${activeFlowTab === tab.id ? 'active' : ''}`}
+                onClick={() => setActiveFlowTab(tab.id)}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginTop: '16px', flexWrap: 'wrap' }}>
+        {/* Tracks Container */}
+        <div className="workflow-tracks-container">
           
-          {/* 1. Triage Queue */}
-          <div 
-            onClick={() => setActiveDetailType('triage_queue')}
-            title="Click to view Triage Queue patients"
-            className="pipeline-stage-card"
-            style={{ background: 'var(--md-sys-color-primary-container)' }}
-          >
-            <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-primary-container)' }}>{stats?.waitingTriage ?? 0}</div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-primary-container)', marginTop: '4px' }}>Triage Queue</div>
-            <div style={{ fontSize: '10px', color: 'var(--md-sys-color-on-primary-container)', opacity: 0.8, marginTop: '2px' }}>Click to view</div>
-          </div>
-          
-          <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-outline-variant)', fontSize: '20px' }}>arrow_forward</span>
-          
-          {/* 2. Doctor Queue */}
-          <div 
-            onClick={() => setActiveDetailType('doctor_queue')}
-            title="Click to view Doctor Queue patients"
-            className="pipeline-stage-card"
-            style={{ background: 'var(--md-sys-color-tertiary-container)' }}
-          >
-            <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-tertiary-container)' }}>{stats?.waitingDoctor ?? 0}</div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-tertiary-container)', marginTop: '4px' }}>Doctor Queue</div>
-            <div style={{ fontSize: '10px', color: 'var(--md-sys-color-on-tertiary-container)', opacity: 0.8, marginTop: '2px' }}>Click to view</div>
-          </div>
-          
-          <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-outline-variant)', fontSize: '20px' }}>arrow_forward</span>
-          
-          {/* 3. In Consultation */}
-          <div 
-            onClick={() => setActiveDetailType('in_consultation')}
-            title="Click to view In-Consultation patients"
-            className="pipeline-stage-card"
-            style={{ background: 'var(--md-sys-color-secondary-container)' }}
-          >
-            <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-secondary-container)' }}>{stats?.inProgress ?? 0}</div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-secondary-container)', marginTop: '4px' }}>In Consultation</div>
-            <div style={{ fontSize: '10px', color: 'var(--md-sys-color-on-secondary-container)', opacity: 0.8, marginTop: '2px' }}>Click to view</div>
-          </div>
-          
-          <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-outline-variant)', fontSize: '20px' }}>arrow_forward</span>
-          
-          {/* 4. Lab Diagnostics */}
-          <div 
-            onClick={() => setActiveDetailType('pending_lab')}
-            title="Click to view Pending Lab patients"
-            className="pipeline-stage-card"
-            style={{ background: 'var(--md-sys-color-error-container)' }}
-          >
-            <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-error-container)' }}>{stats?.pendingLab ?? 0}</div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-error-container)', marginTop: '4px' }}>Lab Diagnostics</div>
-            <div style={{ fontSize: '10px', color: 'var(--md-sys-color-on-error-container)', opacity: 0.8, marginTop: '2px' }}>Click to view</div>
-          </div>
-          
-          <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-outline-variant)', fontSize: '20px' }}>arrow_forward</span>
-          
-          {/* 5. Pharmacy Queue */}
-          <div 
-            onClick={() => setActiveDetailType('pending_pharmacy')}
-            title="Click to view Pharmacy Queue patients"
-            className="pipeline-stage-card"
-            style={{ background: 'var(--md-sys-color-surface-container-high)' }}
-          >
-            <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-primary)' }}>{stats?.pendingPharmacy ?? 0}</div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px' }}>Pharmacy Queue</div>
-            <div style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.8, marginTop: '2px' }}>Click to view</div>
-          </div>
-          
-          <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-outline-variant)', fontSize: '20px' }}>arrow_forward</span>
-          
-          {/* 6. Skipped Calls */}
-          <div 
-            onClick={() => setActiveDetailType('skipped')}
-            title="Click to view Skipped Calls"
-            className="pipeline-stage-card"
-            style={{ background: 'var(--md-sys-color-surface-container)' }}
-          >
-            <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--md-sys-color-on-surface-variant)' }}>{stats?.skipped ?? 0}</div>
-            <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '4px' }}>Skipped Calls</div>
-            <div style={{ fontSize: '10px', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.8, marginTop: '2px' }}>Click to view</div>
-          </div>
-          
+          {/* TRACK 1: OPD Care Continuum */}
+          {(activeFlowTab === 'ALL' || activeFlowTab === 'OPD') && (
+            <div className="workflow-track-section">
+              <div className="workflow-track-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary)' }}>stethoscope</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>Outpatient Care Continuum (OPD)</span>
+                  <span className="workflow-track-badge" style={{ background: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
+                    {totalRegisteredVisits} Registered Today
+                  </span>
+                </div>
+                <button
+                  className="workflow-track-action-btn"
+                  onClick={() => setActiveDetailType('today_visits')}
+                  title="View all OPD registrations"
+                >
+                  <span>View All OPD</span>
+                  <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>arrow_forward</span>
+                </button>
+              </div>
+
+              <div className="workflow-stage-grid">
+                {/* 1. Nurse Triage */}
+                <div 
+                  onClick={() => setActiveDetailType('nurse_queue')}
+                  title="Click to view Nurse Queue patients awaiting vitals"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-primary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>
+                    {stats?.waitingTriage ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Nurse Triage</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Waiting for Vitals</div>
+                  </div>
+                </div>
+
+                {/* 2. Doctor Queue */}
+                <div 
+                  onClick={() => setActiveDetailType('doctor_queue')}
+                  title="Click to view Doctor Queue patients awaiting consultation"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-tertiary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-tertiary-container)' }}>
+                    {stats?.waitingDoctor ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-tertiary-container)' }}>Doctor Queue</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-tertiary-container)' }}>Waiting Consultation</div>
+                  </div>
+                </div>
+
+                {/* 3. In Consultation */}
+                <div 
+                  onClick={() => setActiveDetailType('in_consultation')}
+                  title="Click to view active in-consultation patients"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-secondary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>
+                    {stats?.inProgress ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>In Consultation</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>Active Encounter</div>
+                  </div>
+                </div>
+
+                {/* 4. Lab Diagnostics */}
+                <div 
+                  onClick={() => setActiveDetailType('pending_lab')}
+                  title="Click to view patients in diagnostic lab investigation queue"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-error-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-error-container)' }}>
+                    {stats?.pendingLab ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-error-container)' }}>Lab Diagnostics</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-error-container)' }}>Specimen & Results</div>
+                  </div>
+                </div>
+
+                {/* 5. Pharmacy Queue */}
+                <div 
+                  onClick={() => setActiveDetailType('pending_pharmacy')}
+                  title="Click to view pharmacy dispensation queue"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-surface-container-high)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-primary)' }}>
+                    {stats?.pendingPharmacy ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-surface)' }}>Pharmacy Queue</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Medication Dispense</div>
+                  </div>
+                </div>
+
+                {/* 6. Billing Settlement */}
+                <div 
+                  onClick={() => setActiveDetailType('pending_billing')}
+                  title="Click to view billing and cashier settlement queue"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-surface-container-highest)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-tertiary)' }}>
+                    {stats?.pendingBilling ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-surface)' }}>Billing Settlement</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Cashier Clearance</div>
+                  </div>
+                </div>
+
+                {/* 7. Skipped Calls */}
+                <div 
+                  onClick={() => setActiveDetailType('skipped')}
+                  title="Click to view skipped or uncalled patient tokens"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-surface-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+                    {stats?.skipped ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Skipped / Recalls</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Unattended Tokens</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TRACK 2: IPD Inpatient & Ward Continuum */}
+          {(activeFlowTab === 'ALL' || activeFlowTab === 'IPD') && (
+            <div className="workflow-track-section">
+              <div className="workflow-track-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-secondary)' }}>hotel</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>Inpatient & Ward Continuum (IPD)</span>
+                  <span className="workflow-track-badge" style={{ background: 'var(--md-sys-color-secondary-container)', color: 'var(--md-sys-color-on-secondary-container)' }}>
+                    {stats?.ipd?.activeAdmissions ?? 0} Active Inpatients
+                  </span>
+                </div>
+                <button
+                  className="workflow-track-action-btn"
+                  onClick={() => navigate('/dashboard/administrator/bed-map')}
+                  title="Navigate to Central Inpatient Bed Map"
+                >
+                  <span>Central IPD Hub</span>
+                  <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>open_in_new</span>
+                </button>
+              </div>
+
+              <div className="workflow-stage-grid">
+                {/* 1. Pending Bed Allocation */}
+                <div 
+                  onClick={() => setActiveDetailType('ipd_pending')}
+                  title="Click to inspect admissions awaiting bed assignment"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-primary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>
+                    {stats?.ipd?.pendingAdmissions ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Pending Bed</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Admission Ingest</div>
+                  </div>
+                </div>
+
+                {/* 2. Active Inpatients */}
+                <div 
+                  onClick={() => setActiveDetailType('ipd_admitted')}
+                  title="Click to inspect active admitted inpatients"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-secondary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>
+                    {stats?.ipd?.activeAdmissions ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>Ward Inpatients</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>CPOE & Nursing Care</div>
+                  </div>
+                </div>
+
+                {/* 3. Emergency & Critical Cases */}
+                <div 
+                  onClick={() => setActiveDetailType('ipd_emergency')}
+                  title="Click to inspect emergency / critical inpatient admissions"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-error-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-error-container)' }}>
+                    {(stats?.emergency?.activeCount ?? stats?.ipd?.emergencyAdmitted) ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-error-container)' }}>Emergency / Critical</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-error-container)' }}>Intensive Care Cases</div>
+                  </div>
+                </div>
+
+                {/* 4. Discharge Clearance */}
+                <div 
+                  onClick={() => setActiveDetailType('ipd_discharging')}
+                  title="Click to inspect inpatients in discharge clearance"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-tertiary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-tertiary-container)' }}>
+                    {stats?.ipd?.dischargingCount ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-tertiary-container)' }}>Discharge Clearance</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-tertiary-container)' }}>Clearance In-Flight</div>
+                  </div>
+                </div>
+
+                {/* 5. Discharged Today */}
+                <div 
+                  onClick={() => setActiveDetailType('ipd_discharged')}
+                  title="Click to view inpatients discharged today"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-surface-container-high)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-primary)' }}>
+                    {stats?.ipd?.dischargedToday ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-surface)' }}>Discharged Today</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Concluded Stays</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TRACK 3: Operating Theatres & Surgical Suites */}
+          {(activeFlowTab === 'ALL' || activeFlowTab === 'SURGERIES') && (
+            <div className="workflow-track-section">
+              <div className="workflow-track-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-tertiary)' }}>medical_services</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>Surgical Suites & Operating Theatres (OT)</span>
+                  <span className="workflow-track-badge" style={{ background: 'var(--md-sys-color-tertiary-container)', color: 'var(--md-sys-color-on-tertiary-container)' }}>
+                    {stats?.surgeries?.totalToday ?? 0} Total Procedures Today
+                  </span>
+                </div>
+                <button
+                  className="workflow-track-action-btn"
+                  onClick={() => navigate('/dashboard/administrator/surgeries')}
+                  title="Navigate to Administrator Surgical Suites & OT Command"
+                >
+                  <span>OT Scheduler</span>
+                  <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>open_in_new</span>
+                </button>
+              </div>
+
+              <div className="workflow-stage-grid">
+                {/* 1. Scheduled / Pre-Op */}
+                <div 
+                  onClick={() => setActiveDetailType('ot_scheduled')}
+                  title="Click to inspect scheduled and pre-op surgical sessions"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-primary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>
+                    {stats?.surgeries?.scheduled ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Scheduled Pre-Op</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Checklist & Prep</div>
+                  </div>
+                </div>
+
+                {/* 2. In Theatre (Operating) */}
+                <div 
+                  onClick={() => setActiveDetailType('ot_in_theatre')}
+                  title="Click to inspect active operating theatre surgeries"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-error-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-error-container)' }}>
+                    {stats?.surgeries?.inTheatre ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-error-container)' }}>In Theatre (Operating)</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-error-container)' }}>Live Surgical Suite</div>
+                  </div>
+                </div>
+
+                {/* 3. PACU Recovery */}
+                <div 
+                  onClick={() => setActiveDetailType('ot_pacu')}
+                  title="Click to inspect patients in PACU recovery"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-secondary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>
+                    {stats?.surgeries?.pacu ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>PACU Recovery</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>Post-Anesthesia Care</div>
+                  </div>
+                </div>
+
+                {/* 4. Completed Today */}
+                <div 
+                  onClick={() => setActiveDetailType('ot_completed')}
+                  title="Click to view surgeries completed today"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-surface-container-high)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-primary)' }}>
+                    {stats?.surgeries?.completedToday ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-surface)' }}>Surgeries Completed</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Handoff & Notes Done</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TRACK 4: Bed Capacity & Ward Allocation */}
+          {(activeFlowTab === 'ALL' || activeFlowTab === 'BEDS') && (
+            <div className="workflow-track-section">
+              <div className="workflow-track-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary)' }}>single_bed</span>
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>Bed Allocation & Capacity Infrastructure</span>
+                  <span className="workflow-track-badge" style={{ background: 'var(--md-sys-color-primary-container)', color: 'var(--md-sys-color-on-primary-container)' }}>
+                    {stats?.beds?.occupancyRate ?? 0}% Overall Occupancy
+                  </span>
+                </div>
+                <button
+                  className="workflow-track-action-btn"
+                  onClick={() => navigate('/dashboard/administrator/bed-map')}
+                  title="Open Real-time Interactive Bed Map"
+                >
+                  <span>Open Live Bed Map</span>
+                  <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>map</span>
+                </button>
+              </div>
+
+              <div className="workflow-bed-grid">
+                {/* Occupancy Meter */}
+                <div 
+                  className="workflow-bed-meter-box"
+                  onClick={() => navigate('/dashboard/administrator/bed-map')}
+                  style={{ cursor: 'pointer' }}
+                  title="Click to view full facility bed map"
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>Ward Occupancy Rate</span>
+                    <span style={{ fontWeight: 800, color: 'var(--md-sys-color-primary)' }}>{stats?.beds?.occupancyRate ?? 0}%</span>
+                  </div>
+                  <div className="velocity-progress-container" style={{ height: '10px' }}>
+                    <div 
+                      className="velocity-progress-bar velocity-blue" 
+                      style={{ width: `${Math.min(100, stats?.beds?.occupancyRate || 0)}%` }} 
+                    />
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{stats?.beds?.occupiedBeds ?? 0} Occupied</span>
+                    <span>{stats?.beds?.availableBeds ?? 0} Available</span>
+                  </div>
+                </div>
+
+                {/* 1. Occupied Beds */}
+                <div 
+                  onClick={() => navigate('/dashboard/administrator/bed-map')}
+                  title="Click to view occupied beds in bed map"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-secondary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>
+                    {stats?.beds?.occupiedBeds ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>Occupied Beds</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-secondary-container)' }}>Active Inpatients</div>
+                  </div>
+                </div>
+
+                {/* 2. Available Beds */}
+                <div 
+                  onClick={() => navigate('/dashboard/administrator/bed-map')}
+                  title="Click to view available beds in bed map"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-primary-container)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>
+                    {stats?.beds?.availableBeds ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Available Beds</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-primary-container)' }}>Ready for Admission</div>
+                  </div>
+                </div>
+
+                {/* 3. Maintenance / Sanitizing */}
+                <div 
+                  onClick={() => navigate('/dashboard/administrator/bed-map')}
+                  title="Click to view sanitizing / maintenance beds"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-surface-container-high)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-tertiary)' }}>
+                    {stats?.beds?.maintenanceBeds ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-surface)' }}>Sanitizing / Maint</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Turnover Protocol</div>
+                  </div>
+                </div>
+
+                {/* 4. Total Bed Inventory */}
+                <div 
+                  onClick={() => navigate('/dashboard/administrator/bed-map')}
+                  title="Click to view total bed inventory in bed map"
+                  className="workflow-stage-card"
+                  style={{ background: 'var(--md-sys-color-surface-container-highest)' }}
+                >
+                  <div className="workflow-stage-card-val" style={{ color: 'var(--md-sys-color-on-surface)' }}>
+                    {stats?.beds?.totalBeds ?? 0}
+                  </div>
+                  <div>
+                    <div className="workflow-stage-card-title" style={{ color: 'var(--md-sys-color-on-surface)' }}>Total Bed Inventory</div>
+                    <div className="workflow-stage-card-desc" style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>Facility Total</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 
       {/* Split Insights Layout */}
-      <div className="insights-row" style={{ marginTop: '20px' }}>
+      <div className="insights-row">
         
         {/* Column 1: Queue Throughput & Clinical Department Topography */}
         <div className="insights-col-left">
@@ -351,7 +930,7 @@ const AdminAnalytics = () => {
           {/* Velocity Card */}
           <div className="insights-card">
             <h3 className="insights-card-title">Queue Throughput Velocity</h3>
-            <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="velocity-metrics-list">
               <div>
                 <div className="velocity-info">
                   <span className="velocity-label">Visit Fulfillment Rate</span>

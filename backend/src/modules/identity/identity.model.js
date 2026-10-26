@@ -13,7 +13,12 @@ const identitySchema = new mongoose.Schema(
     },
     // Security fields
     failedLoginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
     refreshTokenHash: { type: String, select: false, default: null },
+    previousRefreshTokenHash: { type: String, select: false, default: null },
+    refreshTokenRotatedAt: { type: Date, default: null },
+    tokenFamilyId: { type: String, select: false, default: null },
+    passwordHistory: [{ hash: { type: String, select: false }, changedAt: { type: Date, default: Date.now } }],
     lastLoginAt: { type: Date, default: null },
     // First-login password change enforcement (docs/file2.md §Password Strategy)
     firstLogin: { type: Boolean, default: true },

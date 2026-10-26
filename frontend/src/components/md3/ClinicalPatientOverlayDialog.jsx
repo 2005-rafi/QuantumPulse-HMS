@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { Icon } from './Md3Widgets';
 import { Md3Button, Md3TextField } from './Md3FormComponents';
+import { formatVisitStatus } from '../../utils/patientFormatters';
 import './ClinicalPatientOverlayDialog.css';
 
 /**
@@ -68,7 +69,7 @@ const ClinicalPatientOverlayDialog = ({
         endpoint = '/visits/queue/ALL';
       } else if (type === 'completed_visits' || type === 'completed_today') {
         endpoint = '/visits/queue/COMPLETED';
-      } else if (type === 'triage_queue') {
+      } else if (type === 'triage_queue' || type === 'nurse_queue') {
         endpoint = '/visits/queue/WAITING_TRIAGE,CALLED';
       } else if (type === 'waiting_doctor' || type === 'doctor_queue') {
         endpoint = '/visits/queue/WAITING_DOCTOR,WAITING_DOCTOR_REVIEW';
@@ -134,7 +135,8 @@ const ClinicalPatientOverlayDialog = ({
       case 'completed_visits':
         return 'Completed Patient Consultations';
       case 'triage_queue':
-        return 'Triage Queue — Waiting for Vitals';
+      case 'nurse_queue':
+        return 'Nurse Queue — Waiting for Vitals';
       default:
         return 'Clinical Patient Ledger';
     }
@@ -160,7 +162,10 @@ const ClinicalPatientOverlayDialog = ({
         return 'Visits currently active inside doctor consultation rooms';
       case 'waiting_doctor':
       case 'doctor_queue':
-        return 'Patients with triage vitals recorded, waiting in line for consultation';
+        return 'Patients with nurse vitals recorded, waiting in line for consultation';
+      case 'triage_queue':
+      case 'nurse_queue':
+        return 'Patients waiting for nurse vital intake and assessment';
       case 'lab_reviews':
       case 'pending_lab':
         return 'Patients whose diagnostic lab test results have arrived and require doctor analysis';
@@ -499,7 +504,7 @@ const ClinicalPatientOverlayDialog = ({
                               <h4 className="c-overlay-patient-name">{patientName}</h4>
                               <span className="c-overlay-mrn-tag">MRN: {patient.mrn || '—'}</span>
                               <span className={`c-overlay-status-pill ${item.status?.toLowerCase() || 'routine'}`}>
-                                {item.status?.replace(/_/g, ' ') || 'ACTIVE'}
+                                {formatVisitStatus(item.status) || 'ACTIVE'}
                               </span>
                             </div>
 

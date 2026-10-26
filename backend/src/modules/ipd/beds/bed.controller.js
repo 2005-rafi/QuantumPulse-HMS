@@ -34,6 +34,15 @@ class BedController {
     }
   }
 
+  async deleteFloor(req, res, next) {
+    try {
+      const result = await bedService.deleteFloor(req.params.id);
+      return success(res, result, 'Floor deleted successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // ── Room Controllers ────────────────────────────────────────
   async createRoom(req, res, next) {
     try {
@@ -69,6 +78,15 @@ class BedController {
     try {
       const room = await bedService.updateRoom(req.params.id, req.body);
       return success(res, room, 'Room updated successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async deleteRoom(req, res, next) {
+    try {
+      const result = await bedService.deleteRoom(req.params.id);
+      return success(res, result, 'Room deleted successfully');
     } catch (err) {
       next(err);
     }
@@ -117,6 +135,15 @@ class BedController {
     }
   }
 
+  async deleteBed(req, res, next) {
+    try {
+      const result = await bedService.deleteBed(req.params.id);
+      return success(res, result, 'Bed deleted successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async updateBedStatus(req, res, next) {
     try {
       const { status, notes } = req.body;
@@ -142,6 +169,25 @@ class BedController {
       const staffId = req.user.staffId || req.user.id;
       const result = await bedService.transferBed(req.params.admissionId, targetBedId, transferReason, staffId);
       return success(res, result, 'Patient bed transferred successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getAllocationsByAdmission(req, res, next) {
+    try {
+      const allocations = await bedService.getAllocationsByAdmission(req.params.admissionId);
+      return success(res, allocations, 'Admission bed allocations retrieved successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getRecentTransfers(req, res, next) {
+    try {
+      const limit = parseInt(req.query.limit, 10) || 50;
+      const transfers = await bedService.getRecentTransfers(limit);
+      return success(res, transfers, 'Recent ward transfers retrieved successfully');
     } catch (err) {
       next(err);
     }

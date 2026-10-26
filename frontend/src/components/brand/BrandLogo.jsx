@@ -1,41 +1,45 @@
-import React, { useState, useMemo } from 'react';
-import { useConfig } from '../../contexts/ConfigContext';
-import { useTheme } from '../../context/ThemeContext';
+import React, { useState } from 'react';
+import { useConfig } from '../../context/ConfigContext';
 import './BrandLogo.css';
 
 /**
- * Default Medical Vector Mark (Graceful SVG Fallback)
+ * Official Hospital Brand Vector Mark (Native SVG from assets/logo/logo.svg)
+ * Renders the authoritative Quantum CareOne insignia at 60fps with zero network lag or layout shift.
  */
-const DefaultBrandFallback = ({ size = 'md' }) => (
-  <div className={`brand-logo-fallback brand-logo-fallback--${size}`} aria-hidden="true">
-    <svg viewBox="0 0 40 40" fill="none" className="brand-logo-fallback__svg">
-      <rect width="40" height="40" rx="10" fill="var(--md-sys-color-primary, #00668b)" />
-      <path d="M20 10v20M10 20h20" stroke="var(--md-sys-color-on-primary, #ffffff)" strokeWidth="3.5" strokeLinecap="round" />
-      <path d="M26 26c1.5-2 2-5 0-7s-5 0-7 2" stroke="var(--md-sys-color-primary-container, #c2e8ff)" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  </div>
+export const OfficialHospitalLogo = ({ width = '100%', height = '100%', className = '' }) => (
+  <svg
+    viewBox="0 0 199 168"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className={`brand-logo-svg ${className}`}
+    style={{ width, height, display: 'block', overflow: 'visible' }}
+    aria-hidden="true"
+  >
+    <path
+      d="M181.908 36.9701C151.888 -1.18229 114.539 22.6745 99.6164 39.3718C78.2867 15.7668 54.3012 14.8976 44.9748 17.4136C12.0582 23.1776 3.39038 62.8169 3.17101 81.9161C-5.51894 51.7235 5.69461 29.5367 12.3877 22.2173C44.2509 -16.4842 83.8164 4.03329 99.6164 19.1296C116.206 -0.632768 142.298 -0.998736 153.27 1.28859C201.724 14.1891 201.328 61.1021 195.074 82.946C194.811 57.4195 186.187 41.6594 181.908 36.9701Z"
+      fill="#04BDAF"
+    />
+    <path
+      d="M37.8959 128.559C20.3796 113.18 13.6524 94.3769 11.7887 82.6221C11.4352 80.3923 14.0315 79.4635 15.3805 81.2738C17.6105 84.2669 19.6795 87.0375 20.7602 88.4831C37.6325 118.236 56.7896 125.246 64.2589 125.033C65.566 124.806 66.5068 124.347 67.1527 123.723C73.7746 117.329 62.0836 105.562 65.4797 97.0063C66.4493 94.5636 67.7882 93.2587 69.0817 92.6706C70.3129 92.111 71.2393 93.4468 71.2473 94.7993C71.2857 101.306 76.275 109.716 79.0882 113.491C95.7174 127.297 99.3708 149.63 99.0665 163.629C98.9939 166.962 95.3966 168.742 92.5533 167.001C72.224 154.557 48.1803 136.622 37.8959 128.559Z"
+      fill="#0161AB"
+    />
+    <path
+      d="M162.686 126.639C180.202 111.26 186.929 92.457 188.793 80.7022C189.147 78.4724 186.55 77.5436 185.201 79.3542C182.971 82.347 180.902 85.1178 179.821 86.5632C162.949 116.316 143.792 123.326 136.323 123.113C135.016 122.886 134.075 122.427 133.429 121.803C126.807 115.409 138.498 103.643 135.102 95.0867C134.133 92.644 132.793 91.3388 131.5 90.7509C130.269 90.1911 129.343 91.5272 129.335 92.8794C129.296 99.3866 124.307 107.796 121.494 111.571C104.864 125.377 101.211 147.71 101.515 161.709C101.588 165.042 105.185 166.822 108.028 165.082C128.358 152.637 152.402 134.702 162.686 126.639Z"
+      fill="#0161AB"
+    />
+    <path
+      d="M120.749 67.9567H79.3607C78.0588 67.9567 77.0034 69.012 77.0034 70.3138V81.5646C77.0034 82.8664 78.0588 83.9217 79.3607 83.9217H120.749C122.051 83.9217 123.106 82.8664 123.106 81.5646V70.3138C123.106 69.012 122.051 67.9567 120.749 67.9567Z"
+      fill="#04BDAF"
+    />
+    <path
+      d="M108.263 96.0114V55.8716C108.263 54.5698 107.208 53.5145 105.906 53.5145H94.2107C92.9088 53.5145 91.8534 54.5698 91.8534 55.8716V96.0114C91.8534 97.3132 92.9088 98.3685 94.2107 98.3685H105.906C107.208 98.3685 108.263 97.3132 108.263 96.0114Z"
+      fill="#04BDAF"
+    />
+  </svg>
 );
 
 /**
- * BrandLogo — Dynamic, Material 3 Scalable Brand Logo Component.
- *
- * Design Principles:
- * 1. Dynamic Vector Proportions: Preserves intrinsic SVG aspect ratio with 'object-fit: contain' (No arbitrary square clipping).
- * 2. Unrestricted Fluid Sizing: Expands and contracts gracefully according to surrounding layout or explicit variants.
- * 3. Reactive Theme Swapping: Automatically renders light.svg or dark.svg based on active ThemeContext (Daylight vs Night mode).
- * 4. Zero Layout Shift: Smooth transition animations and graceful fallback on network load errors.
- *
- * @param {Object} props
- * @param {'header'|'hero'|'card'|'compact'|'full'|'auto'} [props.variant='auto'] - Layout context variant.
- * @param {'sm'|'md'|'lg'|'xl'|'custom'} [props.size='md'] - Visual size scale.
- * @param {string|number} [props.maxHeight] - Optional custom max height (e.g. '42px', 48).
- * @param {string|number} [props.maxWidth] - Optional custom max width (e.g. '240px', 280).
- * @param {boolean} [props.forceDark] - Force dark mode SVG variant (e.g. on dark hero gradient).
- * @param {boolean} [props.forceLight] - Force light mode SVG variant.
- * @param {string} [props.className] - Extra CSS classes.
- * @param {Object} [props.style] - Inline styles.
- * @param {string} [props.alt] - Alt text description.
- * @param {React.ReactNode} [props.fallback] - Custom fallback node.
+ * BrandLogo — Scalable Material 3 Brand Logo Component.
  */
 export const BrandLogo = ({
   variant = 'auto',
@@ -45,35 +49,21 @@ export const BrandLogo = ({
   className = '',
   style = {},
   alt,
-  fallback,
 }) => {
   const config = useConfig();
-  const [hasError, setHasError] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
 
-  // Single unified SVG logo
-  const logoUrl = config?.LOGO_URL || '/logo.svg';
-  const altText = alt || config?.HOSPITAL_NAME || config?.SHORT_NAME || 'Quantum CareOne Brand Logo';
-
-  if (hasError || !logoUrl) {
-    return fallback || <DefaultBrandFallback size={size} />;
-  }
-
-  // Dynamic inline dimension overrides
   const customDimensions = {};
   if (maxHeight) customDimensions.maxHeight = typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight;
   if (maxWidth) customDimensions.maxWidth = typeof maxWidth === 'number' ? `${maxWidth}px` : maxWidth;
 
+  // Render native SVG directly for guaranteed instant high-DPI rendering
   return (
     <div
       className={`brand-logo-wrap brand-logo-wrap--${variant} brand-logo-wrap--size-${size} ${className}`}
       style={{ ...customDimensions, ...style }}
     >
-      <img
-        src={logoUrl}
-        alt={altText}
-        className="brand-logo-img-dynamic"
-        onError={() => setHasError(true)}
-      />
+      <OfficialHospitalLogo />
     </div>
   );
 };

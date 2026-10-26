@@ -1,0 +1,390 @@
+/**
+ * features/ipd/AdminFacilityBuilder.css
+ * Material Design 3 expressive styles for Unified Bed Map & Hospital Facility Command Center.
+ * Connects directly to centralized design tokens in admin-responsive-metrics.css.
+ */
+
+.facility-builder-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-section-gap, 16px);
+  width: 100%;
+  max-width: 100%;
+  padding: 2px;
+  box-sizing: border-box;
+  animation: facilityFadeIn 0.2s cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes facilityFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 1. Doctor Admission Advice Queue Alert Strip ── */
+.facility-advice-alert {
+  background: var(--md-sys-color-surface-container-low, #f8fafd);
+  border: 1px solid var(--md-sys-color-outline-variant, #c2e7ff);
+  border-radius: var(--admin-card-border-radius, 14px);
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.facility-advice-alert__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.facility-advice-alert__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.facility-advice-alert__icon {
+  font-size: 22px;
+  color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  padding: 6px;
+  border-radius: 8px;
+}
+
+.facility-advice-alert__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+  display: block;
+}
+
+.facility-advice-alert__count {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-outline, #707974);
+}
+
+.facility-advice-alert__toggle-btn {
+  background: none;
+  border: 1px solid var(--md-sys-color-outline-variant, #c2e7ff);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--md-sys-color-primary, #00668b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.facility-advice-alert__toggle-btn:hover {
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+}
+
+.facility-active-advice-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2e);
+  font-size: 0.82rem;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.facility-advice-cancel-btn {
+  background: var(--md-sys-color-error, #ba1a1a);
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.facility-advice-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.facility-advice-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.facility-advice-card--selected {
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary, #00668b);
+}
+
+.facility-advice-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.facility-advice-card__meta {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline, #707974);
+}
+
+.facility-advice-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.facility-advice-badge--emergency_stat,
+.facility-advice-badge--emergency {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.facility-advice-badge--urgent {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.facility-advice-badge--routine {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.facility-advice-card__details {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant, #404944);
+}
+
+.facility-advice-card__action {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+/* ── 2. KPI Hospital Metrics Row ── */
+.facility-kpi-grid {
+  display: grid;
+  grid-template-columns: var(--facility-kpi-grid-cols, repeat(5, minmax(0, 1fr)));
+  gap: var(--admin-grid-gap, 10px);
+  width: 100%;
+}
+
+.facility-kpi-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  border-radius: var(--admin-card-border-radius, 14px);
+  padding: var(--facility-kpi-padding, 10px 14px);
+  min-height: var(--facility-kpi-min-height, 68px);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+}
+
+.facility-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+.facility-kpi-card__icon {
+  width: var(--facility-kpi-icon-size, 36px);
+  height: var(--facility-kpi-icon-size, 36px);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.facility-kpi-card__icon .material-symbols-rounded {
+  font-size: calc(var(--facility-kpi-icon-size, 36px) * 0.55);
+}
+
+.facility-kpi-card__icon--primary {
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2e);
+}
+
+.facility-kpi-card__icon--occupied {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+
+.facility-kpi-card__icon--vacant {
+  background: var(--md-sys-color-primary-container, #bbf2e1);
+  color: var(--md-sys-color-on-primary-container, #00211a);
+}
+
+.facility-kpi-card__icon--icu {
+  background: var(--md-sys-color-tertiary-container, #ffddb3);
+  color: var(--md-sys-color-on-tertiary-container, #2b1700);
+}
+
+.facility-kpi-card__icon--maint {
+  background: var(--md-sys-color-surface-container-high, #e0e8e4);
+  color: var(--md-sys-color-on-surface-variant, #404944);
+}
+
+.facility-kpi-card__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.facility-kpi-card__label {
+  font-size: var(--facility-kpi-label-size, 0.7rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--md-sys-color-outline, #707974);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.facility-kpi-card__value {
+  font-size: var(--facility-kpi-val-size, 1.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--md-sys-color-on-surface, #191c1b);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.facility-kpi-card__sub {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-outline, #707974);
+}
+
+/* ── 3. Filters & Controls Toolbar ── */
+.facility-top-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.facility-top-toolbar__filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.facility-top-toolbar__floor-select {
+  min-width: 220px;
+  max-width: 320px;
+  flex: 1 1 240px;
+}
+
+.facility-top-toolbar__status-select {
+  min-width: 130px;
+  max-width: 170px;
+  flex: 1 1 140px;
+}
+
+.facility-top-toolbar__ward-select {
+  min-width: 140px;
+  max-width: 190px;
+  flex: 1 1 150px;
+}
+
+.admin-dir-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.facility-filter-bar__reset-btn {
+  background: none;
+  border: none;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-primary, #00668b);
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.facility-filter-bar__reset-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #e0e8e4);
+}
+
+/* ── Responsive Adaptations ── */
+@media (max-width: 767px) {
+  .facility-top-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .facility-top-toolbar__filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .facility-top-toolbar__floor-select {
+    grid-column: 1 / -1;
+    min-width: 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .facility-top-toolbar__status-select,
+  .facility-top-toolbar__ward-select {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .admin-dir-controls {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .admin-dir-controls .admin-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 8px 10px;
+    font-size: 0.78rem;
+  }
+}
+

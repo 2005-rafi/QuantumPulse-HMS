@@ -97,7 +97,7 @@ const HistoryTab = ({ patient = {} }) => {
                     <span className="summary-timeline-date">Active Session</span>
                   </div>
                   <p className="summary-timeline-desc">
-                    Patient currently in consultation desk. Triage observations and diagnostic requisitions in progress.
+                    Patient currently in consultation desk. Nursing observations and diagnostic requisitions in progress.
                   </p>
                 </div>
               </div>

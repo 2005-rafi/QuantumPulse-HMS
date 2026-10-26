@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useOutletContext, useLocation } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import api from '../../services/api';
 import { staffAPI } from '../../services/staffAPI';
 import CreateStaffSheet from './CreateStaffSheet';
 import StaffAnalyticsDialog from './StaffAnalyticsDialog';
@@ -8,6 +11,7 @@ import { Md3Fab, Icon } from '../../components/md3/Md3Widgets';
 import { StaffFilterSideSheet } from '../../components/md3/StaffFilterSideSheet';
 import { Md3SearchBar } from '../../components/md3/AdminControls';
 import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
+import Md3ConfirmDialog from '../../components/md3/Md3ConfirmDialog';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
 import Md3Pagination from '../../components/md3/Md3Pagination';
 import usePagination from '../../hooks/usePagination';
@@ -16,17 +20,73 @@ import StaffListView from '../../components/staff/StaffListView';
 import { useStaffLayoutPreference } from '../../hooks/useStaffLayoutPreference';
 
 const AdminStaffManager = () => {
-  const { 
-    staffList, 
-    roles, 
-    departments, 
-    fetchStaff, 
-    openConfirm, 
-    closeConfirm, 
-    setConfirmLoading, 
-    showSuccess, 
-    showError 
-  } = useOutletContext();
+  const outletCtx = useOutletContext() || {};
+  const { user } = useAuth();
+  const { showSuccess: toastSuccess, showError: toastError } = useToast();
+
+  const [localStaffList, setLocalStaffList] = useState([]);
+  const [localRoles, setLocalRoles] = useState([]);
+  const [localDepartments, setLocalDepartments] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const isStandalone = !outletCtx.staffList;
+  const staffList = outletCtx.staffList || localStaffList;
+  const roles = outletCtx.roles || localRoles;
+  const departments = outletCtx.departments || localDepartments;
+  const showSuccess = outletCtx.showSuccess || toastSuccess;
+  const showError = outletCtx.showError || toastError;
+
+  // Standalone confirm dialog state
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmLabel: 'Confirm',
+    cancelLabel: 'Cancel',
+    variant: 'danger',
+    icon: '',
+    loading: false,
+    onConfirm: null,
+  });
+
+  const openConfirm = outletCtx.openConfirm || ((opts) => setConfirmDialog({ isOpen: true, loading: false, ...opts }));
+  const closeConfirm = outletCtx.closeConfirm || (() => setConfirmDialog((d) => ({ ...d, isOpen: false, loading: false, onConfirm: null })));
+  const setConfirmLoading = outletCtx.setConfirmLoading || ((v) => setConfirmDialog((d) => ({ ...d, loading: v })));
+
+  const fetchStandaloneData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [staffRes, rolesRes, deptRes] = await Promise.all([
+        staffAPI.list({ limit: 100 }),
+        api.get('/roles'),
+        api.get('/departments'),
+      ]);
+      const staffItems = staffRes.data?.items || staffRes.data?.staff || (Array.isArray(staffRes.data) ? staffRes.data : []);
+      const roleItems = rolesRes.data?.data || (Array.isArray(rolesRes.data) ? rolesRes.data : []);
+      const deptItems = deptRes.data?.data || (Array.isArray(deptRes.data) ? deptRes.data : []);
+      setLocalStaffList(staffItems);
+      setLocalRoles(roleItems);
+      setLocalDepartments(deptItems);
+    } catch (err) {
+      showError(err.response?.data?.message || 'Error loading departmental staff data');
+    } finally {
+      setLoading(false);
+    }
+  }, [showError]);
+
+  const fetchStaff = outletCtx.fetchStaff || fetchStandaloneData;
+  const hasMountedRef = useRef(false);
+
+  useEffect(() => {
+    if (hasMountedRef.current) return;
+    hasMountedRef.current = true;
+
+    if (isStandalone) {
+      fetchStandaloneData();
+    } else if (outletCtx.fetchStaff && (!outletCtx.staffList || outletCtx.staffList.length === 0)) {
+      outletCtx.fetchStaff();
+    }
+  }, [isStandalone, fetchStandaloneData, outletCtx.fetchStaff, outletCtx.staffList]);
 
   const location = useLocation();
 
@@ -113,6 +173,28 @@ const AdminStaffManager = () => {
     });
   };
 
+  const handleUnlockStaff = (staffId, staffName) => {
+    openConfirm({
+      title: 'Unlock Account',
+      message: `Unlock ${staffName}'s account? This will reset failed login attempts and restore workstation access.`,
+      confirmLabel: 'Unlock',
+      variant: 'success',
+      icon: 'lock_open',
+      onConfirm: async () => {
+        setConfirmLoading(true);
+        try {
+          await staffAPI.unlock(staffId);
+          showSuccess('Account unlocked successfully.');
+          fetchStaff();
+          closeConfirm();
+        } catch (err) {
+          showError(err.response?.data?.message || 'Error unlocking account');
+          closeConfirm();
+        }
+      },
+    });
+  };
+
   const filteredStaff = staffList.filter(s => {
     const matchesRole = filters.roles.length === 0 || filters.roles.includes(s.roleId?.name);
     
@@ -155,40 +237,63 @@ const AdminStaffManager = () => {
   return (
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <section className="info-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', flex: 1 }}>
-            <h2 style={{ color: 'var(--md-sys-color-primary)', margin: 0 }}>
-              {filters.statuses.includes('Active') && filters.statuses.length === 1 ? 'Active Staff Directory' : filters.statuses.includes('Disabled') && filters.statuses.length === 1 ? 'Disabled Staff Directory' : 'Staff Directory'}
+        {user?.isHod && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '12px 18px',
+            marginBottom: '16px',
+            background: 'var(--md-sys-color-surface-container-high, #e8edf4)',
+            borderLeft: '4px solid var(--md-sys-color-primary, #00668b)',
+            borderRadius: '8px',
+            color: 'var(--md-sys-color-on-surface, #1b1c1e)',
+            fontSize: '13px'
+          }}>
+            <span className="material-symbols-rounded" style={{ fontSize: '20px', color: 'var(--md-sys-color-primary, #00668b)' }}>
+              badge
+            </span>
+            <span>
+              <strong>Department Staff Purview:</strong> {user?.department || 'Department'}. As Head of Department, you have delegated authority to recruit, promote, and manage staff accounts within your department.
+            </span>
+          </div>
+        )}
+
+        <div className="admin-dir-header">
+          <div className="admin-dir-title-group">
+            <h2 className="admin-dir-title">
+              {user?.isHod 
+                ? `${user.department} Staff`
+                : (filters.statuses.includes('Active') && filters.statuses.length === 1 
+                  ? 'Active Staff Directory' 
+                  : filters.statuses.includes('Disabled') && filters.statuses.length === 1 
+                  ? 'Disabled Staff Directory' 
+                  : 'Staff Directory')}
             </h2>
+            <span className="admin-dir-count-sub">
+              {filteredStaff.length} staff member{filteredStaff.length !== 1 ? 's' : ''} shown
+            </span>
+          </div>
+
+          <div className="admin-dir-controls">
             <Md3SearchBar 
               value={searchQuery} 
               onChange={setSearchQuery} 
               placeholder="Search staff by name..." 
             />
-            <button 
-              onClick={() => setIsStaffAnalyticsOpen(true)}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                padding: '8px 16px', 
-                background: 'var(--md-sys-color-secondary-container, #e8def8)', 
-                color: 'var(--md-sys-color-on-secondary-container, #1d192b)', 
-                border: 'none', 
-                borderRadius: '100px', 
-                cursor: 'pointer', 
-                fontSize: '13px', 
-                fontWeight: 'bold',
-                transition: 'background 200ms ease',
-                height: '44px'
-              }}
-              className="staff-analytics-btn"
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>analytics</span>
-              Analytics
-            </button>
-          </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexShrink: 0 }}>
+
+            {!user?.isHod && (
+              <button 
+                type="button"
+                onClick={() => setIsStaffAnalyticsOpen(true)}
+                className="admin-btn admin-btn-secondary"
+                title="View Staff Analytics"
+              >
+                <span className="material-symbols-rounded">analytics</span>
+                <span>Analytics</span>
+              </button>
+            )}
+
             {/* View Mode Toggle: Cards vs List */}
             <div className="md3-view-toggle-group" role="group" aria-label="Staff directory layout view mode">
               <button
@@ -213,41 +318,37 @@ const AdminStaffManager = () => {
               </button>
             </div>
 
-            <button 
-              onClick={() => setIsFilterOpen(true)}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '8px', 
-                padding: '8px 16px', 
-                background: activeFiltersCount > 0 ? 'var(--md-sys-color-primary-container, #eaddff)' : 'var(--md-sys-color-surface-container-high, #ece6f0)', 
-                color: activeFiltersCount > 0 ? 'var(--md-sys-color-on-primary-container, #21005d)' : 'var(--md-sys-color-on-surface, #1d1b20)', 
-                border: activeFiltersCount > 0 ? '1px solid var(--md-sys-color-primary, #6750a4)' : '1px solid var(--md-sys-color-outline-variant, #cac4d0)', 
-                borderRadius: '100px', 
-                cursor: 'pointer', 
-                fontSize: '13px', 
-                fontWeight: 'bold',
-                transition: 'all 200ms ease',
-                height: '44px'
-              }}
-              className="staff-filter-btn"
+            <button
+              type="button"
+              onClick={() => { fetchStaff(); showSuccess('Staff records synchronized.'); }}
+              disabled={loading}
+              className="admin-btn admin-btn-tonal"
+              title="Refresh Staff Records"
             >
-              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>tune</span>
-              Filters
+              <span className="material-symbols-rounded">refresh</span>
+              <span>Refresh</span>
+            </button>
+
+            <button 
+              type="button"
+              onClick={() => setIsFilterOpen(true)}
+              className={`admin-btn ${activeFiltersCount > 0 ? 'admin-btn-secondary' : 'admin-btn-tonal'}`}
+              title="Filter Staff Directory"
+            >
+              <span className="material-symbols-rounded">tune</span>
+              <span>Filters</span>
               {activeFiltersCount > 0 && (
-                <span style={{ 
-                  background: 'var(--md-sys-color-primary, #6750a4)', 
-                  color: 'var(--md-sys-color-on-primary, #ffffff)', 
-                  borderRadius: '50%', 
-                  minWidth: '20px',
-                  height: '20px',
+                <span style={{
+                  background: 'var(--md-sys-color-primary, #00668b)',
+                  color: 'var(--md-sys-color-on-primary, #ffffff)',
+                  borderRadius: '50%',
+                  width: '18px',
+                  height: '18px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
-                  fontWeight: 'bold',
-                  padding: '2px',
-                  boxSizing: 'border-box'
+                  fontSize: '10px',
+                  fontWeight: 800
                 }}>
                   {activeFiltersCount}
                 </span>
@@ -255,27 +356,13 @@ const AdminStaffManager = () => {
             </button>
 
             <button
+              type="button"
               onClick={() => setIsCreateStaffOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 20px',
-                background: 'var(--md-sys-color-primary, #00668b)',
-                color: 'var(--md-sys-color-on-primary, #ffffff)',
-                border: 'none',
-                borderRadius: '100px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                transition: 'all 200ms ease',
-                height: '44px',
-                boxShadow: 'var(--md-sys-elevation-1, 0 1px 3px rgba(0,0,0,0.12))'
-              }}
-              className="staff-add-btn"
+              className="admin-btn admin-btn-primary"
+              title="Add New Staff Member"
             >
-              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
-              Add Staff
+              <span className="material-symbols-rounded">add</span>
+              <span>Add Staff</span>
             </button>
           </div>
         </div>
@@ -311,6 +398,7 @@ const AdminStaffManager = () => {
                 onProgress={(staff) => setProgressingStaff(staff)}
                 onDisable={(id, name) => handleDisableStaff(id, name)}
                 onEnable={(id, name) => handleEnableStaff(id, name)}
+                onUnlock={(id, name) => handleUnlockStaff(id, name)}
               />
             </div>
           ) : (
@@ -323,6 +411,7 @@ const AdminStaffManager = () => {
                   onProgress={(s) => setProgressingStaff(s)}
                   onDisable={(id, name) => handleDisableStaff(id, name)}
                   onEnable={(id, name) => handleEnableStaff(id, name)}
+                  onUnlock={(id, name) => handleUnlockStaff(id, name)}
                 />
               ))}
             </div>
@@ -377,6 +466,21 @@ const AdminStaffManager = () => {
         departments={departments}
         roles={roles}
       />
+
+      {isStandalone && (
+        <Md3ConfirmDialog
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          cancelLabel={confirmDialog.cancelLabel}
+          variant={confirmDialog.variant}
+          icon={confirmDialog.icon}
+          loading={confirmDialog.loading}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={closeConfirm}
+        />
+      )}
     </div>
   );
 };

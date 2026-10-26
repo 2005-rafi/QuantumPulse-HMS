@@ -1,4 +1,4 @@
-﻿const ServiceMaster = require('./service-master.model');
+const ServiceMaster = require('./service-master.model');
 const TariffRule = require('./tariff-rule.model');
 
 class TariffRepository {
@@ -36,6 +36,38 @@ class TariffRepository {
       .lean();
   }
 
+  async getNextRuleNumber(category = 'PROCEDURE') {
+    const PREFIX_MAP = {
+      PROCEDURE: 'TR-PRC',
+      CONSULTATION: 'TR-CON',
+      BED_CHARGES: 'TR-BED',
+      REGISTRATION: 'TR-REG',
+      DIAGNOSTICS: 'TR-DX',
+      PACKAGE: 'TR-PKG',
+    };
+    const prefix = PREFIX_MAP[category] || 'TR-GEN';
+    const regex = new RegExp(`^${prefix}-(\\d+)`);
+    
+    // Find highest ruleNumber for this category
+    const highest = await TariffRule.findOne({ ruleNumber: regex })
+      .sort({ ruleNumber: -1 })
+      .select('ruleNumber')
+      .lean();
+
+    let nextSeq = 1;
+    if (highest && highest.ruleNumber) {
+      const match = highest.ruleNumber.match(regex);
+      if (match && match[1]) {
+        nextSeq = parseInt(match[1], 10) + 1;
+      }
+    } else {
+      const count = await TariffRule.countDocuments({ category });
+      nextSeq = count + 1;
+    }
+
+    return `${prefix}-${String(nextSeq).padStart(2, '0')}`;
+  }
+
   async listTariffRules(filters = {}, options = {}) {
     const query = {};
     if (filters.category) query.category = filters.category;
@@ -43,6 +75,18 @@ class TariffRepository {
     if (filters.departmentId) query['scope.departmentId'] = filters.departmentId;
     if (filters.tariffGrade) query['scope.tariffGrade'] = filters.tariffGrade;
     if (filters.testCode) query.testCode = filters.testCode;
+
+    if (filters.search && filters.search.trim()) {
+      const term = filters.search.trim();
+      const sRegex = new RegExp(term, 'i');
+      query.$or = [
+        { name: sRegex },
+        { ruleNumber: sRegex },
+        { testCode: sRegex },
+        { description: sRegex },
+        { inclusions: sRegex },
+      ];
+    }
 
     const page = options.page || 1;
     const limit = options.limit || 50;
@@ -52,7 +96,7 @@ class TariffRepository {
       TariffRule.find(query)
         .populate('serviceMasterId', 'code name category')
         .populate('scope.departmentId', 'name code')
-        .sort({ category: 1, status: 1, effectiveFrom: -1 })
+        .sort({ ruleNumber: 1, category: 1, status: 1, effectiveFrom: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -83,17 +127,31 @@ class TariffRepository {
   }
 
   /**
-   * Find conflicting PUBLISHED rules for the same scope + category + effective period.
+   * Find conflicting PUBLISHED rules for the same scope + category + service + effective period.
    * Used in conflict guard before PUBLISH transition.
+   * A rule only conflicts if ALL dimensions match identically.
    */
-  async findConflictingRules(category, scope, effectiveFrom, effectiveTo, excludeId = null) {
+  async findConflictingRules(category, scope = {}, effectiveFrom, effectiveTo, excludeId = null, serviceMasterId = null, testCode = null) {
+    const sId = serviceMasterId?._id || serviceMasterId || null;
+    const deptId = scope.departmentId?._id || scope.departmentId || null;
+    const staffId = scope.staffId?._id || scope.staffId || null;
+    const floorId = scope.floorId?._id || scope.floorId || null;
+
     const query = {
       category,
       status: 'PUBLISHED',
-      'scope.departmentId': scope.departmentId || null,
+      serviceMasterId: sId,
+      testCode: testCode || null,
+      'scope.departmentId': deptId,
       'scope.tariffGrade': scope.tariffGrade || null,
-      'scope.staffId': scope.staffId || null,
+      'scope.staffId': staffId,
       'scope.visitType': scope.visitType || null,
+      'scope.appointmentType': scope.appointmentType || null,
+      'scope.wardClass': scope.wardClass || null,
+      'scope.comfortTier': scope.comfortTier || null,
+      'scope.sharingType': scope.sharingType || null,
+      'scope.floorId': floorId,
+      'scope.bedFeature': scope.bedFeature || null,
       // Date overlap check: existingFrom <= newTo (or newTo is null) AND existingTo >= newFrom (or existingTo is null)
       $and: [
         { $or: [{ effectiveTo: null }, { effectiveTo: { $gte: effectiveFrom } }] },

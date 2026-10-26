@@ -1,6 +1,6 @@
 /* ==========================================================================
-   Md3ClinicalDrawer.css — Material Design 3 Clinical Navigation Drawer
-   Pure MD3 Design Tokens, Dynamic Spacing & Spring Physics Motion
+   Md3ClinicalDrawer.css — Material Design 3 Expressive Clinical Navigation Drawer
+   Full State Management: IDLE, HOVER, ONTAP (:active) & Elevation Hierarchy
    ========================================================================== */
 
 .md3-drawer-portal {
@@ -10,13 +10,13 @@
   display: flex;
 }
 
-/* ── Backdrop Scrim ── */
+/* ── Backdrop Scrim (MD3 Level 0 -> Modal Overlay) ── */
 .md3-drawer-scrim {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.42);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
   opacity: 0;
   animation: md3DrawerScrimFadeIn 0.25s cubic-bezier(0.2, 0, 0, 1) forwards;
 }
@@ -26,19 +26,19 @@
   to { opacity: 1; }
 }
 
-/* ── Drawer Surface Container ── */
+/* ── Drawer Surface Container (MD3 Elevation Level 4) ── */
 .md3-drawer-surface {
   position: relative;
   width: 320px;
   max-width: 85vw;
   height: 100%;
   background-color: var(--md-sys-color-surface, #ffffff);
-  color: var(--md-sys-color-on-surface, #1d1b16);
-  border-radius: 0 24px 24px 0;
-  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  color: var(--md-sys-color-on-surface, #191c1e);
+  border-radius: 0 28px 28px 0;
+  border-right: 1px solid var(--md-sys-color-outline-variant, #e0e2ec);
   box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.18),
-    0 4px 12px rgba(0, 0, 0, 0.08);
+    0 16px 36px rgba(0, 0, 0, 0.16),
+    0 6px 14px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   z-index: 1;
@@ -58,13 +58,14 @@
 
 /* ── Drawer Header ── */
 .md3-drawer-header {
-  padding: 16px 18px 14px;
+  padding: 18px 20px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
-  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e2ec);
+  background-color: var(--md-sys-color-surface-container-low, #f7f9fd);
   flex-shrink: 0;
+  gap: 12px;
 }
 
 .md3-drawer-brand {
@@ -72,39 +73,45 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1;
 }
 
 .md3-drawer-brand-icon {
-  width: 38px;
-  height: 38px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
-  background-color: var(--md-sys-color-primary-container, #e8e2d0);
-  color: var(--md-sys-color-primary, #6b5f19);
+  background-color: var(--md-sys-color-primary-container, #c4e7ff);
+  color: var(--md-sys-color-primary, #006689);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 102, 137, 0.15);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.md3-drawer-brand-icon svg {
-  width: 20px;
-  height: 20px;
+.md3-drawer-brand-icon svg,
+.md3-drawer-brand-icon .material-symbols-rounded {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
 }
 
 .md3-drawer-brand-icon--has-logo {
   width: auto;
-  min-width: 38px;
+  min-width: 40px;
   max-width: 140px;
   background-color: transparent;
   border-radius: 0;
+  box-shadow: none;
   overflow: visible;
 }
 
 .md3-drawer-brand-logo {
   width: auto;
   height: 100%;
-  max-height: 36px;
+  max-height: 38px;
   max-width: 100%;
   object-fit: contain;
   display: block;
@@ -118,44 +125,52 @@
 }
 
 .md3-drawer-title {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface, #191c1e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .md3-drawer-subtitle {
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  color: var(--md-sys-color-on-surface-variant, #40484c);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+/* Close Button with IDLE, HOVER, ONTAP states */
 .md3-drawer-close-btn {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background: transparent;
-  border: none;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  border: 1px solid transparent;
+  color: var(--md-sys-color-on-surface-variant, #40484c);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   flex-shrink: 0;
 }
 
 .md3-drawer-close-btn:hover {
-  background-color: var(--md-sys-color-surface-container-high, #ede8dc);
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  background-color: var(--md-sys-color-surface-container-high, #e6e8eb);
+  color: var(--md-sys-color-on-surface, #191c1e);
+  transform: rotate(90deg) scale(1.05);
 }
 
-/* ── Action Slot (Register Patient) ── */
+.md3-drawer-close-btn:active {
+  transform: scale(0.92);
+  background-color: var(--md-sys-color-surface-container-highest, #dee3e6);
+}
+
+/* ── Action Slot (e.g. Register Patient Button) ── */
 .md3-drawer-action-slot {
   padding: 14px 18px 6px;
   flex-shrink: 0;
@@ -167,28 +182,41 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  height: 42px !important;
-  border-radius: 12px !important;
+  height: 44px !important;
+  border-radius: 14px !important;
   font-weight: 700 !important;
-  font-size: 0.85rem !important;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12) !important;
+  font-size: 0.88rem !important;
+  box-shadow: 0 2px 8px rgba(0, 102, 137, 0.18) !important;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
-/* ── Drawer Body with Dynamic Spacing ── */
+.md3-drawer-action-slot button:hover,
+.md3-drawer-action-slot a:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 102, 137, 0.28) !important;
+}
+
+.md3-drawer-action-slot button:active,
+.md3-drawer-action-slot a:active {
+  transform: scale(0.98) !important;
+}
+
+/* ── Drawer Body with Dynamic Spacing & Muscle-Memory Targets ── */
 .md3-drawer-body {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 18px 20px;
+  padding: 14px 16px 20px;
   display: flex;
   flex-direction: column;
   gap: 20px;
   scrollbar-width: thin;
+  scrollbar-color: var(--md-sys-color-outline-variant, #e0e2ec) transparent;
 }
 
 .md3-drawer-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .md3-drawer-section-header {
@@ -196,15 +224,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  flex-wrap: wrap;
+  padding: 0 8px;
 }
 
 .md3-drawer-section-label {
   font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  letter-spacing: 0.08em;
+  color: var(--md-sys-color-on-surface-variant, #40484c);
 }
 
 .md3-drawer-today-badge {
@@ -215,20 +243,22 @@
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 999px;
-  background-color: var(--md-sys-color-primary-container, #e8e2d0);
-  color: var(--md-sys-color-primary, #6b5f19);
+  background-color: var(--md-sys-color-primary-container, #c4e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2c);
 }
 
-.md3-drawer-today-badge svg {
+.md3-drawer-today-badge svg,
+.md3-drawer-today-badge .material-symbols-rounded {
   width: 13px;
   height: 13px;
+  font-size: 13px;
 }
 
-/* ── Navigation Destination Links ── */
+/* ── Navigation Destination Items (IDLE, HOVER, ONTAP State Layers) ── */
 .md3-drawer-nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .md3-drawer-nav-item {
@@ -238,26 +268,61 @@
   width: 100%;
   height: 48px;
   padding: 0 16px;
-  border-radius: 24px;
+  border-radius: 28px;
   border: 1px solid transparent;
-  background: transparent;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  background-color: transparent;
+  color: var(--md-sys-color-on-surface-variant, #40484c);
   font-size: 0.9rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
-  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   box-sizing: border-box;
 }
 
-.md3-drawer-nav-item:hover {
-  background-color: var(--md-sys-color-surface-container, #f3eee3);
+/* IDLE STATE: Clean & Uncluttered */
+.md3-drawer-nav-item .md3-drawer-nav-icon {
+  color: var(--md-sys-color-on-surface-variant, #40484c);
+  transition: color 0.2s ease, transform 0.2s ease;
 }
 
+/* HOVER STATE: Highlighting & Soft Surface Container Elevation */
+.md3-drawer-nav-item:hover {
+  background-color: var(--md-sys-color-surface-container-high, #eef2f6);
+  color: var(--md-sys-color-on-surface, #191c1e);
+  transform: translateX(4px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.md3-drawer-nav-item:hover .md3-drawer-nav-icon {
+  color: var(--md-sys-color-primary, #006689);
+  transform: scale(1.08);
+}
+
+/* ACTIVE STATE: Distinct Primary Container Fill with Contrast */
 .md3-drawer-nav-item--active {
-  background-color: var(--md-sys-color-secondary-container, #e8e2d0);
-  color: var(--md-sys-color-on-secondary-container, #1e1b11);
+  background-color: var(--md-sys-color-primary-container, #c4e7ff) !important;
+  color: var(--md-sys-color-on-primary-container, #001e2c) !important;
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 102, 137, 0.2);
+}
+
+.md3-drawer-nav-item--active .md3-drawer-nav-icon {
+  color: var(--md-sys-color-primary, #006689) !important;
+}
+
+.md3-drawer-nav-item--active:hover {
+  background-color: #b3defc !important;
+  transform: translateX(4px);
+}
+
+/* ONTAP / PRESS STATE: Spring Scale Feedback */
+.md3-drawer-nav-item:active {
+  transform: scale(0.97) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .md3-drawer-nav-icon {
@@ -265,12 +330,15 @@
   align-items: center;
   justify-content: center;
   width: 24px;
-  color: inherit;
+  height: 24px;
+  flex-shrink: 0;
 }
 
-.md3-drawer-nav-icon svg {
-  width: 20px;
-  height: 20px;
+.md3-drawer-nav-icon svg,
+.md3-drawer-nav-icon .material-symbols-rounded {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
 }
 
 .md3-drawer-nav-label {
@@ -278,23 +346,32 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1;
 }
 
 .md3-drawer-nav-badge {
   font-size: 0.72rem;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background-color: var(--md-sys-color-primary, #6b5f19);
+  padding: 2px 7px;
+  border-radius: 10px;
+  background-color: var(--md-sys-color-primary, #006689);
   color: var(--md-sys-color-on-primary, #ffffff);
   font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 
 .md3-drawer-nav-active-check {
-  font-size: 18px;
-  color: var(--md-sys-color-primary, #6b5f19);
+  font-size: 20px;
+  color: var(--md-sys-color-primary, #006689);
+  margin-left: -4px;
+  animation: md3ChevronPulse 0.25s ease forwards;
 }
 
-/* ── Activities / Today's Pulse List ── */
+@keyframes md3ChevronPulse {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Activities / Fallback Pulse List (If Passed Elsewhere) ── */
 .md3-drawer-activities-list {
   display: flex;
   flex-direction: column;
@@ -307,15 +384,17 @@
   justify-content: space-between;
   padding: 10px 14px;
   border-radius: 14px;
-  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
-  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  background-color: var(--md-sys-color-surface-container-low, #f7f9fd);
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e2ec);
   box-sizing: border-box;
   gap: 12px;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
 }
 
 .md3-drawer-activity-card:hover {
-  background-color: var(--md-sys-color-surface-container, #f3eee3);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
 }
 
 .md3-drawer-activity-left {
@@ -330,32 +409,34 @@
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background-color: var(--md-sys-color-surface-container-high, #ede8dc);
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  background-color: var(--md-sys-color-surface-container-high, #e6e8eb);
+  color: var(--md-sys-color-on-surface, #191c1e);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.md3-drawer-activity-icon-wrap svg {
-  width: 16px;
-  height: 16px;
+.md3-drawer-activity-icon-wrap svg,
+.md3-drawer-activity-icon-wrap .material-symbols-rounded {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
 }
 
 .md3-drawer-activity-card--primary .md3-drawer-activity-icon-wrap {
-  background-color: var(--md-sys-color-primary-container, #e8e2d0);
-  color: var(--md-sys-color-primary, #6b5f19);
+  background-color: var(--md-sys-color-primary-container, #c4e7ff);
+  color: var(--md-sys-color-primary, #006689);
 }
 
 .md3-drawer-activity-card--secondary .md3-drawer-activity-icon-wrap {
-  background-color: var(--md-sys-color-secondary-container, #e8e2d0);
-  color: var(--md-sys-color-on-secondary-container, #1e1b11);
+  background-color: var(--md-sys-color-secondary-container, #d5e4f2);
+  color: var(--md-sys-color-on-secondary-container, #101c27);
 }
 
 .md3-drawer-activity-card--tertiary .md3-drawer-activity-icon-wrap {
-  background-color: color-mix(in srgb, var(--md-sys-color-tertiary, #655f41) 15%, transparent);
-  color: var(--md-sys-color-tertiary, #655f41);
+  background-color: #ffeed4;
+  color: #8c5000;
 }
 
 .md3-drawer-activity-label {
@@ -363,7 +444,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  color: var(--md-sys-color-on-surface-variant, #40484c);
   white-space: normal;
   line-height: 1.25;
   word-break: break-word;
@@ -372,20 +453,21 @@
 .md3-drawer-activity-val {
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface, #191c1e);
   letter-spacing: -0.02em;
   flex-shrink: 0;
 }
 
-/* ── Footer / User Identity ── */
+/* ── Footer / User Identity (MD3 Surface Container Elevation) ── */
 .md3-drawer-footer {
   padding: 14px 18px;
-  border-top: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
-  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e2ec);
+  background-color: var(--md-sys-color-surface-container-low, #f7f9fd);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  gap: 12px;
 }
 
 .md3-drawer-user-card {
@@ -393,45 +475,56 @@
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex: 1;
 }
 
 .md3-drawer-user-info {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: 1px;
 }
 
 .md3-drawer-user-name {
-  font-size: 0.86rem;
+  font-size: 0.88rem;
   font-weight: 700;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface, #191c1e);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .md3-drawer-user-role {
-  font-size: 0.68rem;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant, #40484c);
   font-weight: 600;
   text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
+/* Logout Button with IDLE, HOVER, ONTAP states */
 .md3-drawer-logout-btn {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--md-sys-color-error, #ba1a1a);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   flex-shrink: 0;
 }
 
 .md3-drawer-logout-btn:hover {
   background-color: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  transform: scale(1.08);
+  box-shadow: 0 2px 6px rgba(186, 26, 26, 0.15);
+}
+
+.md3-drawer-logout-btn:active {
+  transform: scale(0.92);
 }

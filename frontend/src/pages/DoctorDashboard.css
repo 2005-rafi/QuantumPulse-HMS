@@ -28,17 +28,7 @@
   min-height: 0;
 }
 
-/* ─── 1b. Inpatient Department Doctor Cockpit ─── */
-.doctor-ipd-cockpit {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 16px 24px 48px 24px;
-  width: 100%;
-  max-width: 100%;
-  min-height: 100%;
-  box-sizing: border-box;
-}
+/* ─── 1b. Inpatient Department Doctor Cockpit handled in DoctorIpdCockpit.css ─── */
 
 /* ─── 2. Consultation Desk: 2-Pane Workstation (Sidebar + Fluid Desk) ─── */
 .consultation-desk {
@@ -48,6 +38,11 @@
   width: 100%;
   overflow: hidden;
   box-sizing: border-box;
+  transition: grid-template-columns 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.consultation-desk.consultation-desk--rail {
+  grid-template-columns: 76px 1fr;
 }
 
 .consultation-desk__queue {
@@ -58,6 +53,13 @@
   flex-direction: column;
   overflow: hidden;
   box-sizing: border-box;
+  transition: width 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.consultation-desk__queue.consultation-desk__queue--rail {
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
 }
 
 .consultation-desk__workspace {
@@ -69,6 +71,16 @@
   overflow: hidden;
   min-width: 0;
   box-sizing: border-box;
+}
+
+/* ─── Mobile/Tablet Backdrop Scrim for Side-Based Drawer ─── */
+.doc-drawer-backdrop {
+  display: none;
+}
+
+/* ─── Mobile/Tablet Sticky/Top Toolbar ─── */
+.doc-mobile-toolbar {
+  display: none;
 }
 
 /* ==========================================================================
@@ -99,9 +111,35 @@
 .doc-queue__header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
+}
+
+.doc-queue__collapse-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.doc-queue__collapse-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.doc-queue__collapse-btn .material-symbols-rounded {
+  font-size: 16px;
 }
 
 .doc-queue__header-icon {
@@ -165,6 +203,12 @@
   text-overflow: ellipsis;
 }
 
+.doc-queue__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .doc-queue__refresh-btn {
   width: 28px;
   height: 28px;
@@ -195,6 +239,28 @@
 
 .doc-queue__refresh-btn:active:not(:disabled) {
   transform: scale(0.92);
+}
+
+.doc-queue__mobile-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.doc-queue__mobile-close-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.doc-queue__mobile-close-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1c1b1f);
 }
 
 .doc-queue__refresh-btn.is-loading .material-symbols-rounded {
@@ -883,7 +949,7 @@
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 100%;
+  max-width: 760px;
   box-sizing: border-box;
   animation: docFadeIn 0.25s cubic-bezier(0.2, 0, 0, 1) both;
 }
@@ -1668,6 +1734,19 @@
   padding: 3px 10px;
   border-radius: 999px;
   white-space: nowrap;
+}
+
+.doc-identity-banner__status-pill--mobile {
+  display: none;
+}
+
+.doc-identity-banner__tag--token,
+.doc-identity-banner__tag--ticket {
+  display: none;
+}
+
+.doc-identity-banner__status-pill--desktop {
+  display: inline-flex;
 }
 
 .doc-identity-banner__status-pill--progress {
@@ -3386,17 +3465,799 @@
 }
 
 /* ==========================================================================
-   14. Responsive Adaptations
+   14. Doctor Queue Collapsible Rail & Responsive Adaptations
    ========================================================================== */
+
+/* ─── 3b. Doctor Queue Collapsible Rail (.doc-queue-rail) ─── */
+.doc-queue-rail {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 76px;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  box-sizing: border-box;
+  overflow: hidden;
+  user-select: none;
+}
+
+.doc-rail__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  flex-shrink: 0;
+}
+
+.doc-rail__toggle-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.doc-rail__toggle-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.doc-rail__toggle-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.doc-rail__count-badge {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  line-height: 1.2;
+}
+
+.doc-rail__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+/* Single Rail Item */
+.doc-rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  border-radius: var(--md-sys-shape-corner-sm, 8px);
+  border: 1px solid transparent;
+  background-color: var(--md-sys-color-surface-container-low, #f8fafc);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  text-align: center;
+  width: 66px;
+  box-sizing: border-box;
+}
+
+.doc-rail-item:hover {
+  background-color: var(--md-sys-color-surface-container-high, #e2e8f0);
+  border-color: var(--md-sys-color-outline-variant, #cbd5e1);
+  transform: translateY(-1px);
+}
+
+.doc-rail-item--selected {
+  background-color: var(--md-sys-color-primary-container, #eaddff) !important;
+  border-color: var(--md-sys-color-primary, #6750a4) !important;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+}
+
+.doc-rail-item--called {
+  background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
+  border-color: var(--md-sys-color-tertiary, #7d5260);
+}
+
+.doc-rail-item--in-progress {
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 15%, transparent);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.doc-rail-item__avatar-wrapper {
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.doc-rail-item__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-weight: 700;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doc-rail-item--selected .doc-rail-item__avatar {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: #ffffff;
+}
+
+.doc-rail-item__called-dot {
+  position: absolute;
+  bottom: 0;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-tertiary, #7d5260);
+  border: 1.5px solid #ffffff;
+}
+
+.doc-rail-item__in-progress-dot {
+  position: absolute;
+  bottom: 0;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  border: 1.5px solid #ffffff;
+}
+
+.doc-rail-item__review-dot {
+  position: absolute;
+  bottom: 0;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #f59e0b;
+  border: 1.5px solid #ffffff;
+}
+
+.doc-rail-item__token {
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  padding: 1px 3px;
+  border-radius: 3px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cbd5e1);
+  margin-bottom: 2px;
+  max-width: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-rail-item__name-box {
+  width: 58px;
+  max-width: 58px;
+  overflow: hidden;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1e293b);
+  line-height: 1.1;
+}
+
+.doc-rail-item__marquee {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.doc-rail__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-outline, #94a3b8);
+  padding: 20px 0;
+}
+
+/* ─── Responsive Adaptations (Mobile & Tablet <= 1024px) ─── */
 @media (max-width: 1024px) {
-  .consultation-desk {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow: auto;
+  /* Backdrop scrim overlay when side-drawer is opened */
+  .doc-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1190;
+    animation: docFadeIn 0.22s ease-out;
   }
+
+  @keyframes docFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Mobile Top Navigation Toolbar */
+  .doc-mobile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--md-sys-color-surface, #ffffff);
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    border-radius: var(--md-sys-shape-corner-md, 12px);
+    box-shadow: var(--md-sys-elevation-level1, 0 1px 3px rgba(0,0,0,0.08));
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+  }
+
+  .doc-mobile-drawer-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--md-sys-color-primary, #6750a4);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-sm, 8px);
+    padding: 8px 14px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(103, 80, 164, 0.25);
+    transition: all 0.15s ease;
+  }
+
+  .doc-mobile-drawer-btn:active {
+    transform: scale(0.97);
+  }
+
+  .doc-mobile-drawer-btn .material-symbols-rounded {
+    font-size: 18px;
+  }
+
+  .doc-mobile-count-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .doc-mobile-patient-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .doc-mobile-token-pill {
+    font-family: monospace;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: var(--md-sys-color-surface-container-high, #ece6f0);
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    padding: 3px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  }
+
+  .doc-mobile-patient-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+
+  .consultation-desk {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: calc(100vh - 72px);
+    width: 100%;
+    overflow: visible;
+  }
+
+  /* Slide-Based Drawer on Mobile & Tablet: Fully hidden when closed, zero pixel leakage */
   .consultation-desk__queue {
-    height: 360px;
-    border-right: none;
-    border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 340px !important;
+    max-width: 86vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    z-index: 1200 !important;
+    border-radius: 0 16px 16px 0 !important;
+    border: none !important;
+    border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0) !important;
+    transform: translateX(-110%) !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+    transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1), visibility 0.28s ease, box-shadow 0.28s ease !important;
+    background-color: var(--md-sys-color-surface, #ffffff) !important;
+    overflow: hidden !important;
+  }
+
+  .consultation-desk__queue.is-mobile-open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    box-shadow: var(--md-sys-elevation-level4, 0 14px 28px rgba(0,0,0,0.25)) !important;
+  }
+
+  .doc-queue-rail {
+    display: none !important;
+  }
+
+  .doc-queue__collapse-btn {
+    display: none !important;
+  }
+
+  .doc-queue__mobile-close-btn {
+    display: flex !important;
+  }
+
+  .consultation-desk__workspace {
+    flex: 1;
+    height: auto;
+    overflow: visible;
+    width: 100%;
+  }
+
+  /* ── Tablet & Mobile Workspace Padding & Gaps ── */
+  .doc-workspace {
+    padding: 0;
+  }
+
+  .doc-workspace__card {
+    padding: 10px 12px 14px;
+    gap: 10px;
+    border-radius: var(--md-sys-shape-corner-medium, 10px);
   }
 }
+
+/* ==========================================================================
+   15. Mobile Ultra-Compact Density Optimizations (<= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* ── Mobile Toolbar ── */
+  .doc-mobile-toolbar {
+    padding: 6px 10px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+    gap: 8px;
+  }
+
+  .doc-mobile-drawer-btn {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+    gap: 6px;
+    border-radius: 6px;
+  }
+
+  .doc-mobile-drawer-btn .material-symbols-rounded {
+    font-size: 16px;
+  }
+
+  .doc-mobile-count-badge {
+    padding: 1px 6px;
+    font-size: 0.68rem;
+  }
+
+  .doc-mobile-patient-preview {
+    gap: 6px;
+  }
+
+  .doc-mobile-token-pill {
+    font-size: 0.68rem;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+
+  .doc-mobile-patient-name {
+    font-size: 0.78rem;
+    max-width: 120px;
+  }
+
+  /* ── Patient Identity Demographics Banner (Mobile High Density) ── */
+  .doc-identity-banner {
+    border-radius: 8px;
+  }
+
+  .doc-identity-banner__allergy-strip {
+    padding: 4px 10px;
+    font-size: 0.66rem;
+    gap: 4px;
+  }
+
+  .doc-identity-banner__allergy-strip .material-symbols-rounded {
+    font-size: 13px;
+  }
+
+  .doc-identity-banner__body {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .doc-identity-banner__left {
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .doc-identity-banner__avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.76rem;
+    border-radius: 50%;
+  }
+
+  .doc-identity-banner__details {
+    gap: 3px;
+    width: 100%;
+  }
+
+  .doc-identity-banner__name-row {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .doc-identity-banner__name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    margin: 0;
+    line-height: 1.25;
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: clip;
+    max-width: none;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doc-identity-banner__mrn-pill {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.64rem;
+    font-weight: 700;
+    color: var(--md-sys-color-primary, #6750a4);
+    background-color: var(--md-sys-color-primary-container, #eaddff);
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .doc-identity-banner__status-pill--desktop {
+    display: none !important;
+  }
+
+  .doc-identity-banner__status-pill--mobile {
+    display: inline-flex !important;
+    font-size: 0.62rem;
+    padding: 2px 8px;
+    margin-left: auto;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .doc-identity-banner__chips-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+
+  .doc-identity-banner__tag {
+    font-size: 0.63rem;
+    padding: 1.5px 5px;
+    border-radius: 4px;
+    gap: 3px;
+  }
+
+  .doc-identity-banner__tag .material-symbols-rounded {
+    font-size: 11px;
+  }
+
+  .doc-identity-banner__tag--token {
+    display: inline-flex !important;
+    background-color: var(--md-sys-color-primary-container, #eaddff);
+    color: var(--md-sys-color-on-primary-container, #21005d);
+    font-weight: 700;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  .doc-identity-banner__tag--ticket {
+    display: inline-flex !important;
+    background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+    color: var(--md-sys-color-on-surface-variant, #49454f);
+    font-weight: 600;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  .doc-identity-banner__right {
+    display: none !important;
+  }
+
+  /* ── Secondary Tabs Navigation Bar (Horizontal Scrollable Strip) ── */
+  .doc-workspace__tabs-bar {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+    width: 100%;
+  }
+
+  .doc-workspace__tabs-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .doc-workspace__tab-btn {
+    height: 28px;
+    padding: 2px 9px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    gap: 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border-radius: 6px;
+  }
+
+  .doc-workspace__tab-btn .material-symbols-rounded {
+    font-size: 14px;
+  }
+
+  /* ── Summary & Vitals Density (60% Scroll Reduction) ── */
+  .summary-2col-layout {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .summary-col {
+    gap: 8px;
+  }
+
+  .summary-card {
+    border-radius: 8px;
+  }
+
+  .summary-card__header {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .summary-card__icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .summary-card__icon svg,
+  .summary-card__icon .material-symbols-rounded {
+    font-size: 13px !important;
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .summary-card__title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .summary-card__subtitle {
+    display: none;
+  }
+
+  .summary-card__body {
+    padding: 6px 8px;
+    gap: 6px;
+  }
+
+  .triage-vitals-matrix {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+
+  .triage-vital-tile {
+    padding: 4px 6px;
+    gap: 6px;
+    border-radius: 6px;
+    min-height: 38px;
+  }
+
+  .triage-tile-icon {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+  }
+
+  .triage-tile-icon svg,
+  .triage-tile-icon .material-symbols-rounded {
+    font-size: 12px !important;
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .triage-tile-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.01em;
+  }
+
+  .triage-tile-val {
+    font-size: 0.76rem;
+    font-weight: 700;
+  }
+
+  .triage-bmi-wrap {
+    gap: 3px;
+  }
+
+  .summary-complaint-box {
+    padding: 6px 8px;
+    gap: 6px;
+    border-radius: 6px;
+    border-left-width: 3px;
+  }
+
+  .summary-complaint-icon svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .summary-complaint-label {
+    font-size: 0.58rem;
+  }
+
+  .summary-complaint-text {
+    font-size: 0.74rem;
+    line-height: 1.3;
+  }
+
+  .summary-dynamic-box {
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-top: 2px;
+  }
+
+  .summary-dynamic-title {
+    font-size: 0.64rem;
+    margin-bottom: 3px;
+  }
+
+  .summary-dynamic-grid {
+    gap: 4px;
+  }
+
+  .summary-dynamic-item {
+    padding: 3px 6px;
+    border-radius: 4px;
+  }
+
+  .summary-dynamic-key {
+    font-size: 0.58rem;
+  }
+
+  .summary-dynamic-val {
+    font-size: 0.70rem;
+  }
+
+  .summary-info-item {
+    font-size: 0.72rem;
+    padding: 3px 0;
+  }
+
+  .summary-info-label {
+    font-size: 0.68rem;
+  }
+
+  .summary-info-value {
+    font-size: 0.72rem;
+  }
+
+  /* ── Consultation Tab & Prescription Density ── */
+  .clinical-field-row-2 {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .clinical-diagnosis-block,
+  .clinical-treatment-block,
+  .clinical-notes-block {
+    padding: 6px 8px;
+    border-radius: 8px;
+    gap: 4px;
+  }
+
+  .clinical-diagnosis-header__icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .clinical-diagnosis-header__label,
+  .clinical-treatment-label {
+    font-size: 0.74rem;
+  }
+
+  .rx-manager-card {
+    border-radius: 8px;
+  }
+
+  .rx-manager-header {
+    padding: 5px 8px;
+  }
+
+  .rx-manager-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .rx-manager-title {
+    font-size: 0.74rem;
+  }
+
+  /* ── Bottom Action Dock ── */
+  .consultation-fab-dock {
+    padding-top: 6px;
+    gap: 6px;
+  }
+
+  .consultation-fab-dock__actions {
+    gap: 6px;
+    justify-content: stretch;
+  }
+
+  .consultation-fab-dock__actions > * {
+    flex: 1;
+  }
+
+  .action-btn-draft,
+  .action-btn-finalize {
+    height: 32px !important;
+    font-size: 0.72rem !important;
+    padding: 0 8px !important;
+  }
+}
+

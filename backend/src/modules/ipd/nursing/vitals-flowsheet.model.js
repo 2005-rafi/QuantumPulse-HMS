@@ -134,17 +134,52 @@ const vitalsFlowsheetSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    shockIndex: {
+      type: Number,
+      default: null, // heartRate / systolicBp
+    },
+    shockIndexAlert: {
+      type: Boolean,
+      default: false, // true if shockIndex >= 0.9
+    },
+    frequencyOrderAtTime: {
+      type: String,
+      default: 'Q4H',
+    },
+    isCorrection: {
+      type: Boolean,
+      default: false,
+    },
+    correctionReason: {
+      type: String,
+      default: null,
+    },
+    supersededRecordId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'VitalsFlowsheet',
+      default: null,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-// Pre-save hook to calculate NEWS2 automatically
+// Pre-save hook to calculate NEWS2 and Shock Index automatically
 vitalsFlowsheetSchema.pre('save', function () {
   const result = computeNews2(this);
   this.news2Score = result.score;
   this.news2RiskLevel = result.riskLevel;
+
+  // Calculate Shock Index (HR / Systolic BP)
+  if (this.heartRate && this.systolicBp && this.systolicBp > 0) {
+    const rawSi = this.heartRate / this.systolicBp;
+    this.shockIndex = Math.round(rawSi * 100) / 100;
+    this.shockIndexAlert = this.shockIndex >= 0.9;
+  } else {
+    this.shockIndex = null;
+    this.shockIndexAlert = false;
+  }
 });
 
 vitalsFlowsheetSchema.index({ admissionId: 1, recordedAt: -1 });

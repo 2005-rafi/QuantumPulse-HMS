@@ -4,12 +4,19 @@
  * (CPOE Orders, SOAP Ward Rounds, OT Booking, 3-Way Discharge Governance).
  */
 import React, { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate } from 'react-router-dom';
 import IpdPatientBanner from '../../components/ipd/IpdPatientBanner';
 import DischargeKanban from '../../components/ipd/DischargeKanban';
 import GatePassPrintable from '../../components/ipd/GatePassPrintable';
 import IpdTelemetryDetailDialog from './IpdTelemetryDetailDialog';
+import IpdPatientQueue from './IpdPatientQueue';
+import DoctorIpdHistoryManager from './DoctorIpdHistoryManager';
 import { Md3Button, Md3TextField, Md3TextArea, Md3Select } from '../../components/md3/Md3FormComponents';
+import Md3ConfirmDialog from '../../components/md3/Md3ConfirmDialog';
+import ClinicalStationIdleDeck from '../../components/md3/ClinicalStationIdleDeck';
+import { useToast } from '../../context/ToastContext';
+import { usePatientStatus } from '../../context/PatientStatusContext';
 import { formatPatientName, formatDoctorName } from '../../utils/patientFormatters';
 import ipdApi from '../../services/ipdApi';
 import './DoctorIpdCockpit.css';
@@ -30,6 +37,31 @@ const LAB_CATALOG_SAMPLE = [
 export const DoctorIpdCockpit = () => {
   const { admissionId } = useParams();
   const navigate = useNavigate();
+  const { showSuccess, showError, showWarning } = useToast();
+  const { subscribeToLedgerUpdates, subscribeToStatusChanges } = usePatientStatus();
+
+  // Simple Reusable Dialog Box for User Notifications
+  const [notifyDialog, setNotifyDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    variant: 'info', // 'success' | 'danger' | 'warning' | 'info'
+    confirmLabel: 'OK',
+  });
+
+  const showNotificationDialog = (title, message, variant = 'info', confirmLabel = 'OK') => {
+    setNotifyDialog({
+      isOpen: true,
+      title,
+      message,
+      variant,
+      confirmLabel,
+    });
+  };
+
+  const closeNotificationDialog = () => {
+    setNotifyDialog((prev) => ({ ...prev, isOpen: false }));
+  };
 
   const [admissionList, setAdmissionList] = useState([]);
   const [currentAdmission, setCurrentAdmission] = useState(null);
@@ -38,6 +70,11 @@ export const DoctorIpdCockpit = () => {
   const [clearance, setClearance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showGatePassModal, setShowGatePassModal] = useState(false);
+  const [gatePassData, setGatePassData] = useState(null);
+
+  // Queue Rail / Mobile Drawer State
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
 
   // Active Telemetry Drilldown Modal: null | 'ADMITTED' | 'CRITICAL' | 'ROUNDS' | 'DISCHARGE'
   const [activeTelemetryModal, setActiveTelemetryModal] = useState(null);
@@ -45,6 +82,9 @@ export const DoctorIpdCockpit = () => {
   // Ward filter & search
   const [selectedWardFilter, setSelectedWardFilter] = useState('ALL'); // ALL, ICU_CCU, HDU, GENERAL
   const [patientSearch, setPatientSearch] = useState('');
+
+  // View Mode: 'COCKPIT' (Active live beds) | 'HISTORY' (Case archival & history)
+  const [viewMode, setViewMode] = useState('COCKPIT');
 
   // Tabs: 'ROUNDS' | 'CPOE' | 'DISCHARGE'
   const [activeTab, setActiveTab] = useState('ROUNDS');
@@ -67,6 +107,15 @@ export const DoctorIpdCockpit = () => {
   const [medInstructions, setMedInstructions] = useState('');
   const [savingOrder, setSavingOrder] = useState(false);
 
+  // CDSS Drug-Allergy Safety Interceptor Dialog State
+  const [cdssAlert, setCdssAlert] = useState({
+    isOpen: false,
+    message: '',
+    details: {},
+    overrideReason: '',
+    pendingOrder: null,
+  });
+
   // CPOE Lab Order Form
   const [selectedLabTest, setSelectedLabTest] = useState('');
   const [labPriority, setLabPriority] = useState('ROUTINE');
@@ -76,8 +125,10 @@ export const DoctorIpdCockpit = () => {
   const [selectedDietTier, setSelectedDietTier] = useState('REGULAR_DIET');
   const [dietInstructions, setDietInstructions] = useState('');
 
-  // CPOE OT Form
+  // CPOE OT Request Form
   const [otProcedureName, setOtProcedureName] = useState('');
+  const [otSurgeryType, setOtSurgeryType] = useState('ELECTIVE');
+  const [otUrgency, setOtUrgency] = useState('ROUTINE');
   const [otScheduledDate, setOtScheduledDate] = useState('');
   const [otScheduledTime, setOtScheduledTime] = useState('09:00');
   const [otAnesthesiaType, setOtAnesthesiaType] = useState('GENERAL');
@@ -90,6 +141,7 @@ export const DoctorIpdCockpit = () => {
   const [dischargeAdvice, setDischargeAdvice] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
   const [initiatingDischarge, setInitiatingDischarge] = useState(false);
+  const [isEditingDischargeSummary, setIsEditingDischargeSummary] = useState(false);
 
   useEffect(() => {
     const fetchAdmissions = async () => {
@@ -160,6 +212,26 @@ export const DoctorIpdCockpit = () => {
     loadData();
   }, [admissionId]);
 
+  // Real-Time Reactive Push Synchronization for IPD Clearance & Financial Settlement
+  useEffect(() => {
+    if (!subscribeToLedgerUpdates) return;
+    const unsubLedger = subscribeToLedgerUpdates((payload) => {
+      if (!payload) return;
+      if (!admissionId || String(payload.admissionId) === String(admissionId)) {
+        loadData();
+      }
+    });
+
+    const unsubStatus = subscribeToStatusChanges ? subscribeToStatusChanges(() => {
+      handleRefreshQueue();
+    }) : null;
+
+    return () => {
+      if (unsubLedger) unsubLedger();
+      if (unsubStatus) unsubStatus();
+    };
+  }, [admissionId, subscribeToLedgerUpdates, subscribeToStatusChanges]);
+
   // Telemetry metric counters
   const telemetry = useMemo(() => {
     const totalAdmitted = admissionList.length;
@@ -212,7 +284,11 @@ export const DoctorIpdCockpit = () => {
   const handleSaveRound = async (e) => {
     e.preventDefault();
     if (!subjective.trim() || !assessment.trim() || !plan.trim()) {
-      alert('Please fill out Subjective, Assessment, and Plan fields.');
+      showNotificationDialog(
+        'Incomplete Ward Round Note',
+        'Please fill out the Subjective, Assessment, and Plan fields before saving.',
+        'warning'
+      );
       return;
     }
 
@@ -229,9 +305,16 @@ export const DoctorIpdCockpit = () => {
       setAssessment('');
       setPlan('');
       await loadData();
-      alert('Daily SOAP ward round note recorded successfully.');
+      showNotificationDialog(
+        'Ward Round Recorded',
+        'Daily SOAP ward round note recorded successfully.',
+        'success'
+      );
+      showSuccess('Ward Round Recorded', 'Daily SOAP note added to patient stay history.');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to record round note');
+      const msg = err.response?.data?.message || 'Failed to record round note';
+      showNotificationDialog('Ward Round Error', msg, 'danger');
+      showError('Ward Round Failed', msg);
     } finally {
       setSavingRound(false);
     }
@@ -241,29 +324,90 @@ export const DoctorIpdCockpit = () => {
   const handleSaveMedOrder = async (e) => {
     e.preventDefault();
     if (!medName.trim() || !dosage.trim()) {
-      alert('Medication Name and Dosage are required.');
+      showNotificationDialog(
+        'Missing Information',
+        'Medication Name and Dosage are required to place an order.',
+        'warning'
+      );
+      return;
+    }
+
+    const payload = {
+      orderType: 'MEDICATION',
+      medication: {
+        name: medName.trim(),
+        dosage: dosage.trim(),
+        route,
+        frequency: freq,
+        instructions: medInstructions.trim(),
+      },
+    };
+
+    setSavingOrder(true);
+    try {
+      await ipdApi.createCpoeOrder(admissionId, payload);
+      setMedName('');
+      setDosage('');
+      setMedInstructions('');
+      await loadData();
+      showNotificationDialog(
+        'Medication Prescribed',
+        'Medication ordered successfully. Dose schedule automatically appended to Nursing e-MAR.',
+        'success'
+      );
+      showSuccess('Medication Ordered', 'Prescription active on patient e-MAR.');
+    } catch (err) {
+      const errData = err.response?.data;
+      if (errData?.errorCode === 'CDSS_001') {
+        // CDSS Drug-Allergy Safety Interception
+        setCdssAlert({
+          isOpen: true,
+          message: errData.message || 'Critical Drug-Allergy Contraindication detected.',
+          details: errData.details || {},
+          overrideReason: '',
+          pendingOrder: payload,
+        });
+      } else {
+        const msg = errData?.message || 'Failed to place medication order';
+        showNotificationDialog('Prescription Error', msg, 'danger');
+        showError('Order Failed', msg);
+      }
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  // Confirm CDSS Drug-Allergy Safety Override with clinical justification
+  const handleConfirmCdssOverride = async () => {
+    if (!cdssAlert.overrideReason.trim()) {
+      showWarning(
+        'Override Reason Required',
+        'Please enter a documented clinical justification to override this CDSS allergy warning.'
+      );
       return;
     }
 
     setSavingOrder(true);
     try {
       await ipdApi.createCpoeOrder(admissionId, {
-        orderType: 'MEDICATION',
-        medication: {
-          name: medName.trim(),
-          dosage: dosage.trim(),
-          route,
-          frequency: freq,
-          instructions: medInstructions.trim(),
-        },
+        ...cdssAlert.pendingOrder,
+        clinicalOverrideReason: cdssAlert.overrideReason.trim(),
       });
+      setCdssAlert((prev) => ({ ...prev, isOpen: false }));
       setMedName('');
       setDosage('');
       setMedInstructions('');
       await loadData();
-      alert('Medication ordered. Dose schedule automatically appended to Nursing e-MAR.');
+      showNotificationDialog(
+        'Prescription Saved with Override',
+        'Medication ordered with documented clinical override. Safety intercept logged in hospital audit trail.',
+        'warning'
+      );
+      showSuccess('Prescription Logged', 'Clinical override recorded in audit trail.');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to place medication order');
+      const msg = err.response?.data?.message || 'Failed to submit clinical override';
+      showNotificationDialog('Override Failed', msg, 'danger');
+      showError('Override Failed', msg);
     } finally {
       setSavingOrder(false);
     }
@@ -273,7 +417,11 @@ export const DoctorIpdCockpit = () => {
   const handleSaveLabOrder = async (e) => {
     e.preventDefault();
     if (!selectedLabTest) {
-      alert('Please select a diagnostic / laboratory investigation.');
+      showNotificationDialog(
+        'Investigation Required',
+        'Please select a diagnostic / laboratory investigation from the catalog.',
+        'warning'
+      );
       return;
     }
 
@@ -288,9 +436,16 @@ export const DoctorIpdCockpit = () => {
       setSelectedLabTest('');
       setLabClinicalNotes('');
       await loadData();
-      alert('Laboratory order submitted and routed to Diagnostic queue.');
+      showNotificationDialog(
+        'Laboratory Order Placed',
+        'Diagnostic requisition submitted and routed to Laboratory Phlebotomy queue.',
+        'success'
+      );
+      showSuccess('Diagnostic Order Placed', 'Test routed to Pathology queue.');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to place laboratory order');
+      const msg = err.response?.data?.message || 'Failed to place laboratory order';
+      showNotificationDialog('Laboratory Order Error', msg, 'danger');
+      showError('Order Failed', msg);
     } finally {
       setSavingOrder(false);
     }
@@ -308,39 +463,59 @@ export const DoctorIpdCockpit = () => {
       });
       setDietInstructions('');
       await loadData();
-      alert('Clinical diet prescription updated.');
+      showNotificationDialog(
+        'Diet Order Updated',
+        'Clinical diet prescription updated successfully for ward nursing & pantry.',
+        'success'
+      );
+      showSuccess('Diet Prescription Updated', 'Ward dietary plan saved.');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to update diet');
+      const msg = err.response?.data?.message || 'Failed to update diet';
+      showNotificationDialog('Diet Order Error', msg, 'danger');
+      showError('Diet Update Failed', msg);
     } finally {
       setSavingOrder(false);
     }
   };
 
-  // Submit CPOE OT Booking
+  // Submit CPOE OT Booking Request (Dispatched to Surgeon & OT Board for scheduling)
   const handleSaveOtBooking = async (e) => {
     e.preventDefault();
-    if (!otProcedureName.trim() || !otScheduledDate) {
-      alert('Procedure Name and Scheduled Date are required.');
+    if (!otProcedureName.trim()) {
+      showNotificationDialog(
+        'Procedure Name Required',
+        'Please enter the surgical procedure name before requesting OT allocation.',
+        'warning'
+      );
       return;
     }
 
     setSavingOrder(true);
     try {
-      const scheduledStart = new Date(`${otScheduledDate}T${otScheduledTime}:00`);
-      await ipdApi.bookOtSession({
+      await ipdApi.requestSurgery({
         admissionId,
         procedureName: otProcedureName.trim(),
-        scheduledStart,
+        surgeryType: otSurgeryType,
+        urgency: otUrgency,
+        targetDate: otScheduledDate ? new Date(otScheduledDate) : new Date(),
         anesthesiaType: otAnesthesiaType,
-        specialNotes: otSpecialNotes,
-        roomId: otRooms[0]?._id,
+        requestNotes: otSpecialNotes.trim(),
       });
       setOtProcedureName('');
       setOtSpecialNotes('');
+      setOtUrgency('ROUTINE');
+      setOtSurgeryType('ELECTIVE');
       await loadData();
-      alert('Operating Theatre (OT) session requested and scheduled.');
+      showNotificationDialog(
+        'Surgery Request Dispatched',
+        'Surgery request submitted to the Operating Theatre Board. The surgical team will allocate an OT room and schedule the surgical team.',
+        'success'
+      );
+      showSuccess('Surgery Requested', 'Dispatched to Operating Theatre Suite.');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to book OT session');
+      const msg = err.response?.data?.message || 'Failed to submit surgery request';
+      showNotificationDialog('OT Request Error', msg, 'danger');
+      showError('Surgery Request Failed', msg);
     } finally {
       setSavingOrder(false);
     }
@@ -350,7 +525,11 @@ export const DoctorIpdCockpit = () => {
   const handleInitiateDischarge = async (e) => {
     e.preventDefault();
     if (!finalDiagnosis.trim() || !courseInHospital.trim() || !dischargeAdvice.trim()) {
-      alert('Please fill out all mandatory clinical discharge summary fields.');
+      showNotificationDialog(
+        'Incomplete Discharge Summary',
+        'Please fill out all mandatory clinical discharge summary fields (Final Diagnosis, Course in Hospital, Discharge Advice).',
+        'warning'
+      );
       return;
     }
 
@@ -362,10 +541,17 @@ export const DoctorIpdCockpit = () => {
         dischargeAdvice: dischargeAdvice.trim(),
         followUpDate: followUpDate ? new Date(followUpDate) : null,
       });
-      alert('Discharge initiated! 3-Way Clearance Kanban (Pharmacy, Ward, Billing) is now active.');
+      showNotificationDialog(
+        'Discharge Initiated',
+        'Discharge initiated! 3-Way Clearance Kanban (Pharmacy, Ward, Billing) is now active.',
+        'success'
+      );
+      showSuccess('Discharge Initiated', '3-Way Clearance Kanban active.');
       await loadData();
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to initiate discharge');
+      const msg = err.response?.data?.message || 'Failed to initiate discharge';
+      showNotificationDialog('Discharge Initiation Error', msg, 'danger');
+      showError('Discharge Failed', msg);
     } finally {
       setInitiatingDischarge(false);
     }
@@ -376,8 +562,51 @@ export const DoctorIpdCockpit = () => {
     try {
       await ipdApi.markClearance(admissionId, dept, payload);
       await loadData();
+      showSuccess('Clearance Updated', `${dept} clearance recorded.`);
     } catch (err) {
-      alert(err.response?.data?.message || `Failed to update ${dept} clearance`);
+      const msg = err.response?.data?.message || `Failed to update ${dept} clearance`;
+      showNotificationDialog('Clearance Error', msg, 'danger');
+      showError('Clearance Failed', msg);
+    }
+  };
+
+  const handleSelectAdmission = (adm) => {
+    setViewMode('COCKPIT');
+    navigate(`/dashboard/doctor/ipd/${adm._id}`);
+    setIsMobileDrawerOpen(false);
+  };
+
+  const handleRefreshQueue = async () => {
+    try {
+      const res = await ipdApi.getAdmissions({ status: 'ADMITTED' });
+      const list = res.data?.data || [];
+      setAdmissionList(list);
+      if (admissionId) await loadData();
+    } catch (err) {
+      console.error('Failed to refresh inpatient queue:', err);
+    }
+  };
+
+  // View Official Exit Gate Pass
+  const handleViewGatePass = async () => {
+    if (!admissionId) return;
+    try {
+      const res = await ipdApi.getGatePass(admissionId);
+      setGatePassData(res.data?.data || null);
+      setShowGatePassModal(true);
+    } catch (err) {
+      if (clearance && currentAdmission) {
+        setGatePassData({
+          ...clearance,
+          admissionId: currentAdmission,
+          gatePassNumber: clearance.gatePassNumber || `GP-${currentAdmission.admissionNumber}`,
+          gatePassGeneratedAt: clearance.gatePassGeneratedAt || new Date(),
+        });
+        setShowGatePassModal(true);
+      } else {
+        const msg = err.response?.data?.message || 'Failed to fetch Gate Pass details';
+        showNotificationDialog('Gate Pass Error', msg, 'danger');
+      }
     }
   };
 
@@ -386,181 +615,218 @@ export const DoctorIpdCockpit = () => {
     try {
       await ipdApi.finalizeDischarge(admissionId);
       await loadData();
-      setShowGatePassModal(true);
+      await handleViewGatePass();
+      showSuccess('Discharge Finalized', 'Official Gate Pass generated.');
     } catch (err) {
-      alert(err.response?.data?.message || 'Failed to finalize discharge');
+      const msg = err.response?.data?.message || 'Failed to finalize discharge';
+      showNotificationDialog('Finalization Error', msg, 'danger');
+      showError('Finalization Failed', msg);
     }
   };
 
+  // Note: viewMode === 'HISTORY' is now seamlessly rendered within the main workspace below,
+  // preserving the outer layout shell and patient queue just like Image 02.
+
   if (!admissionId && admissionList.length === 0) {
     return (
-      <div className="doctor-ipd-cockpit">
-        <div style={{ textAlign: 'center', padding: '64px 20px', background: 'var(--md-sys-color-surface-container-low)', borderRadius: '20px', border: '1px dashed var(--md-sys-color-outline-variant)' }}>
-          <span className="material-symbols-rounded" style={{ fontSize: '48px', color: 'var(--md-sys-color-on-surface-variant)' }}>hotel</span>
-          <h3 style={{ margin: '12px 0 4px', fontSize: '1.15rem', fontWeight: 800 }}>No active inpatient admissions found</h3>
-          <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
-            Admit a patient from the Reception or OPD module to access the Doctor Inpatient Clinical Cockpit.
-          </p>
+      <div className="doctor-ipd-cockpit" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            className="doc-ipd-switch-btn"
+            onClick={() => setViewMode('HISTORY')}
+          >
+            <span className="material-symbols-rounded">history_edu</span>
+            <span>View Inpatient History & Archival</span>
+          </button>
         </div>
+        <ClinicalStationIdleDeck preset="DOCTOR_IPD" />
       </div>
     );
   }
 
   return (
-    <div className="doctor-ipd-cockpit">
-      {/* ── 1. HERO WORKSPACE & INPATIENT TELEMETRY BANNER ── */}
-      <div className="md3-ipd-hero">
-        <div className="md3-ipd-hero-top">
-          <div className="md3-ipd-hero-main">
-            <div className="md3-ipd-hero-avatar">
-              <span className="material-symbols-rounded">hotel</span>
-            </div>
-            <div className="md3-ipd-hero-content">
-              <h1 className="md3-ipd-hero-title">Doctor Inpatient Clinical Cockpit</h1>
-              <p className="md3-ipd-hero-subtitle">
-                Daily SOAP Ward Rounds • Computerized Physician Order Entry (CPOE) • 3-Way Discharge Governance
-              </p>
-            </div>
-          </div>
+    <div className={`doctor-ipd-cockpit ${isCollapsed ? 'doctor-ipd-cockpit--rail' : ''}`}>
+      {/* ── Mobile/Tablet Backdrop Scrim Portaled to Root Body for Full Viewport Blur ── */}
+      {isMobileDrawerOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            className="ipd-drawer-backdrop"
+            onClick={() => setIsMobileDrawerOpen(false)}
+            aria-hidden="true"
+          />,
+          document.body
+        )}
 
-          {/* Quick Inpatient Selector */}
-          <div className="md3-ipd-switcher-box">
-            <Md3Select
-              label="Select Inpatient"
-              value={admissionId || ''}
-              onChange={(e) => navigate(`/dashboard/doctor/ipd/${e.target.value}`)}
-            >
-              {filteredAdmissions.map((a) => (
-                <option key={a._id} value={a._id}>
-                  {formatPatientName(a.patientId)} (Bed: {a.currentBedId?.bedLabel || a.currentBedId?.bedNumber || '—'})
-                </option>
-              ))}
-            </Md3Select>
-          </div>
+      {/* ── Collapsible Inpatient Queue (Rail on Desktop, Drawer on Mobile/Tablet) ── */}
+      <div className={`ipd-cockpit__queue ${isCollapsed ? 'ipd-cockpit__queue--rail' : ''} ${isMobileDrawerOpen ? 'is-mobile-open' : ''}`}>
+        <IpdPatientQueue
+          admissionList={admissionList}
+          selectedAdmissionId={admissionId}
+          onSelectAdmission={handleSelectAdmission}
+          onRefresh={handleRefreshQueue}
+          isCollapsed={isCollapsed}
+          onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+          onCloseMobileDrawer={() => setIsMobileDrawerOpen(false)}
+        />
+      </div>
+
+      {/* ── Main Inpatient Clinical Workspace ── */}
+      <div className="ipd-cockpit__workspace">
+        {/* Mobile/Tablet Sticky/Top Toolbar */}
+        <div className="ipd-mobile-toolbar">
+          <button
+            type="button"
+            className="ipd-mobile-drawer-btn"
+            onClick={() => setIsMobileDrawerOpen(true)}
+            aria-label="Open Inpatient Queue Drawer"
+          >
+            <span className="material-symbols-rounded">hotel</span>
+            <span>Inpatient Queue</span>
+            <span className="ipd-mobile-count-badge">{admissionList.length}</span>
+          </button>
+
+          {currentAdmission && (
+            <div className="ipd-mobile-patient-preview">
+              <span className="ipd-mobile-bed-pill">
+                Bed {currentAdmission.currentBedId?.bedLabel || currentAdmission.currentBedId?.bedNumber || '—'}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Telemetry Stats Bar with OnTap interactive drilldowns */}
-        <div className="md3-ipd-telemetry-deck" role="region" aria-label="Inpatient Telemetry Metrics">
-          <div
-            className="md3-ipd-telemetry-card"
-            onClick={() => setActiveTelemetryModal('ADMITTED')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('ADMITTED')}
-            title="Click to view full admitted inpatients directory"
-          >
-            <div className="md3-ipd-telemetry-card-left">
-              <span className="md3-ipd-telemetry-icon primary">
+        {/* ── 1. HERO WORKSPACE & INPATIENT TELEMETRY BANNER ── */}
+        <div className="md3-ipd-hero">
+          <div className="md3-ipd-hero-top">
+            <div className="md3-ipd-hero-main">
+              <div className="md3-ipd-hero-avatar">
+                <span className="material-symbols-rounded">
+                  {viewMode === 'HISTORY' ? 'history_edu' : 'hotel'}
+                </span>
+              </div>
+              <div className="md3-ipd-hero-content">
+                <h1 className="md3-ipd-hero-title">
+                  {viewMode === 'HISTORY' ? 'Inpatient Clinical History & Case Archival' : 'Doctor Inpatient Clinical Cockpit'}
+                </h1>
+              </div>
+            </div>
+
+            <div className="ipd-view-mode-toggle">
+              <button
+                type="button"
+                className={`ipd-mode-btn ${viewMode === 'COCKPIT' ? 'is-active' : ''}`}
+                onClick={() => setViewMode('COCKPIT')}
+              >
                 <span className="material-symbols-rounded">hotel</span>
-              </span>
-              <div className="md3-ipd-telemetry-text">
-                <span className="md3-ipd-telemetry-val">{telemetry.totalAdmitted}</span>
-                <span className="md3-ipd-telemetry-lbl">Admitted Patients</span>
-              </div>
+                <span>Active Cockpit ({admissionList.length})</span>
+              </button>
+              <button
+                type="button"
+                className={`ipd-mode-btn ${viewMode === 'HISTORY' ? 'is-active' : ''}`}
+                onClick={() => setViewMode('HISTORY')}
+              >
+                <span className="material-symbols-rounded">history_edu</span>
+                <span>Inpatient History</span>
+              </button>
             </div>
-            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
           </div>
 
-          <div
-            className="md3-ipd-telemetry-card"
-            onClick={() => setActiveTelemetryModal('CRITICAL')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('CRITICAL')}
-            title="Click to view ICU, CCU & HDU high dependency patients"
-          >
-            <div className="md3-ipd-telemetry-card-left">
-              <span className="md3-ipd-telemetry-icon critical">
-                <span className="material-symbols-rounded">e911_emergency</span>
-              </span>
-              <div className="md3-ipd-telemetry-text">
-                <span className="md3-ipd-telemetry-val">{telemetry.criticalCount}</span>
-                <span className="md3-ipd-telemetry-lbl">ICU / CCU / HDU</span>
+          {/* Telemetry Stats Bar with OnTap interactive drilldowns — Active in Cockpit mode */}
+          {viewMode === 'COCKPIT' && (
+            <div className="md3-ipd-telemetry-deck" role="region" aria-label="Inpatient Telemetry Metrics">
+              <div
+                className="md3-ipd-telemetry-card"
+                onClick={() => setActiveTelemetryModal('ADMITTED')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('ADMITTED')}
+                title="Click to view full admitted inpatients directory"
+              >
+                <div className="md3-ipd-telemetry-card-left">
+                  <span className="md3-ipd-telemetry-icon primary">
+                    <span className="material-symbols-rounded">hotel</span>
+                  </span>
+                  <div className="md3-ipd-telemetry-text">
+                    <span className="md3-ipd-telemetry-val">{telemetry.totalAdmitted}</span>
+                    <span className="md3-ipd-telemetry-lbl">Admitted Patients</span>
+                  </div>
+                </div>
+                <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
               </div>
-            </div>
-            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
-          </div>
 
-          <div
-            className="md3-ipd-telemetry-card"
-            onClick={() => setActiveTelemetryModal('ROUNDS')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('ROUNDS')}
-            title="Click to view chronological ward rounds ledger"
-          >
-            <div className="md3-ipd-telemetry-card-left">
-              <span className="md3-ipd-telemetry-icon rounds">
-                <span className="material-symbols-rounded">edit_note</span>
-              </span>
-              <div className="md3-ipd-telemetry-text">
-                <span className="md3-ipd-telemetry-val">{telemetry.roundsCount}</span>
-                <span className="md3-ipd-telemetry-lbl">Ward Rounds (Active Stay)</span>
+              <div
+                className="md3-ipd-telemetry-card"
+                onClick={() => setActiveTelemetryModal('CRITICAL')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('CRITICAL')}
+                title="Click to view ICU, CCU & HDU high dependency patients"
+              >
+                <div className="md3-ipd-telemetry-card-left">
+                  <span className="md3-ipd-telemetry-icon critical">
+                    <span className="material-symbols-rounded">e911_emergency</span>
+                  </span>
+                  <div className="md3-ipd-telemetry-text">
+                    <span className="md3-ipd-telemetry-val">{telemetry.criticalCount}</span>
+                    <span className="md3-ipd-telemetry-lbl">ICU / CCU / HDU</span>
+                  </div>
+                </div>
+                <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
               </div>
-            </div>
-            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
-          </div>
 
-          <div
-            className="md3-ipd-telemetry-card"
-            onClick={() => setActiveTelemetryModal('DISCHARGE')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('DISCHARGE')}
-            title="Click to view inpatients undergoing 3-way discharge clearance"
-          >
-            <div className="md3-ipd-telemetry-card-left">
-              <span className="md3-ipd-telemetry-icon discharge">
-                <span className="material-symbols-rounded">door_front</span>
-              </span>
-              <div className="md3-ipd-telemetry-text">
-                <span className="md3-ipd-telemetry-val">{telemetry.dischargePendingCount}</span>
-                <span className="md3-ipd-telemetry-lbl">Discharges in Progress</span>
+              <div
+                className="md3-ipd-telemetry-card"
+                onClick={() => setActiveTelemetryModal('ROUNDS')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('ROUNDS')}
+                title="Click to view chronological ward rounds ledger"
+              >
+                <div className="md3-ipd-telemetry-card-left">
+                  <span className="md3-ipd-telemetry-icon rounds">
+                    <span className="material-symbols-rounded">edit_note</span>
+                  </span>
+                  <div className="md3-ipd-telemetry-text">
+                    <span className="md3-ipd-telemetry-val">{telemetry.roundsCount}</span>
+                    <span className="md3-ipd-telemetry-lbl">Ward Rounds (Active Stay)</span>
+                  </div>
+                </div>
+                <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
+              </div>
+
+              <div
+                className="md3-ipd-telemetry-card"
+                onClick={() => setActiveTelemetryModal('DISCHARGE')}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && setActiveTelemetryModal('DISCHARGE')}
+                title="Click to view inpatients undergoing 3-way discharge clearance"
+              >
+                <div className="md3-ipd-telemetry-card-left">
+                  <span className="md3-ipd-telemetry-icon discharge">
+                    <span className="material-symbols-rounded">door_front</span>
+                  </span>
+                  <div className="md3-ipd-telemetry-text">
+                    <span className="md3-ipd-telemetry-val">{telemetry.dischargePendingCount}</span>
+                    <span className="md3-ipd-telemetry-lbl">Discharges in Progress</span>
+                  </div>
+                </div>
+                <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
               </div>
             </div>
-            <span className="material-symbols-rounded md3-ipd-telemetry-chevron">chevron_right</span>
-          </div>
+          )}
         </div>
-      </div>
 
-      {/* ── 2. WARD FILTER & SEARCH BAR ── */}
-      <div className="md3-ipd-filter-bar">
-        <div className="md3-ipd-filter-chips">
-          <span className="md3-ipd-filter-lbl">
-            <span className="material-symbols-rounded">filter_alt</span>
-            <span>Ward Unit:</span>
-          </span>
-          {[
-            { id: 'ALL', label: 'All Inpatients' },
-            { id: 'ICU_CCU', label: 'ICU & CCU' },
-            { id: 'HDU', label: 'HDU High Care' },
-            { id: 'GENERAL', label: 'General Ward' },
-          ].map((chip) => (
-            <button
-              key={chip.id}
-              type="button"
-              className={`md3-ipd-filter-chip ${selectedWardFilter === chip.id ? 'active' : ''}`}
-              onClick={() => setSelectedWardFilter(chip.id)}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ minWidth: '220px', flex: 1, maxWidth: '320px' }}>
-          <input
-            type="text"
-            className="md3-search-input"
-            placeholder="Search inpatient name, MRN, bed…"
-            value={patientSearch}
-            onChange={(e) => setPatientSearch(e.target.value)}
-            style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+        {viewMode === 'HISTORY' ? (
+          <DoctorIpdHistoryManager
+            embedded={true}
+            onSwitchToActiveCockpit={() => setViewMode('COCKPIT')}
           />
-        </div>
-      </div>
-
-      {/* ── 3. PATIENT HERO BANNER ── */}
-      {currentAdmission && <IpdPatientBanner admission={currentAdmission} />}
+        ) : (
+          <>
+            {/* ── 2. PATIENT HERO BANNER ── */}
+            {currentAdmission && <IpdPatientBanner admission={currentAdmission} />}
 
       {/* ── 4. WORKSPACE TAB NAVIGATION ── */}
       <div className="md3-ipd-tabs-nav" role="tablist">
@@ -671,36 +937,83 @@ export const DoctorIpdCockpit = () => {
                   <div style={{ fontSize: '0.78rem', marginTop: '4px' }}>Fill out the SOAP form on the left to record the patient's first ward round note.</div>
                 </div>
               ) : (
-                wardRounds.map((r, i) => (
-                  <div key={r._id || i} className="md3-ipd-round-item">
-                    <div className="md3-ipd-round-header">
-                      <span className="md3-ipd-round-num">
-                        Round #{wardRounds.length - i} • {formatDoctorName(r.doctorId?.fullName || 'Attending Physician')}
-                      </span>
-                      <span className="md3-ipd-round-time">
-                        {new Date(r.createdAt || r.roundDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
-                      </span>
-                    </div>
-                    <div className="md3-ipd-soap-segment">
-                      <span className="md3-ipd-soap-key">[S] Subjective:</span>
-                      <span className="md3-ipd-soap-val">{r.subjective}</span>
-                    </div>
-                    {r.objective && (
-                      <div className="md3-ipd-soap-segment">
-                        <span className="md3-ipd-soap-key">[O] Objective:</span>
-                        <span className="md3-ipd-soap-val">{r.objective}</span>
+                wardRounds.map((r, i) => {
+                  const docObj = r.doctorId || {};
+                  const docName = formatDoctorName(
+                    docObj.fullName || `${docObj.firstName || ''} ${docObj.lastName || ''}`.trim() || 'Attending Physician'
+                  );
+                  const positionTitle = docObj.position?.title || (typeof docObj.position === 'string' ? docObj.position : '') || 'Attending Physician';
+                  const positionRank = docObj.position?.rank ? `Rank ${docObj.position.rank}` : null;
+                  const condition = r.conditionAssessment || 'STABLE';
+
+                  const conditionColors = {
+                    IMPROVING: { bg: '#e6f4ea', text: '#137333', border: '#ceead6' },
+                    STABLE: { bg: '#e8f0fe', text: '#1a73e8', border: '#d2e3fc' },
+                    GUARDED: { bg: '#fef7e0', text: '#b06000', border: '#feefc3' },
+                    CRITICAL: { bg: '#fce8e6', text: '#c5221f', border: '#fad2cf' },
+                  };
+                  const condStyle = conditionColors[condition] || conditionColors.STABLE;
+
+                  return (
+                    <div
+                      key={r._id || i}
+                      className="md3-ipd-round-item"
+                      style={{ borderLeft: `4px solid ${condStyle.text}` }}
+                    >
+                      <div className="md3-ipd-round-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                            <span className="md3-ipd-round-num" style={{ fontWeight: 700 }}>
+                              Round #{wardRounds.length - i} • {docName}
+                            </span>
+                            <span style={{
+                              fontSize: '0.70rem',
+                              fontWeight: 600,
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              background: 'var(--md-sys-color-surface-container, #e2eaf4)',
+                              color: 'var(--md-sys-color-on-surface-variant, #334155)',
+                            }}>
+                              {positionTitle}{positionRank ? ` (${positionRank})` : ''}
+                            </span>
+                            <span style={{
+                              fontSize: '0.70rem',
+                              fontWeight: 700,
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              background: condStyle.bg,
+                              color: condStyle.text,
+                              border: `1px solid ${condStyle.border}`,
+                            }}>
+                              {condition}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="md3-ipd-round-time" style={{ fontSize: '0.76rem', color: 'var(--md-sys-color-outline, #6b7280)' }}>
+                          {new Date(r.createdAt || r.roundDate).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                        </span>
                       </div>
-                    )}
-                    <div className="md3-ipd-soap-segment">
-                      <span className="md3-ipd-soap-key">[A] Assessment:</span>
-                      <span className="md3-ipd-soap-val">{r.assessment}</span>
+                      <div className="md3-ipd-soap-segment">
+                        <span className="md3-ipd-soap-key">[S] Subjective:</span>
+                        <span className="md3-ipd-soap-val">{r.subjective}</span>
+                      </div>
+                      {r.objective && (
+                        <div className="md3-ipd-soap-segment">
+                          <span className="md3-ipd-soap-key">[O] Objective:</span>
+                          <span className="md3-ipd-soap-val">{r.objective}</span>
+                        </div>
+                      )}
+                      <div className="md3-ipd-soap-segment">
+                        <span className="md3-ipd-soap-key">[A] Assessment:</span>
+                        <span className="md3-ipd-soap-val">{r.assessment}</span>
+                      </div>
+                      <div className="md3-ipd-soap-segment">
+                        <span className="md3-ipd-soap-key">[P] Plan:</span>
+                        <span className="md3-ipd-soap-val">{r.plan}</span>
+                      </div>
                     </div>
-                    <div className="md3-ipd-soap-segment">
-                      <span className="md3-ipd-soap-key">[P] Plan:</span>
-                      <span className="md3-ipd-soap-val">{r.plan}</span>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
@@ -747,6 +1060,29 @@ export const DoctorIpdCockpit = () => {
             {/* Sub-form 1: Inpatient Medication */}
             {cpoeSubTab === 'MEDICATION' && (
               <form onSubmit={handleSaveMedOrder} className="md3-cpoe-form">
+                {currentAdmission?.patientId?.allergies && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      background: 'var(--md-sys-color-error-container, #ffdad6)',
+                      color: 'var(--md-sys-color-on-error-container, #410002)',
+                      fontSize: '0.80rem',
+                      fontWeight: 600,
+                      marginBottom: '10px',
+                    }}
+                  >
+                    <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-error, #ba1a1a)' }}>
+                      warning
+                    </span>
+                    <span>
+                      <strong>Patient Documented Allergies:</strong> {currentAdmission.patientId.allergies}
+                    </span>
+                  </div>
+                )}
                 <Md3TextField
                   label="Medication Name & Salt *"
                   value={medName}
@@ -866,9 +1202,25 @@ export const DoctorIpdCockpit = () => {
               </form>
             )}
 
-            {/* Sub-form 4: OT Booking */}
+            {/* Sub-form 4: OT Request (Polled/Requested by Doctor, Scheduled by Surgeon) */}
             {cpoeSubTab === 'OT' && (
               <form onSubmit={handleSaveOtBooking} className="md3-cpoe-form">
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  marginBottom: '10px',
+                  background: 'var(--md-sys-color-surface-container-high, #f0f4f8)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--md-sys-color-outline-variant, #d2deec)',
+                  fontSize: '0.78rem',
+                  color: 'var(--md-sys-color-on-surface-variant, #334155)',
+                }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary, #0b57d0)' }}>surgical</span>
+                  <span><strong>Operating Theatre Request:</strong> Doctors submit surgery requests here. The Surgeon / OT Board reviews, allocates an OT room, and assigns surgical and nursing teams.</span>
+                </div>
+
                 <Md3TextField
                   label="Surgical Procedure Name *"
                   value={otProcedureName}
@@ -878,35 +1230,48 @@ export const DoctorIpdCockpit = () => {
                 />
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <Md3Select
+                    label="Surgery Type *"
+                    value={otSurgeryType}
+                    onChange={(e) => setOtSurgeryType(e.target.value)}
+                  >
+                    <option value="ELECTIVE">Elective (Planned Surgery)</option>
+                    <option value="EMERGENCY">Emergency Surgery</option>
+                  </Md3Select>
+
+                  <Md3Select
+                    label="Urgency Level *"
+                    value={otUrgency}
+                    onChange={(e) => setOtUrgency(e.target.value)}
+                  >
+                    <option value="ROUTINE">Routine (Normal OT list)</option>
+                    <option value="URGENT">Urgent (Within 24-48 hours)</option>
+                    <option value="EMERGENCY_STAT">STAT / Critical Emergency (Immediate OT)</option>
+                  </Md3Select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                   <Md3TextField
-                    label="Surgery Date *"
+                    label="Target Surgery Date"
                     type="date"
                     value={otScheduledDate}
                     onChange={(e) => setOtScheduledDate(e.target.value)}
-                    required
                   />
-                  <Md3TextField
-                    label="Scheduled Start Time *"
-                    type="time"
-                    value={otScheduledTime}
-                    onChange={(e) => setOtScheduledTime(e.target.value)}
-                    required
-                  />
+
+                  <Md3Select
+                    label="Anesthesia Type *"
+                    value={otAnesthesiaType}
+                    onChange={(e) => setOtAnesthesiaType(e.target.value)}
+                  >
+                    <option value="GENERAL">General Anesthesia (GA)</option>
+                    <option value="SPINAL">Spinal Anesthesia</option>
+                    <option value="EPIDURAL">Epidural Anesthesia</option>
+                    <option value="LOCAL">Local / Sedation</option>
+                  </Md3Select>
                 </div>
 
-                <Md3Select
-                  label="Anesthesia Type *"
-                  value={otAnesthesiaType}
-                  onChange={(e) => setOtAnesthesiaType(e.target.value)}
-                >
-                  <option value="GENERAL">General Anesthesia (GA)</option>
-                  <option value="SPINAL">Spinal Anesthesia</option>
-                  <option value="EPIDURAL">Epidural Anesthesia</option>
-                  <option value="LOCAL">Local / Sedation</option>
-                </Md3Select>
-
                 <Md3TextField
-                  label="Surgical &amp; Pre-Op Notes"
+                  label="Clinical &amp; Pre-Op Notes"
                   value={otSpecialNotes}
                   onChange={(e) => setOtSpecialNotes(e.target.value)}
                   placeholder="e.g. Keep 2 units PRBC cross-matched, pre-op antibiotic prophylaxis"
@@ -914,7 +1279,8 @@ export const DoctorIpdCockpit = () => {
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
                   <Md3Button variant="filled" type="submit" loading={savingOrder}>
-                    Book Operating Theatre Session
+                    <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>send</span>
+                    <span>Submit Surgery Request to OT</span>
                   </Md3Button>
                 </div>
               </form>
@@ -983,10 +1349,125 @@ export const DoctorIpdCockpit = () => {
       )}
 
       {/* ── 7. TAB 3: DISCHARGE & CLEARANCE KANBAN ── */}
+      {/* ── 7. TAB 3: DISCHARGE & CLEARANCE KANBAN ── */}
       {activeTab === 'DISCHARGE' && (
         <div className="md3-ipd-discharge-stack">
-          {/* Discharge Initiation Card (if not yet initiated or finalized) */}
-          {(!currentAdmission?.dischargeSummary?.finalDiagnosis || currentAdmission?.status === 'ADMITTED') && (
+          {clearance ? (
+            <>
+              {/* Primary Focus: 3-Way Departmental Clearance Kanban */}
+              <DischargeKanban
+                clearance={clearance}
+                admission={currentAdmission}
+                onMarkClearance={handleMarkClearance}
+                onFinalizeDischarge={handleFinalizeDischarge}
+                onViewGatePass={handleViewGatePass}
+                onRefresh={loadData}
+              />
+
+              {/* Secondary Review: Collapsible / Compact Discharge Summary Record */}
+              <div className="md3-ipd-discharge-summary-card">
+                <div className="md3-ipd-discharge-summary-header">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span className="material-symbols-rounded" style={{ fontSize: '20px', color: 'var(--md-sys-color-primary, #6750a4)' }}>clinical_notes</span>
+                    <strong style={{ fontSize: '0.92rem', color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>Authorized Discharge Summary &amp; Orders</strong>
+                  </div>
+                  <button
+                    type="button"
+                    className="md3-cpoe-subtab-btn"
+                    onClick={() => setIsEditingDischargeSummary(!isEditingDischargeSummary)}
+                    style={{ fontSize: '0.74rem' }}
+                  >
+                    <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>
+                      {isEditingDischargeSummary ? 'visibility' : 'edit_document'}
+                    </span>
+                    <span>{isEditingDischargeSummary ? 'View Summary' : 'Amend Summary'}</span>
+                  </button>
+                </div>
+
+                {isEditingDischargeSummary ? (
+                  <form onSubmit={handleInitiateDischarge} className="md3-ipd-soap-form">
+                    <div className="md3-ipd-discharge-grid">
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <Md3TextArea
+                          label="Final Discharge Diagnosis *"
+                          value={finalDiagnosis}
+                          onChange={(e) => setFinalDiagnosis(e.target.value)}
+                          placeholder="e.g. Acute Cholecystitis — S/P Laparoscopic Cholecystectomy (Resolved)"
+                          autoGrow={true}
+                          minRows={2}
+                          required
+                        />
+                        <Md3TextArea
+                          label="Hospital Course & Treatment Summary *"
+                          value={courseInHospital}
+                          onChange={(e) => setCourseInHospital(e.target.value)}
+                          placeholder="e.g. Admitted via ER, managed surgically on Day 2, post-op vitals stable..."
+                          autoGrow={true}
+                          minRows={2}
+                          required
+                        />
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <Md3TextArea
+                          label="Discharge Advice & Take-Home Instructions *"
+                          value={dischargeAdvice}
+                          onChange={(e) => setDischargeAdvice(e.target.value)}
+                          placeholder="e.g. Continue oral antibiotics for 5 days, keep surgical dressing dry..."
+                          autoGrow={true}
+                          minRows={2}
+                          required
+                        />
+                        <Md3TextField
+                          label="Follow-Up Outpatient Review Date"
+                          type="date"
+                          value={followUpDate}
+                          onChange={(e) => setFollowUpDate(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                      <Md3Button variant="filled" type="submit" loading={initiatingDischarge}>
+                        Update Discharge Summary
+                      </Md3Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="md3-ipd-discharge-grid">
+                    <div className="md3-ipd-discharge-field">
+                      <span className="md3-ipd-discharge-label">Final Diagnosis</span>
+                      <span className="md3-ipd-discharge-value">
+                        {currentAdmission?.dischargeSummary?.finalDiagnosis || finalDiagnosis || 'Diagnosis Recorded'}
+                      </span>
+                    </div>
+
+                    <div className="md3-ipd-discharge-field">
+                      <span className="md3-ipd-discharge-label">Follow-Up Review Date</span>
+                      <span className="md3-ipd-discharge-value">
+                        {currentAdmission?.dischargeSummary?.followUpDate
+                          ? new Date(currentAdmission.dischargeSummary.followUpDate).toLocaleDateString('en-IN', { dateStyle: 'medium' })
+                          : followUpDate || 'Not scheduled'}
+                      </span>
+                    </div>
+
+                    <div className="md3-ipd-discharge-field">
+                      <span className="md3-ipd-discharge-label">Hospital Course &amp; Treatment</span>
+                      <span className="md3-ipd-discharge-value">
+                        {currentAdmission?.dischargeSummary?.courseInHospital || courseInHospital || 'Documented in EHR'}
+                      </span>
+                    </div>
+
+                    <div className="md3-ipd-discharge-field">
+                      <span className="md3-ipd-discharge-label">Discharge Advice &amp; Take-Home Rx</span>
+                      <span className="md3-ipd-discharge-value">
+                        {currentAdmission?.dischargeSummary?.dischargeAdvice || dischargeAdvice || 'Standard take-home care advice'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* Discharge Not Yet Initiated: Clean 2-Column Initiation Form */
             <div className="md3-ipd-card">
               <div className="md3-ipd-card-header">
                 <div className="md3-ipd-card-title-group">
@@ -996,80 +1477,77 @@ export const DoctorIpdCockpit = () => {
                   <div>
                     <h3 className="md3-ipd-card-title">Initiate Inpatient Discharge Order</h3>
                     <p className="md3-ipd-card-subtitle">
-                      Authorizes patient discharge and opens the 3-Way Clearance Kanban across Pharmacy, Ward Nursing, and Billing
+                      Authorizes patient discharge and activates the 3-Way Clearance Kanban across Pharmacy, Ward Nursing, and Billing
                     </p>
                   </div>
                 </div>
               </div>
 
               <form onSubmit={handleInitiateDischarge} className="md3-ipd-soap-form">
-                <Md3TextArea
-                  label="Final Discharge Diagnosis *"
-                  value={finalDiagnosis}
-                  onChange={(e) => setFinalDiagnosis(e.target.value)}
-                  placeholder="e.g. Acute Cholecystitis — S/P Laparoscopic Cholecystectomy (Resolved)"
-                  autoGrow={true}
-                  minRows={2}
-                  required
-                />
-
-                <Md3TextArea
-                  label="Hospital Course & Treatment Summary *"
-                  value={courseInHospital}
-                  onChange={(e) => setCourseInHospital(e.target.value)}
-                  placeholder="e.g. Admitted via ER, managed surgically on Day 2, post-op vitals stable, ambulating independently, surgical drain removed"
-                  autoGrow={true}
-                  minRows={2}
-                  required
-                />
-
-                <Md3TextArea
-                  label="Discharge Advice & Take-Home Instructions *"
-                  value={dischargeAdvice}
-                  onChange={(e) => setDischargeAdvice(e.target.value)}
-                  placeholder="e.g. Continue oral antibiotics for 5 days, keep surgical dressing dry, low-fat diet, emergency review if fever > 100.4F"
-                  autoGrow={true}
-                  minRows={2}
-                  required
-                />
-
-                <div style={{ maxWidth: '280px' }}>
-                  <Md3TextField
-                    label="Follow-Up Outpatient Review Date"
-                    type="date"
-                    value={followUpDate}
-                    onChange={(e) => setFollowUpDate(e.target.value)}
-                  />
+                <div className="md3-ipd-discharge-grid">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <Md3TextArea
+                      label="Final Discharge Diagnosis *"
+                      value={finalDiagnosis}
+                      onChange={(e) => setFinalDiagnosis(e.target.value)}
+                      placeholder="e.g. Acute Cholecystitis — S/P Laparoscopic Cholecystectomy (Resolved)"
+                      autoGrow={true}
+                      minRows={3}
+                      required
+                    />
+                    <Md3TextArea
+                      label="Hospital Course & Treatment Summary *"
+                      value={courseInHospital}
+                      onChange={(e) => setCourseInHospital(e.target.value)}
+                      placeholder="e.g. Admitted via ER, managed surgically on Day 2, post-op vitals stable..."
+                      autoGrow={true}
+                      minRows={3}
+                      required
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <Md3TextArea
+                      label="Discharge Advice & Take-Home Instructions *"
+                      value={dischargeAdvice}
+                      onChange={(e) => setDischargeAdvice(e.target.value)}
+                      placeholder="e.g. Continue oral antibiotics for 5 days, keep surgical dressing dry, low-fat diet..."
+                      autoGrow={true}
+                      minRows={3}
+                      required
+                    />
+                    <Md3TextField
+                      label="Follow-Up Outpatient Review Date"
+                      type="date"
+                      value={followUpDate}
+                      onChange={(e) => setFollowUpDate(e.target.value)}
+                    />
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
                   <Md3Button variant="filled" type="submit" loading={initiatingDischarge}>
-                    Authorize &amp; Open Clearance Kanban
+                    <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>send</span>
+                    <span>Authorize &amp; Open Clearance Kanban</span>
                   </Md3Button>
                 </div>
               </form>
             </div>
           )}
-
-          {/* 3-Way Clearance Kanban */}
-          {clearance && (
-            <DischargeKanban
-              clearance={clearance}
-              admission={currentAdmission}
-              onMarkClearance={handleMarkClearance}
-              onFinalizeDischarge={handleFinalizeDischarge}
-              onViewGatePass={() => setShowGatePassModal(true)}
-            />
-          )}
         </div>
       )}
+    </>
+  )}
 
       {/* Printable Gate Pass Modal */}
-      {showGatePassModal && clearance && (
+      {showGatePassModal && (gatePassData || clearance) && (
         <GatePassPrintable
+          gatePassData={gatePassData}
           admission={currentAdmission}
           clearance={clearance}
-          onClose={() => setShowGatePassModal(false)}
+          onClose={() => {
+            setShowGatePassModal(false);
+            setGatePassData(null);
+          }}
         />
       )}
 
@@ -1085,6 +1563,65 @@ export const DoctorIpdCockpit = () => {
           navigate(`/dashboard/doctor/ipd/${newAdmId}`);
         }}
       />
+
+      {/* Simple Reusable User Notification Dialog */}
+      <Md3ConfirmDialog
+        isOpen={notifyDialog.isOpen}
+        onClose={closeNotificationDialog}
+        onConfirm={closeNotificationDialog}
+        title={notifyDialog.title}
+        message={notifyDialog.message}
+        variant={notifyDialog.variant}
+        confirmLabel={notifyDialog.confirmLabel || 'OK'}
+        showCancel={false}
+      />
+
+      {/* CDSS Drug-Allergy Safety Interceptor Dialog */}
+      <Md3ConfirmDialog
+        isOpen={cdssAlert.isOpen}
+        onClose={() => setCdssAlert((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmCdssOverride}
+        title="⚠️ CDSS Drug-Allergy Safety Alert"
+        message={cdssAlert.message}
+        variant="danger"
+        icon="report"
+        confirmLabel="Confirm Clinical Override"
+        cancelLabel="Abort Prescription"
+        loading={savingOrder}
+      >
+        <div style={{ marginTop: '14px', textAlign: 'left' }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              color: 'var(--md-sys-color-on-surface, #1d1b20)',
+              marginBottom: '6px',
+            }}
+          >
+            Clinical Override Justification * <span style={{ fontWeight: 400, color: 'var(--md-sys-color-error, #ba1a1a)' }}>(Mandatory for audit trail)</span>
+          </label>
+          <textarea
+            value={cdssAlert.overrideReason}
+            onChange={(e) => setCdssAlert((prev) => ({ ...prev, overrideReason: e.target.value }))}
+            placeholder="e.g. Desensitization protocol initiated under ICU supervision / No alternative therapeutic drug available"
+            rows={3}
+            style={{
+              width: '100%',
+              padding: '8px 12px',
+              borderRadius: '8px',
+              border: '1px solid var(--md-sys-color-outline, #79747e)',
+              background: 'var(--md-sys-color-surface, #fff)',
+              color: 'var(--md-sys-color-on-surface, #1d1b20)',
+              fontSize: '0.85rem',
+              resize: 'vertical',
+              boxSizing: 'border-box',
+              outline: 'none',
+            }}
+          />
+        </div>
+      </Md3ConfirmDialog>
+      </div>
     </div>
   );
 };

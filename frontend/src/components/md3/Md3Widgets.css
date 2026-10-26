@@ -468,9 +468,10 @@
 
 /* Gap presets */
 .md3-grid--gap-none    { gap: 0; }
-.md3-grid--gap-small   { gap: var(--md-spacing-s); }
-.md3-grid--gap-default { gap: var(--md-spacing-m); }
-.md3-grid--gap-large   { gap: var(--md-spacing-l); }
+.md3-grid--gap-small   { gap: var(--md-spacing-s, 8px); }
+.md3-grid--gap-compact { row-gap: 16px; column-gap: 12px; }
+.md3-grid--gap-default { row-gap: 20px; column-gap: 16px; }
+.md3-grid--gap-large   { row-gap: 24px; column-gap: 20px; }
 
 /* Columns 1 — always single col */
 .md3-grid--cols-1 { grid-template-columns: 1fr; }
@@ -793,99 +794,115 @@
    Md3Tabs — primary tab bar (Segmented Control)
    ────────────────────────────────────────────────────── */
 /* ──────────────────────────────────────────────────────
-   Md3Tabs — primary tab bar (Segmented Control / Compact Density)
+   Md3Tabs — primary tab bar (Material 3 Expressive Segmented Control)
    ────────────────────────────────────────────────────── */
 .md3-tabs {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  position: relative;
-  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
-  border-radius: var(--md-sys-shape-corner-full, 9999px);
-  padding: 3px;
-  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
-  width: fit-content;
-  box-sizing: border-box;
-  height: var(--md-comp-tab-height, 36px);
+  display: inline-flex;
   align-items: center;
-  overflow: hidden;
+  gap: 4px;
+  position: relative;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  padding: 4px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.md3-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .md3-tab {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--md-spacing-xs, 6px);
-  padding: var(--md-comp-tab-padding, 4px 16px);
-  height: 100%;
+  gap: var(--md-spacing-xs, 8px);
+  padding: 6px 16px;
+  min-height: 32px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
+  font-family: inherit;
   font-size: var(--md-comp-tab-font-size, 0.82rem);
   font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   border-radius: var(--md-sys-shape-corner-full, 9999px);
   z-index: 1;
-  transition: color 0.2s cubic-bezier(0.2, 0, 0, 1), transform 0.15s ease;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
   white-space: nowrap;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
 }
 
 .md3-tab:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px var(--md-sys-color-primary, #6b5f19);
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary, #6750a4);
 }
 
-.md3-tab:hover {
-  color: var(--md-sys-color-on-surface, #1d1b16);
+.md3-tab:hover:not(.md3-tab--active) {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border-color: color-mix(in srgb, var(--md-sys-color-outline, #79747e) 20%, transparent);
 }
 
 .md3-tab:active {
-  transform: scale(0.96);
+  transform: scale(0.97);
 }
 
 .md3-tab--active {
-  color: var(--md-sys-color-primary, #6b5f19);
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, transparent);
   font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .md3-tab__icon {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
 }
 
 .md3-tab__icon svg {
-  width: var(--md-comp-tab-icon-size, 16px);
-  height: var(--md-comp-tab-icon-size, 16px);
+  width: var(--md-comp-tab-icon-size, 17px);
+  height: var(--md-comp-tab-icon-size, 17px);
+  color: inherit;
 }
 
 .md3-tab__icon .material-symbols-rounded {
-  font-size: 17px;
+  font-size: 18px !important;
+  line-height: 1;
+  color: inherit;
 }
 
-.md3-tabs__indicator {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  /* width and transform set by inline styles */
-  z-index: 0;
-  pointer-events: none;
-  transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1);
+.md3-tab__label {
+  line-height: 1.2;
 }
 
-.md3-tabs__indicator::after {
-  content: '';
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 3px;
-  right: 3px;
-  background-color: var(--md-sys-color-secondary-container, #e8e2d0);
-  border-radius: var(--md-sys-shape-corner-full, 9999px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+.md3-tab__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-tab--active .md3-tab__badge {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
 }
 
 /* ──────────────────────────────────────────────────────

@@ -1,55 +1,96 @@
 import React from 'react';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './BillingTemplate.css';
 
 /**
- * Dynamic Multi-Workflow High-Density Billing Template Component
- * Designed for paper conservation (11px base print typography) and single-page A4 optimization.
+ * Dynamic Multi-Workflow High-Density Billing & Clinical Slip Template Component
+ * Designed for paper conservation (11px base print typography) and single-page A4 / A5 / POS optimization.
  * Supports: OPD, IPD Inpatient Stay, Surgical & OT, Emergency, and Comprehensive Insurance Claims
+ * Modes:
+ *   - 'INVOICE': Authoritative Financial Bill & Settlement Receipt
+ *   - 'TOKEN_SLIP': OPD Consultation Queue Routing Slip & Clinical Triage Ticket
+ *   - 'COMBINED': Two-part document containing Queue Token Routing + Official Fee Receipt
  */
 const BillingTemplate = React.forwardRef(({
-  hospitalInfo = {},
-  labels = {},
-  fieldVisibility = {},
-  customFields = [],
+  hospitalInfo: propHospitalInfo = {},
+  labels: propLabels = {},
+  fieldVisibility: propFieldVisibility = {},
+  customFields: propCustomFields = [],
   workflowType = 'OPD', // 'OPD' | 'IPD' | 'SURGICAL' | 'EMERGENCY' | 'COMPREHENSIVE'
+  patient: propPatient = null,
   visit = null,
   admission = null,
-  lineItems = null,
+  lineItems: propLineItems = null,
   medications = [],
   consultationFee = 0,
   labCharges = 0,
   financials = null,
   total,
   currency = CURRENCY_SYMBOL,
+  bill = null,
+  config = null,
+  documentMode = 'COMBINED', // 'COMBINED' | 'INVOICE' | 'TOKEN_SLIP'
 }, ref) => {
   // Determine effective workflow from props or data
   const effectiveWorkflow = workflowType || (
+    bill?.visitType ||
     visit?.visitType === 'IPD' || admission ? 'IPD' :
     visit?.visitType === 'EMERGENCY' ? 'EMERGENCY' :
     'OPD'
   );
 
+  // Centralized configuration resolution
+  const activeTemplate = config?.templates?.[effectiveWorkflow] || config?.templates?.OPD || {};
+  const hospitalInfo = {
+    ...(config?.hospitalInfo || {}),
+    ...propHospitalInfo,
+  };
+  const labels = {
+    ...(activeTemplate.labels || config?.labels || {}),
+    ...propLabels,
+  };
+  const fieldVisibility = {
+    ...(activeTemplate.fieldVisibility || config?.fieldVisibility || {}),
+    ...propFieldVisibility,
+  };
+  const customFields = propCustomFields.length > 0 ? propCustomFields : (activeTemplate.customFields || config?.customFields || []);
+
   const isVisible = (fieldKey) => fieldVisibility[fieldKey] !== false;
 
-  // Extract patient details
-  const patient = visit?.patientId || admission?.patientId || {};
-  const patientName = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Patient';
+  // Extract patient details (from direct prop, bill, visit, or admission)
+  const patient = propPatient || (typeof bill?.patientId === 'object' ? bill.patientId : null) || (typeof visit?.patientId === 'object' ? visit.patientId : null) || (typeof admission?.patientId === 'object' ? admission.patientId : null) || {};
+  const patientName = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || patient.name || 'Patient';
   const mrn = patient.mrn || 'N/A';
-  const ageGender = `${patient.age ? `${patient.age} Y` : '—'} / ${patient.gender || '—'}`;
+  const ageGender = `${patient.age ? `${patient.age} Y` : (patient.age != null ? `${patient.age} Y` : '—')} / ${patient.gender || '—'}`;
   const phone = patient.phone || '—';
   const bloodGroup = patient.bloodGroup || '—';
 
+  const isHexId = (val) => typeof val === 'string' && /^[0-9a-fA-F]{24}$/.test(val);
+
   // Extract doctor / consultant
-  const doctorName = visit?.consultation?.doctorId
-    ? (typeof visit.consultation.doctorId === 'object'
-        ? `Dr. ${visit.consultation.doctorId.firstName || ''} ${visit.consultation.doctorId.lastName || ''}`.trim()
-        : `Dr. ${visit.consultation.doctorId}`)
-    : admission?.attendingDoctorId
-    ? (typeof admission.attendingDoctorId === 'object'
-        ? `Dr. ${admission.attendingDoctorId.firstName || ''} ${admission.attendingDoctorId.lastName || ''}`.trim()
-        : `Dr. ${admission.attendingDoctorId}`)
-    : 'Dr. Arjun Desai (Consultant)';
+  const doctorObj = (typeof visit?.consultation?.doctorId === 'object' ? visit.consultation.doctorId : null)
+    || (typeof visit?.doctorId === 'object' ? visit.doctorId : null)
+    || (typeof admission?.primaryDoctorId === 'object' ? admission.primaryDoctorId : null)
+    || (typeof admission?.attendingDoctorId === 'object' ? admission.attendingDoctorId : null);
+
+  const rawDoctor = doctorObj
+    || (visit?.doctorName && !isHexId(visit.doctorName) ? visit.doctorName : null)
+    || (visit?.consultation?.doctorId && typeof visit.consultation.doctorId === 'string' && !isHexId(visit.consultation.doctorId) ? visit.consultation.doctorId : null)
+    || (admission?.attendingDoctorId && typeof admission.attendingDoctorId === 'string' && !isHexId(admission.attendingDoctorId) ? admission.attendingDoctorId : null)
+    || 'Dr. Arjun Desai (Consultant)';
+
+  const doctorName = formatDoctorName(rawDoctor);
+
+  // Extract department & tokens
+  const departmentName = (typeof visit?.departmentId === 'object' ? visit.departmentId?.name : null)
+    || (typeof bill?.departmentId === 'object' ? bill.departmentId?.name : null)
+    || (typeof admission?.admittingDepartmentId === 'object' ? admission.admittingDepartmentId?.name : null)
+    || (visit?.departmentName && !isHexId(visit.departmentName) ? visit.departmentName : null)
+    || (typeof visit?.departmentId === 'string' && !isHexId(visit.departmentId) ? visit.departmentId : null)
+    || 'Outpatient General Care';
+  const tokenString = visit?.tokenString || (visit?.visitNumber ? visit.visitNumber.slice(-4) : 'GENME-001');
+  const reasonForVisit = visit?.reasonForVisit || visit?.chiefComplaint || 'Routine Medical Checkup';
 
   // Extract IPD stay details
   const admissionNo = admission?.admissionNumber || visit?.admissionId?.admissionNumber || (effectiveWorkflow === 'IPD' || effectiveWorkflow === 'COMPREHENSIVE' || effectiveWorkflow === 'SURGICAL' ? 'IPD-2026-0412' : null);
@@ -62,11 +103,18 @@ const BillingTemplate = React.forwardRef(({
   const insuranceProvider = admission?.insuranceDetails?.provider || visit?.insuranceProvider || (effectiveWorkflow === 'COMPREHENSIVE' || isVisible('insuranceTpa') ? 'Star Health & Allied Insurance' : null);
   const policyNo = admission?.insuranceDetails?.policyNumber || visit?.policyNumber || (effectiveWorkflow === 'COMPREHENSIVE' || isVisible('policyNo') ? 'POL-SH-9928194' : null);
 
-  // Clean invoice number (convert raw 24-char ObjectId to clean INV-2026-XXXX)
+  // Extract payment method from reception payment, ledger bill payment, or visit
+  const effectivePaymentMethod = 
+    visit?.receptionPayment?.paymentMethod ||
+    (bill?.payments && bill.payments.length > 0 ? bill.payments[0].method : null) ||
+    visit?.paymentMethod ||
+    null;
+
+  // Clean invoice number
   const formatInvoiceNumber = (rawId, vType) => {
     if (!rawId) return 'INV-2026-0894';
     const str = String(rawId);
-    if (str.startsWith('INV-') || str.startsWith('OPD-') || str.startsWith('IPD-') || str.startsWith('EMG-')) {
+    if (str.startsWith('INV-') || str.startsWith('OPD-') || str.startsWith('IPD-') || str.startsWith('EMG-') || str.startsWith('VST-')) {
       return str;
     }
     const clean = str.replace(/^[_\W]+/, '').replace(/^visit_mock_/, '');
@@ -77,7 +125,7 @@ const BillingTemplate = React.forwardRef(({
     return `INV-${clean.toUpperCase()}`;
   };
 
-  const cleanInvoiceNo = visit?.billNumber || formatInvoiceNumber(visit?._id, effectiveWorkflow);
+  const cleanInvoiceNo = bill?.billNumber || visit?.billNumber || formatInvoiceNumber(bill?._id || visit?._id, effectiveWorkflow);
 
   const getDynamicValue = (fieldPath) => {
     if (!fieldPath) return '';
@@ -106,19 +154,21 @@ const BillingTemplate = React.forwardRef(({
 
   // Canonical clinical category registry
   const CLINICAL_CATEGORIES = [
+    { id: 'REGISTRATION', title: 'Clinical Registration & Administrative Services' },
     { id: 'CONSULTATION', title: 'Doctor Consultations & Specialist Reviews' },
     { id: 'BED_CHARGES', title: 'Room, Bed & Inpatient Nursing Accommodation' },
     { id: 'PROCEDURE', title: 'Surgical Procedures & Operative Services' },
     { id: 'DIAGNOSTICS', title: 'Laboratory & Diagnostic Investigations' },
     { id: 'PHARMACY', title: 'Pharmacy Medications & Dispensed Drugs' },
     { id: 'CONSUMABLES', title: 'Medical Consumables & Surgical Disposables' },
-    { id: 'REGISTRATION', title: 'Clinical Registration & Administrative Services' },
     { id: 'OTHER', title: 'General Hospital Services & Sundry Charges' },
   ];
 
   // Compile itemized rows
-  const effectiveLineItems = lineItems && lineItems.length > 0
-    ? lineItems
+  const effectiveLineItems = propLineItems && propLineItems.length > 0
+    ? propLineItems
+    : bill?.lineItems && bill.lineItems.length > 0
+    ? bill.lineItems
     : null;
 
   // Build segregated category groups
@@ -144,19 +194,52 @@ const BillingTemplate = React.forwardRef(({
         }));
     }
 
-    // Direct OPD / Pharmacy dispensation props
+    // Direct OPD / Pharmacy dispensation props & visit fallbacks
     const active = [];
-    if (isVisible('consultationFee') && Number(consultationFee) > 0) {
+
+    const effectiveRegFee = Number(
+      visit?.registrationFee != null ? visit.registrationFee :
+      visit?.receptionPayment?.registrationFee != null ? visit.receptionPayment.registrationFee :
+      visit?.billing?.registrationFee != null ? visit.billing.registrationFee :
+      bill?.registrationFee != null ? bill.registrationFee :
+      0
+    );
+
+    const effectiveConsultFee = Number(
+      consultationFee > 0 ? consultationFee :
+      visit?.consultationFee != null ? visit.consultationFee :
+      visit?.receptionPayment?.consultationFee != null ? visit.receptionPayment.consultationFee :
+      visit?.billing?.consultationFee != null ? visit.billing.consultationFee :
+      0
+    );
+
+    if (effectiveRegFee > 0 && isVisible('registrationFee')) {
+      active.push({
+        id: 'REGISTRATION',
+        title: 'Clinical Registration & Administrative Services',
+        sectionIndex: String.fromCharCode(65 + active.length),
+        subtotal: effectiveRegFee,
+        items: [{
+          description: labels.registrationFee || 'Patient Registration Fee',
+          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
+          quantity: '1 Token',
+          amount: effectiveRegFee,
+          category: 'REGISTRATION',
+        }],
+      });
+    }
+
+    if (isVisible('consultationFee') && (effectiveConsultFee > 0 || (effectiveRegFee === 0 && visit?.consultationFee != null))) {
       active.push({
         id: 'CONSULTATION',
-        title: 'Doctor Consultations & Specialist Reviews',
+        title: effectiveConsultFee === 0 ? 'Doctor Consultation (Complimentary / Waived)' : 'Doctor Consultations & Specialist Reviews',
         sectionIndex: String.fromCharCode(65 + active.length),
-        subtotal: Number(consultationFee),
+        subtotal: effectiveConsultFee,
         items: [{
-          description: labels.consultationFee || 'Doctor Consultation Fee',
-          dateRange: new Date().toLocaleDateString('en-IN'),
+          description: labels.consultationFee || (effectiveConsultFee === 0 ? 'Doctor Consultation Fee (Complimentary)' : 'Doctor Consultation Fee'),
+          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
           quantity: '1 Visit',
-          amount: Number(consultationFee),
+          amount: effectiveConsultFee,
           category: 'CONSULTATION',
         }],
       });
@@ -170,7 +253,7 @@ const BillingTemplate = React.forwardRef(({
         subtotal: Number(labCharges),
         items: [{
           description: labels.labCharges || 'Laboratory Diagnostic Investigation',
-          dateRange: new Date().toLocaleDateString('en-IN'),
+          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
           quantity: '1 Panel',
           amount: Number(labCharges),
           category: 'DIAGNOSTICS',
@@ -179,20 +262,32 @@ const BillingTemplate = React.forwardRef(({
     }
 
     if (medications && medications.length > 0) {
-      const medSubtotal = medications.reduce((sum, m) => sum + Number(m.amount || 0), 0);
+      const medSubtotal = medications.reduce((sum, m) => {
+        const q = Number(m.quantity) || 0;
+        const up = Number(m.unitPrice) || 0;
+        const lineAmt = m.amount !== undefined && m.amount !== '' && !isNaN(Number(m.amount)) ? Number(m.amount) : (q * up);
+        return sum + lineAmt;
+      }, 0);
+
       active.push({
         id: 'PHARMACY',
         title: 'Pharmacy Medications & Dispensed Drugs',
         sectionIndex: String.fromCharCode(65 + active.length),
         subtotal: medSubtotal,
-        items: medications.map(med => ({
-          description: med.recommended + (med.alternativeGiven ? ` (Given: ${med.alternativeGiven})` : ''),
-          dosageSchedule: med.dosageSchedule,
-          dateRange: new Date().toLocaleDateString('en-IN'),
-          quantity: med.quantity,
-          amount: Number(med.amount || 0),
-          category: 'PHARMACY',
-        })),
+        items: medications.map(med => {
+          const qty = Number(med.quantity) || 1;
+          const unitPrice = med.unitPrice !== undefined && med.unitPrice !== '' ? Number(med.unitPrice) : (Number(med.amount || 0) / qty);
+          const totalAmt = Number(med.amount != null && med.amount !== '' ? med.amount : (qty * unitPrice));
+          return {
+            description: med.recommended + (med.alternativeGiven ? ` (Given: ${med.alternativeGiven})` : '') + (unitPrice > 0 ? ` @ ${currency}${unitPrice.toFixed(2)}/unit` : ''),
+            dosageSchedule: med.dosageSchedule,
+            dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
+            quantity: `${qty} Units`,
+            unitPrice,
+            amount: totalAmt,
+            category: 'PHARMACY',
+          };
+        }),
       });
     }
 
@@ -204,7 +299,7 @@ const BillingTemplate = React.forwardRef(({
         subtotal: 0,
         items: [{
           description: 'Clinical Review & Consultation',
-          dateRange: new Date().toLocaleDateString('en-IN'),
+          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
           quantity: 1,
           amount: 0,
           category: 'CONSULTATION',
@@ -220,13 +315,32 @@ const BillingTemplate = React.forwardRef(({
   // Compute subtotal and financials
   const grossBilled = financials?.grossBilled != null
     ? financials.grossBilled
+    : bill?.billedAmount != null
+    ? bill.billedAmount
     : total != null
     ? Number(total)
     : categorizedGroups.reduce((sum, g) => sum + g.subtotal, 0);
 
-  const advanceDeposits = financials?.advancePaid || (effectiveWorkflow === 'IPD' || effectiveWorkflow === 'COMPREHENSIVE' ? 10000 : 0);
-  const insuranceApproved = financials?.insuranceApproved || (effectiveWorkflow === 'COMPREHENSIVE' ? 15000 : 0);
-  const adjustments = financials?.adjustments || 0;
+  const advanceDeposits = financials?.advancePaid != null
+    ? financials.advancePaid
+    : bill?.advanceCollected != null
+    ? bill.advanceCollected
+    : (effectiveWorkflow === 'IPD' && !bill && !visit ? 10000 : 0);
+
+  const insuranceApproved = financials?.insuranceApproved || (effectiveWorkflow === 'COMPREHENSIVE' && !bill && !visit ? 15000 : 0);
+  const adjustments = financials?.adjustments != null
+    ? financials.adjustments
+    : bill?.adjustedAmount != null
+    ? bill.adjustedAmount
+    : 0;
+
+  const collectedAmount = financials?.collectedAmount != null
+    ? financials.collectedAmount
+    : bill?.collectedAmount != null
+    ? bill.collectedAmount
+    : (visit?.receptionPayment?.registrationFee ? Number(visit.receptionPayment.registrationFee) : 0);
+
+  const isFullySettled = bill?.status === 'PAID' || (collectedAmount >= grossBilled && grossBilled > 0);
   const netPayable = Math.max(0, grossBilled - advanceDeposits - insuranceApproved - adjustments);
 
   const showSignatures = isVisible('pharmacistSignature') || isVisible('hospitalSeal') || isVisible('patientSignature') || isVisible('billingOfficer');
@@ -249,21 +363,31 @@ const BillingTemplate = React.forwardRef(({
     };
   };
 
+  const isTokenOnly = documentMode === 'TOKEN_SLIP';
+  const isInvoiceOnly = documentMode === 'INVOICE';
+  const isCombined = documentMode === 'COMBINED';
+
   return (
-    <div ref={ref} className="billing-template-container">
+    <div ref={ref} className={`billing-template-container billing-template-container--${effectiveWorkflow.toLowerCase()} ${isTokenOnly ? 'billing-template--token-only' : ''}`}>
       {/* 1. HOSPITAL BRANDING HEADER */}
       <div className="billing-header">
-        <h1 className="hospital-name">{hospitalInfo.name || 'GLOBAL HEALTH HOSPITAL'}</h1>
+        <h1 className="hospital-name">{hospitalInfo.name || 'QUANTUM CAREONE HOSPITAL'}</h1>
+        {hospitalInfo.subHeader && (
+          <p className="hospital-subheader">{hospitalInfo.subHeader}</p>
+        )}
         {isVisible('hospitalAddress') && hospitalInfo.address && (
           <p className="hospital-address">{hospitalInfo.address}</p>
         )}
         <div className="hospital-meta-row">
-          {isVisible('hospitalContact') && hospitalInfo.contact && (
-            <span className="hospital-contact">{hospitalInfo.contact}</span>
+          {isVisible('hospitalContact') && hospitalInfo.phone && (
+            <span className="hospital-contact">Ph: {hospitalInfo.phone}</span>
           )}
-          {isVisible('hospitalTaxId') && (hospitalInfo.taxId || hospitalInfo.gstin) && (
+          {isVisible('hospitalContact') && hospitalInfo.email && (
+            <span className="hospital-contact">Email: {hospitalInfo.email}</span>
+          )}
+          {isVisible('hospitalTaxId') && (hospitalInfo.gstin || hospitalInfo.taxId) && (
             <span className="hospital-tax-tag">
-              {hospitalInfo.taxId || `GSTIN: ${hospitalInfo.gstin || '29AAAAA0000A1Z5'}`}
+              GSTIN: {hospitalInfo.gstin || hospitalInfo.taxId}
             </span>
           )}
         </div>
@@ -271,37 +395,67 @@ const BillingTemplate = React.forwardRef(({
 
       <hr className="divider" />
 
-      {/* 2. INVOICE TITLE & ENCOUNTER IDENTIFIERS */}
-      <div className="billing-title">
-        <div className="billing-title-left">
-          <h2>{labels.title || (
-            effectiveWorkflow === 'IPD' ? 'INPATIENT FINAL BILL & SETTLEMENT' :
-            effectiveWorkflow === 'SURGICAL' ? 'SURGICAL & OPERATIVE INVOICE' :
-            effectiveWorkflow === 'EMERGENCY' ? 'EMERGENCY & TRAUMA CARE INVOICE' :
-            effectiveWorkflow === 'COMPREHENSIVE' ? 'CONSOLIDATED INPATIENT & INSURANCE CLAIM BILL' :
-            'OFFICIAL MEDICAL BILL'
-          )}</h2>
-          <span className="workflow-badge-tag">{effectiveWorkflow} ENCOUNTER</span>
-        </div>
-        <div className="billing-title-right">
-          <div className="title-meta-item">
-            <span className="meta-label">{labels.date || 'Date'}:</span>
-            <span className="meta-val">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+      {/* 2. CLINICAL OPD QUEUE TOKEN & ROUTING CARD (When in TOKEN_SLIP or COMBINED mode) */}
+      {(isTokenOnly || isCombined) && (
+        <div className="billing-token-routing-card">
+          <div className="token-routing-badge">
+            <span className="token-routing-tag">QUEUE TOKEN</span>
+            <span className="token-routing-number">{tokenString}</span>
           </div>
-          <div className="title-meta-item">
-            <span className="meta-label">{labels.billNo || 'Bill No'}:</span>
-            <span className="meta-val">{cleanInvoiceNo}</span>
+          <div className="token-routing-details">
+            <div className="token-routing-item">
+              <span className="token-item-label">{labels.department || 'Department'}:</span>
+              <span className="token-item-val">{departmentName}</span>
+            </div>
+            <div className="token-routing-item">
+              <span className="token-item-label">{labels.doctor || 'Physician'}:</span>
+              <span className="token-item-val">{doctorName}</span>
+            </div>
+            <div className="token-routing-item">
+              <span className="token-item-label">Visit Type:</span>
+              <span className="token-item-val">{effectiveWorkflow} Walk-in</span>
+            </div>
+            <div className="token-routing-item">
+              <span className="token-item-label">Reason:</span>
+              <span className="token-item-val">{reasonForVisit}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* 3. COMPACT PATIENT & CLINICAL METADATA GRID */}
+      {/* 3. INVOICE TITLE & ENCOUNTER IDENTIFIERS (When in INVOICE or COMBINED mode) */}
+      {!isTokenOnly && (
+        <div className="billing-title">
+          <div className="billing-title-left">
+            <h2>{labels.title || (
+              effectiveWorkflow === 'IPD' ? 'INPATIENT FINAL BILL & SETTLEMENT' :
+              effectiveWorkflow === 'SURGICAL' ? 'SURGICAL & OPERATIVE INVOICE' :
+              effectiveWorkflow === 'EMERGENCY' ? 'EMERGENCY & TRAUMA CARE INVOICE' :
+              effectiveWorkflow === 'COMPREHENSIVE' ? 'CONSOLIDATED INPATIENT & INSURANCE CLAIM BILL' :
+              'OUTPATIENT OPD VISIT BILL & RECEIPT'
+            )}</h2>
+            <span className="workflow-badge-tag">{effectiveWorkflow} ENCOUNTER</span>
+          </div>
+          <div className="billing-title-right">
+            <div className="title-meta-item">
+              <span className="meta-label">{labels.date || 'Date'}:</span>
+              <span className="meta-val">{visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+            </div>
+            <div className="title-meta-item">
+              <span className="meta-label">{labels.billNo || 'Receipt No'}:</span>
+              <span className="meta-val">{cleanInvoiceNo}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 4. COMPACT PATIENT & CLINICAL METADATA GRID */}
       <div className="patient-info">
         <div className="patient-info-grid">
           {/* Row 1: Demographics & Treating Consultant */}
           <div className="patient-info-row">
             <span className="info-label">{labels.patientName || 'Patient Name'}:</span>
-            <span className="info-value">{patientName}</span>
+            <span className="info-value"><strong>{patientName}</strong></span>
           </div>
           {isVisible('doctor') && (
             <div className="patient-info-row">
@@ -312,8 +466,8 @@ const BillingTemplate = React.forwardRef(({
 
           {/* Row 2: Identifiers */}
           <div className="patient-info-row">
-            <span className="info-label">{labels.mrn || 'MRN'}:</span>
-            <span className="info-value">{mrn}</span>
+            <span className="info-label">{labels.mrn || 'UHID / MRN'}:</span>
+            <span className="info-value"><strong>{mrn}</strong></span>
           </div>
           {isVisible('ageGender') && (
             <div className="patient-info-row">
@@ -325,8 +479,20 @@ const BillingTemplate = React.forwardRef(({
           {/* Row 3: Contact & IPD Details */}
           {isVisible('phone') && phone && (
             <div className="patient-info-row">
-              <span className="info-label">Phone:</span>
+              <span className="info-label">{labels.phone || 'Phone'}:</span>
               <span className="info-value">{phone}</span>
+            </div>
+          )}
+          {bloodGroup && (
+            <div className="patient-info-row">
+              <span className="info-label">Blood Group:</span>
+              <span className="info-value">{bloodGroup}</span>
+            </div>
+          )}
+          {effectivePaymentMethod && (
+            <div className="patient-info-row">
+              <span className="info-label">Payment Mode:</span>
+              <span className="info-value">{effectivePaymentMethod}</span>
             </div>
           )}
 
@@ -385,146 +551,172 @@ const BillingTemplate = React.forwardRef(({
         </div>
       </div>
 
-      {/* 4. HIGH-DENSITY SEGREGATED ITEMIZED CHARGES TABLE */}
-      <table className="billing-table">
-        <thead>
-          <tr>
-            <th style={{ width: '50%' }}>{labels.description || 'Clinical Service / Medication Description'}</th>
-            <th style={{ width: '20%' }}>{labels.serviceDate || 'Service Date'}</th>
-            <th style={{ width: '12%', textAlign: 'center' }}>{labels.quantity || 'Qty / Units'}</th>
-            <th className="amount-col" style={{ width: '18%' }}>{labels.amount || 'Amount'}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {categorizedGroups.map((group) => (
-            <React.Fragment key={group.id}>
-              {/* Category Subheader Banner with Subtotal */}
-              <tr className="billing-category-header-row">
-                <td colSpan="3" className="billing-category-title-cell">
-                  <span className="billing-category-index-badge">{group.sectionIndex}</span>
-                  <span className="billing-category-title-text">{group.title}</span>
-                  <span className="billing-category-count-tag">({group.items.length} {group.items.length === 1 ? 'charge' : 'charges'})</span>
-                </td>
-                <td className="billing-category-subtotal-cell amount-col">
-                  <span className="billing-category-subtotal-label">Subtotal:</span>{' '}
-                  <span className="billing-category-subtotal-val">{currency}{group.subtotal.toFixed(2)}</span>
-                </td>
-              </tr>
+      {/* 5. CLINICAL ASSESSMENT SECTION (In Token Slip mode only) */}
+      {isTokenOnly && (
+        <div className="token-clinical-notes-block">
+          <span className="token-notes-label">Attending Doctor Assessment &amp; Clinical Prescription:</span>
+          <div className="token-notes-blank-area"></div>
+        </div>
+      )}
 
-              {/* Categorized Line Items */}
-              {group.items.map((item, idx) => {
-                const dsInfo = item.dosageSchedule ? formatDosageSchedule(item.dosageSchedule) : null;
-                return (
-                  <tr key={idx} className="billing-item-row">
-                    <td className="billing-item-desc-cell">
-                      <div className="item-name-row">
-                        <span className="item-title">{item.description || item.name}</span>
-                      </div>
-                      {item.notes && (
-                        <div className="item-notes-text">{item.notes}</div>
-                      )}
-                      {dsInfo && (
-                        <div className="dosage-tabular-strip">
-                          <span className="dosage-pill-badge">{dsInfo.pill}</span>
-                          {dsInfo.timing && <span className="dosage-timing-text">{dsInfo.timing}</span>}
-                        </div>
-                      )}
+      {/* 6. HIGH-DENSITY SEGREGATED ITEMIZED CHARGES TABLE (In Invoice & Combined modes) */}
+      {!isTokenOnly && (
+        <>
+          <table className="billing-table">
+            <thead>
+              <tr>
+                <th style={{ width: '50%' }}>{labels.description || 'Clinical Service / Fee Description'}</th>
+                <th style={{ width: '20%' }}>{labels.serviceDate || 'Service Date'}</th>
+                <th style={{ width: '12%', textAlign: 'center' }}>{labels.quantity || 'Qty'}</th>
+                <th className="amount-col" style={{ width: '18%' }}>{labels.amount || 'Amount'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {categorizedGroups.map((group) => (
+                <React.Fragment key={group.id}>
+                  {/* Category Subheader Banner with Subtotal */}
+                  <tr className="billing-category-header-row">
+                    <td colSpan="3" className="billing-category-title-cell">
+                      <span className="billing-category-index-badge">{group.sectionIndex}</span>
+                      <span className="billing-category-title-text">{group.title}</span>
+                      <span className="billing-category-count-tag">({group.items.length} {group.items.length === 1 ? 'charge' : 'charges'})</span>
                     </td>
-                    <td className="item-date-text">
-                      {item.dateRange || (item.addedAt ? new Date(item.addedAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'))}
-                    </td>
-                    <td style={{ textAlign: 'center' }}>{item.quantity || 1}</td>
-                    <td className="amount-col">
-                      {currency}{Number(item.lineTotal != null ? item.lineTotal : item.amount || 0).toFixed(2)}
+                    <td className="billing-category-subtotal-cell amount-col">
+                      <span className="billing-category-subtotal-label">Subtotal:</span>{' '}
+                      <span className="billing-category-subtotal-val">{currency}{group.subtotal.toFixed(2)}</span>
                     </td>
                   </tr>
-                );
-              })}
-            </React.Fragment>
-          ))}
-        </tbody>
-      </table>
 
-      {/* 5. COMPACT FINANCIAL RECONCILIATION SUMMARY */}
-      <div className="financial-reconciliation-section">
-        <div className="reconciliation-table-wrapper">
-          <table className="reconciliation-table">
-            <tbody>
-              <tr>
-                <td className="recon-label">Gross Invoiced Total:</td>
-                <td className="recon-value">{currency}{grossBilled.toFixed(2)}</td>
-              </tr>
-
-              {advanceDeposits > 0 && isVisible('advanceSummary') && (
-                <tr className="recon-deduction">
-                  <td className="recon-label">
-                    Less Advance Paid (Receipt #ADV-0412):
-                  </td>
-                  <td className="recon-value">- {currency}{advanceDeposits.toFixed(2)}</td>
-                </tr>
-              )}
-
-              {insuranceApproved > 0 && isVisible('insuranceSummary') && (
-                <tr className="recon-deduction">
-                  <td className="recon-label">
-                    Less Insurance / TPA Approved Claim:
-                  </td>
-                  <td className="recon-value">- {currency}{insuranceApproved.toFixed(2)}</td>
-                </tr>
-              )}
-
-              {adjustments > 0 && (
-                <tr className="recon-deduction">
-                  <td className="recon-label">Less Authorized Concessions:</td>
-                  <td className="recon-value">- {currency}{adjustments.toFixed(2)}</td>
-                </tr>
-              )}
-
-              <tr className="recon-net-total">
-                <td className="recon-label-highlight">
-                  {labels.totalAmount || (
-                    advanceDeposits > 0 || insuranceApproved > 0
-                      ? 'NET BALANCE PAYABLE'
-                      : 'TOTAL AMOUNT DUE'
-                  )}:
-                </td>
-                <td className="recon-value-highlight">
-                  {currency}{netPayable.toFixed(2)}
-                </td>
-              </tr>
+                  {/* Categorized Line Items */}
+                  {group.items.map((item, idx) => {
+                    const dsInfo = item.dosageSchedule ? formatDosageSchedule(item.dosageSchedule) : null;
+                    return (
+                      <tr key={idx} className="billing-item-row">
+                        <td className="billing-item-desc-cell">
+                          <div className="item-name-row">
+                            <span className="item-title">{item.description || item.name}</span>
+                          </div>
+                          {item.snapshotRulePath && (
+                            <div className="item-notes-text" style={{ fontSize: '9px', color: '#64748b' }}>
+                              Policy: {item.snapshotRulePath}
+                            </div>
+                          )}
+                          {dsInfo && (
+                            <div className="dosage-tabular-strip">
+                              <span className="dosage-pill-badge">{dsInfo.pill}</span>
+                              {dsInfo.timing && <span className="dosage-timing-text">{dsInfo.timing}</span>}
+                            </div>
+                          )}
+                        </td>
+                        <td className="item-date-text">
+                          {item.dateRange || (item.addedAt ? new Date(item.addedAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'))}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>{item.quantity || 1}</td>
+                        <td className="amount-col">
+                          {currency}{Number(item.lineTotal != null ? item.lineTotal : item.amount || 0).toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </tbody>
           </table>
-        </div>
-      </div>
 
-      {/* 6. COMPACT SIGNATURE & AUTHORIZATION SECTION */}
+          {/* 7. COMPACT FINANCIAL RECONCILIATION SUMMARY */}
+          <div className="financial-reconciliation-section">
+            <div className="reconciliation-table-wrapper">
+              <table className="reconciliation-table">
+                <tbody>
+                  <tr>
+                    <td className="recon-label">Gross Billed Amount:</td>
+                    <td className="recon-value">{currency}{grossBilled.toFixed(2)}</td>
+                  </tr>
+
+                  {advanceDeposits > 0 && isVisible('advanceSummary') && (
+                    <tr className="recon-deduction">
+                      <td className="recon-label">
+                        Less Advance Deposit Paid:
+                      </td>
+                      <td className="recon-value">- {currency}{advanceDeposits.toFixed(2)}</td>
+                    </tr>
+                  )}
+
+                  {insuranceApproved > 0 && isVisible('insuranceSummary') && (
+                    <tr className="recon-deduction">
+                      <td className="recon-label">
+                        Less Insurance / TPA Coverage:
+                      </td>
+                      <td className="recon-value">- {currency}{insuranceApproved.toFixed(2)}</td>
+                    </tr>
+                  )}
+
+                  {adjustments > 0 && (
+                    <tr className="recon-deduction">
+                      <td className="recon-label">Less Authorized Concessions:</td>
+                      <td className="recon-value">- {currency}{adjustments.toFixed(2)}</td>
+                    </tr>
+                  )}
+
+                  {isFullySettled && (
+                    <tr className="recon-payment-status">
+                      <td className="recon-label" style={{ color: '#16a34a', fontWeight: '600' }}>
+                        Settlement Status:
+                      </td>
+                      <td className="recon-value" style={{ color: '#16a34a', fontWeight: '700' }}>
+                        PAID ({effectivePaymentMethod || 'Cash'})
+                      </td>
+                    </tr>
+                  )}
+
+                  <tr className="recon-net-total">
+                    <td className="recon-label-highlight">
+                      {labels.totalAmount || (
+                        advanceDeposits > 0 || insuranceApproved > 0
+                          ? 'NET BALANCE PAYABLE'
+                          : isFullySettled
+                          ? 'TOTAL AMOUNT PAID'
+                          : 'TOTAL AMOUNT PAID / DUE'
+                      )}:
+                    </td>
+                    <td className="recon-value-highlight">
+                      {currency}{netPayable.toFixed(2)}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* 8. COMPACT SIGNATURE & AUTHORIZATION SECTION */}
       {showSignatures && (
         <div className="signature-area">
           {isVisible('patientSignature') && (
             <div className="signature-block">
               <div className="signature-line"></div>
               <p>{labels.patientSignature || 'Patient / Attendant Signature'}</p>
-              <span className="signature-subtext">Received medicines/services in satisfactory condition</span>
             </div>
           )}
 
-          {isVisible('pharmacistSignature') && Boolean(labels.pharmacistSignature) && (
+          {isVisible('billingOfficer') && (
             <div className="signature-block">
               <div className="signature-line"></div>
-              <p>{labels.pharmacistSignature || 'Dispensing Pharmacist'}</p>
+              <p>{labels.billingOfficer || 'Cashier / Billing Desk'}</p>
             </div>
           )}
 
           {isVisible('hospitalSeal') && (
             <div className="signature-block">
               <div className="signature-line"></div>
-              <p>{labels.hospitalSeal || 'Authorized Hospital Seal & Billing Desk'}</p>
+              <p>{labels.hospitalSeal || 'Hospital Stamp & Seal'}</p>
             </div>
           )}
         </div>
       )}
 
-      {/* 7. FOOTER NOTE & LEGAL DISCLAIMER */}
+      {/* 9. FOOTER NOTE & LEGAL DISCLAIMER */}
       {(showFooterNote || customFields.filter(f => f.position === 'footer').length > 0) && (
         <div className="footer-note">
           {showFooterNote && <p>{labels.footerNote}</p>}
@@ -536,5 +728,3 @@ const BillingTemplate = React.forwardRef(({
 });
 
 export default BillingTemplate;
-
-

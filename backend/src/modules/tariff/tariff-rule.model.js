@@ -47,7 +47,7 @@ const scopeSchema = new mongoose.Schema({
   staffId: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', default: null },
   visitType: {
     type: String,
-    enum: ['OPD', 'EMERGENCY', 'IPD', null],
+    enum: ['OPD', 'IPD', 'EMERGENCY', 'SURGERY', 'DAY_CARE', 'HEALTH_CHECKUP', null],
     default: null,
   },
   appointmentType: {
@@ -97,6 +97,12 @@ const scopeSchema = new mongoose.Schema({
 }, { _id: false });
 
 const tariffRuleSchema = new mongoose.Schema({
+  // Recognition & Categorization
+  ruleNumber: { type: String, trim: true, uppercase: true }, // e.g. TR-PRC-01, TR-CON-01, TR-BED-01, TR-PKG-01
+  name: { type: String, trim: true, default: '' }, // e.g. "Major Laparoscopic Cholecystectomy Suite"
+  description: { type: String, trim: true, default: '' },
+  inclusions: { type: String, trim: true, default: '' }, // e.g. "Physician Consult + CBC + LFT + RFT + ECG + Chest X-Ray + Urine Routine"
+
   // What service does this rule price? (exactly one of:)
   serviceMasterId: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceMaster', default: null },
   testCode: { type: String, trim: true, default: null }, // for DIAGNOSTICS -- stable lab testCode
@@ -113,7 +119,7 @@ const tariffRuleSchema = new mongoose.Schema({
   amount: { type: Number, required: true, min: 0 }, // Daily rate when category === 'BED_CHARGES'
   unit: {
     type: String,
-    enum: ['PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_DAY', 'PER_HOUR'],
+    enum: ['PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_PACKAGE', 'PER_DAY', 'PER_HOUR'],
     default: 'PER_VISIT',
   },
 
@@ -134,7 +140,9 @@ const tariffRuleSchema = new mongoose.Schema({
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
 }, { timestamps: true });
 
-// Indexes for fast TariffResolver queries
+// Indexes for fast TariffResolver & search queries
+tariffRuleSchema.index({ ruleNumber: 1 }, { sparse: true });
+tariffRuleSchema.index({ name: 'text', description: 'text', inclusions: 'text', ruleNumber: 'text', testCode: 'text' });
 tariffRuleSchema.index({ category: 1, status: 1, effectiveFrom: 1 });
 tariffRuleSchema.index({ 'scope.departmentId': 1, category: 1, status: 1 });
 tariffRuleSchema.index({ 'scope.tariffGrade': 1, category: 1, status: 1 });

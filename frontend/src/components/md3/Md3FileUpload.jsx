@@ -181,6 +181,17 @@ export const Md3FileUpload = ({
 
   return (
     <div className={`md3-file-upload-wrapper ${disabled ? 'is-disabled' : ''}`}>
+      <input
+        id={id}
+        name={name}
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        accept={accept}
+        disabled={disabled}
+        style={{ display: 'none' }}
+      />
+
       {label && (
         <label className="md3-file-upload-label" htmlFor={id}>
           {label} {required && <span className="md3-required-star">*</span>}
@@ -199,7 +210,7 @@ export const Md3FileUpload = ({
                 {fileName}
               </span>
               <span className="md3-file-attached-meta">
-                {formatFileSize(fileSize)} • Cloud Storage Managed
+                {formatFileSize(fileSize)} • {selectedFile?.isStaged ? 'Ready for Upload on Save' : 'Cloud Storage Managed'}
               </span>
             </div>
           </div>
@@ -228,16 +239,6 @@ export const Md3FileUpload = ({
           tabIndex={0}
           onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && fileInputRef.current?.click()}
         >
-          <input
-            id={id}
-            name={name}
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept={accept}
-            disabled={disabled}
-            style={{ display: 'none' }}
-          />
 
           <span className="material-symbols-rounded md3-file-cloud-icon">
             cloud_upload

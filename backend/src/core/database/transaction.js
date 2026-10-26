@@ -50,7 +50,7 @@ const withTransaction = async (workFn, maxRetries = 3, initialDelayMs = 100) => 
         if (process.env.NODE_ENV === 'production') {
           session.endSession();
           logger.error('FATAL: Standalone MongoDB detected in production. Multi-document transactions are required but unsupported by standalone engines.');
-          const AppError = require('../errors/AppError');
+          const AppError = require('../errors/app-error');
           throw new AppError('SYSTEM_003', 'Transaction failed: multi-document transactions are required in production but unsupported by standalone MongoDB engine.');
         }
         logger.warn('MongoDB standalone mode detected. Executing operation without multi-document transaction boundary.');

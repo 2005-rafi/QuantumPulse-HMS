@@ -1,419 +1,660 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Md3Button, Md3TextField, Md3Select, Md3UnsavedChangesDialog } from '../../components/md3/Md3FormComponents';
 import api from '../../services/api';
+import { useToast } from '../../context/ToastContext';
+import './CreateDepartmentSheet.css';
+
 
 const DEPT_TYPES = [
   { value: 'CLINICAL',            label: 'Clinical',                    desc: 'Patient consultation and treatment' },
   { value: 'DIAGNOSTIC',         label: 'Diagnostic',                  desc: 'Investigations and diagnostics (e.g. Lab, Radiology)' },
   { value: 'CLINICAL/DIAGNOSTIC', label: 'Clinical & Diagnostic',       desc: 'Both consultation and diagnostic services' },
-  { value: 'SUPPORT',            label: 'Support',                     desc: 'Supports hospital operations (e.g. Pharmacy)' },
-  { value: 'ADMINISTRATIVE',     label: 'Administrative',              desc: 'Administration and management (e.g. Billing, HR)' },
+  { value: 'SUPPORT',            label: 'Support',                     desc: 'Supports hospital operations (e.g. Pharmacy, Ward)' },
+  { value: 'ADMINISTRATIVE',     label: 'Administrative',              desc: 'Administration and management (e.g. Billing, Front Desk)' },
 ];
 
-const EMPTY_FORM = { name: '', code: '', description: '', type: '', status: 'Active' };
+const generateId = () => Math.random().toString(36).substring(2, 9);
+
+const createEmptyDepartment = () => ({
+  id: generateId(),
+  name: '',
+  code: '',
+  type: 'CLINICAL',
+  status: 'Active',
+  description: '',
+  isExpanded: true,
+  errors: {},
+});
 
 /**
- * CreateDepartmentSheet — Right-side drawer for creating and editing departments.
+ * CreateDepartmentSheet — Multi-Department Expandable/Collapsible Builder.
+ * Reusable Material Design 3 pattern matching Floor, Room & Bed Facility Builders.
  *
- * SOLID / SRP: This component owns only the department form interaction.
- * Parent (AdminDepartmentManager) owns data fetching and list rendering.
- *
- * Per docs/file.md §Department Creation Workflow:
- * - Only identity fields are created here (name, code, type, status, description).
- * - HOD assignment is a separate post-creation step in AdminDepartmentManager.
+ * Features:
+ * - Single Edit mode (when `department` prop is passed)
+ * - Multi-Department Batch Creation (with accordion cards & centered add trigger)
+ * - Input validation & auto-formatting (code uppercase, name alpha-first)
+ * - Consolidated toast notifications and lifecycle guidance
  */
 const CreateDepartmentSheet = ({ isOpen, onClose, onSuccess, department }) => {
-  const [formData, setFormData] = useState(EMPTY_FORM);
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState(null);
-  const [fieldErrors, setFieldErrors] = useState({});
+  const { showSuccess, showError } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
 
+  const isEdit = Boolean(department && department._id);
+
+  // ── Multi-Department Builder State ──
+  const [departmentsList, setDepartmentsList] = useState([createEmptyDepartment()]);
+
+  // ── Single Department Edit State ──
+  const [singleName, setSingleName] = useState('');
+  const [singleCode, setSingleCode] = useState('');
+  const [singleType, setSingleType] = useState('CLINICAL');
+  const [singleStatus, setSingleStatus] = useState('Active');
+  const [singleDescription, setSingleDescription] = useState('');
+  const [singleErrors, setSingleErrors] = useState({});
+
+  const prevIsOpenRef = useRef(false);
+  const prevDeptRef = useRef(null);
+
+  // Sync state when drawer opens or edited department changes
   useEffect(() => {
-    if (department) {
-      setFormData({
-        name:        department.name        || '',
-        code:        department.code        || '',
-        description: department.description || '',
-        type:        department.type        || '',
-        status:      department.status      || 'Active',
-      });
+    const justOpened = isOpen && !prevIsOpenRef.current;
+    const deptChanged = isEdit && department !== prevDeptRef.current;
+
+    if (isOpen && (justOpened || deptChanged)) {
+      setShowDiscardConfirm(false);
+      if (isEdit) {
+        setSingleName(department.name || '');
+        setSingleCode(department.code || '');
+        setSingleType(department.type || 'CLINICAL');
+        setSingleStatus(department.status || 'Active');
+        setSingleDescription(department.description || '');
+        setSingleErrors({});
+      } else {
+        setDepartmentsList([createEmptyDepartment()]);
+      }
+      setError(null);
+    }
+    prevIsOpenRef.current = isOpen;
+    prevDeptRef.current = department;
+  }, [isOpen, department, isEdit]);
+
+  // Compute dirty state
+  const isDirty = useMemo(() => {
+    if (isEdit) {
+      if (!department) return false;
+      return (
+        (singleName || '') !== (department.name || '') ||
+        (singleCode || '') !== (department.code || '') ||
+        (singleType || 'CLINICAL') !== (department.type || 'CLINICAL') ||
+        (singleStatus || 'Active') !== (department.status || 'Active') ||
+        (singleDescription || '') !== (department.description || '')
+      );
     } else {
-      setFormData(EMPTY_FORM);
+      if (departmentsList.length > 1) return true;
+      const first = departmentsList[0];
+      if (!first) return false;
+      return Boolean(first.name.trim() || first.code.trim() || first.description.trim());
     }
-    setError(null);
-    setFieldErrors({});
-  }, [department, isOpen]);
+  }, [isEdit, department, singleName, singleCode, singleType, singleStatus, singleDescription, departmentsList]);
 
-  const handleChange = (e) => {
-    let { name, value } = e.target;
-    if (name === 'code') {
+  const handleAttemptClose = () => {
+    if (isDirty) {
+      setShowDiscardConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleConfirmDiscard = () => {
+    setShowDiscardConfirm(false);
+    onClose();
+  };
+
+  // Intercept Escape key to protect against accidental dismissal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !showDiscardConfirm) {
+        e.preventDefault();
+        e.stopPropagation();
+        handleAttemptClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, isDirty, showDiscardConfirm]);
+
+
+  // ══════════════════════════════════════════════════════════════
+  // MULTI-DEPARTMENT BUILDER HANDLERS
+  // ══════════════════════════════════════════════════════════════
+  const handleAddDepartmentItem = () => {
+    setDepartmentsList((prev) => [
+      ...prev.map((d) => ({ ...d, isExpanded: false })), // collapse previous cards for clean visual overview
+      createEmptyDepartment(),
+    ]);
+  };
+
+  const handleRemoveDepartmentItem = (id) => {
+    if (departmentsList.length <= 1) {
+      setDepartmentsList([createEmptyDepartment()]);
+      return;
+    }
+    setDepartmentsList((prev) => prev.filter((d) => d.id !== id));
+  };
+
+  const handleToggleExpand = (id) => {
+    setDepartmentsList((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, isExpanded: !d.isExpanded } : d))
+    );
+  };
+
+  const handleUpdateField = (id, field, rawValue) => {
+    let value = rawValue;
+    if (field === 'code') {
       value = value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
-    } else if (name === 'name') {
-      value = value.replace(/[^a-zA-Z\s'-]/g, '');
+    } else if (field === 'name') {
+      value = value.replace(/[^a-zA-Z0-9\s'&/,-]/g, '');
     }
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    setFieldErrors((prev) => ({ ...prev, [name]: null }));
+
+    setDepartmentsList((prev) =>
+      prev.map((d) => {
+        if (d.id !== id) return d;
+        const updatedErrors = { ...d.errors };
+        if (updatedErrors[field]) delete updatedErrors[field];
+        return { ...d, [field]: value, errors: updatedErrors };
+      })
+    );
   };
 
-  const validateForm = () => {
-    const errors = {};
-    if (!formData.name.trim()) {
-      errors.name = 'Department name is required';
-    } else if (!/^[a-zA-Z]/.test(formData.name.trim())) {
-      errors.name = 'Department name must start with a letter';
-    }
-
-    if (!formData.code.trim()) {
-      errors.code = 'Department code is required';
-    } else if (formData.code.trim().length < 2) {
-      errors.code = 'Code must be at least 2 characters long';
-    }
-
-    if (!formData.type) {
-      errors.type = 'Department type is required';
-    }
-
-    setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const isFormPreFilled = formData.name.trim() && formData.code.trim() && formData.type;
-
+  // ══════════════════════════════════════════════════════════════
+  // SUBMIT HANDLER
+  // ══════════════════════════════════════════════════════════════
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
     setError(null);
-    setLoading(true);
+
+    // ── Single Edit Mode Submission ──
+    if (isEdit) {
+      const errors = {};
+      if (!singleName.trim()) errors.name = 'Department name is required';
+      if (!singleCode.trim()) errors.code = 'Department code is required';
+      else if (singleCode.trim().length < 2) errors.code = 'Code must be at least 2 characters';
+      if (!singleType) errors.type = 'Department type is required';
+
+      if (Object.keys(errors).length > 0) {
+        setSingleErrors(errors);
+        showError('Please correct the highlighted fields');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const payload = {
+          name: singleName.trim(),
+          code: singleCode.trim().toUpperCase(),
+          type: singleType,
+          status: singleStatus,
+          description: singleDescription.trim(),
+        };
+        await api.put(`/departments/${department._id}`, payload);
+        setLoading(false);
+        const successMsg = `Department "${singleName}" updated successfully.`;
+        if (onSuccess) {
+          onSuccess(successMsg);
+        } else {
+          showSuccess(successMsg);
+        }
+      } catch (err) {
+        setLoading(false);
+        const errMsg = err.response?.data?.message || err.message || 'Error updating department';
+        setError(errMsg);
+        showError(errMsg);
+      }
+      return;
+    }
+
+    // ── Multi-Department Batch Creation Mode ──
+    let hasValidationError = false;
+    const validatedList = departmentsList.map((d) => {
+      const errors = {};
+      if (!d.name.trim()) errors.name = 'Department name is required';
+      else if (!/^[a-zA-Z]/.test(d.name.trim())) errors.name = 'Must start with a letter';
+
+      if (!d.code.trim()) errors.code = 'Department code is required';
+      else if (d.code.trim().length < 2) errors.code = 'Code must be at least 2 characters';
+
+      if (!d.type) errors.type = 'Department type is required';
+
+      if (Object.keys(errors).length > 0) {
+        hasValidationError = true;
+        return { ...d, errors, isExpanded: true };
+      }
+      return { ...d, errors: {} };
+    });
+
+    if (hasValidationError) {
+      setDepartmentsList(validatedList);
+      showError('Please complete all required fields highlighted in red');
+      return;
+    }
 
     try {
-      if (department) {
-        await api.put(`/departments/${department._id}`, formData);
-        onSuccess?.(`Department "${formData.name}" updated successfully!`);
+      setLoading(true);
+      let successCount = 0;
+      const errorsOccurred = [];
+
+      for (const d of departmentsList) {
+        try {
+          const payload = {
+            name: d.name.trim(),
+            code: d.code.trim().toUpperCase(),
+            type: d.type,
+            status: d.status,
+            description: d.description.trim(),
+          };
+          await api.post('/departments', payload);
+          successCount++;
+        } catch (itemErr) {
+          errorsOccurred.push(`"${d.name} (${d.code})": ${itemErr.response?.data?.message || itemErr.message}`);
+        }
+      }
+
+      setLoading(false);
+
+      if (errorsOccurred.length > 0) {
+        const errorMsg = `Encountered issues: ${errorsOccurred.join('; ')}`;
+        setError(errorMsg);
+        showError(errorMsg);
+        if (successCount > 0) {
+          onSuccess && onSuccess(`Created ${successCount} department(s) with some notices.`);
+        }
       } else {
-        await api.post('/departments', formData);
-        onSuccess?.(`Department "${formData.name}" created successfully!`);
+        const successMsg = `${successCount} Department${successCount > 1 ? 's' : ''} created successfully.`;
+        if (onSuccess) {
+          onSuccess(successMsg);
+        } else {
+          showSuccess(successMsg);
+        }
       }
     } catch (err) {
-      setError(err.response?.data?.message || `Error ${department ? 'updating' : 'creating'} department`);
-    } finally {
       setLoading(false);
+      const errMsg = err.response?.data?.message || err.message || 'Failed to create departments';
+      setError(errMsg);
+      showError(errMsg);
     }
   };
 
   if (!isOpen) return null;
 
-  const selectedType = DEPT_TYPES.find((t) => t.value === formData.type);
-
   return (
     <>
-      {/* Overlay */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.4)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 1200,
-          transition: 'opacity 200ms ease',
-        }}
-      />
-
-      {/* Drawer */}
-      <div
-        style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0,
-          width: '480px',
-          background: 'var(--md-sys-color-surface-container-low)',
-          color: 'var(--md-sys-color-on-surface)',
-          zIndex: 1201,
-          display: 'flex', flexDirection: 'column',
-          boxShadow: '-8px 0 32px rgba(0,0,0,0.18)',
-          borderRadius: '28px 0 0 28px',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            padding: '24px 28px 20px',
-            borderBottom: '1px solid var(--md-sys-color-outline-variant)',
-            background: 'var(--md-sys-color-surface-container)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700, color: 'var(--md-sys-color-primary)' }}>
-                {department ? 'Edit Department' : 'Create Department'}
-              </h2>
-              <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                {department
-                  ? 'Modify department configuration. HOD is managed separately.'
-                  : 'Set up a new department. Staff & HOD are assigned after creation.'}
-              </p>
+      <div className="dept-sheet-backdrop" onClick={handleAttemptClose}>
+        <div className="dept-sheet-container" onClick={(e) => e.stopPropagation()}>
+          {/* ── 1. Sheet Header ── */}
+          <div className="dept-sheet-header">
+            <div className="dept-sheet-header__title-group">
+              <span className="material-symbols-rounded dept-sheet-header__icon">
+                {isEdit ? 'edit_square' : 'apartment'}
+              </span>
+              <div>
+                <h2 className="dept-sheet-header__title">
+                  {isEdit ? 'Edit Department' : 'Create Department(s)'}
+                </h2>
+                <p className="dept-sheet-header__desc">
+                  {isEdit
+                    ? 'Modify department identity and operational settings'
+                    : 'Add one or multiple hospital departments at once with custom codes and types'}
+                </p>
+              </div>
             </div>
             <button
-              onClick={onClose}
-              style={{
-                background: 'var(--md-sys-color-surface-container-high)',
-                border: 'none', borderRadius: '50%',
-                width: '36px', height: '36px',
-                cursor: 'pointer', fontSize: '18px',
-                color: 'var(--md-sys-color-on-surface-variant)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-              }}
+              type="button"
+              className="dept-sheet-header__close-btn"
+              onClick={handleAttemptClose}
+              title="Close"
             >
-              ✕
+              <span className="material-symbols-rounded">close</span>
             </button>
           </div>
-        </div>
 
-        {/* Form */}
-        <form
-          onSubmit={handleSubmit}
-          style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}
-        >
+
+        {/* ── 2. Sheet Form & Scrollable Body ── */}
+        <form className="dept-sheet-body" onSubmit={handleSubmit}>
           {error && (
             <div style={{
               padding: '12px 16px',
-              background: 'var(--md-sys-color-error-container)',
-              color: 'var(--md-sys-color-on-error-container)',
-              borderRadius: '12px', fontSize: '13px', lineHeight: '1.5',
+              background: 'var(--md-sys-color-error-container, #ffdad6)',
+              color: 'var(--md-sys-color-on-error-container, #410002)',
+              borderRadius: '12px',
+              fontSize: '13px',
+              lineHeight: '1.5',
             }}>
               {error}
             </div>
           )}
 
-          {/* Name */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Department Name <span style={{ color: 'var(--md-sys-color-error)' }}>*</span>
-            </label>
-            <input
-              name="name"
-              type="text"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Enter department name"
-              required
-              style={{
-                ...inputStyle,
-                border: fieldErrors.name ? '2px solid var(--md-sys-color-error)' : '1px solid var(--md-sys-color-outline-variant)'
-              }}
-            />
-            {fieldErrors.name && (
-              <span style={{ fontSize: '11px', color: 'var(--md-sys-color-error)', marginTop: '2px' }}>
-                {fieldErrors.name}
-              </span>
-            )}
-          </div>
-
-          {/* Code */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Department Code <span style={{ color: 'var(--md-sys-color-error)' }}>*</span>
-            </label>
-            <input
-              name="code"
-              type="text"
-              value={formData.code}
-              onChange={handleChange}
-              placeholder="Enter code (e.g. CARD)"
-              maxLength={10}
-              required
-              style={{
-                ...inputStyle,
-                letterSpacing: '0.1em',
-                fontWeight: 700,
-                fontFamily: 'monospace',
-                border: fieldErrors.code ? '2px solid var(--md-sys-color-error)' : '1px solid var(--md-sys-color-outline-variant)'
-              }}
-            />
-            {fieldErrors.code ? (
-              <span style={{ fontSize: '11px', color: 'var(--md-sys-color-error)', marginTop: '2px' }}>
-                {fieldErrors.code}
-              </span>
-            ) : (
-              <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.8 }}>
-                Uppercase, max 10 chars. Used in token generation and reporting.
-              </span>
-            )}
-          </div>
-
-          {/* Type */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Department Type <span style={{ color: 'var(--md-sys-color-error)' }}>*</span>
-            </label>
-            <select
-              name="type"
-              value={formData.type}
-              onChange={handleChange}
-              required
-              style={{
-                ...inputStyle,
-                border: fieldErrors.type ? '2px solid var(--md-sys-color-error)' : '1px solid var(--md-sys-color-outline-variant)'
-              }}
-            >
-              <option value="">-- Select department type --</option>
-              {DEPT_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-            {fieldErrors.type && (
-              <span style={{ fontSize: '11px', color: 'var(--md-sys-color-error)', marginTop: '2px' }}>
-                {fieldErrors.type}
-              </span>
-            )}
-            {selectedType && (
-              <span style={{
-                fontSize: '12px',
-                color: 'var(--md-sys-color-primary)',
-                background: 'var(--md-sys-color-primary-container)',
-                padding: '4px 10px',
-                borderRadius: '8px',
-                display: 'inline-block',
-              }}>
-                {selectedType.desc}
-              </span>
-            )}
-          </div>
-
-          {/* Status */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Status
-            </label>
-            <div style={{ display: 'flex', gap: '12px' }}>
-              {['Active', 'Inactive'].map((s) => (
-                <label
-                  key={s}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '8px',
-                    padding: '10px 16px',
-                    border: `2px solid ${formData.status === s ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
-                    borderRadius: '12px',
-                    cursor: 'pointer',
-                    background: formData.status === s ? 'var(--md-sys-color-primary-container)' : 'transparent',
-                    color: formData.status === s ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface)',
-                    fontSize: '14px', fontWeight: 600,
-                    transition: 'all 150ms ease',
-                    flex: 1, justifyContent: 'center',
+          {/* ════════════════════════════════════════════════════════════
+              MODE A: SINGLE EDIT
+             ════════════════════════════════════════════════════════════ */}
+          {isEdit ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div className="dept-form-row">
+                <Md3TextField
+                  label="Department Name *"
+                  value={singleName}
+                  onChange={(e) => {
+                    setSingleName(e.target.value.replace(/[^a-zA-Z0-9\s'&/,-]/g, ''));
+                    if (singleErrors.name) setSingleErrors((prev) => ({ ...prev, name: null }));
                   }}
+                  placeholder="e.g. Cardiology & Cardiac Care"
+                  error={singleErrors.name}
+                  required
+                />
+                <Md3TextField
+                  label="Department Code *"
+                  value={singleCode}
+                  onChange={(e) => {
+                    setSingleCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10));
+                    if (singleErrors.code) setSingleErrors((prev) => ({ ...prev, code: null }));
+                  }}
+                  placeholder="e.g. CARD"
+                  error={singleErrors.code}
+                  required
+                />
+              </div>
+
+              <div className="dept-form-field">
+                <label className="dept-form-field__label">Department Type *</label>
+                <Md3Select
+                  value={singleType}
+                  onChange={(e) => setSingleType(e.target.value)}
+                  required
                 >
-                  <input
-                    type="radio"
-                    name="status"
-                    value={s}
-                    checked={formData.status === s}
-                    onChange={handleChange}
-                    style={{ display: 'none' }}
-                  />
-                  <span className="material-symbols-rounded" style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
-                    {s === 'Active' ? 'check_circle' : 'radio_button_unchecked'}
-                  </span>
-                  {s}
-                </label>
-              ))}
-            </div>
-          </div>
+                  {DEPT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label} ({t.desc})
+                    </option>
+                  ))}
+                </Md3Select>
+              </div>
 
-          {/* Description */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--md-sys-color-on-surface-variant)' }}>
-              Description <span style={{ opacity: 0.6 }}>(optional)</span>
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Brief description of the department's functions..."
-              style={{ ...inputStyle, resize: 'vertical', minHeight: '80px' }}
-            />
-          </div>
+              <div className="dept-form-field">
+                <label className="dept-form-field__label">Operational Status</label>
+                <div className="dept-status-group">
+                  {['Active', 'Inactive'].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      className={`dept-status-pill ${singleStatus === s ? 'dept-status-pill--active' : ''}`}
+                      onClick={() => setSingleStatus(s)}
+                    >
+                      <span className="material-symbols-rounded">
+                        {singleStatus === s ? 'check_circle' : 'radio_button_unchecked'}
+                      </span>
+                      <span>{s}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          {/* Lifecycle note */}
-          <div style={{
-            padding: '12px 16px',
-            background: 'var(--md-sys-color-secondary-container)',
-            color: 'var(--md-sys-color-on-secondary-container)',
-            borderRadius: '12px',
-            fontSize: '12px',
-            lineHeight: '1.6',
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'flex-start',
-          }}>
-            <span className="material-symbols-rounded" style={{ fontSize: '18px', flexShrink: 0 }}>info</span>
-            <div>
-              <strong>Lifecycle Note:</strong> After creating this department, you can register staff and assign
-              a Head of Department from the department card in the main list.
+              <div className="dept-form-field">
+                <label className="dept-form-field__label">Description (optional)</label>
+                <textarea
+                  value={singleDescription}
+                  onChange={(e) => setSingleDescription(e.target.value)}
+                  rows={3}
+                  placeholder="Brief summary of clinical scope and department functions..."
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--md-sys-color-outline-variant, #e0e4df)',
+                    background: 'var(--md-sys-color-surface-container-lowest, #ffffff)',
+                    color: 'var(--md-sys-color-on-surface, #191c1b)',
+                    fontSize: '14px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                    minHeight: '80px',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+
+              <div className="dept-lifecycle-banner">
+                <span className="material-symbols-rounded">info</span>
+                <div>
+                  <strong>Lifecycle Note:</strong> Staff and Head of Department (HOD) are assigned from the main Department directory card after creation.
+                </div>
+              </div>
             </div>
+          ) : (
+            /* ════════════════════════════════════════════════════════════
+                MODE B: MULTI-DEPARTMENT BATCH ACCORDION BUILDER
+               ════════════════════════════════════════════════════════════ */
+            <div className="dept-accordion-section">
+              <div className="dept-section-header">
+                <span className="dept-section-title">
+                  Configured Departments ({departmentsList.length})
+                </span>
+                <span className="dept-section-hint">
+                  Configure multiple departments in one go. Click plus (+) to add more.
+                </span>
+              </div>
+
+              <div className="dept-accordion-list">
+                {departmentsList.map((dept, idx) => {
+                  const selectedTypeObj = DEPT_TYPES.find((t) => t.value === dept.type);
+                  const titleLabel = dept.name.trim()
+                    ? `${dept.code ? `[${dept.code.toUpperCase()}] ` : ''}${dept.name.trim()}`
+                    : `New Department #${idx + 1}`;
+                  const subLabel = `${selectedTypeObj?.label || dept.type} • ${dept.status}`;
+
+                  return (
+                    <div
+                      key={dept.id}
+                      className={`dept-accordion-card ${dept.isExpanded ? 'dept-accordion-card--expanded' : ''} ${Object.keys(dept.errors || {}).length > 0 ? 'dept-accordion-card--error' : ''}`}
+                    >
+                      {/* Accordion Card Header */}
+                      <div
+                        className="dept-accordion-header"
+                        onClick={() => handleToggleExpand(dept.id)}
+                      >
+                        <div className="dept-accordion-header__left">
+                          <span className="dept-item-badge">#{idx + 1}</span>
+                          <div className="dept-accordion-header__titles">
+                            <div className="dept-accordion-header__main">
+                              {titleLabel}
+                            </div>
+                            <div className="dept-accordion-header__sub">
+                              {subLabel}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div
+                          className="dept-accordion-header__actions"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {departmentsList.length > 1 && (
+                            <button
+                              type="button"
+                              className="dept-item-btn dept-item-btn--delete"
+                              title="Delete this department"
+                              onClick={() => handleRemoveDepartmentItem(dept.id)}
+                            >
+                              <span className="material-symbols-rounded">delete_outline</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            className="dept-item-btn"
+                            title={dept.isExpanded ? 'Collapse' : 'Expand'}
+                            onClick={() => handleToggleExpand(dept.id)}
+                          >
+                            <span className="material-symbols-rounded">
+                              {dept.isExpanded ? 'expand_less' : 'expand_more'}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Accordion Card Body */}
+                      {dept.isExpanded && (
+                        <div className="dept-accordion-body">
+                          <div className="dept-form-row">
+                            <Md3TextField
+                              label="Department Name *"
+                              value={dept.name}
+                              onChange={(e) => handleUpdateField(dept.id, 'name', e.target.value)}
+                              placeholder="e.g. General Medicine, Cardiology"
+                              error={dept.errors?.name}
+                              required
+                            />
+                            <Md3TextField
+                              label="Department Code *"
+                              value={dept.code}
+                              onChange={(e) => handleUpdateField(dept.id, 'code', e.target.value)}
+                              placeholder="e.g. GENMED, CARD"
+                              error={dept.errors?.code}
+                              required
+                            />
+                          </div>
+
+                          <div className="dept-form-field">
+                            <label className="dept-form-field__label">Department Type *</label>
+                            <Md3Select
+                              value={dept.type}
+                              onChange={(e) => handleUpdateField(dept.id, 'type', e.target.value)}
+                              required
+                            >
+                              {DEPT_TYPES.map((t) => (
+                                <option key={t.value} value={t.value}>
+                                  {t.label} ({t.desc})
+                                </option>
+                              ))}
+                            </Md3Select>
+                          </div>
+
+                          {selectedTypeObj && (
+                            <div className="dept-type-tag">
+                              {selectedTypeObj.desc}
+                            </div>
+                          )}
+
+                          <div className="dept-form-field">
+                            <label className="dept-form-field__label">Status</label>
+                            <div className="dept-status-group">
+                              {['Active', 'Inactive'].map((s) => (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  className={`dept-status-pill ${dept.status === s ? 'dept-status-pill--active' : ''}`}
+                                  onClick={() => handleUpdateField(dept.id, 'status', s)}
+                                >
+                                  <span className="material-symbols-rounded">
+                                    {dept.status === s ? 'check_circle' : 'radio_button_unchecked'}
+                                  </span>
+                                  <span>{s}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="dept-form-field">
+                            <label className="dept-form-field__label">Description (optional)</label>
+                            <textarea
+                              value={dept.description}
+                              onChange={(e) => handleUpdateField(dept.id, 'description', e.target.value)}
+                              rows={2}
+                              placeholder="Brief summary of clinical scope or hospital functions..."
+                              style={{
+                                width: '100%',
+                                padding: '12px 14px',
+                                borderRadius: '12px',
+                                border: '1px solid var(--md-sys-color-outline-variant, #e0e4df)',
+                                background: 'var(--md-sys-color-surface-container-lowest, #ffffff)',
+                                color: 'var(--md-sys-color-on-surface, #191c1b)',
+                                fontSize: '14px',
+                                fontFamily: 'inherit',
+                                resize: 'vertical',
+                                minHeight: '68px',
+                                boxSizing: 'border-box',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Centered Add Another Department Trigger Button */}
+              <div className="dept-add-trigger-row">
+                <button
+                  type="button"
+                  className="dept-add-another-btn"
+                  onClick={handleAddDepartmentItem}
+                >
+                  <span className="material-symbols-rounded">add_circle</span>
+                  <span>Add Another Department</span>
+                </button>
+              </div>
+
+              <div className="dept-lifecycle-banner">
+                <span className="material-symbols-rounded">info</span>
+                <div>
+                  <strong>Lifecycle Note:</strong> Staff profiles and HOD appointments can be assigned directly from the Department directory cards after creation.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── 3. Sticky Sheet Footer ── */}
+          <div className="dept-sheet-footer">
+            <Md3Button variant="text" type="button" onClick={handleAttemptClose}>
+              Cancel
+            </Md3Button>
+            <Md3Button
+              variant="filled"
+              type="submit"
+              loading={loading}
+              loadingText="Saving..."
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '6px' }}>
+                {isEdit ? 'save' : 'add'}
+              </span>
+              {isEdit
+                ? 'Save Changes'
+                : `Create ${departmentsList.length} Department${departmentsList.length > 1 ? 's' : ''}`}
+            </Md3Button>
           </div>
         </form>
-
-        {/* Footer */}
-        <div
-          style={{
-            padding: '16px 28px',
-            borderTop: '1px solid var(--md-sys-color-outline-variant)',
-            background: 'var(--md-sys-color-surface-container)',
-            display: 'flex', justifyContent: 'flex-end', gap: '12px',
-          }}
-        >
-          <button
-            onClick={onClose}
-            type="button"
-            style={{
-              padding: '10px 24px',
-              background: 'transparent',
-              border: '1px solid var(--md-sys-color-outline-variant)',
-              borderRadius: '100px',
-              cursor: 'pointer',
-              fontSize: '14px', fontWeight: 600,
-              color: 'var(--md-sys-color-on-surface)',
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={loading || !isFormPreFilled}
-            style={{
-              padding: '10px 28px',
-              background: isFormPreFilled && !loading ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-surface-container-high)',
-              color: isFormPreFilled && !loading ? 'var(--md-sys-color-on-primary)' : 'var(--md-sys-color-on-surface-variant)',
-              border: 'none',
-              borderRadius: '100px',
-              cursor: loading || !isFormPreFilled ? 'not-allowed' : 'pointer',
-              fontSize: '14px', fontWeight: 700,
-              transition: 'all 150ms ease',
-            }}
-          >
-            {loading ? 'Saving...' : department ? 'Save Changes' : 'Create Department'}
-          </button>
-        </div>
       </div>
-    </>
-  );
-};
+    </div>
 
-const inputStyle = {
-  width: '100%',
-  padding: '12px 14px',
-  borderRadius: '12px',
-  border: '1px solid var(--md-sys-color-outline-variant)',
-  background: 'var(--md-sys-color-surface-container-lowest)',
-  color: 'var(--md-sys-color-on-surface)',
-  fontSize: '14px',
-  outline: 'none',
-  boxSizing: 'border-box',
-  fontFamily: 'inherit',
+    <Md3UnsavedChangesDialog
+      isOpen={showDiscardConfirm}
+      title="Discard unsaved changes?"
+      message={isEdit
+        ? "You have modified department details. If you discard, your edits will not be saved."
+        : "You have unsaved department configurations in this builder. Are you sure you want to discard and exit?"
+      }
+      confirmLabel="Discard & Exit"
+      cancelLabel="Keep Editing"
+      onConfirm={handleConfirmDiscard}
+      onCancel={() => setShowDiscardConfirm(false)}
+    />
+  </>
+);
 };
 
 export default CreateDepartmentSheet;
+
+
 
 

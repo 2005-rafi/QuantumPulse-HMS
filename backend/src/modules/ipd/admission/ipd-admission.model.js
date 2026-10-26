@@ -12,7 +12,7 @@ const ADMISSION_STATUS = {
   CANCELLED: 'CANCELLED',
 };
 
-const ADMISSION_TYPES = ['EMERGENCY', 'PLANNED', 'TRANSFER'];
+const ADMISSION_TYPES = ['EMERGENCY', 'PLANNED', 'TRANSFER', 'SURGICAL', 'DAY_CARE'];
 
 const ipdAdmissionSchema = new mongoose.Schema(
   {
@@ -70,6 +70,17 @@ const ipdAdmissionSchema = new mongoose.Schema(
       enum: ADMISSION_TYPES,
       default: 'PLANNED',
     },
+    sourceVisitId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Visit',
+      default: null,
+      index: true,
+    },
+    conversionType: {
+      type: String,
+      enum: ['DIRECT_ADMISSION', 'OPD_CONVERSION', 'EMERGENCY_TRANSFER', 'SURGICAL_ADMISSION'],
+      default: 'DIRECT_ADMISSION',
+    },
     provisionalDiagnosis: {
       type: String,
       trim: true,
@@ -89,6 +100,42 @@ const ipdAdmissionSchema = new mongoose.Schema(
       type: String,
       enum: ['REGULAR_DIET', 'DIABETIC', 'RENAL', 'CARDIAC', 'LIQUID', 'SOFT', 'NPO'],
       default: 'REGULAR_DIET',
+    },
+    vitalsMonitoringPlan: {
+      frequency: {
+        type: String,
+        enum: ['Q1H', 'Q2H', 'Q4H', 'Q6H', 'Q8H', 'Q12H', 'DAILY', 'BID', 'TID', 'PRN', 'CONTINUOUS'],
+        default: 'Q4H',
+      },
+      orderedBy: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Staff',
+      },
+      orderedAt: {
+        type: Date,
+        default: Date.now,
+      },
+      specialInstructions: {
+        type: String,
+        trim: true,
+        default: '',
+      },
+      targetRanges: {
+        minSpO2: { type: Number, default: 95 },
+        minSysBp: { type: Number, default: 90 },
+        maxSysBp: { type: Number, default: 140 },
+        minHr: { type: Number, default: 60 },
+        maxHr: { type: Number, default: 100 },
+      },
+    },
+    lastVitalsRecordedAt: {
+      type: Date,
+      default: null,
+    },
+    nextVitalsDueAt: {
+      type: Date,
+      default: null,
+      index: true,
     },
     status: {
       type: String,
@@ -117,12 +164,24 @@ const ipdAdmissionSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
   }
 );
 
+// Backward-compatibility alias: admittingDoctorId -> primaryDoctorId
+ipdAdmissionSchema.virtual('admittingDoctorId', {
+  ref: 'Staff',
+  localField: 'primaryDoctorId',
+  foreignField: '_id',
+  justOne: true,
+});
+
 ipdAdmissionSchema.index({ status: 1, admissionDate: -1 });
+ipdAdmissionSchema.index({ status: 1, dischargeInitiatedAt: -1, createdAt: -1 });
 ipdAdmissionSchema.index({ patientId: 1, status: 1 });
 ipdAdmissionSchema.index({ primaryDoctorId: 1, status: 1 });
+ipdAdmissionSchema.index({ billId: 1 });
 
 module.exports = mongoose.model('IPDAdmission', ipdAdmissionSchema);
 module.exports.ADMISSION_STATUS = ADMISSION_STATUS;

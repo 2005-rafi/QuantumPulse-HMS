@@ -5,6 +5,7 @@ import { visitAPI } from '../../services/visitAPI';
 import { staffAPI } from '../../services/staffAPI';
 import ipdApi from '../../services/ipdApi';
 import api from '../../services/api';
+import tariffAPI from '../../services/tariffAPI';
 import { Md3TextField, Md3Select, Md3Button } from '../../components/md3/Md3FormComponents';
 import BedAllocationPicker from '../../components/ipd/BedAllocationPicker';
 import IpdAdmissionSlip from '../../components/ipd/IpdAdmissionSlip';
@@ -37,12 +38,12 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     street: '',
     pinCode: '',
     // Workflow Encounter Configuration
-    workflowType: 'OPD', // 'OPD' | 'IPD_MEDICAL' | 'IPD_SURGICAL' | 'NONE'
+    workflowType: 'OPD', // 'OPD' | 'EMERGENCY' | 'IPD_MEDICAL' | 'IPD_SURGICAL' | 'NONE'
     departmentId: '',
     doctorId: '',
     reasonForVisit: '',
     registrationFee: 0,
-    consultationFee: 500,
+    consultationFee: 300,
     paymentMethod: 'Cash',
     // Inpatient (IPD) Specific Configuration
     selectedBedId: '',
@@ -58,6 +59,8 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
 
   const [form, setForm] = useState(initialFormData);
   const [resolvedBedTariff, setResolvedBedTariff] = useState(null);
+  const [resolvedRegistrationTariff, setResolvedRegistrationTariff] = useState(null);
+  const [resolvedConsultationTariff, setResolvedConsultationTariff] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [fieldErrors, setFieldErrors] = useState({});
@@ -68,6 +71,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
   
   // Printable slip state for generated admission
   const [generatedAdmission, setGeneratedAdmission] = useState(null);
+  const pendingSuccessRef = useRef(null);
 
   useEffect(() => {
     const fetchDropdowns = async () => {
@@ -78,12 +82,31 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         ]);
 
         if (deptRes.status === 'fulfilled') {
-          setDepartments(deptRes.value.data?.data || deptRes.value.data || []);
+          const depts = deptRes.value.data?.data || deptRes.value.data || [];
+          setDepartments(depts);
+          const clinicalDepts = depts.filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC');
+          if (clinicalDepts.length > 0) {
+            const defaultDept = clinicalDepts.find((d) => d.name?.toLowerCase().includes('general medicine')) || clinicalDepts[0];
+            if (defaultDept) {
+              setForm((prev) => (prev.departmentId ? prev : { ...prev, departmentId: defaultDept._id }));
+            }
+          }
         }
 
         if (staffRes.status === 'fulfilled') {
-          const staffItems = staffRes.value.data?.items || staffRes.value.data?.data?.items || [];
-          setDoctors(staffItems.filter((s) => s.roleId?.name === 'Doctor'));
+          const rawStaff = staffRes.value?.data || staffRes.value;
+          const staffItems =
+            rawStaff?.items ||
+            rawStaff?.data?.items ||
+            rawStaff?.staff ||
+            (Array.isArray(rawStaff) ? rawStaff : []);
+          setDoctors(
+            staffItems.filter(
+              (s) =>
+                /Doctor|Surgeon/i.test(s.roleId?.name || s.role || '') ||
+                /Doctor|Surgeon|Physician/i.test(s.position || '')
+            )
+          );
         }
       } catch (err) {
         console.error('Failed to load departments/doctors dropdown data', err);
@@ -142,9 +165,58 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     });
   }, [doctors, form.departmentId]);
 
+  // Auto-resolve authoritative Registration and Consultation Tariffs
+  useEffect(() => {
+    if (form.workflowType === 'NONE') return;
+
+    let isMounted = true;
+    const resolveClinicalFees = async () => {
+      try {
+        const visitTypeParam = form.workflowType.startsWith('IPD') ? 'IPD' : form.workflowType;
+        const [regRes, consultRes] = await Promise.allSettled([
+          tariffAPI.resolvePrice({
+            category: 'REGISTRATION',
+            visitType: visitTypeParam,
+            departmentId: form.departmentId || undefined,
+          }),
+          tariffAPI.resolvePrice({
+            category: 'CONSULTATION',
+            visitType: visitTypeParam,
+            departmentId: form.departmentId || undefined,
+            staffId: form.doctorId || undefined,
+          })
+        ]);
+
+        if (isMounted) {
+          if (regRes.status === 'fulfilled') {
+            const regTariff = regRes.value.data?.data || regRes.value.data;
+            if (regTariff && typeof regTariff.amount === 'number') {
+              setResolvedRegistrationTariff(regTariff);
+              setForm((prev) => ({ ...prev, registrationFee: regTariff.amount }));
+            }
+          }
+          if (consultRes.status === 'fulfilled') {
+            const consultTariff = consultRes.value.data?.data || consultRes.value.data;
+            if (consultTariff && typeof consultTariff.amount === 'number') {
+              setResolvedConsultationTariff(consultTariff);
+              setForm((prev) => ({ ...prev, consultationFee: consultTariff.amount }));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[PatientRegistrationForm] Fee tariff resolution error:', err);
+      }
+    };
+
+    resolveClinicalFees();
+    return () => {
+      isMounted = false;
+    };
+  }, [form.workflowType, form.departmentId, form.doctorId]);
+
   // Auto-resolve authoritative bed tariff and minimum advance deposit for IPD Admissions
   useEffect(() => {
-    if (form.encounterType !== 'IPD' || !form.selectedBedId) {
+    if (!form.workflowType?.startsWith('IPD') || !form.selectedBedId) {
       setResolvedBedTariff(null);
       return;
     }
@@ -159,7 +231,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           sharingType: form.selectedBed?.sharingType,
           floorId: form.selectedBed?.floorId?._id || form.selectedBed?.floorId,
         });
-        const tariff = res.data?.data;
+        const tariff = res.data?.data || res.data;
         if (isMounted && tariff) {
           setResolvedBedTariff(tariff);
           setForm((prev) => ({
@@ -176,7 +248,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     return () => {
       isMounted = false;
     };
-  }, [form.encounterType, form.selectedBedId, form.selectedBed]);
+  }, [form.workflowType, form.selectedBedId, form.selectedBed]);
 
   const handleCountryChange = (e) => {
     const iso = e.target.value;
@@ -286,12 +358,59 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     }
 
     setFieldErrors(errors);
-    return Object.keys(errors).length === 0;
+    const errorKeys = Object.keys(errors);
+    if (errorKeys.length > 0) {
+      console.warn('[PatientRegistrationForm] Form validation failed. Errors:', errors);
+      const friendlyLabels = {
+        firstName: 'First Name',
+        lastName: 'Last Name',
+        dob: 'Date of Birth',
+        gender: 'Gender',
+        phone: 'Phone Number',
+        whatsapp: 'WhatsApp Number',
+        emergencyContactPhone: 'Emergency Contact Phone',
+        aadhaar: 'Aadhaar Number',
+        pinCode: 'PIN Code',
+        email: 'Email Address',
+        departmentId: form.workflowType.startsWith('IPD') ? 'Admitting Department' : 'Clinical Department',
+        doctorId: 'Doctor',
+        selectedBedId: 'Bed Selection',
+        provisionalDiagnosis: 'Provisional Diagnosis',
+      };
+      const missingList = errorKeys.map((k) => friendlyLabels[k] || k).join(', ');
+      setError(`Please complete required fields: ${missingList}`);
+
+      // Smoothly scroll to the first invalid input
+      const firstKey = errorKeys[0];
+      if (firstKey) {
+        setTimeout(() => {
+          const el = document.getElementById(firstKey) || document.querySelector(`[name="${firstKey}"]`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.focus?.();
+          }
+        }, 50);
+      }
+      return false;
+    }
+    return true;
   };
 
   const bypassCheckRef = useRef(false);
 
-  const handleCreateVisitForExisting = async (existingPatientId) => {
+  const handleSelectExistingPatient = (existingPatient) => {
+    setIsReviewingDuplicates(false);
+    setDuplicateMatches([]);
+    if (onSuccess) {
+      onSuccess({
+        patient: existingPatient,
+        visit: existingPatient.activeVisit || null,
+        isExistingSelected: true,
+      });
+    }
+  };
+
+  const handleCreateVisitForExisting = async (existingPatientId, allowConcurrent = false) => {
     setLoading(true);
     setError(null);
     try {
@@ -307,7 +426,8 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           carePlan: form.carePlan || '',
           dietTier: form.dietTier || 'REGULAR_DIET',
           initialDepositAmount: Number(form.initialDepositAmount) || 0,
-          depositPaymentMethod: form.depositPaymentMethod || 'Cash',
+          paymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
+          depositPaymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
         };
         const admitRes = await ipdApi.admitPatient(admissionPayload);
         const admissionData = admitRes.data?.data;
@@ -324,13 +444,14 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         const visitPayload = {
           patientId: existingPatientId,
           visitType: form.workflowType === 'NONE' ? 'OPD' : form.workflowType,
+          allowConcurrent,
           ...(form.departmentId && { departmentId: form.departmentId }),
           ...(form.doctorId && { doctorId: form.doctorId }),
           ...(form.reasonForVisit && { reasonForVisit: form.reasonForVisit }),
           receptionPayment: {
-            registrationFee: 0,
-            consultationFee: Number(form.consultationFee) || 0,
-            paymentMethod: form.paymentMethod
+            registrationFee: Number(form.registrationFee) || 0,
+            consultationFee: form.consultationFee != null && !isNaN(Number(form.consultationFee)) ? Number(form.consultationFee) : 0,
+            paymentMethod: form.paymentMethod || 'Cash'
           }
         };
 
@@ -357,9 +478,14 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
+    console.log('[PatientRegistrationForm] handleSubmit triggered', {
+      workflowType: form.workflowType,
+      departmentId: form.departmentId,
+      firstName: form.firstName,
+      lastName: form.lastName,
+    });
 
     if (!validateForm()) {
-      setError('Please correct the highlighted fields before submitting.');
       return;
     }
 
@@ -373,10 +499,10 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         dob: form.dob,
         gender: form.gender,
         bloodGroup: form.bloodGroup,
-        aadhaar: form.aadhaar ? form.aadhaar.trim() : null,
+        ...(form.aadhaar && form.aadhaar.trim() ? { aadhaar: form.aadhaar.trim() } : {}),
         phone: form.phone.trim(),
-        whatsapp: form.whatsapp ? form.whatsapp.trim() : null,
-        email: form.email ? form.email.trim() : null,
+        ...(form.whatsapp && form.whatsapp.trim() ? { whatsapp: form.whatsapp.trim() } : {}),
+        ...(form.email && form.email.trim() ? { email: form.email.trim().toLowerCase() } : {}),
         address: {
           street: form.street.trim(),
           city: form.city.trim(),
@@ -419,7 +545,8 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           carePlan: form.carePlan || '',
           dietTier: form.dietTier || 'REGULAR_DIET',
           initialDepositAmount: Number(form.initialDepositAmount) || 0,
-          depositPaymentMethod: form.depositPaymentMethod || 'Cash',
+          paymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
+          depositPaymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
         };
 
         const admitRes = await ipdApi.admitPatient(admissionPayload);
@@ -435,29 +562,28 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           depositPaymentMethod: form.depositPaymentMethod,
         };
 
-        setGeneratedAdmission(completeSlipData);
+        pendingSuccessRef.current = {
+          patient: registeredPatient,
+          admission: admissionData,
+          isIpd: true,
+        };
 
-        if (onSuccess) {
-          onSuccess({
-            patient: registeredPatient,
-            admission: admissionData,
-            isIpd: true,
-          });
-        }
+        setGeneratedAdmission(completeSlipData);
       }
-      // Case B: Standard OPD Visit
-      else if (form.workflowType === 'OPD') {
+      // Case B: Standard OPD or Emergency Visit
+      else if (form.workflowType === 'OPD' || form.workflowType === 'EMERGENCY') {
         const registerPayload = {
           patient: patientPayload,
+          workflowType: form.workflowType,
           visit: {
-            visitType: 'OPD',
+            visitType: form.workflowType === 'EMERGENCY' ? 'EMERGENCY' : 'OPD',
             ...(form.departmentId && { departmentId: form.departmentId }),
             ...(form.doctorId && { doctorId: form.doctorId }),
-            ...(form.reasonForVisit && { reasonForVisit: form.reasonForVisit }),
+            reasonForVisit: form.reasonForVisit || (form.workflowType === 'EMERGENCY' ? 'Emergency Evaluation' : ''),
             receptionPayment: {
               registrationFee: Number(form.registrationFee) || 0,
-              consultationFee: Number(form.consultationFee) || 0,
-              paymentMethod: form.paymentMethod
+              consultationFee: form.consultationFee != null && !isNaN(Number(form.consultationFee)) ? Number(form.consultationFee) : 0,
+              paymentMethod: form.paymentMethod || 'Cash'
             }
           }
         };
@@ -486,6 +612,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       setForm(initialFormData);
       setFieldErrors({});
     } catch (err) {
+      console.error('[PatientRegistrationForm] Registration submission error:', err);
       setError(err.response?.data?.message || err.message || 'Registration failed. Please check inputs.');
     } finally {
       setLoading(false);
@@ -529,15 +656,68 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                   {match.matchConfidence} MATCH
                 </div>
               </div>
-              <div className="duplicate-card-actions">
-                <button 
-                  type="button"
-                  className="md3-btn md3-btn--filled"
-                  onClick={() => handleCreateVisitForExisting(match._id)}
-                  disabled={loading}
+
+              {/* Active Hospital Encounter Alert Banner */}
+              {match.activeEncountersCount > 0 && (
+                <div
+                  className="duplicate-active-banner"
+                  style={{
+                    backgroundColor: '#fffbeb',
+                    border: '1px solid #fde68a',
+                    borderRadius: '8px',
+                    padding: '9px 12px',
+                    margin: '10px 0',
+                    fontSize: '0.82rem',
+                    color: '#92400e',
+                  }}
                 >
-                  {form.workflowType.startsWith('IPD') ? 'Admit Existing Patient to IPD' : 'Create OPD Visit for Patient'}
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}>
+                    <span className="material-symbols-rounded" style={{ fontSize: '18px', color: '#d97706' }}>warning</span>
+                    <span>Patient has {match.activeEncountersCount} active encounter(s) in progress</span>
+                  </div>
+                  <div style={{ marginTop: '5px', paddingLeft: '24px', fontSize: '0.78rem' }}>
+                    {match.activeVisitsSummary?.map((av, idx) => (
+                      <div key={idx} style={{ marginTop: '3px' }}>
+                        Token: <strong style={{ color: '#b45309' }}>{av.tokenString}</strong> — {av.department} ({av.statusMeta?.label || av.status})
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="duplicate-card-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {match.activeEncountersCount > 0 ? (
+                  <>
+                    <button
+                      type="button"
+                      className="md3-btn md3-btn--filled"
+                      onClick={() => handleSelectExistingPatient(match)}
+                      disabled={loading}
+                      title="Open this patient's active encounter in reception"
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '16px', marginRight: '4px' }}>folder_open</span>
+                      <span>Open Active Patient Record</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="md3-btn md3-btn--outlined"
+                      onClick={() => handleCreateVisitForExisting(match._id, true)}
+                      disabled={loading}
+                      title="Register an additional concurrent consultation (multi-department care)"
+                    >
+                      <span>Add Concurrent Visit</span>
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    type="button"
+                    className="md3-btn md3-btn--filled"
+                    onClick={() => handleCreateVisitForExisting(match._id, false)}
+                    disabled={loading}
+                  >
+                    {form.workflowType.startsWith('IPD') ? 'Admit Existing Patient to IPD' : 'Create OPD Visit for Patient'}
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -603,7 +783,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               label="First Name *"
               value={form.firstName}
               onChange={handleChange}
-              placeholder="e.g. John"
               disabled={loading}
               error={fieldErrors.firstName}
             />
@@ -613,7 +792,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               label="Last Name *"
               value={form.lastName}
               onChange={handleChange}
-              placeholder="e.g. Doe"
               disabled={loading}
               error={fieldErrors.lastName}
             />
@@ -641,52 +819,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 { value: 'Other', label: 'Other' }
               ]}
             />
-          </div>
-        </div>
-
-        {/* Section 2: Contact & Emergency */}
-        <div className="reg-section">
-          <h4 className="reg-section-title">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-            </svg>
-            2. Contact &amp; Emergency Information
-          </h4>
-
-          <div className="reg-grid-2">
-            <Md3TextField
-              id="phone"
-              name="phone"
-              type="tel"
-              label={form.countryCode === 'IN' ? 'Mobile Phone (10 digits) *' : 'Phone Number *'}
-              value={form.phone}
-              onChange={handleChange}
-              placeholder={form.countryCode === 'IN' ? '9876543210' : '+1 234 567 8900'}
-              disabled={loading}
-              error={fieldErrors.phone}
-            />
-            <Md3TextField
-              id="whatsapp"
-              name="whatsapp"
-              type="tel"
-              label={form.countryCode === 'IN' ? 'WhatsApp (Optional, 10 digits)' : 'WhatsApp (Optional)'}
-              value={form.whatsapp}
-              onChange={handleChange}
-              placeholder={form.countryCode === 'IN' ? '9876543210' : '+1 234 567 8900'}
-              disabled={loading}
-              error={fieldErrors.whatsapp}
-            />
-            <Md3TextField
-              id="email"
-              name="email"
-              type="email"
-              label="Email Address (Optional)"
-              value={form.email}
-              onChange={handleChange}
-              placeholder="patient@example.com"
-              disabled={loading}
-              error={fieldErrors.email}
-            />
             <Md3Select
               id="bloodGroup"
               name="bloodGroup"
@@ -695,7 +827,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               onChange={handleChange}
               disabled={loading}
               options={[
-                { value: 'Unknown', label: 'Unknown' },
+                { value: '', label: '-- Select --' },
                 { value: 'A+', label: 'A+' },
                 { value: 'A-', label: 'A-' },
                 { value: 'B+', label: 'B+' },
@@ -703,16 +835,102 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 { value: 'AB+', label: 'AB+' },
                 { value: 'AB-', label: 'AB-' },
                 { value: 'O+', label: 'O+' },
-                { value: 'O-', label: 'O-' }
+                { value: 'O-', label: 'O-' },
+                { value: 'Unknown', label: 'Unknown' }
               ]}
+            />
+            <Md3Select
+              id="maritalStatus"
+              name="maritalStatus"
+              label="Marital Status"
+              value={form.maritalStatus}
+              onChange={handleChange}
+              disabled={loading}
+              options={[
+                { value: '', label: '-- Select --' },
+                { value: 'Single', label: 'Single' },
+                { value: 'Married', label: 'Married' },
+                { value: 'Divorced', label: 'Divorced' },
+                { value: 'Widowed', label: 'Widowed' }
+              ]}
+            />
+          </div>
+        </div>
+
+        {/* Section 2: Contact & Identification */}
+        <div className="reg-section">
+          <h4 className="reg-section-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            Contact &amp; Identification
+          </h4>
+
+          <div className="reg-grid-2">
+            <Md3TextField
+              id="phone"
+              name="phone"
+              type="tel"
+              label="Phone Number *"
+              value={form.phone}
+              onChange={handleChange}
+              disabled={loading}
+              error={fieldErrors.phone}
+            />
+            <Md3TextField
+              id="alternatePhone"
+              name="alternatePhone"
+              type="tel"
+              label="Alternate Phone"
+              value={form.alternatePhone}
+              onChange={handleChange}
+              disabled={loading}
+              error={fieldErrors.alternatePhone}
+            />
+            <Md3TextField
+              id="email"
+              name="email"
+              type="email"
+              label="Email Address"
+              value={form.email}
+              onChange={handleChange}
+              disabled={loading}
+              error={fieldErrors.email}
+            />
+            <Md3Select
+              id="idType"
+              name="idType"
+              label="Government ID Type"
+              value={form.idType}
+              onChange={handleChange}
+              disabled={loading}
+              options={
+                form.countryCode === 'IN'
+                  ? [
+                      { value: 'Aadhaar', label: 'Aadhaar Card' },
+                      { value: 'Passport', label: 'Passport' },
+                      { value: 'Voter ID', label: 'Voter ID' },
+                      { value: 'Driving License', label: 'Driving License' },
+                      { value: 'PAN', label: 'PAN Card' }
+                    ]
+                  : [
+                      { value: 'Passport', label: 'Passport' },
+                      { value: 'National ID', label: 'National Identity Card' },
+                      { value: 'Driving License', label: 'Driver License' },
+                      { value: 'Other', label: 'Other Government ID' }
+                    ]
+              }
             />
             <Md3TextField
               id="aadhaar"
               name="aadhaar"
-              label={form.countryCode === 'IN' ? 'Aadhaar (12 digits, Optional)' : 'National ID / SSN (Optional)'}
+              label={
+                form.idType === 'Aadhaar'
+                  ? 'Aadhaar (12 digits)'
+                  : `${form.idType || 'Govt ID'} Number`
+              }
               value={form.aadhaar}
               onChange={handleChange}
-              placeholder={form.countryCode === 'IN' ? '123456789012' : 'ID number'}
               disabled={loading}
               error={fieldErrors.aadhaar}
             />
@@ -722,7 +940,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               label="Emergency Contact Name"
               value={form.emergencyContactName}
               onChange={handleChange}
-              placeholder="e.g. Jane Doe"
               disabled={loading}
             />
             <Md3TextField
@@ -731,7 +948,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               label="Emergency Contact Relation"
               value={form.emergencyContactRelation}
               onChange={handleChange}
-              placeholder="e.g. Spouse, Parent"
               disabled={loading}
             />
             <Md3TextField
@@ -741,7 +957,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               label="Emergency Contact Phone"
               value={form.emergencyContactPhone}
               onChange={handleChange}
-              placeholder={form.countryCode === 'IN' ? '9876543210' : '+1 234 567 8900'}
               disabled={loading}
               error={fieldErrors.emergencyContactPhone}
             />
@@ -755,13 +970,13 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
               <circle cx="12" cy="10" r="3" />
             </svg>
-            3. Address Information
+            Address Information
           </h4>
 
           <div className="reg-grid-2">
             <div className="col-span-2">
               <Md3Select
-                id="country"
+                id="countryCode"
                 name="countryCode"
                 label="Country *"
                 value={form.countryCode}
@@ -774,7 +989,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               <Md3Select
                 id="state"
                 name="state"
-                label="State / Province *"
+                label="State / Province"
                 value={form.state}
                 onChange={handleStateChange}
                 disabled={loading}
@@ -787,7 +1002,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 label="State / Province"
                 value={form.state}
                 onChange={handleChange}
-                placeholder="e.g. State / Region"
                 disabled={loading}
               />
             )}
@@ -816,7 +1030,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 label="City / Town"
                 value={form.city}
                 onChange={handleChange}
-                placeholder="e.g. City / Town"
                 disabled={loading}
               />
             )}
@@ -827,7 +1040,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 label="Street / House No. / Area"
                 value={form.street}
                 onChange={handleChange}
-                placeholder="Full street address"
                 disabled={loading}
               />
             </div>
@@ -838,7 +1050,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 label={form.countryCode === 'IN' ? 'PIN Code (6 digits)' : 'Postal / ZIP Code'}
                 value={form.pinCode}
                 onChange={handleChange}
-                placeholder={form.countryCode === 'IN' ? '6-digit PIN code' : 'Postal code'}
                 disabled={loading}
                 error={fieldErrors.pinCode}
               />
@@ -864,6 +1075,18 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               <div>
                 <span className="reg-workflow-btn-label">OPD Walk-in</span>
                 <span className="reg-workflow-btn-sub">Outpatient queue token</span>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className={`reg-workflow-btn ${form.workflowType === 'EMERGENCY' ? 'is-active' : ''}`}
+              onClick={() => setForm(p => ({ ...p, workflowType: 'EMERGENCY' }))}
+            >
+              <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-error, #ba1a1a)' }}>e911_emergency</span>
+              <div>
+                <span className="reg-workflow-btn-label">Emergency / Trauma</span>
+                <span className="reg-workflow-btn-sub">Immediate ER ticket &amp; triage</span>
               </div>
             </button>
 
@@ -904,8 +1127,8 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
             </button>
           </div>
 
-          {/* Sub-form A: OPD Outpatient Configuration */}
-          {form.workflowType === 'OPD' && (
+          {/* Sub-form A: OPD / Emergency Outpatient Configuration */}
+          {(form.workflowType === 'OPD' || form.workflowType === 'EMERGENCY') && (
             <div className="reg-grid-2">
               <Md3Select
                 id="departmentId"
@@ -916,14 +1139,40 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                 disabled={loading}
                 error={fieldErrors.departmentId}
               >
-                <option value="">-- Select Clinical Department --</option>
-                {departments
-                  .filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC')
-                  .map((d) => (
-                    <option key={d._id} value={d._id}>
-                      {d.name}
-                    </option>
-                  ))}
+                <option value="">-- Select Department --</option>
+                {departments.some((d) => d.type === 'CLINICAL') && (
+                  <optgroup label="Clinical Departments">
+                    {departments
+                      .filter((d) => d.type === 'CLINICAL')
+                      .map((d) => (
+                        <option key={d._id} value={d._id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                )}
+                {departments.some((d) => d.type === 'DIAGNOSTIC') && (
+                  <optgroup label="Diagnostic & Laboratory Departments">
+                    {departments
+                      .filter((d) => d.type === 'DIAGNOSTIC')
+                      .map((d) => (
+                        <option key={d._id} value={d._id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                )}
+                {departments.some((d) => d.type === 'CLINICAL/DIAGNOSTIC' || (!['CLINICAL', 'DIAGNOSTIC'].includes(d.type))) && (
+                  <optgroup label="Clinical & Diagnostic Units">
+                    {departments
+                      .filter((d) => d.type === 'CLINICAL/DIAGNOSTIC' || (!['CLINICAL', 'DIAGNOSTIC'].includes(d.type)))
+                      .map((d) => (
+                        <option key={d._id} value={d._id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </optgroup>
+                )}
               </Md3Select>
 
               <Md3Select
@@ -949,34 +1198,40 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                   label="Reason for Visit / Chief Complaint"
                   value={form.reasonForVisit}
                   onChange={handleChange}
-                  placeholder="e.g. Fever, Routine checkup"
                   disabled={loading}
                 />
               </div>
 
-              <Md3TextField
-                id="consultationFee"
-                name="consultationFee"
-                type="number"
-                label={`Consultation Fee (${CURRENCY_SYMBOL})`}
-                value={form.consultationFee}
-                onChange={handleChange}
-                disabled={loading}
-              />
-              <Md3Select
-                id="paymentMethod"
-                name="paymentMethod"
-                label="Payment Method *"
-                value={form.paymentMethod}
-                onChange={handleChange}
-                disabled={loading}
-                options={[
-                  { value: 'Cash', label: 'Cash' },
-                  { value: 'Card', label: 'Card' },
-                  { value: 'UPI', label: 'UPI' },
-                  { value: 'Insurance', label: 'Insurance' }
-                ]}
-              />
+              <div>
+                <Md3TextField
+                  id="registrationFee"
+                  name="registrationFee"
+                  type="number"
+                  label={`Registration Fee (${CURRENCY_SYMBOL})`}
+                  value={form.registrationFee}
+                  readOnly={true}
+                  disabled={loading}
+                  helperText="🔒 Hospital Standard Tariff (Read Only)"
+                  error={fieldErrors.registrationFee}
+                />
+              </div>
+
+              <div>
+                <Md3Select
+                  id="paymentMethod"
+                  name="paymentMethod"
+                  label="Payment Method *"
+                  value={form.paymentMethod}
+                  onChange={handleChange}
+                  disabled={loading}
+                  options={[
+                    { value: 'Cash', label: 'Cash' },
+                    { value: 'Card', label: 'Card' },
+                    { value: 'UPI', label: 'UPI' },
+                    { value: 'Insurance', label: 'Insurance' }
+                  ]}
+                />
+              </div>
             </div>
           )}
 
@@ -995,13 +1250,28 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                   error={fieldErrors.departmentId}
                 >
                   <option value="">-- Select Inpatient Department --</option>
-                  {departments
-                    .filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC')
-                    .map((d) => (
-                      <option key={d._id} value={d._id}>
-                        {d.name}
-                      </option>
-                    ))}
+                  {departments.some((d) => d.type === 'CLINICAL') && (
+                    <optgroup label="Clinical Departments">
+                      {departments
+                        .filter((d) => d.type === 'CLINICAL')
+                        .map((d) => (
+                          <option key={d._id} value={d._id}>
+                            {d.name}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
+                  {departments.some((d) => d.type === 'CLINICAL/DIAGNOSTIC' || (!['CLINICAL', 'DIAGNOSTIC'].includes(d.type))) && (
+                    <optgroup label="Clinical & Diagnostic Units">
+                      {departments
+                        .filter((d) => d.type === 'CLINICAL/DIAGNOSTIC' || (!['CLINICAL', 'DIAGNOSTIC'].includes(d.type)))
+                        .map((d) => (
+                          <option key={d._id} value={d._id}>
+                            {d.name}
+                          </option>
+                        ))}
+                    </optgroup>
+                  )}
                 </Md3Select>
 
                 <Md3Select
@@ -1044,35 +1314,40 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                     background: 'var(--md-sys-color-surface-container-low, #f7fbf8)',
                     border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
                     borderRadius: '12px',
-                    padding: '12px 16px',
+                    padding: '14px 16px',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    flexWrap: 'wrap',
-                    gap: '12px',
+                    flexDirection: 'column',
+                    gap: '8px',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary, #006a57)', fontSize: '20px' }}>
-                      price_check
-                    </span>
-                    <div>
-                      <strong style={{ fontSize: '0.88rem', color: 'var(--md-sys-color-on-surface)' }}>
-                        Authoritative Bed Tariff: {CURRENCY_SYMBOL}{resolvedBedTariff.dailyRate}/day
-                      </strong>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
-                        Hourly: {CURRENCY_SYMBOL}{resolvedBedTariff.hourlyRate}/hr • Grace: {resolvedBedTariff.gracePeriodMinutes || 60}m
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary, #006a57)', fontSize: '20px' }}>
+                        hotel
                       </span>
+                      <div>
+                        <strong style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)' }}>
+                          {resolvedBedTariff.explanation || `Inpatient Bed Tariff: ${CURRENCY_SYMBOL}${resolvedBedTariff.dailyRate}/day`}
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                          Standard Rate: {CURRENCY_SYMBOL}{resolvedBedTariff.dailyRate}/24hr • Hourly: {CURRENCY_SYMBOL}{resolvedBedTariff.hourlyRate}/hr • Grace: {resolvedBedTariff.gracePeriodMinutes || 60}m
+                        </span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                        Required Min Advance Deposit
+                      </span>
+                      <strong style={{ fontSize: '0.95rem', color: resolvedBedTariff.minAdvanceDeposit > 0 ? '#b45309' : 'inherit' }}>
+                        {CURRENCY_SYMBOL}{resolvedBedTariff.minAdvanceDeposit ?? 0}
+                      </strong>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
-                      Required Min Advance Deposit
-                    </span>
-                    <strong style={{ fontSize: '0.92rem', color: resolvedBedTariff.minAdvanceDeposit > 0 ? '#b45309' : 'inherit' }}>
-                      {CURRENCY_SYMBOL}{resolvedBedTariff.minAdvanceDeposit ?? 0}
-                    </strong>
-                  </div>
+                  {resolvedBedTariff.instructionNote && (
+                    <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', borderTop: '1px dashed var(--md-sys-color-outline-variant)', paddingTop: '6px', opacity: 0.9 }}>
+                      {resolvedBedTariff.instructionNote}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1084,7 +1359,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                   label="Provisional Diagnosis *"
                   value={form.provisionalDiagnosis}
                   onChange={handleChange}
-                  placeholder="e.g. Acute Appendicitis, Severe Dengue"
                   disabled={loading}
                   error={fieldErrors.provisionalDiagnosis}
                 />
@@ -1114,7 +1388,6 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                     label="Chief Complaints &amp; Admission Notes"
                     value={form.chiefComplaints}
                     onChange={handleChange}
-                    placeholder="e.g. High fever with abdominal pain since 3 days"
                     disabled={loading}
                   />
                 </div>
@@ -1150,6 +1423,18 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           )}
         </div>
 
+        {/* Bottom Error Notification */}
+        {error && (
+          <div className="reg-error-alert reg-error-alert-bottom" role="alert" style={{ marginBottom: '8px' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            <span>{error}</span>
+          </div>
+        )}
+
         {/* Footer Actions */}
         <div className="reg-submit-row">
           {onCancel && (
@@ -1165,6 +1450,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           )}
           <Md3Button
             type="submit"
+            onClick={(e) => handleSubmit(e)}
             disabled={loading}
             loading={loading}
             loadingText={
@@ -1176,6 +1462,8 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           >
             {form.workflowType === 'OPD'
               ? 'Register & Issue OPD Ticket'
+              : form.workflowType === 'EMERGENCY'
+              ? 'Register & Issue Emergency Ticket'
               : form.workflowType === 'IPD_MEDICAL'
               ? 'Register & Admit to IPD'
               : form.workflowType === 'IPD_SURGICAL'
@@ -1190,7 +1478,13 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         <IpdAdmissionSlip
           admissionData={generatedAdmission}
           isOpen={!!generatedAdmission}
-          onClose={() => setGeneratedAdmission(null)}
+          onClose={() => {
+            const pending = pendingSuccessRef.current;
+            setGeneratedAdmission(null);
+            if (pending && onSuccess) {
+              onSuccess(pending);
+            }
+          }}
         />
       )}
     </>

@@ -1,4 +1,5 @@
 const Patient = require('./patient.model');
+const { executeIsolatedQuery, executeIsolatedAggregate } = require('../../core/database/read-write-isolation');
 const { encryptDeterministic, encryptRandom, decrypt } = require('../../core/utils/encryption');
 
 // Helper to encrypt a patient record for DB write
@@ -6,13 +7,43 @@ const encryptPatient = (data) => {
   if (!data) return data;
   const clone = { ...data };
   
-  if (clone.aadhaar) clone.aadhaar = encryptDeterministic(clone.aadhaar);
-  if (clone.phone) clone.phone = encryptDeterministic(clone.phone);
-  if (clone.whatsapp) clone.whatsapp = encryptDeterministic(clone.whatsapp);
-  if (clone.email) clone.email = encryptDeterministic(clone.email);
-  if (clone.parentsName) clone.parentsName = encryptRandom(clone.parentsName);
-  if (clone.allergies) clone.allergies = encryptRandom(clone.allergies);
-  if (clone.operations) clone.operations = encryptRandom(clone.operations);
+  if (clone.aadhaar && typeof clone.aadhaar === 'string' && clone.aadhaar.trim()) {
+    clone.aadhaar = encryptDeterministic(clone.aadhaar.trim());
+  } else {
+    delete clone.aadhaar;
+  }
+
+  if (clone.phone) clone.phone = encryptDeterministic(clone.phone.trim());
+
+  if (clone.whatsapp && typeof clone.whatsapp === 'string' && clone.whatsapp.trim()) {
+    clone.whatsapp = encryptDeterministic(clone.whatsapp.trim());
+  } else {
+    delete clone.whatsapp;
+  }
+
+  if (clone.email && typeof clone.email === 'string' && clone.email.trim()) {
+    clone.email = encryptDeterministic(clone.email.trim().toLowerCase());
+  } else {
+    delete clone.email;
+  }
+
+  if (clone.parentsName && typeof clone.parentsName === 'string' && clone.parentsName.trim()) {
+    clone.parentsName = encryptRandom(clone.parentsName.trim());
+  } else {
+    delete clone.parentsName;
+  }
+
+  if (clone.allergies && typeof clone.allergies === 'string' && clone.allergies.trim()) {
+    clone.allergies = encryptRandom(clone.allergies.trim());
+  } else {
+    delete clone.allergies;
+  }
+
+  if (clone.operations && typeof clone.operations === 'string' && clone.operations.trim()) {
+    clone.operations = encryptRandom(clone.operations.trim());
+  } else {
+    delete clone.operations;
+  }
   
   if (clone.address) {
     clone.address = { ...clone.address };
@@ -117,33 +148,66 @@ const create = async (data, options = {}) => {
   return decryptPatient(doc);
 };
 
-const findById = async (id) => {
-  const doc = await Patient.findById(id).populate('medicalHistory.addedBy', 'fullName role').lean();
+const findById = async (id, includeDeleted = false) => {
+  const query = { _id: id };
+  if (!includeDeleted) query.isDeleted = { $ne: true };
+  const doc = await executeIsolatedQuery(Patient, (m) => m.findOne(query).populate('medicalHistory.addedBy', 'fullName role'));
   return decryptPatient(doc);
 };
 
-const findByMrn = async (mrn) => {
-  const doc = await Patient.findOne({ mrn }).populate('medicalHistory.addedBy', 'fullName role').lean();
+const findByMrn = async (mrn, includeDeleted = false) => {
+  if (!mrn) return null;
+  const rawMrn = String(mrn).trim();
+  const cleanUpper = rawMrn.toUpperCase();
+
+  // Support formatted MRN, raw query, and unhyphenated barcode payload (e.g. QPO2600000018)
+  const candidates = [rawMrn, cleanUpper];
+  const unhyphenatedMatch = cleanUpper.match(/^([A-Z]{2,6})(\d{2})(\d{7})(\d)$/);
+  if (unhyphenatedMatch) {
+    const [, code, yr, seq, chk] = unhyphenatedMatch;
+    candidates.push(`${code}-${yr}-${seq}-${chk}`);
+  }
+
+  const query = {
+    $or: [
+      { mrn: { $in: candidates } },
+      { previousMrns: { $in: candidates } }
+    ]
+  };
+  if (!includeDeleted) query.isDeleted = { $ne: true };
+  const doc = await executeIsolatedQuery(Patient, (m) => m.findOne(query).populate('medicalHistory.addedBy', 'fullName role'));
   return decryptPatient(doc);
 };
 
 const findDuplicates = async (filter) => {
-  const docs = await Patient.find(filter).lean();
+  const finalFilter = { ...filter };
+  if (finalFilter.isDeleted === undefined) {
+    finalFilter.isDeleted = { $ne: true };
+  }
+  const docs = await executeIsolatedQuery(Patient, (m) => m.find(finalFilter));
   return decryptPatient(docs);
 };
 
 const search = async (filter = {}, page = 1, limit = 20, sort = { createdAt: -1, _id: -1 }, projection = null) => {
-  let query = Patient.find(filter);
+  const finalFilter = { ...filter };
+  if (finalFilter.isDeleted === undefined) {
+    finalFilter.isDeleted = { $ne: true };
+  }
+  let query = Patient.find(finalFilter);
   if (projection) query = query.select(projection);
-  const docs = await query
-    .sort(sort)
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .lean();
+  const docs = await executeIsolatedQuery(Patient, () =>
+    query.sort(sort).skip((page - 1) * limit).limit(limit)
+  );
   return decryptPatient(docs);
 };
 
-const countDocuments = (filter = {}) => Patient.countDocuments(filter);
+const countDocuments = (filter = {}) => {
+  const finalFilter = { ...filter };
+  if (finalFilter.isDeleted === undefined) {
+    finalFilter.isDeleted = { $ne: true };
+  }
+  return Patient.countDocuments(finalFilter);
+};
 
 const update = async (id, data) => {
   const encrypted = encryptPatient(data);
@@ -160,7 +224,7 @@ const addMedicalHistory = async (id, historyData) => {
 };
 
 const aggregateSearch = async (pipeline) => {
-  const results = await Patient.aggregate(pipeline);
+  const results = await executeIsolatedAggregate(Patient, pipeline);
   const metadata = results[0]?.metadata[0] || { total: 0 };
   const data = results[0]?.data || [];
   return {
@@ -170,3 +234,4 @@ const aggregateSearch = async (pipeline) => {
 };
 
 module.exports = { create, findById, findByMrn, findDuplicates, search, countDocuments, update, addMedicalHistory, aggregateSearch, decryptPatient, encryptPatient };
+

@@ -13,16 +13,42 @@ const useAutoRefresh = (fetchFn, intervalMs = 30000, deps = []) => {
       });
     }
 
-    intervalRef.current = setInterval(() => {
-      stableFetch();
-    }, intervalMs);
+    const startPolling = () => {
+      if (!intervalRef.current) {
+        intervalRef.current = setInterval(() => {
+          stableFetch();
+        }, intervalMs);
+      }
+    };
 
-    return () => {
-      cancelled = true;
+    const stopPolling = () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        if (!cancelled) {
+          stableFetch();
+        }
+        startPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    if (!document.hidden) {
+      startPolling();
+    }
+
+    return () => {
+      cancelled = true;
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [stableFetch, intervalMs]);
 

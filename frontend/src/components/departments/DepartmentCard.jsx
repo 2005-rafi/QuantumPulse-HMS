@@ -1,5 +1,6 @@
 import React from 'react';
 import { Md3Avatar } from '../md3/Md3Widgets';
+import { cleanClinicalText } from '../../utils/clinicalText';
 import './DepartmentCard.css';
 
 const TYPE_COLORS = {
@@ -11,8 +12,9 @@ const TYPE_COLORS = {
 };
 
 const getDeptInitials = (name) => {
-  if (!name) return 'DP';
-  return name
+  const clean = cleanClinicalText(name);
+  if (!clean) return 'DP';
+  return clean
     .split(' ')
     .filter(Boolean)
     .map((part) => part[0])
@@ -40,14 +42,16 @@ export const DepartmentCard = ({
   const isInactive = department.status === 'Inactive';
   const typeColor = TYPE_COLORS[department.type] || TYPE_COLORS.SUPPORT;
   const hod = department.headOfDepartment;
-  const initials = getDeptInitials(department.name);
+  const cleanName = cleanClinicalText(department.name);
+  const cleanCode = cleanClinicalText(department.code);
+  const initials = getDeptInitials(cleanName);
   const vitalCount = department.vitalFields?.length || 0;
 
   return (
     <div
       className={`md3-dept-card ${isSelected ? 'md3-dept-card--selected' : ''} ${isInactive ? 'md3-dept-card--inactive' : ''}`}
       role="article"
-      aria-label={`Department card for ${department.name}`}
+      aria-label={`Department card for ${cleanName}`}
     >
       <div className="md3-dept-card-rail" aria-hidden="true" />
 
@@ -62,8 +66,8 @@ export const DepartmentCard = ({
         </div>
 
         <div className="md3-dept-card-identity">
-          <h4 className="md3-dept-card-name" title={department.name}>
-            {department.name}
+          <h4 className="md3-dept-card-name" title={cleanName}>
+            {cleanName}
           </h4>
           <span
             className="md3-dept-type-pill"
@@ -74,6 +78,7 @@ export const DepartmentCard = ({
           </span>
         </div>
 
+
         <div className="md3-dept-card-badges">
           <span className={`md3-dept-status-pill ${!isInactive ? 'md3-dept-status-pill--active' : 'md3-dept-status-pill--inactive'}`}>
             {!isInactive ? 'Active' : 'Inactive'}
@@ -83,8 +88,8 @@ export const DepartmentCard = ({
 
       {/* ── SUB HEADER: CODE + CLINICAL SUMMARY ── */}
       <div className="md3-dept-card-sub-header">
-        <code className="md3-dept-code-badge" title={`Department Code: ${department.code || 'N/A'}`}>
-          {department.code || 'N/A'}
+        <code className="md3-dept-code-badge" title={`Department Code: ${cleanCode || 'N/A'}`}>
+          {cleanCode || 'N/A'}
         </code>
         <span className="md3-dept-counter-pill">
           {(department.type === 'CLINICAL' || department.type === 'CLINICAL/DIAGNOSTIC') ? (
@@ -108,12 +113,12 @@ export const DepartmentCard = ({
 
       {/* ── CARD BODY METADATA (HOD & DESCRIPTION SUMMARY) ── */}
       <div className="md3-dept-card-details">
-        <div className="md3-dept-meta-row md3-dept-hod-row" title={hod ? `HOD: ${hod.fullName}` : 'No HOD Assigned'}>
+        <div className="md3-dept-meta-row md3-dept-hod-row" title={hod ? `HOD: ${cleanClinicalText(hod.fullName)}` : 'No HOD Assigned'}>
           <span className="material-symbols-rounded" style={{ fontSize: '15px', color: hod ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-on-surface-variant)' }}>
             {hod ? 'person' : 'person_off'}
           </span>
           <span className="md3-dept-meta-text">
-            {hod ? <strong>{hod.fullName}</strong> : <em>No HOD Assigned</em>}
+            {hod ? <strong>{cleanClinicalText(hod.fullName)}</strong> : <em>No HOD Assigned</em>}
           </span>
         </div>
       </div>

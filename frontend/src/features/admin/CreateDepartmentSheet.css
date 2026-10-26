@@ -1,0 +1,418 @@
+/**
+ * features/admin/CreateDepartmentSheet.css
+ * Material Design 3 Slide-over Sheet styles for Multi-Department Builder.
+ * Features collapsible/expandable accordion cards, centered add trigger, and sticky footer.
+ */
+
+.dept-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  animation: deptBackdropFade 0.2s ease-out;
+}
+
+@keyframes deptBackdropFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.dept-sheet-container {
+  width: 100%;
+  max-width: 620px;
+  height: 100%;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #191c1b);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.18);
+  animation: deptSlideIn 0.28s cubic-bezier(0.1, 0.9, 0.2, 1);
+  overflow: hidden;
+  border-radius: 28px 0 0 28px;
+}
+
+@keyframes deptSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ── 1. Sheet Header ── */
+.dept-sheet-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  flex-shrink: 0;
+}
+
+.dept-sheet-header__title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dept-sheet-header__icon {
+  font-size: 26px;
+  color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  padding: 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dept-sheet-header__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--md-sys-color-primary, #00668b);
+}
+
+.dept-sheet-header__desc {
+  margin: 3px 0 0 0;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-outline, #73777f);
+}
+
+.dept-sheet-header__close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  transition: all 0.15s ease;
+}
+
+.dept-sheet-header__close-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #e0e4df);
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+/* ── 2. Scrollable Body ── */
+.dept-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── 3. Accordion Section & Cards ── */
+.dept-accordion-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.dept-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.dept-section-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.dept-section-hint {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-outline, #73777f);
+}
+
+.dept-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dept-accordion-card {
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  border-radius: 16px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.dept-accordion-card:hover {
+  border-color: var(--md-sys-color-outline, #73777f);
+}
+
+.dept-accordion-card--expanded {
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 4px 16px rgba(0, 102, 139, 0.08);
+  background: var(--md-sys-color-surface, #ffffff);
+}
+
+.dept-accordion-card--error {
+  border-color: var(--md-sys-color-error, #ba1a1a) !important;
+}
+
+/* ── Accordion Card Header ── */
+.dept-accordion-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  user-select: none;
+  transition: background 0.15s ease;
+}
+
+.dept-accordion-header:hover {
+  background: var(--md-sys-color-surface-container, #ececf0);
+}
+
+.dept-accordion-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dept-item-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2c);
+  flex-shrink: 0;
+}
+
+.dept-accordion-header__titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dept-accordion-header__main {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dept-accordion-header__sub {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-outline, #73777f);
+  margin-top: 1px;
+}
+
+.dept-accordion-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dept-item-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  transition: all 0.15s ease;
+}
+
+.dept-item-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #e0e4df);
+}
+
+.dept-item-btn--delete:hover {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-error, #ba1a1a);
+}
+
+/* ── Accordion Card Body ── */
+.dept-accordion-body {
+  padding: 18px 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  background: var(--md-sys-color-surface, #ffffff);
+  animation: deptBodyFadeIn 0.2s ease-out;
+}
+
+@keyframes deptBodyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dept-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 520px) {
+  .dept-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.dept-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dept-form-field__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+}
+
+/* ── Centered Add Trigger ── */
+.dept-add-trigger-row {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.dept-add-another-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  background: var(--md-sys-color-surface-container, #ececf0);
+  border: 1px dashed var(--md-sys-color-primary, #00668b);
+  border-radius: 100px;
+  color: var(--md-sys-color-primary, #00668b);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.dept-add-another-btn:hover {
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2c);
+  border-style: solid;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 102, 139, 0.15);
+}
+
+.dept-add-another-btn .material-symbols-rounded {
+  font-size: 20px;
+}
+
+/* ── Status Segmented Control ── */
+.dept-status-group {
+  display: flex;
+  gap: 10px;
+}
+
+.dept-status-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #e0e4df);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface, #191c1b);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.dept-status-pill--active {
+  border-color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2c);
+  font-weight: 700;
+}
+
+.dept-status-pill .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ── Type Description Tag ── */
+.dept-type-tag {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  padding: 4px 10px;
+  border-radius: 8px;
+  display: inline-block;
+  font-weight: 600;
+  width: fit-content;
+}
+
+/* ── Lifecycle Banner ── */
+.dept-lifecycle-banner {
+  padding: 12px 16px;
+  background: var(--md-sys-color-secondary-container, #cfe6f1);
+  color: var(--md-sys-color-on-secondary-container, #071e26);
+  border-radius: 12px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.dept-lifecycle-banner .material-symbols-rounded {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── 4. Sheet Footer ── */
+.dept-sheet-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}

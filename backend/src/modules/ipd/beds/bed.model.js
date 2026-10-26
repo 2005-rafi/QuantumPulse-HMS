@@ -18,6 +18,7 @@ const BED_FEATURES = [
   'MONITOR_ATTACHED',
   'OXYGEN_PIPED',
   'SUCTION_READY',
+  'INFUSION_PUMP',
 ];
 
 const bedSchema = new mongoose.Schema(

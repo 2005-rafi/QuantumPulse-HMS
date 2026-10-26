@@ -1,0 +1,122 @@
+/**
+ * src/components/common/StatCard/StatCard.css
+ * Reusable Metric & KPI Card Tokenized Styles.
+ */
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: var(--md-comp-stats-bar-gap, 8px);
+  padding: var(--md-comp-stat-card-padding, 6px 12px);
+  min-height: var(--md-comp-stat-card-min-height, 48px);
+  border-radius: var(--md-comp-stat-card-border-radius, 10px);
+  background-color: var(--md-sys-color-surface, #f6fbf4);
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  font-family: var(--md-sys-typescale-font-family, system-ui);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+
+.stat-card--interactive {
+  cursor: pointer;
+}
+
+.stat-card--interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  border-color: var(--md-sys-color-primary, #006a6a);
+}
+
+.stat-card__icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--md-comp-stat-icon-box-size, 28px);
+  height: var(--md-comp-stat-icon-box-size, 28px);
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.stat-card__icon {
+  font-size: var(--md-comp-stat-icon-size, 15px);
+  line-height: 1;
+}
+
+.stat-card__content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stat-card__label {
+  font-size: var(--md-comp-stat-label-size, 0.68rem);
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #404944);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-card__value {
+  font-size: var(--md-comp-stat-value-size, 0.95rem);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #181d19);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.stat-card__trend {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.stat-card__trend--up {
+  color: #166534;
+}
+
+.stat-card__trend--down {
+  color: #b91c1c;
+}
+
+/* Variant Accents */
+.stat-card--primary .stat-card__icon-box {
+  background-color: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2e);
+}
+
+.stat-card--secondary .stat-card__icon-box {
+  background-color: var(--md-sys-color-secondary-container, #cce8e0);
+  color: var(--md-sys-color-on-secondary-container, #05201a);
+}
+
+.stat-card--tertiary .stat-card__icon-box {
+  background-color: var(--md-sys-color-tertiary-container, #ffdcc2);
+  color: var(--md-sys-color-on-tertiary-container, #2e1500);
+}
+
+.stat-card--success .stat-card__icon-box {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.stat-card--warning .stat-card__icon-box {
+  background-color: #fef9c3;
+  color: #854d0e;
+}
+
+.stat-card--error .stat-card__icon-box {
+  background-color: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+}
+
+.stat-card--neutral .stat-card__icon-box {
+  background-color: var(--md-sys-color-surface-container-high, #e2e8e5);
+  color: var(--md-sys-color-on-surface-variant, #404944);
+}

@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./discharge.controller');
-const authenticate = require('../../../core/middleware/authenticate');
+const authenticate = require('../../../core/middleware/authenticate.middleware');
 
 router.post('/:admissionId/initiate', authenticate, controller.initiateDischarge);
 router.get('/:admissionId/clearance', authenticate, controller.getClearanceStatus);

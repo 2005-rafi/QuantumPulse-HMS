@@ -1,0 +1,842 @@
+/* ── Quantum CareOne: Inpatient Nursing Workstation & Care Deck ── */
+
+:root {
+  --qc-ipd-spacing-xs: 4px;
+  --qc-ipd-spacing-sm: 8px;
+  --qc-ipd-spacing-md: 14px;
+  --qc-ipd-spacing-lg: 20px;
+  --qc-ipd-radius-card: 14px;
+  --qc-ipd-radius-pill: 9999px;
+  --qc-ipd-font-size-xs: 0.72rem;
+  --qc-ipd-font-size-sm: 0.78rem;
+  --qc-ipd-font-size-base: 0.86rem;
+  --qc-ipd-font-size-lg: 1.05rem;
+  --qc-ipd-font-size-xl: 1.30rem;
+}
+
+.ipd-terminal-viewport {
+  width: 100%;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--qc-ipd-spacing-sm, 8px);
+  padding: 10px 14px 28px;
+  box-sizing: border-box;
+  background: var(--md-sys-color-surface-container-lowest, #f9fafb);
+}
+
+/* ─── Full-Screen Ward Operations Viewport ─── */
+.ipd-ward-operations-viewport {
+  width: 100%;
+  animation: ipdViewFadeIn 0.2s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+}
+
+@keyframes ipdViewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Compact Master Header ─── */
+.ipd-master-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: var(--qc-ipd-radius-card, 14px);
+  padding: 10px 16px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+.ipd-master-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ipd-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--md-sys-color-primary-container, #d5eae4);
+  color: var(--md-sys-color-on-primary-container, #003734);
+  border: 1px solid var(--md-sys-color-outline-variant, #b2dfdb);
+  padding: 3px 9px;
+  border-radius: var(--qc-ipd-radius-pill, 9999px);
+  font-size: 0.70rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.ipd-status-chip__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary, #006a6a);
+  box-shadow: 0 0 5px rgba(0, 106, 106, 0.7);
+}
+
+.ipd-master-header__title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--md-sys-color-on-surface, #14201c);
+  letter-spacing: -0.2px;
+}
+
+.ipd-master-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Mobile Sticky Toolbar ─── */
+.ipd-mobile-toolbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 12px;
+  padding: 8px 12px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ipd-mobile-drawer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--qc-ipd-radius-pill, 9999px);
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.ipd-mobile-count-badge {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 1px 6px;
+  border-radius: 9999px;
+  font-size: 0.70rem;
+}
+
+.ipd-mobile-patient-preview {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.ipd-mobile-token-pill {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipd-mobile-quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ipd-mobile-action-icon-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  background: var(--md-sys-color-surface-container, #f0f5f2);
+  color: var(--md-sys-color-primary, #006a6a);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ipd-mobile-action-icon-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ─── 2-Pane Master-Detail Terminal Layout (Desktop) ─── */
+.ipd-terminal-layout {
+  display: grid;
+  grid-template-columns: 310px minmax(0, 1fr);
+  gap: var(--qc-ipd-spacing-md, 14px);
+  align-items: start;
+  width: 100%;
+  min-height: calc(100vh - 125px);
+  transition: grid-template-columns 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ipd-terminal-layout--rail {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+/* ─── Left Master: Full Sidebar ─── */
+.ipd-terminal__sidebar {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: var(--qc-ipd-radius-card, 14px);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  height: calc(100vh - 125px);
+  position: sticky;
+  top: 10px;
+  box-sizing: border-box;
+}
+
+.ipd-terminal__sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 2px;
+}
+
+.ipd-terminal__sidebar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ipd-terminal__collapse-btn,
+.ipd-terminal__icon-btn,
+.ipd-terminal__mobile-close-btn {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-outline, #526660);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.ipd-terminal__collapse-btn:hover,
+.ipd-terminal__icon-btn:hover {
+  background: var(--md-sys-color-surface-container, #f0f5f2);
+  color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ipd-terminal__mobile-close-btn {
+  display: none;
+}
+
+.ipd-terminal__sidebar-count {
+  background: var(--md-sys-color-primary-container, #d5eae4);
+  color: var(--md-sys-color-on-primary-container, #003734);
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 9999px;
+}
+
+.ipd-terminal__sidebar-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #14201c);
+}
+
+.ipd-terminal__sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ipd-terminal__admit-btn {
+  background: var(--md-sys-color-primary-container, #d5eae4);
+  color: var(--md-sys-color-on-primary-container, #003734);
+  border: none;
+  border-radius: var(--qc-ipd-radius-pill, 9999px);
+  padding: 3px 9px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  transition: all 0.15s ease;
+}
+
+.ipd-terminal__admit-btn:hover {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+}
+
+/* ─── 2x2 Filter Matrix ─── */
+.ipd-filter-matrix {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.ipd-matrix-tile {
+  background: var(--md-sys-color-surface-container-low, #f7f9f8);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ipd-matrix-tile:hover {
+  background: var(--md-sys-color-surface-container, #eff3f1);
+  border-color: var(--md-sys-color-outline, #526660);
+}
+
+.ipd-matrix-tile--active {
+  background: var(--md-sys-color-primary-container, #d5eae4);
+  border-color: var(--md-sys-color-primary, #006a6a);
+  color: var(--md-sys-color-on-primary-container, #003734);
+}
+
+.ipd-matrix-tile--alert {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.ipd-matrix-tile--alert.ipd-matrix-tile--active {
+  background: #fee2e2;
+  border-color: #ef4444;
+  color: #991b1b;
+}
+
+.ipd-matrix-tile__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ipd-matrix-tile__icon {
+  font-size: 14px;
+  color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ipd-matrix-tile--alert .ipd-matrix-tile__icon {
+  color: #dc2626;
+}
+
+.ipd-matrix-tile__count {
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.ipd-matrix-tile__label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #3e4f4a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipd-terminal__sidebar-search {
+  width: 100%;
+}
+
+.ipd-terminal__card-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-right: 2px;
+}
+
+.ipd-terminal__empty-state {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--md-sys-color-outline, #526660);
+  font-size: 0.78rem;
+}
+
+.ipd-terminal__empty-state .material-symbols-rounded {
+  font-size: 28px;
+  opacity: 0.4;
+  margin-bottom: 4px;
+}
+
+/* ─── Inpatient Queue Card Item ─── */
+.ipd-queue-card {
+  background: var(--md-sys-color-surface-container-low, #f7f9f8);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ipd-queue-card:hover {
+  background: var(--md-sys-color-surface-container, #eff3f1);
+  border-color: var(--md-sys-color-primary, #006a6a);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.ipd-queue-card--active {
+  background: var(--md-sys-color-primary-container, #d5eae4);
+  border: 1.5px solid var(--md-sys-color-primary, #006a6a);
+  box-shadow: 0 2px 8px rgba(0, 106, 106, 0.14);
+}
+
+.ipd-queue-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ipd-queue-card__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: var(--md-sys-color-surface-container-high, #e0eae5);
+  color: var(--md-sys-color-on-surface, #14201c);
+  font-size: 0.74rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ipd-queue-card--active .ipd-queue-card__avatar {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+}
+
+.ipd-queue-card__name-wrapper {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ipd-queue-card__name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #14201c);
+  margin: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.ipd-queue-card__demog {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-outline, #526660);
+  font-weight: 600;
+}
+
+.ipd-queue-card__chips-col {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  padding-top: 6px;
+  border-top: 1px dashed var(--md-sys-color-outline-variant, #e0eae5);
+}
+
+.ipd-queue-card__bed-tag {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #ccfbf1;
+  color: #0f766e;
+  border: 1px solid #99f6e4;
+  padding: 3px 8px;
+  border-radius: var(--qc-ipd-radius-pill, 9999px);
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ipd-queue-card__bed-tag .material-symbols-rounded {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ipd-queue-card__chip-marquee {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.ipd-queue-card__status-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.ipd-queue-card__vitals-pending {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--md-sys-color-outline, #526660);
+  background: var(--md-sys-color-surface-container, #eff3f1);
+  padding: 3px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+.ipd-queue-card__pending-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--md-sys-color-outline, #89938e);
+}
+
+/* ─── Left Master: 72px Collapsed Rail ─── */
+.ipd-terminal__rail {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: var(--qc-ipd-radius-card, 14px);
+  padding: 10px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  height: calc(100vh - 125px);
+  position: sticky;
+  top: 10px;
+  box-sizing: border-box;
+}
+
+.ipd-terminal__rail-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ipd-terminal__rail-toggle-btn {
+  background: none;
+  border: none;
+  color: var(--md-sys-color-outline, #526660);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.ipd-terminal__rail-toggle-btn:hover {
+  background: var(--md-sys-color-surface-container, #f0f5f2);
+  color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ipd-terminal__rail-count-badge {
+  background: var(--md-sys-color-primary-container, #d5eae4);
+  color: var(--md-sys-color-on-primary-container, #003734);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 9999px;
+}
+
+.ipd-terminal__rail-body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.ipd-terminal__rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 4px 2px;
+  border-radius: 8px;
+  width: 100%;
+  transition: all 0.15s ease;
+}
+
+.ipd-terminal__rail-item:hover {
+  background: var(--md-sys-color-surface-container, #f0f5f2);
+}
+
+.ipd-terminal__rail-item--selected {
+  background: var(--md-sys-color-primary-container, #d5eae4);
+}
+
+.ipd-terminal__rail-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--md-sys-color-surface-container-high, #e0eae5);
+  color: var(--md-sys-color-on-surface, #14201c);
+  font-size: 0.74rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ipd-terminal__rail-item--selected .ipd-terminal__rail-avatar {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+}
+
+.ipd-terminal__rail-bed {
+  font-size: 0.60rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary, #006a6a);
+  white-space: nowrap;
+}
+
+.ipd-terminal__rail-name {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #3e4f4a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 58px;
+  text-align: center;
+}
+
+/* ─── Right Detail: Master Clinical Workspace ─── */
+.ipd-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qc-ipd-spacing-md, 14px);
+  width: 100%;
+  min-width: 0;
+}
+
+/* ─── MD3 Clinical Workflow Duty Tab Bar ─── */
+.ipd-tab-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: var(--qc-ipd-radius-pill, 9999px);
+  padding: 4px 6px;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.ipd-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: var(--qc-ipd-radius-pill, 9999px);
+  padding: 7px 14px;
+  font-size: var(--qc-ipd-font-size-sm, 0.78rem);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #495d57);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ipd-tab-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.ipd-tab-btn:hover {
+  background: var(--md-sys-color-surface-container, #f0f5f2);
+  color: var(--md-sys-color-on-surface, #14201c);
+}
+
+.ipd-tab-btn--active {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 106, 106, 0.25);
+}
+
+.ipd-tab-btn--active:hover {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+}
+
+.ipd-tab-badge {
+  font-size: 0.66rem;
+  font-weight: 800;
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 1px 6px;
+  border-radius: 9999px;
+}
+
+.ipd-tab-badge--neutral {
+  background: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.ipd-tab-btn--active .ipd-tab-badge--neutral {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ─── Tab Content Panels ─── */
+.ipd-tab-panel {
+  width: 100%;
+}
+
+.ipd-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qc-ipd-spacing-md, 14px);
+  width: 100%;
+}
+
+.ipd-tab-content--vitals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--qc-ipd-spacing-md, 14px);
+}
+
+.ipd-workspace-empty {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: var(--qc-ipd-radius-card, 14px);
+  padding: 60px 24px;
+  text-align: center;
+  color: var(--md-sys-color-outline, #526660);
+}
+
+.ipd-workspace-empty .material-symbols-rounded {
+  font-size: 48px;
+  opacity: 0.4;
+  margin-bottom: 8px;
+}
+
+.ipd-workspace-empty h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #14201c);
+  margin: 0 0 6px;
+}
+
+.ipd-workspace-empty p {
+  font-size: 0.84rem;
+  margin: 0;
+  max-width: 440px;
+  margin-inline: auto;
+}
+
+/* ─── Mobile Drawer Portal ─── */
+.ipd-queue-drawer-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+}
+
+.ipd-queue-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(3px);
+  z-index: 10000;
+}
+
+.ipd-queue-drawer-surface {
+  position: relative;
+  z-index: 10001;
+  width: min(85vw, 360px);
+  height: 100%;
+  background: var(--md-sys-color-surface, #ffffff);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  box-sizing: border-box;
+  animation: slideInLeft 0.22s cubic-bezier(0, 0, 0.2, 1);
+}
+
+.ipd-queue-drawer-surface .ipd-terminal__mobile-close-btn {
+  display: inline-flex;
+}
+
+.ipd-queue-drawer-surface .ipd-terminal__collapse-btn {
+  display: none;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ─── Responsive Adjustments (Desktop / Tablet / Mobile) ─── */
+@media (max-width: 1024px) {
+  .ipd-terminal-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .ipd-terminal__sidebar,
+  .ipd-terminal__rail {
+    display: none;
+  }
+
+  .ipd-mobile-toolbar {
+    display: flex;
+  }
+
+  .ipd-master-header {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ipd-terminal-viewport {
+    padding: 6px 8px 24px;
+  }
+
+  .ipd-tab-btn {
+    padding: 6px 10px;
+    font-size: 0.74rem;
+  }
+}

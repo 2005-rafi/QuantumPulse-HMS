@@ -1,19 +1,20 @@
-import React from 'react';
+﻿import React from 'react';
+import { usePatientStatus } from '../../context/PatientStatusContext';
+import { getPatientStatus } from '../../constants/patientStatus';
 import './PatientListView.css';
 
 /**
  * Material 3 Clinical List View for Patients.
  * Pure reusable presentation component following SOLID (SRP/OCP).
  *
- * Mandatory Fields Displayed:
- * 1. Name & Avatar Initials
- * 2. Age & Gender
- * 3. Mobile Number
- * 4. Location (City alone)
- * 5. Last Visit Date
- * 6. Latest Appointment Date & Time
+ * Sizing & Responsiveness:
+ * - Desktop (>= 1024px): Full 8-column clinical data grid with comfortable spacing.
+ * - Tablet (641px - 1023px): High-density compact table with optimized column widths.
+ * - Mobile (<= 640px): Ultra-compact billing-style clinical list tile (~58px height)
+ *   highlighting Avatar, Name, MRN, Age/Gender, Status Pill, and Chevron action.
  */
-export const PatientListView = ({ patients = [], onSelectPatient }) => {
+export const PatientListView = ({ patients = [], onSelectPatient, renderRowAction }) => {
+  const { getLiveStatus } = usePatientStatus();
   if (!patients || patients.length === 0) return null;
 
   const getInitials = (name) => {
@@ -29,22 +30,22 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
 
   const formatCity = (patient) => {
     const city = patient.address?.city || patient.city;
-    if (!city) return '—';
+    if (!city) return 'â€”';
     return String(city).trim();
   };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
+    if (!dateStr) return 'â€”';
     try {
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '—';
+      if (isNaN(d.getTime())) return 'â€”';
       return d.toLocaleDateString('en-IN', {
         day: 'numeric',
         month: 'short',
         year: 'numeric',
       });
     } catch {
-      return '—';
+      return 'â€”';
     }
   };
 
@@ -70,6 +71,7 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
         <thead>
           <tr>
             <th scope="col" className="col-patient">Patient &amp; MRN</th>
+            <th scope="col" className="col-status">Clinical Status</th>
             <th scope="col" className="col-age">Age / Gender</th>
             <th scope="col" className="col-phone">Mobile No</th>
             <th scope="col" className="col-location">Location (City)</th>
@@ -86,6 +88,17 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
             const city = formatCity(patient);
             const lastVisit = formatDate(patient.lastVisitDate);
             const appt = formatAppointment(patient.latestAppointment);
+
+            const ageText = patient.age !== undefined && patient.age !== null ? `${patient.age} yrs` : '';
+            const genderText = patient.gender || '';
+            const demographics = [ageText, genderText].filter(Boolean).join(' â€¢ ');
+
+            // Live status integration from real-time state management
+            const fallbackStatus = patient.currentState || patient.lastVisitStatus || 'REGISTERED_IDLE';
+            const liveInfo = getLiveStatus(patientId, fallbackStatus);
+            const statusMeta = liveInfo.statusMeta || getPatientStatus(liveInfo.status);
+            const currentToken = liveInfo.tokenString || patient.activeVisit?.tokenString;
+            const currentDept = patient.activeVisit?.department;
 
             return (
               <tr
@@ -109,11 +122,39 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
                     </div>
                     <div className="md3-patient-meta">
                       <span className="md3-patient-name">{fullName}</span>
-                      <span className="md3-patient-mrn">
-                        <span className="material-symbols-rounded">tag</span>
-                        {patient.mrn || 'N/A'}
-                      </span>
+                      <div className="md3-patient-sub-line">
+                        <span className="md3-patient-mrn">
+                          <span className="material-symbols-rounded">tag</span>
+                          {patient.mrn || 'N/A'}
+                        </span>
+                        {demographics && (
+                          <span className="md3-mobile-demographics">
+                            â€¢ {demographics}
+                          </span>
+                        )}
+                      </div>
                     </div>
+                  </div>
+                </td>
+
+                {/* 2. Clinical Status & Live Queue Token */}
+                <td className="col-status">
+                  <div className="md3-status-container">
+                    <span
+                      className={`md3-status-pill ${statusMeta.badgeClass || 'md3-status-badge--neutral'}`}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '14px', lineHeight: 1 }}>
+                        {statusMeta.icon || 'fiber_manual_record'}
+                      </span>
+                      <span>{statusMeta.label}</span>
+                    </span>
+                    {currentToken && (
+                      <span className="md3-status-token">
+                        <span className="material-symbols-rounded md3-status-token-icon">confirmation_number</span>
+                        <span>{currentToken}</span>
+                        {currentDept ? <span className="md3-status-dept-text">â€¢ {currentDept}</span> : null}
+                      </span>
+                    )}
                   </div>
                 </td>
 
@@ -121,7 +162,7 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
                 <td className="col-age">
                   <div className="md3-age-cell">
                     <span className="md3-age-val">
-                      {patient.age !== undefined && patient.age !== null ? `${patient.age} yrs` : '—'}
+                      {patient.age !== undefined && patient.age !== null ? `${patient.age} yrs` : 'â€”'}
                     </span>
                     <span className="md3-gender-val">
                       {patient.gender || 'Unknown'}
@@ -137,7 +178,7 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
                       <span>{patient.phone}</span>
                     </span>
                   ) : (
-                    <span className="md3-text-muted">—</span>
+                    <span className="md3-text-muted">â€”</span>
                   )}
                 </td>
 
@@ -153,18 +194,18 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
                 <td className="col-last-visit">
                   {patient.activeAdmission ? (
                     <div className="md3-visit-cell">
-                      <span className="material-symbols-rounded">hotel</span>
-                      <span className="md3-visit-date">
+                      <span className="material-symbols-rounded md3-desktop-only">hotel</span>
+                      <span className="md3-visit-date md3-desktop-only">
                         {patient.activeAdmission.bedNumber ? `Bed ${patient.activeAdmission.bedNumber}` : 'Admitted'}
                       </span>
                       <span className={`md3-visit-type-chip ${patient.activeAdmission.admissionType === 'EMERGENCY' ? 'md3-visit-type-chip--emergency' : 'md3-visit-type-chip--ipd'}`}>
-                        {patient.activeAdmission.admissionType === 'EMERGENCY' ? 'EMERGENCY' : 'IPD'}
+                        {patient.activeAdmission.bedNumber ? `Bed ${patient.activeAdmission.bedNumber}` : (patient.activeAdmission.admissionType === 'EMERGENCY' ? 'EMERGENCY' : 'IPD')}
                       </span>
                     </div>
                   ) : patient.lastVisitDate ? (
                     <div className="md3-visit-cell">
-                      <span className="material-symbols-rounded">event_available</span>
-                      <span className="md3-visit-date">{lastVisit}</span>
+                      <span className="material-symbols-rounded md3-desktop-only">event_available</span>
+                      <span className="md3-visit-date md3-desktop-only">{lastVisit}</span>
                       <span
                         className={`md3-visit-type-chip ${
                           patient.lastVisitType === 'EMERGENCY'
@@ -178,7 +219,7 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
                       </span>
                     </div>
                   ) : (
-                    <span className="md3-badge-none">No past visits</span>
+                    <span className="md3-badge-none md3-desktop-only">No past visits</span>
                   )}
                 </td>
 
@@ -204,18 +245,26 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
 
                 {/* 7. Action */}
                 <td className="col-actions text-right">
-                  <button
-                    type="button"
-                    className="md3-btn-view-profile"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectPatient && onSelectPatient(patient);
-                    }}
-                    title={`Open record for ${fullName}`}
-                  >
-                    <span>View</span>
-                    <span className="material-symbols-rounded">chevron_right</span>
-                  </button>
+                  <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
+                    {renderRowAction && (
+                      <div onClick={(e) => e.stopPropagation()}>
+                        {renderRowAction(patient)}
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      className="md3-btn-view-profile"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectPatient && onSelectPatient(patient);
+                      }}
+                      title={`Open record for ${fullName}`}
+                      aria-label={`Open record for ${fullName}`}
+                    >
+                      <span className="md3-desktop-only">View</span>
+                      <span className="material-symbols-rounded">chevron_right</span>
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
@@ -227,3 +276,4 @@ export const PatientListView = ({ patients = [], onSelectPatient }) => {
 };
 
 export default PatientListView;
+

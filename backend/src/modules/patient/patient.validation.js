@@ -9,7 +9,7 @@ const createPatientSchema = Joi.object({
   aadhaar: Joi.string().length(12).pattern(/^[0-9]+$/).allow('', null).messages({'string.pattern.base': 'Aadhaar must contain only numbers'}),
   phone: Joi.string().required().trim(),
   whatsapp: Joi.string().allow('', null).trim(),
-  email: Joi.string().email().allow('', null).trim(),
+  email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).allow('', null),
   parentsName: Joi.string().allow('', null).trim(),
   address: Joi.object({
     street: Joi.string().allow('', null).trim(),
@@ -24,8 +24,10 @@ const createPatientSchema = Joi.object({
     name: Joi.string().allow('', null).trim(),
     relation: Joi.string().allow('', null).trim(),
     phone: Joi.string().allow('', null).trim()
-  }).optional()
-});
+  }).optional(),
+  allergies: Joi.string().allow('', null).trim().optional(),
+  operations: Joi.string().allow('', null).trim().optional(),
+}).unknown(true);
 
 const updatePatientSchema = Joi.object({
   firstName: Joi.string().trim(),
@@ -36,7 +38,7 @@ const updatePatientSchema = Joi.object({
   aadhaar: Joi.string().length(12).pattern(/^[0-9]+$/).allow('', null).messages({'string.pattern.base': 'Aadhaar must contain only numbers'}),
   phone: Joi.string().trim(),
   whatsapp: Joi.string().allow('', null).trim(),
-  email: Joi.string().email().allow('', null).trim(),
+  email: Joi.string().trim().lowercase().email({ tlds: { allow: false } }).allow('', null),
   parentsName: Joi.string().allow('', null).trim(),
   address: Joi.object({
     street: Joi.string().allow('', null).trim(),
@@ -52,7 +54,7 @@ const updatePatientSchema = Joi.object({
     relation: Joi.string().allow('', null).trim(),
     phone: Joi.string().allow('', null).trim()
   }).optional()
-}).min(1);
+}).min(1).unknown(true);
 
 const addHistorySchema = Joi.object({
   condition: Joi.string().required().trim(),
@@ -63,18 +65,20 @@ const addHistorySchema = Joi.object({
 
 const createPatientWithVisitSchema = Joi.object({
   patient: createPatientSchema.required(),
+  workflowType: Joi.string().valid('OPD', 'EMERGENCY', 'IPD_MEDICAL', 'IPD_SURGICAL', 'NONE').optional(),
   visit: Joi.object({
     isDirectPharmacy: Joi.boolean().optional(),
-    departmentId: Joi.string().optional(),
-    doctorId: Joi.string().optional(),
-    visitType: Joi.string().valid('OPD', 'IPD').optional(),
-    reasonForVisit: Joi.string().allow('').optional(),
+    departmentId: Joi.string().allow('', null).optional(),
+    doctorId: Joi.string().allow('', null).optional(),
+    visitType: Joi.string().valid('OPD', 'IPD', 'EMERGENCY').optional(),
+    reasonForVisit: Joi.string().allow('', null).optional(),
     receptionPayment: Joi.object({
       registrationFee: Joi.number().min(0).optional(),
       consultationFee: Joi.number().min(0).optional(),
-      paymentMethod: Joi.string().valid('Cash', 'Card', 'UPI', 'Insurance').optional()
+      paymentMethod: Joi.string().allow('', null).optional()
     }).optional()
-  }).required()
-});
+  }).optional(),
+  admission: Joi.object().unknown(true).optional(),
+}).unknown(true);
 
 module.exports = { createPatientSchema, updatePatientSchema, addHistorySchema, createPatientWithVisitSchema };

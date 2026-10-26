@@ -3,13 +3,11 @@ const dns = require('dns');
 const config = require('../config');
 const logger = require('../logger');
 
-// If using MongoDB Atlas SRV URI, ensure reliable DNS resolution via configured DNS servers
-if (config.mongoUri && config.mongoUri.startsWith('mongodb+srv://') && config.db?.useCustomDns) {
+if (typeof dns.setDefaultResultOrder === 'function') {
   try {
-    const servers = config.db?.dnsServers || ['8.8.8.8', '1.1.1.1', '8.8.4.4'];
-    dns.setServers(servers);
-  } catch (dnsErr) {
-    // Non-critical fallback if custom DNS cannot be set
+    dns.setDefaultResultOrder('ipv4first');
+  } catch (e) {
+    // Ignore
   }
 }
 

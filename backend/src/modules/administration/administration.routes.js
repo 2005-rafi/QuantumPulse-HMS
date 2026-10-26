@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./administration.controller');
-const authenticate = require('../../core/middleware/authenticate');
-const { requirePermission } = require('../../core/middleware/authorize');
-const { validate } = require('../../core/validation/validate');
+const authenticate = require('../../core/middleware/authenticate.middleware');
+const { requirePermission, requireStaffManagementAuth } = require('../../core/middleware/authorize.middleware');
+const { validate } = require('../../core/validation/validate.middleware');
 const {
   createRoleSchema,
   assignPermissionsSchema,
@@ -13,7 +13,7 @@ const {
 } = require('./administration.validation');
 
 // ── Role & Permission Routes ────────────────────────────────────────────────────────────
-router.get('/roles',    authenticate, requirePermission('MANAGE_USERS'), controller.listRoles);
+router.get('/roles',    authenticate, requireStaffManagementAuth, controller.listRoles);
 router.post('/roles',   authenticate, requirePermission('MANAGE_USERS'), validate(createRoleSchema), controller.createRole);
 router.post('/roles/:id/permissions', authenticate, requirePermission('MANAGE_USERS'), validate(assignPermissionsSchema), controller.assignPermissionsToRole);
 router.get('/permissions', authenticate, requirePermission('MANAGE_USERS'), controller.listPermissions);
@@ -35,8 +35,12 @@ router.get('/departments/:id/laboratories', authenticate, requirePermission('LAB
 router.get('/settings/:key', authenticate, controller.getSetting);
 router.put('/settings/:key', authenticate, requirePermission('MANAGE_USERS'), controller.updateSetting);
 
+// ── Cache Management Routes ─────────────────────────────────────────────────────────────
+router.post('/cache/flush', authenticate, requirePermission('MANAGE_USERS'), controller.flushCache);
+router.get('/cache/stats',  authenticate, requirePermission('MANAGE_USERS'), controller.getCacheStats);
+
 // ── Storage & Database Analytics Route ──────────────────────────────────────────────────
-const storageAnalyticsController = require('./storageAnalytics.controller');
+const storageAnalyticsController = require('./storage-analytics.controller');
 router.get('/storage-analytics', authenticate, requirePermission(['MANAGE_USERS', 'VIEW_AUDIT']), storageAnalyticsController.getAnalytics);
 router.get('/admin/storage-analytics', authenticate, requirePermission(['MANAGE_USERS', 'VIEW_AUDIT']), storageAnalyticsController.getAnalytics);
 

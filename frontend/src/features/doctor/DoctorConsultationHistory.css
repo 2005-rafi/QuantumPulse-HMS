@@ -1,15 +1,15 @@
 /* ==========================================================================
    DoctorConsultationHistory.css — Pure Material 3 Clinical Tracking Hub
    Path: frontend/src/features/doctor/DoctorConsultationHistory.css
-   Full infinite horizontal & vertical expansion across desktop, tablet, mobile
+   Full adaptive horizontal & vertical optimization across desktop, tablet, mobile
    ========================================================================== */
 
-/* ── 1. MAIN PAGE CONTAINER (FLUID INFINITE EXPANSION) ── */
+/* ── 1. MAIN PAGE CONTAINER ── */
 .md3-doc-history-page {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 16px 24px 48px 24px;
+  gap: 12px;
+  padding: 14px 20px 36px;
   width: 100%;
   max-width: 100%;
   min-height: 100%;
@@ -18,126 +18,121 @@
   color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
-/* ── 2. HERO WORKSPACE & TELEMETRY BANNER ── */
+/* ── 2. HERO WORKSPACE & TELEMETRY BANNER (COMPACT DENSITY) ── */
 .md3-doc-history-hero {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
   background: linear-gradient(135deg, var(--md-sys-color-surface-container-low, #f7f2fa) 0%, var(--md-sys-color-surface-container, #f3edf7) 100%);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-large, 20px);
-  padding: 20px 24px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  padding: 12px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .md3-doc-hero-main {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 10px;
 }
 
 .md3-doc-hero-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   background-color: var(--md-sys-color-primary, #6750a4);
   color: var(--md-sys-color-on-primary, #ffffff);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 30%, transparent);
+  box-shadow: 0 1px 4px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
 }
 
 .md3-doc-hero-avatar .material-symbols-rounded {
-  font-size: 28px;
+  font-size: 20px;
 }
 
 .md3-doc-hero-content {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
+  min-width: 0;
 }
 
 .md3-doc-hero-title {
   margin: 0;
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
   color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.2;
 }
 
 .md3-doc-hero-subtitle {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  line-height: 1.4;
+  line-height: 1.25;
 }
 
 .md3-doc-hero-subtitle strong {
   color: var(--md-sys-color-primary, #6750a4);
 }
 
-/* Telemetry Stats Deck */
+/* Telemetry Stats Deck (Dense Medium Size on Desktop, Compact Strip on Mobile) */
 .md3-doc-telemetry-deck {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
   width: 100%;
 }
 
 .md3-doc-telemetry-card {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 8px;
+  padding: 6px 10px;
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
-  border-radius: 14px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
   cursor: pointer;
   user-select: none;
-  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1),
-              box-shadow 160ms cubic-bezier(0.2, 0, 0, 1),
-              border-color 160ms cubic-bezier(0.2, 0, 0, 1),
-              background-color 160ms cubic-bezier(0.2, 0, 0, 1);
+  transition: all 140ms ease;
   outline: none;
+  min-height: 38px;
+  box-sizing: border-box;
 }
 
 .md3-doc-telemetry-card:focus-visible {
   border-color: var(--md-sys-color-primary, #6750a4);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
 }
 
 .md3-doc-telemetry-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
   border-color: var(--md-sys-color-primary, #6750a4);
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
 }
 
 .md3-doc-telemetry-card:active {
-  transform: translateY(0) scale(0.98);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transform: translateY(0);
 }
 
 .md3-telemetry-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: transform 160ms ease;
-}
-
-.md3-doc-telemetry-card:hover .md3-telemetry-icon {
-  transform: scale(1.05);
 }
 
 .md3-telemetry-icon .material-symbols-rounded {
-  font-size: 20px;
+  font-size: 15px;
 }
 
 .md3-telemetry-icon.primary {
@@ -168,43 +163,47 @@
 .md3-telemetry-text {
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .md3-telemetry-val {
-  font-size: 1.15rem;
+  font-size: 0.90rem;
   font-weight: 800;
   color: var(--md-sys-color-on-surface, #1d1b20);
   line-height: 1.1;
 }
 
 .md3-telemetry-lbl {
-  font-size: 0.72rem;
+  font-size: 0.64rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* ── 3. CONTROLS MATRIX (SEARCH, MODALITIES, DATES & STATUS) ── */
+/* ── 3. CONTROLS MATRIX (COMPACT DENSITY) ── */
 .md3-doc-controls-card {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-medium, 16px);
-  padding: 14px 18px;
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  padding: 10px 14px;
 }
 
 .md3-doc-controls-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
 }
 
 .md3-doc-search-box {
   flex: 1;
-  min-width: 320px;
+  min-width: 260px;
   position: relative;
   display: flex;
   align-items: center;
@@ -212,41 +211,42 @@
 
 .md3-search-icon {
   position: absolute;
-  left: 14px;
+  left: 10px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 20px;
+  font-size: 16px;
   pointer-events: none;
 }
 
 .md3-search-input {
   width: 100%;
-  padding: 10px 38px 10px 42px;
-  border-radius: 12px;
+  height: 32px;
+  padding: 4px 30px 4px 32px;
+  border-radius: 8px;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   color: var(--md-sys-color-on-surface, #1d1b20);
-  font-size: 0.88rem;
+  font-size: 0.78rem;
   font-weight: 500;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
 }
 
 .md3-search-input:focus {
   border-color: var(--md-sys-color-primary, #6750a4);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 20%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 20%, transparent);
 }
 
 .md3-search-clear-btn {
   position: absolute;
-  right: 10px;
+  right: 6px;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   display: flex;
   align-items: center;
-  padding: 4px;
+  padding: 2px;
   border-radius: 50%;
 }
 
@@ -254,35 +254,48 @@
   background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
 }
 
+.md3-search-clear-btn .material-symbols-rounded {
+  font-size: 15px;
+}
+
 /* Modality Segmented Control */
 .md3-modality-segment-group {
   display: flex;
   align-items: center;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
-  padding: 3px;
-  border-radius: 12px;
+  padding: 2px;
+  border-radius: 8px;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.md3-modality-segment-group::-webkit-scrollbar {
+  display: none;
 }
 
 .md3-modality-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 9px;
+  gap: 4px;
+  height: 26px;
+  padding: 2px 9px;
+  border-radius: 6px;
   border: none;
   background: transparent;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 160ms ease;
+  transition: all 140ms ease;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .md3-modality-btn .material-symbols-rounded {
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .md3-modality-btn:hover {
@@ -292,7 +305,7 @@
 .md3-modality-btn.active {
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   color: var(--md-sys-color-on-surface, #1d1b20);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
 .md3-modality-btn.active.opd {
@@ -312,46 +325,47 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 10px;
   flex-wrap: wrap;
-  padding-top: 6px;
-  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #cac4d0) 50%, transparent);
+  padding-top: 4px;
+  border-top: 1px solid color-mix(in srgb, var(--md-sys-color-outline-variant, #cac4d0) 40%, transparent);
 }
 
 .md3-date-filter-deck,
 .md3-status-filter-deck {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .md3-filter-group-label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
+  gap: 3px;
+  font-size: 0.68rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-right: 4px;
+  margin-right: 2px;
 }
 
 .md3-filter-group-label .material-symbols-rounded {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--md-sys-color-primary, #6750a4);
 }
 
 .md3-date-chip,
 .md3-status-chip {
-  padding: 5px 11px;
-  border-radius: 8px;
-  font-size: 0.74rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
   font-weight: 700;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   cursor: pointer;
-  transition: all 150ms ease;
+  transition: all 120ms ease;
+  white-space: nowrap;
 }
 
 .md3-date-chip:hover,
@@ -369,54 +383,59 @@
 .md3-custom-date-inputs {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .md3-date-input {
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   background: var(--md-sys-color-surface-container-lowest, #ffffff);
-  font-size: 0.75rem;
+  font-size: 0.70rem;
+  height: 24px;
   outline: none;
 }
 
 .md3-timeline-view-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .md3-text-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   background: transparent;
   border: none;
   color: var(--md-sys-color-primary, #6750a4);
-  font-size: 0.75rem;
+  font-size: 0.70rem;
   font-weight: 700;
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
 }
 
 .md3-text-btn:hover {
   background-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 10%, transparent);
 }
 
+.md3-text-btn .material-symbols-rounded {
+  font-size: 14px;
+}
+
 /* ── 4. TIMELINE FEED & DATE-WISE SECTIONS ── */
 .md3-doc-timeline-feed {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 14px;
   width: 100%;
 }
 
 .md3-date-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   width: 100%;
 }
 
@@ -428,17 +447,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 18px;
+  gap: 8px;
+  padding: 6px 12px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
   cursor: pointer;
   user-select: none;
-  transition: background-color 150ms ease, box-shadow 150ms ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
 }
 
 .md3-date-header:hover {
@@ -448,13 +467,13 @@
 .md3-date-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .md3-date-badge-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
@@ -463,25 +482,25 @@
 }
 
 .md3-date-badge-icon .material-symbols-rounded {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .md3-date-title-wrap {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
 .md3-date-heading {
   margin: 0;
-  font-size: 0.98rem;
+  font-size: 0.84rem;
   font-weight: 800;
   color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .md3-date-subtext {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
@@ -489,19 +508,19 @@
 .md3-date-header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .md3-date-pills-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .md3-modality-mini-pill {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 1.5px 6px;
   border-radius: 100px;
 }
 
@@ -521,20 +540,20 @@
 }
 
 .md3-collapse-chevron {
-  font-size: 22px;
+  font-size: 18px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  transition: transform 200ms ease;
+  transition: transform 180ms ease;
 }
 
 .md3-collapse-chevron.collapsed {
   transform: rotate(-90deg);
 }
 
-/* ── 5. FLUID MASONRY/GRID OF PATIENT ENCOUNTERS (INFINITE WIDTH) ── */
+/* ── 5. GRID OF PATIENT ENCOUNTERS ── */
 .md3-encounters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
   width: 100%;
 }
 
@@ -542,15 +561,15 @@
 .md3-encounter-card {
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-medium, 16px);
-  padding: 16px;
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   cursor: pointer;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
   position: relative;
   overflow: hidden;
 }
@@ -561,7 +580,7 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: 4px;
+  width: 3.5px;
   background-color: var(--md-sys-color-primary, #6750a4);
 }
 
@@ -578,8 +597,8 @@
 }
 
 .md3-encounter-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
   border-color: var(--md-sys-color-primary, #6750a4);
 }
 
@@ -588,34 +607,36 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .md3-ec-patient-block {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
+  flex: 1;
 }
 
 .md3-ec-identity {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  flex: 1;
 }
 
 .md3-ec-name {
   margin: 0;
-  font-size: 0.96rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: var(--md-sys-color-on-surface, #1d1b20);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .md3-ec-demographics {
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
@@ -624,15 +645,16 @@
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 3px;
+  gap: 2px;
   flex-shrink: 0;
 }
 
 .md3-ec-token {
-  font-size: 0.70rem;
+  font-size: 0.68rem;
+  font-family: 'Roboto Mono', monospace;
   font-weight: 800;
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 1.5px 5px;
+  border-radius: 4px;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   color: var(--md-sys-color-on-surface, #1d1b20);
@@ -642,8 +664,8 @@
 .md3-ec-time {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 0.70rem;
+  gap: 2px;
+  font-size: 0.65rem;
   font-weight: 600;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
@@ -653,43 +675,45 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 8px;
+  gap: 6px;
+  padding-bottom: 4px;
   border-bottom: 1px dashed var(--md-sys-color-outline-variant, #e7e0ec);
+  flex-wrap: wrap;
 }
 
 .md3-ec-mrn {
-  font-size: 0.72rem;
+  font-size: 0.66rem;
+  font-family: 'Roboto Mono', monospace;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .md3-ec-sub-badges {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .md3-ec-blood-pill {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 800;
   color: #ba1a1a;
   background: rgba(186, 26, 26, 0.1);
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
 }
 
 .md3-ec-modality-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.68rem;
+  gap: 3px;
+  font-size: 0.64rem;
   font-weight: 800;
-  padding: 2px 8px;
+  padding: 1.5px 6px;
   border-radius: 100px;
 }
 
 .md3-ec-modality-pill .material-symbols-rounded {
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .md3-ec-modality-pill.opd {
@@ -711,50 +735,50 @@
 .md3-ec-diagnosis-block {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  padding: 10px 12px;
-  border-radius: 10px;
-  border-left: 3px solid var(--md-sys-color-primary, #6750a4);
+  padding: 6px 8px;
+  border-radius: 6px;
+  border-left: 2.5px solid var(--md-sys-color-primary, #6750a4);
 }
 
 .md3-ec-section-label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.68rem;
+  gap: 3px;
+  font-size: 0.60rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: var(--md-sys-color-primary, #6750a4);
 }
 
 .md3-ec-section-label .material-symbols-rounded {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .md3-ec-diagnosis-text {
-  font-size: 0.86rem;
-  font-weight: 800;
+  font-size: 0.76rem;
+  font-weight: 700;
   color: var(--md-sys-color-on-surface, #1d1b20);
-  line-height: 1.3;
+  line-height: 1.25;
 }
 
 .md3-ec-complaint {
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
-/* 🔒 Immutable Doctor Notes Box */
+/* Immutable Doctor Notes Box */
 .md3-ec-notes-box {
   background-color: #f0fdf4;
   border: 1px solid #bbf7d0;
-  border-radius: 10px;
-  padding: 10px 12px;
+  border-radius: 6px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .md3-ec-notes-header {
@@ -766,33 +790,37 @@
 .md3-ec-notes-title {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.68rem;
+  gap: 3px;
+  font-size: 0.60rem;
   font-weight: 800;
   color: #166534;
   text-transform: uppercase;
 }
 
+.md3-ec-notes-title .material-symbols-rounded {
+  font-size: 12px;
+}
+
 .md3-ec-locked-pill {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
-  font-size: 0.62rem;
+  gap: 2px;
+  font-size: 0.58rem;
   font-weight: 800;
   color: #166534;
   background-color: #dcfce7;
-  padding: 1px 6px;
+  padding: 0.5px 5px;
   border-radius: 100px;
 }
 
 .md3-ec-locked-pill .material-symbols-rounded {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .md3-ec-notes-body {
-  font-size: 0.78rem;
+  font-size: 0.70rem;
   color: #14532d;
-  line-height: 1.35;
+  line-height: 1.25;
   font-style: italic;
 }
 
@@ -800,24 +828,24 @@
 .md3-ec-rx-deck {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
 }
 
 .md3-ec-rx-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .md3-ec-rx-pill {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 3px 6px;
+  border-radius: 5px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
-  font-size: 0.74rem;
+  font-size: 0.68rem;
 }
 
 .md3-ec-rx-drug {
@@ -831,10 +859,10 @@
 }
 
 .md3-ec-rx-more {
-  font-size: 0.70rem;
+  font-size: 0.64rem;
   font-weight: 700;
   color: var(--md-sys-color-primary, #6750a4);
-  padding-left: 4px;
+  padding-left: 2px;
 }
 
 /* Lab Bar */
@@ -842,30 +870,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 10px;
-  border-radius: 8px;
+  padding: 4px 6px;
+  border-radius: 5px;
   background-color: var(--md-sys-color-surface-container, #f3edf7);
-  font-size: 0.74rem;
+  font-size: 0.68rem;
 }
 
 .md3-ec-lab-label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-weight: 700;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .md3-ec-lab-label .material-symbols-rounded {
-  font-size: 15px;
+  font-size: 13px;
   color: var(--md-sys-color-primary, #6750a4);
 }
 
 .md3-ec-lab-status {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 5px;
+  border-radius: 3px;
 }
 
 .md3-ec-lab-status.ready {
@@ -883,15 +911,15 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 6px;
+  padding-top: 4px;
   border-top: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
 }
 
 .md3-ec-status-badge {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 1.5px 6px;
+  border-radius: 4px;
 }
 
 .md3-ec-status-badge.finalized {
@@ -905,34 +933,36 @@
 }
 
 .md3-ec-doctor-tag {
-  font-size: 0.70rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: var(--md-sys-color-primary, #6750a4);
 }
 
-/* ── 6. CLINICAL ENCOUNTER MODAL DIALOG ── */
+/* ── 6. CLINICAL ENCOUNTER DETAIL DIALOG (ENTERPRISE MATERIAL 3) ── */
 .md3-dialog-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.45);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  background-color: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   padding: 16px;
+  box-sizing: border-box;
 }
 
 .md3-dialog-card {
   width: 100%;
-  max-width: 680px;
-  max-height: 85vh;
+  max-width: 780px;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
-  border-radius: var(--md-sys-shape-corner-large, 24px);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-large, 16px);
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22);
   overflow: hidden;
   animation: md3DialogFadeIn 180ms cubic-bezier(0.1, 0.9, 0.2, 1);
 }
@@ -940,11 +970,11 @@
 @keyframes md3DialogFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.96) translateY(6px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
@@ -952,38 +982,67 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 24px;
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  padding: 12px 18px;
+  background: linear-gradient(135deg, var(--md-sys-color-surface-container-low, #f7f2fa) 0%, var(--md-sys-color-surface-container, #f3edf7) 100%);
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  gap: 12px;
 }
 
 .md3-dialog-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
 }
 
-.md3-dialog-header-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background-color: var(--md-sys-color-primary-container, #eaddff);
-  color: var(--md-sys-color-on-primary-container, #21005d);
+.md3-dialog-avatar {
+  flex-shrink: 0;
+}
+
+.md3-dialog-header-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.md3-dialog-title-row {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .md3-dialog-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: -0.01em;
+}
+
+.md3-dialog-token-pill {
+  font-size: 0.70rem;
+  font-weight: 800;
+  font-family: monospace;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
 }
 
 .md3-dialog-subtitle {
-  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.70rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-dialog-subtitle .material-symbols-rounded {
+  font-size: 13px;
 }
 
 .md3-dialog-close-btn {
@@ -995,101 +1054,440 @@
   border-radius: 50%;
   display: flex;
   align-items: center;
+  justify-content: center;
+  transition: all 140ms ease;
+  flex-shrink: 0;
 }
 
 .md3-dialog-close-btn:hover {
   background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .md3-dialog-body {
-  padding: 20px 24px;
+  padding: 14px 18px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  font-size: 0.85rem;
+  gap: 12px;
+  background-color: var(--md-sys-color-surface, #fdf8fd);
 }
 
-.md3-dialog-section {
+/* ── Distinct Surface Container Sections ── */
+.md3-dialog-card-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  border-radius: 12px;
-  padding: 14px 16px;
   border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.md3-dialog-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.md3-dialog-section-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  flex-shrink: 0;
+}
+
+.md3-dialog-section-icon.vitals {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.md3-dialog-section-icon.diagnosis {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.md3-dialog-section-icon.notes {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+
+.md3-dialog-section-icon.rx {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.md3-dialog-section-icon.lab {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.md3-dialog-section-icon .material-symbols-rounded {
+  font-size: 13px;
 }
 
 .md3-dialog-section-title {
-  margin: 0 0 10px 0;
-  font-size: 0.80rem;
+  margin: 0;
+  font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--md-sys-color-primary, #6750a4);
+  flex: 1;
 }
 
-.md3-dialog-grid-2 {
+/* ── 1. Demographics Data Grid (4 Columns) ── */
+.md3-dialog-data-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
 }
 
-.md3-dialog-notes-content {
-  background-color: #ffffff;
+.md3-dialog-data-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #ece6f0);
+}
+
+.md3-data-label {
+  font-size: 0.60rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-data-value {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  word-break: break-word;
+}
+
+.md3-data-value.mrn-code {
+  font-family: monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.md3-blood-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.70rem;
+  font-weight: 800;
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* ── 2. Vitals Telemetry Grid ── */
+.md3-dialog-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.md3-vitals-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #ece6f0);
+}
+
+.md3-vitals-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: #fee2e2;
+  color: #991b1b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-vitals-icon .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.md3-vitals-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.md3-vitals-lbl {
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-vitals-val {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-vitals-val small {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── 3. Clinical Findings & Diagnosis Card ── */
+.md3-dialog-diagnosis-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #ece6f0);
+}
+
+.md3-diagnosis-primary-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.md3-diagnosis-tag {
+  font-size: 0.62rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+.md3-diagnosis-title {
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-diagnosis-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  font-size: 0.74rem;
+}
+
+.md3-diagnosis-sublabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-diagnosis-subtext {
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.35;
+}
+
+/* ── 4. Doctor Observations Box ── */
+.md3-dialog-notes-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 12px;
-  border: 1px solid #bbf7d0;
-  color: #14532d;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #ece6f0);
+}
+
+.md3-dialog-notes-content {
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  white-space: pre-wrap;
+}
+
+.md3-dialog-notes-signature {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  color: var(--md-sys-color-primary, #6750a4);
+  border-top: 1px dashed var(--md-sys-color-outline-variant, #ece6f0);
+  padding-top: 6px;
+}
+
+.md3-dialog-notes-signature .material-symbols-rounded {
+  font-size: 14px;
+}
+
+/* ── 5. Prescriptions & Labs Data Tables ── */
+.md3-dialog-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #ece6f0);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+.md3-dialog-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.74rem;
+  text-align: left;
+}
+
+.md3-dialog-table th {
+  background-color: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.60rem;
+  letter-spacing: 0.03em;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  white-space: nowrap;
+}
+
+.md3-dialog-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f0ebf4);
+  vertical-align: middle;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-dialog-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.md3-dialog-table tbody tr:hover td {
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.md3-dialog-table .row-num {
+  font-size: 0.65rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  width: 24px;
+}
+
+.md3-dialog-table .rx-name {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-dialog-table .rx-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin-right: 4px;
+}
+
+.md3-dialog-table .rx-freq {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-dialog-table .rx-instructions {
+  font-size: 0.68rem;
   font-style: italic;
-  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
-.md3-dialog-rx-table {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.md3-dialog-table .lab-test-name strong {
+  color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
-.md3-dialog-rx-row {
-  display: flex;
+.md3-dialog-table .lab-cat {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-dialog-table .lab-instructions {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-lab-order-badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background-color: #ffffff;
-  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
-.md3-dialog-labs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+.md3-lab-order-badge .material-symbols-rounded {
+  font-size: 12px;
 }
 
-.md3-dialog-lab-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background-color: #ffffff;
-  border: 1px solid var(--md-sys-color-outline-variant, #e7e0ec);
+.md3-lab-order-badge.completed {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
 }
 
+.md3-lab-order-badge.pending {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+/* ── 6. Modal Actions Footer ── */
 .md3-dialog-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  padding: 14px 24px;
+  justify-content: space-between;
+  padding: 10px 18px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  gap: 12px;
+}
+
+.md3-dialog-footer-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.md3-dialog-footer-info .material-symbols-rounded {
+  font-size: 14px;
+  color: var(--md-sys-color-primary, #6750a4);
 }
 
 .md3-dialog-btn {
-  padding: 8px 18px;
-  border-radius: 10px;
+  padding: 6px 16px;
+  border-radius: 8px;
   font-weight: 700;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   border: none;
   cursor: pointer;
+  transition: all 140ms ease;
 }
 
 .md3-dialog-btn.secondary {
@@ -1101,6 +1499,10 @@
   background-color: var(--md-sys-color-outline-variant, #cac4d0);
 }
 
+.md3-dialog-btn.secondary:active {
+  transform: scale(0.98);
+}
+
 /* ── 7. EMPTY & LOADING STATES ── */
 .md3-feed-loading-box,
 .md3-feed-empty-box {
@@ -1108,114 +1510,336 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 64px 24px;
-  border-radius: 20px;
+  padding: 48px 18px;
+  border-radius: 14px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
   text-align: center;
 }
 
 .md3-empty-icon-wrap {
-  width: 64px;
-  height: 64px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .md3-empty-icon-wrap .material-symbols-rounded {
-  font-size: 32px;
+  font-size: 24px;
 }
 
 .md3-empty-title {
-  margin: 0 0 6px 0;
-  font-size: 1.15rem;
+  margin: 0 0 4px 0;
+  font-size: 0.98rem;
   font-weight: 800;
   color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .md3-empty-subtitle {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  max-width: 480px;
-  line-height: 1.4;
+  max-width: 420px;
+  line-height: 1.35;
 }
 
 .md3-reset-filter-btn {
-  margin-top: 16px;
+  margin-top: 12px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: 10px;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
   border: 1px solid var(--md-sys-color-primary, #6750a4);
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
-  font-size: 0.80rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
 }
 
 /* ── 8. RESPONSIVE BREAKPOINTS (DESKTOP, TABLET, MOBILE) ── */
 @media (max-width: 1024px) {
+  .md3-doc-telemetry-deck {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
   .md3-encounters-grid {
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   }
 }
 
 @media (max-width: 768px) {
   .md3-doc-history-page {
-    padding: 12px 14px 36px 14px;
+    padding: 8px 10px 28px;
+    gap: 8px;
+  }
+
+  .md3-doc-history-hero {
+    padding: 8px 10px;
+    border-radius: 10px;
+    gap: 8px;
   }
 
   .md3-doc-hero-main {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .md3-doc-hero-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+  }
+
+  .md3-doc-hero-avatar .material-symbols-rounded {
+    font-size: 16px;
+  }
+
+  .md3-doc-hero-title {
+    font-size: 0.90rem;
+  }
+
+  .md3-doc-hero-subtitle {
+    display: none;
   }
 
   .md3-doc-telemetry-deck {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+  }
+
+  .md3-doc-telemetry-card {
+    padding: 4px 6px;
+    min-height: 34px;
+    border-radius: 6px;
+    gap: 6px;
+  }
+
+  .md3-telemetry-icon {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+  }
+
+  .md3-telemetry-icon .material-symbols-rounded {
+    font-size: 12px;
+  }
+
+  .md3-telemetry-val {
+    font-size: 0.78rem;
+  }
+
+  .md3-telemetry-lbl {
+    font-size: 0.58rem;
+  }
+
+  .md3-doc-controls-card {
+    padding: 8px 10px;
+    border-radius: 10px;
+    gap: 6px;
   }
 
   .md3-doc-controls-row {
     flex-direction: column;
     align-items: stretch;
+    gap: 6px;
   }
 
   .md3-doc-search-box {
     min-width: 100%;
   }
 
+  .md3-search-input {
+    height: 30px;
+    font-size: 0.74rem;
+  }
+
   .md3-modality-segment-group {
-    overflow-x: auto;
     width: 100%;
-    justify-content: space-between;
+    box-sizing: border-box;
+    justify-content: flex-start;
+  }
+
+  .md3-modality-btn {
+    height: 24px;
+    padding: 2px 7px;
+    font-size: 0.68rem;
+  }
+
+  .md3-doc-controls-secondary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .md3-date-filter-deck,
+  .md3-status-filter-deck {
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+
+  .md3-date-filter-deck::-webkit-scrollbar,
+  .md3-status-filter-deck::-webkit-scrollbar {
+    display: none;
+  }
+
+  .md3-date-chip,
+  .md3-status-chip {
+    padding: 2px 7px;
+    font-size: 0.65rem;
+    flex-shrink: 0;
   }
 
   .md3-encounters-grid {
     grid-template-columns: 1fr;
-  }
-
-  .md3-dialog-grid-2 {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .md3-doc-telemetry-deck {
-    grid-template-columns: 1fr;
-  }
-
-  .md3-date-header-left {
-    gap: 8px;
+    gap: 6px;
   }
 
   .md3-date-pills-row {
     display: none;
   }
+
+  /* Dialog Mobile Responsive Adaptations */
+  .md3-dialog-card {
+    max-height: 92vh;
+    border-radius: 12px;
+    margin: 4px;
+  }
+
+  .md3-dialog-header {
+    padding: 10px 12px;
+  }
+
+  .md3-dialog-body {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .md3-dialog-card-section {
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .md3-dialog-data-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .md3-dialog-vitals-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .md3-dialog-actions {
+    padding: 8px 12px;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .md3-dialog-footer-info {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .md3-dialog-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .md3-doc-telemetry-deck {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .md3-date-header {
+    padding: 5px 8px;
+  }
+
+  .md3-date-heading {
+    font-size: 0.78rem;
+  }
+
+  .md3-dialog-data-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .md3-dialog-vitals-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── INPATIENT HISTORY CALLOUT BANNER ── */
+.doc-ipd-callout-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+  border: 1px solid #80cbc4;
+  border-radius: 14px;
+  padding: 12px 18px;
+  margin-top: 10px;
+  animation: ipdCalloutSlide 180ms ease forwards;
+}
+
+@keyframes ipdCalloutSlide {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.doc-ipd-callout-banner .callout-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.doc-ipd-callout-banner .callout-left .material-symbols-rounded {
+  font-size: 26px;
+  color: #006874;
+}
+
+.doc-ipd-callout-banner .callout-left strong {
+  display: block;
+  font-size: 13px;
+  color: #004d40;
+}
+
+.doc-ipd-callout-banner .callout-left span {
+  font-size: 12px;
+  color: #004d40;
+  opacity: 0.85;
+}
+
+.doc-ipd-callout-banner .callout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #006874;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 104, 116, 0.2);
+  transition: all 150ms ease;
+}
+
+.doc-ipd-callout-banner .callout-btn:hover {
+  background: #004d56;
 }

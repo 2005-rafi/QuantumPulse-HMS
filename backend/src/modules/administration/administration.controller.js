@@ -1,5 +1,5 @@
 const service = require('./administration.service');
-const catchAsync = require('../../core/utils/catchAsync');
+const catchAsync = require('../../core/utils/catch-async');
 const { success } = require('../../core/responses');
 
 // Lazy-load laboratoryService to avoid circular dependency at startup.
@@ -92,11 +92,24 @@ const updateSetting = catchAsync(async (req, res) => {
   return success(res, updatedValue, 'Setting updated successfully');
 });
 
+// ── Cache Handlers ────────────────────────────────────────────────────────────────
+
+const flushCache = catchAsync(async (req, res) => {
+  const result = await service.flushCache();
+  return success(res, result, 'In-memory reference cache successfully flushed');
+});
+
+const getCacheStats = catchAsync(async (req, res) => {
+  const stats = await service.getCacheStats();
+  return success(res, stats, 'Cache telemetry statistics retrieved successfully');
+});
+
 module.exports = {
   listRoles, listPermissions, createRole, assignPermissionsToRole,
   listDepartments, listAllDepartments, createDepartment, updateDepartment, deleteDepartment, assignHod,
   getLaboratoriesByDepartment,
   getSetting, updateSetting,
+  flushCache, getCacheStats,
 };
 
 

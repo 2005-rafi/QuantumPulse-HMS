@@ -27,7 +27,8 @@ import api from '../services/api';
  */
 export const useTriageQueue = () => {
   const { user } = useAuth();
-  const deptId = user?.departmentId;
+  const rawDept = user?.departmentId;
+  const deptId = typeof rawDept === 'object' ? (rawDept?._id || rawDept?.id) : rawDept;
 
   const [queue, setQueue] = useState([]);
   const [loadingQueue, setLoadingQueue] = useState(true);
@@ -50,7 +51,7 @@ export const useTriageQueue = () => {
 
       if (deptId && results[1]) {
         const deptList = results[1].data?.data || [];
-        const myDept = deptList.find((d) => d._id === deptId);
+        const myDept = deptList.find((d) => (d._id === deptId || d.id === deptId));
         if (myDept) setDepartment(myDept);
       }
     } catch (err) {
@@ -80,6 +81,17 @@ export const useTriageQueue = () => {
     setSelectedVisit(null);
   }, []);
 
+  const handleSkipTriage = useCallback(async (visitId, reason) => {
+    await visitAPI.skipTriage(visitId, { reason });
+    setSelectedVisit(null);
+    fetchQueue();
+  }, [fetchQueue]);
+
+  const handleRevokeSkip = useCallback(async (visitId, reason) => {
+    await visitAPI.revokeTriageSkip(visitId, { reason });
+    fetchQueue();
+  }, [fetchQueue]);
+
   const deptName = department?.name || user?.department || 'OPD';
 
   return {
@@ -87,11 +99,14 @@ export const useTriageQueue = () => {
     loadingQueue,
     selectedVisit,
     department,
+    deptId,
     triagedToday,
     fetchQueue,
     handleSelect,
     handleTriageComplete,
     handleTriageCancel,
+    handleSkipTriage,
+    handleRevokeSkip,
     deptName,
   };
 };

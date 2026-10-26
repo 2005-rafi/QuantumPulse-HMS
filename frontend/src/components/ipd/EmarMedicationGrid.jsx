@@ -60,8 +60,40 @@ export const EmarMedicationGrid = ({
       </div>
 
       {records.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '32px', color: 'var(--md-sys-color-outline)', fontSize: '0.9rem' }}>
-          No scheduled medication doses for today. Prescribe via Doctor CPOE orders.
+        <div
+          style={{
+            background: 'var(--md-sys-color-surface-container-low, #f7f9f8)',
+            border: '1.5px dashed var(--md-sys-color-outline-variant, #cedbd5)',
+            borderRadius: '12px',
+            padding: '24px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            gap: '8px',
+          }}
+        >
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              background: 'var(--md-sys-color-primary-container, #cce8e8)',
+              color: 'var(--md-sys-color-primary, #006a6a)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '22px' }}>medication</span>
+          </div>
+          <div style={{ fontSize: '0.92rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>
+            No Scheduled Medication Doses for Today
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline, #707973)', maxWidth: '420px' }}>
+            Physician medication orders entered via Doctor Cockpit (CPOE) automatically populate scheduled OD/BD/TDS/QID administration slots here.
+          </div>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>

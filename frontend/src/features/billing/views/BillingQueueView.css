@@ -1,0 +1,389 @@
+/* ==========================================================================
+   BillingQueueView.css — Professional Medical Idle State & Responsive Layout
+   ========================================================================== */
+@import '../../../styles/admin-responsive-metrics.css';
+
+/* ── Active Queue Container & Filter Bar ── */
+.billing-queue-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--clinical-gap-element, 10px);
+  width: 100%;
+}
+
+.billing-queue-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.billing-queue-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--clinical-tab-radius, 16px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+
+.billing-queue-filter-btn--active {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: var(--md-sys-color-primary, #006a6a);
+  box-shadow: 0 2px 6px rgba(0, 106, 106, 0.2);
+}
+
+.billing-queue-filter-count {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.billing-queue-filter-btn--active .billing-queue-filter-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ── Queue Search Wrapper ── */
+.billing-queue-search-wrap {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  padding: 8px 14px;
+  border-radius: var(--billing-card-radius, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+/* ── Queue Cards Grid ── */
+.billing-queue-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: var(--clinical-gap-card, 12px);
+}
+
+.billing-queue-card {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--billing-card-radius, 14px);
+  padding: var(--billing-card-padding, 12px 14px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.billing-queue-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.billing-queue-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.billing-queue-patient-name {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.billing-queue-patient-mrn {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-family: monospace;
+}
+
+.billing-queue-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.billing-queue-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.billing-queue-meta-item .material-symbols-rounded {
+  font-size: 15px;
+}
+
+.billing-queue-card-actions {
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ── IDLE / WAITING STATE CARD ── */
+.billing-idle-card {
+  position: relative;
+  max-width: 580px;
+  width: 100%;
+  margin: 16px auto 32px auto;
+  padding: 36px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, rgba(0, 0, 0, 0.08));
+  border-radius: 24px;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 1px 4px 0 rgba(0, 0, 0, 0.02);
+  backdrop-filter: blur(12px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.billing-idle-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #00897b, #1e88e5, #00897b);
+  background-size: 200% 100%;
+  animation: shimmerBar 6s ease-in-out infinite;
+}
+
+@keyframes shimmerBar {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+.billing-idle-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: rgba(46, 125, 50, 0.08);
+  border: 1px solid rgba(46, 125, 50, 0.2);
+  border-radius: 999px;
+  margin-bottom: 20px;
+  transition: all 0.2s ease;
+}
+
+.billing-idle-beacon-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #2e7d32;
+  position: relative;
+  box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.5);
+  animation: beaconGlow 2.4s infinite;
+}
+
+@keyframes beaconGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(46, 125, 50, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 125, 50, 0);
+  }
+}
+
+.billing-idle-badge-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #1b5e20;
+}
+
+.billing-idle-icon-wrapper {
+  position: relative;
+  width: 84px;
+  height: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+}
+
+.billing-idle-pulse-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.billing-idle-pulse-ring.ring-1 {
+  background: rgba(0, 137, 123, 0.08);
+  border: 1.5px solid rgba(0, 137, 123, 0.25);
+  animation: medicalPulse 3s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.billing-idle-pulse-ring.ring-2 {
+  background: rgba(30, 136, 229, 0.05);
+  border: 1px solid rgba(30, 136, 229, 0.18);
+  animation: medicalPulse 3s cubic-bezier(0.2, 0.8, 0.2, 1) infinite 1.5s;
+}
+
+@keyframes medicalPulse {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(1.48);
+    opacity: 0;
+  }
+}
+
+.billing-idle-icon-box {
+  position: relative;
+  z-index: 2;
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(0, 137, 123, 0.12) 0%, rgba(30, 136, 229, 0.08) 100%);
+  border: 1px solid rgba(0, 137, 123, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 137, 123, 0.1);
+  animation: iconBreathe 4s ease-in-out infinite;
+}
+
+@keyframes iconBreathe {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.03);
+  }
+}
+
+.billing-idle-icon {
+  font-size: 34px !important;
+  color: #00796b;
+  transition: transform 0.2s ease;
+}
+
+.billing-idle-text-block {
+  max-width: 440px;
+  margin-bottom: 22px;
+}
+
+.billing-idle-title {
+  margin: 0 0 6px 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1e293b);
+  letter-spacing: -0.01em;
+}
+
+.billing-idle-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+}
+
+.billing-idle-action-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.billing-idle-refresh-btn {
+  min-width: 180px;
+  height: 40px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 137, 123, 0.18);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.billing-idle-refresh-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 137, 123, 0.28);
+}
+
+.billing-refresh-icon {
+  font-size: 18px !important;
+  transition: transform 0.3s ease;
+}
+
+.billing-idle-refresh-btn:hover .billing-refresh-icon {
+  transform: rotate(45deg);
+}
+
+.billing-idle-sync-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* Responsive Scaling */
+@media (max-width: 640px) {
+  .billing-queue-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .billing-idle-card {
+    padding: 28px 16px;
+    border-radius: 18px;
+    margin: 8px auto 16px auto;
+  }
+
+  .billing-idle-title {
+    font-size: 1.05rem;
+  }
+
+  .billing-idle-desc {
+    font-size: 0.78rem;
+  }
+
+  .billing-idle-icon-wrapper {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 14px;
+  }
+
+  .billing-idle-icon-box {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+  }
+
+  .billing-idle-icon {
+    font-size: 28px !important;
+  }
+
+  .billing-idle-refresh-btn {
+    width: 100%;
+    max-width: 240px;
+  }
+}

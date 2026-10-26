@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { visitAPI } from '../../services/visitAPI';
 import { useAuth } from '../../context/AuthContext';
 import { Md3Avatar } from '../../components/md3/Md3Widgets';
-import { formatPatientName, getPatientInitials, formatDoctorName } from '../../utils/patientFormatters';
+import { formatPatientName, getPatientInitials, formatDoctorName, formatVisitStatus } from '../../utils/patientFormatters';
 import './DoctorConsultationHistory.css';
 
 /**
@@ -17,6 +18,7 @@ import './DoctorConsultationHistory.css';
  */
 export const DoctorConsultationHistory = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Query and filter states
   const [visits, setVisits] = useState([]);
@@ -373,6 +375,26 @@ export const DoctorConsultationHistory = () => {
           </div>
         </div>
 
+        {selectedModality === 'IPD' && (
+          <div className="doc-ipd-callout-banner">
+            <div className="callout-left">
+              <span className="material-symbols-rounded">hotel</span>
+              <div>
+                <strong>Looking for Inpatient Stay History & Full Case Files?</strong>
+                <span>Review all past admissions, daily SOAP ward rounds, CPOE orders, and discharge summaries in the dedicated Inpatient History Manager.</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="callout-btn"
+              onClick={() => navigate('/dashboard/doctor/ipd')}
+            >
+              <span>Open Inpatient History Manager</span>
+              <span className="material-symbols-rounded">arrow_forward</span>
+            </button>
+          </div>
+        )}
+
         {/* Row 2: Date Range Presets & Status Chips */}
         <div className="md3-doc-controls-secondary">
           {/* Date Range Chips */}
@@ -609,7 +631,7 @@ export const DoctorConsultationHistory = () => {
                       } else if (modality === 'EMERGENCY') {
                         modalityClass = 'emergency';
                         modalityIcon = 'e911_emergency';
-                        modalityLabel = visit.triageLevel ? `EMERGENCY • Level ${visit.triageLevel}` : 'EMERGENCY';
+                        modalityLabel = visit.triageLevel ? `EMERGENCY • Acuity Level ${visit.triageLevel}` : 'EMERGENCY';
                       }
 
                       return (
@@ -621,7 +643,7 @@ export const DoctorConsultationHistory = () => {
                           {/* Card Top: Avatar, Patient Name, Token & Timestamp */}
                           <div className="md3-ec-top">
                             <div className="md3-ec-patient-block">
-                              <Md3Avatar initials={initials} size="medium" variant={modalityClass === 'emergency' ? 'error' : modalityClass === 'ipd' ? 'tertiary' : 'primary'} />
+                              <Md3Avatar initials={initials} size="small" variant={modalityClass === 'emergency' ? 'error' : modalityClass === 'ipd' ? 'tertiary' : 'primary'} />
                               <div className="md3-ec-identity">
                                 <h4 className="md3-ec-name" title={fullName}>
                                   {fullName}
@@ -673,7 +695,7 @@ export const DoctorConsultationHistory = () => {
                             )}
                           </div>
 
-                          {/* 🔒 Immutable Doctor Clinical Observations */}
+                          {/* Immutable Doctor Clinical Observations */}
                           <div className="md3-ec-notes-box">
                             <div className="md3-ec-notes-header">
                               <span className="md3-ec-notes-title">
@@ -731,7 +753,7 @@ export const DoctorConsultationHistory = () => {
                           {/* Card Footer: Status & Attending Clinician */}
                           <div className="md3-ec-footer">
                             <span className={`md3-ec-status-badge ${isFinalized ? 'finalized' : 'active'}`}>
-                              {isFinalized ? 'Finalized & Concluded' : (visit.status ? visit.status.replace(/_/g, ' ') : 'Active')}
+                              {isFinalized ? 'Finalized & Concluded' : (visit.status ? formatVisitStatus(visit.status) : 'Active')}
                             </span>
                             <span className="md3-ec-doctor-tag">
                               <span>Attending: {cleanDocName}</span>
@@ -748,127 +770,346 @@ export const DoctorConsultationHistory = () => {
         )}
       </div>
 
-      {/* ── 4. CLINICAL ENCOUNTER DETAIL DIALOG (MATERIAL 3 MODAL) ── */}
-      {selectedEncounterDetail && (
-        <div className="md3-dialog-backdrop" onClick={() => setSelectedEncounterDetail(null)}>
-          <div className="md3-dialog-card" onClick={(e) => e.stopPropagation()}>
-            {/* Modal Header */}
-            <div className="md3-dialog-header">
-              <div className="md3-dialog-header-left">
-                <span className="md3-dialog-header-icon">
-                  <span className="material-symbols-rounded">clinical_notes</span>
-                </span>
-                <div>
-                  <h2 className="md3-dialog-title">
-                    Clinical Encounter Record: {formatPatientName(selectedEncounterDetail.patientId)}
-                  </h2>
-                  <span className="md3-dialog-subtitle">
-                    Encounter {selectedEncounterDetail.tokenString || selectedEncounterDetail.visitNumber} • {selectedEncounterDetail.visitType || 'OPD'} • {new Date(selectedEncounterDetail.consultation?.recordedAt || selectedEncounterDetail.createdAt).toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' })}
-                  </span>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="md3-dialog-close-btn"
-                onClick={() => setSelectedEncounterDetail(null)}
-                title="Close dialog"
-              >
-                <span className="material-symbols-rounded">close</span>
-              </button>
-            </div>
+      {/* ── 4. CLINICAL ENCOUNTER DETAIL DIALOG (MATERIAL 3 STRUCTURED MODAL) ── */}
+      {selectedEncounterDetail && (() => {
+        const p = selectedEncounterDetail.patientId || {};
+        const patientName = formatPatientName(p);
+        const patientInitials = getPatientInitials(p);
+        const consult = selectedEncounterDetail.consultation || {};
+        const vitals = selectedEncounterDetail.vitals || {};
+        const modality = (selectedEncounterDetail.visitType || 'OPD').toUpperCase();
+        const modalityClass = modality === 'EMERGENCY' ? 'emergency' : modality === 'IPD' ? 'ipd' : 'opd';
+        const isFinalized = consult.status === 'FINALIZED' || selectedEncounterDetail.status === 'COMPLETED';
+        const encounterToken = selectedEncounterDetail.tokenString || selectedEncounterDetail.visitNumber || 'N/A';
+        const recordedDate = consult.recordedAt || selectedEncounterDetail.createdAt;
+        const formattedDate = recordedDate
+          ? new Date(recordedDate).toLocaleString('en-IN', { dateStyle: 'full', timeStyle: 'short' })
+          : 'Date not recorded';
 
-            {/* Modal Scrollable Body */}
-            <div className="md3-dialog-body">
-              {/* Demographics Summary */}
-              <div className="md3-dialog-section">
-                <h4 className="md3-dialog-section-title">Patient Demographics</h4>
-                <div className="md3-dialog-grid-2">
-                  <div><strong>MRN:</strong> {selectedEncounterDetail.patientId?.mrn || '—'}</div>
-                  <div><strong>Age / Gender:</strong> {selectedEncounterDetail.patientId?.age ? `${selectedEncounterDetail.patientId.age} yrs` : '—'} • {selectedEncounterDetail.patientId?.gender || '—'}</div>
-                  <div><strong>Blood Group:</strong> {selectedEncounterDetail.patientId?.bloodGroup || '—'}</div>
-                  <div><strong>Phone:</strong> {selectedEncounterDetail.patientId?.phoneNumber || selectedEncounterDetail.patientId?.phone || '—'}</div>
-                </div>
-              </div>
+        const meds = (selectedEncounterDetail.prescribedMedications && selectedEncounterDetail.prescribedMedications.length > 0)
+          ? selectedEncounterDetail.prescribedMedications
+          : (consult.prescribedMedications || []);
 
-              {/* Diagnosis & Findings */}
-              <div className="md3-dialog-section">
-                <h4 className="md3-dialog-section-title">Clinical Findings &amp; Diagnosis</h4>
-                <div style={{ marginBottom: '8px' }}>
-                  <strong>Primary Diagnosis:</strong> {selectedEncounterDetail.consultation?.diagnosis || 'Clinical evaluation completed'}
-                </div>
-                {(selectedEncounterDetail.vitals?.chiefComplaint || selectedEncounterDetail.consultation?.chiefComplaint || selectedEncounterDetail.reasonForVisit) && (
-                  <div style={{ marginBottom: '8px' }}>
-                    <strong>Presenting Symptoms:</strong> {selectedEncounterDetail.vitals?.chiefComplaint || selectedEncounterDetail.consultation?.chiefComplaint || selectedEncounterDetail.reasonForVisit}
+        const labs = (selectedEncounterDetail.labOrders && selectedEncounterDetail.labOrders.length > 0)
+          ? selectedEncounterDetail.labOrders
+          : (consult.labOrders || []);
+
+        // Check if any vitals are available
+        const hasVitals = vitals.bloodPressure || vitals.bp || vitals.heartRate || vitals.pulse ||
+          vitals.temperature || vitals.temp || vitals.oxygenSaturation || vitals.spo2 ||
+          vitals.respiratoryRate || vitals.rr || vitals.weight || vitals.bmi;
+
+        const symptoms = vitals.chiefComplaint || consult.chiefComplaint || selectedEncounterDetail.reasonForVisit;
+
+        return (
+          <div className="md3-dialog-backdrop" onClick={() => setSelectedEncounterDetail(null)}>
+            <div className="md3-dialog-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+              {/* Modal Header */}
+              <div className="md3-dialog-header">
+                <div className="md3-dialog-header-left">
+                  <div className="md3-dialog-avatar">
+                    <Md3Avatar initials={patientInitials} size="small" variant={modalityClass === 'emergency' ? 'error' : modalityClass === 'ipd' ? 'tertiary' : 'primary'} />
                   </div>
-                )}
-                {selectedEncounterDetail.consultation?.treatmentPlan && (
-                  <div>
-                    <strong>Treatment Plan:</strong> {selectedEncounterDetail.consultation.treatmentPlan}
-                  </div>
-                )}
-              </div>
-
-              {/* 🔒 Immutable Doctor Notes */}
-              <div className="md3-dialog-section">
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <h4 className="md3-dialog-section-title" style={{ margin: 0 }}>Doctor Clinical Observations</h4>
-                  <span className="md3-ec-locked-pill">
-                    <span className="material-symbols-rounded">lock</span>
-                    <span>Immutable Medical Record</span>
-                  </span>
-                </div>
-                <div className="md3-dialog-notes-content">
-                  {selectedEncounterDetail.consultation?.notes || 'Patient examined and advised on clinical protocol.'}
-                </div>
-              </div>
-
-              {/* Prescriptions */}
-              {((selectedEncounterDetail.prescribedMedications && selectedEncounterDetail.prescribedMedications.length > 0) ||
-                (selectedEncounterDetail.consultation?.prescribedMedications && selectedEncounterDetail.consultation.prescribedMedications.length > 0)) && (
-                <div className="md3-dialog-section">
-                  <h4 className="md3-dialog-section-title">Prescribed Medications</h4>
-                  <div className="md3-dialog-rx-table">
-                    {(selectedEncounterDetail.prescribedMedications || selectedEncounterDetail.consultation?.prescribedMedications || []).map((m, idx) => (
-                      <div key={idx} className="md3-dialog-rx-row">
-                        <strong>{typeof m === 'string' ? m : (m.name || m.medicineName || 'Medicine')}</strong>
-                        <span>{typeof m === 'object' ? [m.dosage, m.frequency, m.duration].filter(Boolean).join(' • ') : ''}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Lab Orders */}
-              {selectedEncounterDetail.labOrders && selectedEncounterDetail.labOrders.length > 0 && (
-                <div className="md3-dialog-section">
-                  <h4 className="md3-dialog-section-title">Laboratory Investigations</h4>
-                  <div className="md3-dialog-labs-list">
-                    {selectedEncounterDetail.labOrders.map((lo, idx) => (
-                      <div key={idx} className="md3-dialog-lab-item">
-                        <span>{lo.testName || lo.name || 'Laboratory Investigation'}</span>
-                        <span className={`md3-ec-lab-status ${lo.status === 'COMPLETED' ? 'ready' : 'pending'}`}>
-                          {lo.status || 'ORDERED'}
+                  <div className="md3-dialog-header-title-group">
+                    <div className="md3-dialog-title-row">
+                      <h2 id="dialog-title" className="md3-dialog-title">
+                        {patientName}
+                      </h2>
+                      <span className="md3-dialog-token-pill">{encounterToken}</span>
+                      <span className={`md3-ec-modality-pill ${modalityClass}`}>
+                        <span className="material-symbols-rounded">
+                          {modality === 'IPD' ? 'hotel' : modality === 'EMERGENCY' ? 'e911_emergency' : 'stethoscope'}
                         </span>
-                      </div>
-                    ))}
+                        <span>{modality}</span>
+                      </span>
+                      <span className={`md3-ec-status-badge ${isFinalized ? 'finalized' : 'active'}`}>
+                        {isFinalized ? 'Locked & Finalized' : 'In Progress'}
+                      </span>
+                    </div>
+                    <div className="md3-dialog-subtitle">
+                      <span className="material-symbols-rounded">event</span>
+                      <span>Encounter recorded on {formattedDate}</span>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
+                <button
+                  type="button"
+                  className="md3-dialog-close-btn"
+                  onClick={() => setSelectedEncounterDetail(null)}
+                  title="Close encounter details"
+                  aria-label="Close dialog"
+                >
+                  <span className="material-symbols-rounded">close</span>
+                </button>
+              </div>
 
-            {/* Modal Actions */}
-            <div className="md3-dialog-actions">
-              <button
-                type="button"
-                className="md3-dialog-btn secondary"
-                onClick={() => setSelectedEncounterDetail(null)}
-              >
-                Close
-              </button>
+              {/* Modal Scrollable Body */}
+              <div className="md3-dialog-body">
+                {/* 1. Patient Demographics & Identification Matrix */}
+                <div className="md3-dialog-card-section">
+                  <div className="md3-dialog-section-header">
+                    <span className="md3-dialog-section-icon">
+                      <span className="material-symbols-rounded">person</span>
+                    </span>
+                    <h3 className="md3-dialog-section-title">Patient Identification &amp; Demographics</h3>
+                  </div>
+                  <div className="md3-dialog-data-grid">
+                    <div className="md3-dialog-data-cell">
+                      <span className="md3-data-label">Medical Record Number (MRN)</span>
+                      <span className="md3-data-value mrn-code">{p.mrn || '—'}</span>
+                    </div>
+                    <div className="md3-dialog-data-cell">
+                      <span className="md3-data-label">Age &amp; Gender</span>
+                      <span className="md3-data-value">{p.age ? `${p.age} yrs` : '—'} • {p.gender || '—'}</span>
+                    </div>
+                    <div className="md3-dialog-data-cell">
+                      <span className="md3-data-label">Blood Group</span>
+                      <span className="md3-data-value">
+                        {p.bloodGroup && p.bloodGroup !== 'Unknown' ? (
+                          <span className="md3-blood-badge">{p.bloodGroup}</span>
+                        ) : 'Not Documented'}
+                      </span>
+                    </div>
+                    <div className="md3-dialog-data-cell">
+                      <span className="md3-data-label">Contact Number</span>
+                      <span className="md3-data-value">{p.phoneNumber || p.phone || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Clinical Vitals Telemetry (When recorded) */}
+                {hasVitals && (
+                  <div className="md3-dialog-card-section">
+                    <div className="md3-dialog-section-header">
+                      <span className="md3-dialog-section-icon vitals">
+                        <span className="material-symbols-rounded">monitor_heart</span>
+                      </span>
+                      <h3 className="md3-dialog-section-title">Clinical Vitals Telemetry</h3>
+                    </div>
+                    <div className="md3-dialog-vitals-grid">
+                      <div className="md3-vitals-cell">
+                        <span className="md3-vitals-icon"><span className="material-symbols-rounded">speed</span></span>
+                        <div className="md3-vitals-content">
+                          <span className="md3-vitals-lbl">Blood Pressure</span>
+                          <span className="md3-vitals-val">{vitals.bloodPressure || vitals.bp || '—'} <small>mmHg</small></span>
+                        </div>
+                      </div>
+                      <div className="md3-vitals-cell">
+                        <span className="md3-vitals-icon"><span className="material-symbols-rounded">favorite</span></span>
+                        <div className="md3-vitals-content">
+                          <span className="md3-vitals-lbl">Heart Rate</span>
+                          <span className="md3-vitals-val">{vitals.heartRate || vitals.pulse || '—'} <small>bpm</small></span>
+                        </div>
+                      </div>
+                      <div className="md3-vitals-cell">
+                        <span className="md3-vitals-icon"><span className="material-symbols-rounded">device_thermostat</span></span>
+                        <div className="md3-vitals-content">
+                          <span className="md3-vitals-lbl">Temperature</span>
+                          <span className="md3-vitals-val">{vitals.temperature || vitals.temp || '—'} <small>°F</small></span>
+                        </div>
+                      </div>
+                      <div className="md3-vitals-cell">
+                        <span className="md3-vitals-icon"><span className="material-symbols-rounded">air</span></span>
+                        <div className="md3-vitals-content">
+                          <span className="md3-vitals-lbl">Oxygen Saturation</span>
+                          <span className="md3-vitals-val">{vitals.oxygenSaturation || vitals.spo2 || '—'} <small>%</small></span>
+                        </div>
+                      </div>
+                      <div className="md3-vitals-cell">
+                        <span className="md3-vitals-icon"><span className="material-symbols-rounded">pulmonology</span></span>
+                        <div className="md3-vitals-content">
+                          <span className="md3-vitals-lbl">Respiratory Rate</span>
+                          <span className="md3-vitals-val">{vitals.respiratoryRate || vitals.rr || '—'} <small>/min</small></span>
+                        </div>
+                      </div>
+                      <div className="md3-vitals-cell">
+                        <span className="md3-vitals-icon"><span className="material-symbols-rounded">scale</span></span>
+                        <div className="md3-vitals-content">
+                          <span className="md3-vitals-lbl">Weight / BMI</span>
+                          <span className="md3-vitals-val">
+                            {vitals.weight ? `${vitals.weight} kg` : ''}
+                            {vitals.bmi ? ` • BMI ${vitals.bmi}` : (!vitals.weight ? '—' : '')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Clinical Findings & Diagnoses */}
+                <div className="md3-dialog-card-section">
+                  <div className="md3-dialog-section-header">
+                    <span className="md3-dialog-section-icon diagnosis">
+                      <span className="material-symbols-rounded">stethoscope</span>
+                    </span>
+                    <h3 className="md3-dialog-section-title">Clinical Findings &amp; Diagnosis</h3>
+                  </div>
+                  <div className="md3-dialog-diagnosis-box">
+                    <div className="md3-diagnosis-primary-row">
+                      <span className="md3-diagnosis-tag">Primary Diagnosis</span>
+                      <span className="md3-diagnosis-title">
+                        {consult.diagnosis || 'Clinical evaluation completed'}
+                      </span>
+                    </div>
+                    {symptoms && (
+                      <div className="md3-diagnosis-detail-row">
+                        <span className="md3-diagnosis-sublabel">Presenting Symptoms / Chief Complaints:</span>
+                        <span className="md3-diagnosis-subtext">{symptoms}</span>
+                      </div>
+                    )}
+                    {consult.treatmentPlan && (
+                      <div className="md3-diagnosis-detail-row">
+                        <span className="md3-diagnosis-sublabel">Treatment &amp; Care Protocol:</span>
+                        <span className="md3-diagnosis-subtext">{consult.treatmentPlan}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Immutable Attending Doctor Clinical Observations */}
+                <div className="md3-dialog-card-section">
+                  <div className="md3-dialog-section-header">
+                    <span className="md3-dialog-section-icon notes">
+                      <span className="material-symbols-rounded">edit_note</span>
+                    </span>
+                    <h3 className="md3-dialog-section-title">Doctor Clinical Observations</h3>
+                    <span className="md3-ec-locked-pill" title="Locked clinical record">
+                      <span className="material-symbols-rounded">lock</span>
+                      <span>Immutable Clinical Record</span>
+                    </span>
+                  </div>
+                  <div className="md3-dialog-notes-box">
+                    <div className="md3-dialog-notes-content">
+                      {consult.notes || 'Patient examined and advised on clinical protocol.'}
+                    </div>
+                    <div className="md3-dialog-notes-signature">
+                      <span className="material-symbols-rounded">verified_user</span>
+                      <span>Documented by <strong>{cleanDocName}</strong></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Prescribed Medications Table */}
+                {meds.length > 0 && (
+                  <div className="md3-dialog-card-section">
+                    <div className="md3-dialog-section-header">
+                      <span className="md3-dialog-section-icon rx">
+                        <span className="material-symbols-rounded">pill</span>
+                      </span>
+                      <h3 className="md3-dialog-section-title">Prescribed Medications ({meds.length})</h3>
+                    </div>
+                    <div className="md3-dialog-table-wrapper">
+                      <table className="md3-dialog-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Medication / Drug Name</th>
+                            <th>Dosage &amp; Frequency</th>
+                            <th>Duration</th>
+                            <th>Instructions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {meds.map((m, idx) => {
+                            const name = typeof m === 'string' ? m : (m?.name || m?.medicineName || m?.drugName || 'Medication');
+                            const dosage = typeof m === 'object' ? (m?.dosage || '—') : '—';
+                            const freq = typeof m === 'object' ? (m?.frequency || '—') : '—';
+                            const duration = typeof m === 'object' ? (m?.duration || '—') : '—';
+                            const instructions = typeof m === 'object' ? (m?.instructions || 'As directed') : 'As directed';
+
+                            return (
+                              <tr key={idx}>
+                                <td className="row-num">{idx + 1}</td>
+                                <td className="rx-name">
+                                  <span className="rx-name-text">{name}</span>
+                                </td>
+                                <td>
+                                  <span className="rx-badge">{dosage}</span>
+                                  {freq !== '—' && <span className="rx-freq">{freq}</span>}
+                                </td>
+                                <td>{duration}</td>
+                                <td className="rx-instructions">{instructions}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. Laboratory Investigations Table */}
+                {labs.length > 0 && (
+                  <div className="md3-dialog-card-section">
+                    <div className="md3-dialog-section-header">
+                      <span className="md3-dialog-section-icon lab">
+                        <span className="material-symbols-rounded">science</span>
+                      </span>
+                      <h3 className="md3-dialog-section-title">Laboratory Investigations ({labs.length})</h3>
+                    </div>
+                    <div className="md3-dialog-table-wrapper">
+                      <table className="md3-dialog-table">
+                        <thead>
+                          <tr>
+                            <th>#</th>
+                            <th>Investigation / Test Name</th>
+                            <th>Category / Code</th>
+                            <th>Current Status</th>
+                            <th>Clinical Instructions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {labs.map((lo, idx) => {
+                            const testName = lo?.testName || lo?.name || 'Laboratory Investigation';
+                            const category = lo?.category || lo?.testCode || 'Diagnostic Lab';
+                            const status = lo?.status || 'ORDERED';
+                            const isDone = status === 'COMPLETED';
+                            const instructions = lo?.instructions || lo?.notes || 'Standard protocol';
+
+                            return (
+                              <tr key={idx}>
+                                <td className="row-num">{idx + 1}</td>
+                                <td className="lab-test-name">
+                                  <strong>{testName}</strong>
+                                </td>
+                                <td className="lab-cat">{category}</td>
+                                <td>
+                                  <span className={`md3-lab-order-badge ${isDone ? 'completed' : 'pending'}`}>
+                                    <span className="material-symbols-rounded">
+                                      {isDone ? 'check_circle' : 'hourglass_top'}
+                                    </span>
+                                    <span>{status.replace('_', ' ')}</span>
+                                  </span>
+                                </td>
+                                <td className="lab-instructions">{instructions}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Actions Footer */}
+              <div className="md3-dialog-actions">
+                <div className="md3-dialog-footer-info">
+                  <span className="material-symbols-rounded">shield</span>
+                  <span>Confidential Clinical Record • Authorized Personnel Only</span>
+                </div>
+                <button
+                  type="button"
+                  className="md3-dialog-btn secondary"
+                  onClick={() => setSelectedEncounterDetail(null)}
+                >
+                  Close Record
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

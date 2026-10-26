@@ -1,4 +1,4 @@
-const SUCCESS_CODES = require('./successCodes');
+const SUCCESS_CODES = require('./success-codes');
 
 const success = (res, data, codeOrMessage = 'Success', statusCode = null) => {
   let message = codeOrMessage;
@@ -14,6 +14,7 @@ const success = (res, data, codeOrMessage = 'Success', statusCode = null) => {
 
   return res.status(httpStatus).json({
     status: 'success',
+    success: true,
     successCode,
     message,
     data,

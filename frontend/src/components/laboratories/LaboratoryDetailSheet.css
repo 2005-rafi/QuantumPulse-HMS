@@ -317,9 +317,88 @@
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
+/* ── Centralized Tariff Info Banner ── */
+.md3-lab-tariff-info-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-left: 4px solid var(--md-sys-color-primary, #00668b);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+
+.md3-lab-tariff-info-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--md-sys-color-primary-container, #c2e8ff);
+  color: var(--md-sys-color-on-primary-container, #001e2c);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-lab-tariff-info-icon span {
+  font-size: 18px;
+}
+
+.md3-lab-tariff-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.md3-lab-tariff-info-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #00668b);
+  letter-spacing: 0.02em;
+}
+
+.md3-lab-tariff-info-desc {
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── Test Price Cell & Badges ── */
+.test-price-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
 .test-price-badge {
-  font-size: 0.82rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1b5e20;
+}
+
+.test-tariff-status-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.62rem;
+  font-weight: 600;
+  padding: 1px 5px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.test-tariff-status-tag.configured {
+  background: color-mix(in srgb, #2e7d32 12%, transparent);
   color: #2e7d32;
+  border: 1px solid color-mix(in srgb, #2e7d32 25%, transparent);
+}
+
+.test-tariff-status-tag.default {
+  background: color-mix(in srgb, #ed6c02 12%, transparent);
+  color: #c25e00;
+  border: 1px solid color-mix(in srgb, #ed6c02 25%, transparent);
 }
 
 .text-right {

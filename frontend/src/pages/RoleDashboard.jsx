@@ -1,5 +1,5 @@
 import { useAuth } from '../context/AuthContext';
-import { useConfig } from '../contexts/ConfigContext';
+import { useConfig } from '../context/ConfigContext';
 import { useNavigate } from 'react-router-dom';
 import CommonHeader from '../components/shell/CommonHeader';
 import './Dashboard.css';
@@ -17,6 +17,46 @@ const ROLE_CONFIG = {
       'View patient queue',
       'Generate and process bills',
       'Record payments',
+    ],
+  },
+  'OPD Nurse': {
+    color: '#558b2f',
+    bg: '#f1f8e9',
+    icon: 'vital_signs',
+    label: 'OPD Nurse',
+    description: 'Outpatient triage, initial vitals recording, queue prioritization, and consultation prep.',
+    capabilities: [
+      'Record outpatient vitals and NEWS2',
+      'Conduct queue triage & observations',
+      'View doctor consultation queue',
+      'Check in patient appointments',
+    ],
+  },
+  'IPD Nurse': {
+    color: '#2e7d32',
+    bg: '#e8f5e9',
+    icon: 'hotel',
+    label: 'IPD Nurse',
+    description: 'Inpatient ward station — vitals, e-MAR drug administration, fluid I/O, care plans, and handovers.',
+    capabilities: [
+      'Administer e-MAR inpatient medications',
+      'Log fluid intake & output balance',
+      'Conduct SBAR shift handovers',
+      'Maintain nursing care plans',
+      'Monitor bed status & turnaround',
+    ],
+  },
+  'Lab Nurse': {
+    color: '#00838f',
+    bg: '#e0f7fa',
+    icon: 'biotech',
+    label: 'Lab Nurse',
+    description: 'Diagnostic specimen collection, phlebotomy, running lab tests & diagnostics, entering results.',
+    capabilities: [
+      'Collect blood and laboratory specimens',
+      'Process diagnostic orders and assays',
+      'Record lab findings and numerical values',
+      'Verify and sign off laboratory reports',
     ],
   },
   Nurse: {
@@ -162,14 +202,23 @@ const RoleDashboard = ({ role }) => {
           </div>
 
           <div className="info-card placeholder-card">
-            <h2>🚧 Stage 1 Complete</h2>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary, #00668b)' }}>construction</span>
+              <span>Stage 1 Complete</span>
+            </h2>
             <p>
               Authentication and authorization are fully operational. This placeholder will be
               replaced with functional screens in subsequent stages.
             </p>
             <div className="stage-badges">
-              <span className="stage-badge done">Stage 0 — Foundation ✓</span>
-              <span className="stage-badge done">Stage 1 — IAM / Auth ✓</span>
+              <span className="stage-badge done" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span>Stage 0 — Foundation</span>
+                <span className="material-symbols-rounded" style={{ fontSize: 13 }}>check</span>
+              </span>
+              <span className="stage-badge done" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <span>Stage 1 — IAM / Auth</span>
+                <span className="material-symbols-rounded" style={{ fontSize: 13 }}>check</span>
+              </span>
               <span className="stage-badge pending">Stage 2 — Patients</span>
               <span className="stage-badge pending">Stage 3 — Visits</span>
               <span className="stage-badge pending">Stage 4 — Nursing</span>

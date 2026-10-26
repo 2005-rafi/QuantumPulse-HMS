@@ -133,7 +133,7 @@ export const BillsManager = () => {
 
       {/* Filter Row */}
       <div className="bills-filter-row">
-        <div style={{ flex: 1, maxWidth: '360px' }}>
+        <div className="bills-search-wrapper">
           <Md3TextField
             id="bill-search"
             name="search"
@@ -143,7 +143,7 @@ export const BillsManager = () => {
           />
         </div>
 
-        <div style={{ width: '200px' }}>
+        <div className="bills-status-select-wrapper">
           <Md3Select
             id="bill-status"
             name="statusFilter"
@@ -200,14 +200,14 @@ export const BillsManager = () => {
         <table className="bills-table">
           <thead>
             <tr>
-              <th>Bill #</th>
+              <th style={{ width: '100px' }}>Bill #</th>
               <th>Patient Details</th>
-              <th>Service Date</th>
-              <th>Status</th>
-              <th>Billed</th>
-              <th>Collected</th>
+              <th className="col-hide-tablet">Service Date</th>
+              <th className="col-hide-mobile">Status</th>
+              <th className="col-hide-mobile">Billed</th>
+              <th className="col-hide-tablet">Collected</th>
               <th>Outstanding</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
+              <th style={{ textAlign: 'right', width: '60px' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -225,51 +225,78 @@ export const BillsManager = () => {
               </tr>
             ) : (
               paginatedBills.map((bill) => (
-                <tr key={bill._id} className="bills-row" onClick={() => handleOpenDetail(bill)}>
+                <tr key={bill._id} className="bills-row table-row-tap-affordance" onClick={() => handleOpenDetail(bill)}>
                   <td>
-                    <strong>{bill.billNumber}</strong>
+                    <span className="tariff-rule-number-badge">
+                      {bill.billNumber}
+                    </span>
                   </td>
                   <td>
-                    <div style={{ fontWeight: 600 }}>
-                      {bill.patientId?.firstName} {bill.patientId?.lastName}
-                    </div>
-                    {bill.patientId?.mrn && (
-                      <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-                        MRN: {bill.patientId.mrn}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <span style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--md-sys-color-on-surface)' }}>
+                        {bill.patientId?.firstName || '[Deleted'} {bill.patientId?.lastName || 'Patient]'}
                       </span>
-                    )}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {bill.patientId?.mrn ? (
+                          <span style={{ fontSize: '0.71rem', color: 'var(--md-sys-color-outline)' }}>
+                            MRN: {bill.patientId.mrn}
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.71rem', color: 'var(--md-sys-color-outline)', fontStyle: 'italic' }}>
+                            Unlinked / Purged
+                          </span>
+                        )}
+                        {/* Mobile Inline Status Badge */}
+                        <div className="col-show-mobile-only">
+                          <span className={`bills-status-chip bills-status-chip--${bill.status.toLowerCase()}`} style={{ fontSize: '0.62rem', padding: '1px 5px' }}>
+                            {bill.status}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
                   </td>
-                  <td>{new Date(bill.serviceDate).toLocaleDateString()}</td>
-                  <td>
+                  <td className="col-hide-tablet" style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-on-surface-variant)', whiteSpace: 'nowrap' }}>
+                    {new Date(bill.serviceDate).toLocaleDateString()}
+                  </td>
+                  <td className="col-hide-mobile">
                     <span className={`bills-status-chip bills-status-chip--${bill.status.toLowerCase()}`}>
                       {bill.status}
                     </span>
                   </td>
-                  <td style={{ fontWeight: 700 }}>{CURRENCY_SYMBOL}{bill.billedAmount || 0}</td>
-                  <td style={{ fontWeight: 700, color: '#2e7d32' }}>{CURRENCY_SYMBOL}{bill.collectedAmount || 0}</td>
-                  <td style={{ fontWeight: 800, color: bill.outstandingAmount > 0 ? '#d32f2f' : '#2e7d32' }}>
+                  <td className="col-hide-mobile" style={{ fontWeight: 700, fontSize: '0.8125rem' }}>
+                    {CURRENCY_SYMBOL}{bill.billedAmount || 0}
+                  </td>
+                  <td className="col-hide-tablet" style={{ fontWeight: 700, color: '#2e7d32', fontSize: '0.8125rem' }}>
+                    {CURRENCY_SYMBOL}{bill.collectedAmount || 0}
+                  </td>
+                  <td style={{ fontWeight: 800, fontSize: '0.875rem', color: bill.outstandingAmount > 0 ? '#d32f2f' : '#2e7d32', whiteSpace: 'nowrap' }}>
                     {CURRENCY_SYMBOL}{bill.outstandingAmount || 0}
                   </td>
                   <td style={{ textAlign: 'right' }} onClick={(e) => e.stopPropagation()}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px' }}>
-                      {bill.outstandingAmount > 0 && bill.status !== 'CANCELLED' && (
-                        <button
-                          type="button"
-                          className="bills-action-btn bills-action-btn--pay"
-                          onClick={(e) => handleOpenPayment(bill, e)}
-                          title="Record Payment"
-                        >
-                          <span className="material-symbols-rounded">add_card</span>
-                          <span>Pay</span>
-                        </button>
-                      )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '4px' }}>
+                      {/* Desktop Pay Action */}
+                      <div className="col-hide-tablet">
+                        {bill.outstandingAmount > 0 && bill.status !== 'CANCELLED' && (
+                          <button
+                            type="button"
+                            className="bills-action-btn bills-action-btn--pay"
+                            onClick={(e) => handleOpenPayment(bill, e)}
+                            title="Record Payment"
+                          >
+                            <span className="material-symbols-rounded">add_card</span>
+                            <span>Pay</span>
+                          </button>
+                        )}
+                      </div>
+                      {/* Universal Detail / Chevron Action */}
                       <button
                         type="button"
                         className="bills-action-btn"
                         onClick={() => handleOpenDetail(bill)}
                         title="View Detailed Bill Breakdown"
+                        aria-label="View Bill Details"
                       >
-                        <span className="material-symbols-rounded">visibility</span>
+                        <span className="material-symbols-rounded">chevron_right</span>
                       </button>
                     </div>
                   </td>

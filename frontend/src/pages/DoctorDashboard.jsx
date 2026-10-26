@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useDoctorWorkspace } from '../hooks/useDoctorWorkspace';
 import CommonHeader from '../components/shell/CommonHeader';
 import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
-import { useConfig } from '../contexts/ConfigContext';
+import { useConfig } from '../context/ConfigContext';
 import '../components/shell/shell.css';
 import './DoctorDashboard.css';
 

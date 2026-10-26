@@ -1,7 +1,9 @@
+const mongoose = require('mongoose');
 const visitService = require('./visit.service');
 const { success, error: sendError } = require('../../core/responses');
-const catchAsync = require('../../core/utils/catchAsync');
+const catchAsync = require('../../core/utils/catch-async');
 const auditService = require('../audit/audit.service');
+const { AUDIT_CATEGORIES, AUDIT_SEVERITIES } = require('../audit/audit-constants');
 
 /**
  * VisitController — HTTP boundary for the visit lifecycle.
@@ -46,24 +48,77 @@ class VisitController {
     return success(res, visit, 'Patient re-queued successfully', 200);
   });
 
+  skipTriage = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const nurseId = req.user.staffId || req.user.userId || req.user.id;
+
+    const visit = await visitService.skipTriage(id, reason, nurseId);
+
+    auditService.logStatusChange({
+      actorId: nurseId,
+      actorRole: req.user.role,
+      targetType: 'Visit',
+      targetId: visit._id,
+      statusFrom: 'WAITING_TRIAGE',
+      statusTo: 'TRIAGE_SKIPPED',
+      reason,
+      category: AUDIT_CATEGORIES.CLINICAL,
+      severity: AUDIT_SEVERITIES.WARNING,
+      details: { tokenString: visit.tokenString, departmentId: visit.departmentId, patientId: visit.patientId },
+      ipAddress: req.ip,
+    });
+
+    return success(res, visit, 'Patient triage fast-tracked to doctor queue', 200);
+  });
+
+  revokeTriageSkip = catchAsync(async (req, res) => {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const nurseId = req.user.staffId || req.user.userId || req.user.id;
+
+    const visit = await visitService.revokeTriageSkip(id, reason, nurseId);
+
+    auditService.logStatusChange({
+      actorId: nurseId,
+      actorRole: req.user.role,
+      targetType: 'Visit',
+      targetId: visit._id,
+      statusFrom: 'TRIAGE_SKIPPED',
+      statusTo: 'WAITING_TRIAGE',
+      reason,
+      category: AUDIT_CATEGORIES.CLINICAL,
+      severity: AUDIT_SEVERITIES.INFO,
+      details: { tokenString: visit.tokenString, departmentId: visit.departmentId, patientId: visit.patientId },
+      ipAddress: req.ip,
+    });
+
+    return success(res, visit, 'Triage fast-track revoked. Patient returned to nursing queue', 200);
+  });
+
   cancelVisit = catchAsync(async (req, res) => {
     const { id } = req.params;
     const reason = req.body.cancellationReason || req.body.reason || 'Cancelled at reception';
     const staffId = req.user.staffId || req.user.userId || req.user.id;
     const cancelled = await visitService.cancelVisit(id, reason, staffId);
 
-    auditService.logEvent(
-      staffId,
-      req.user.role,
-      'VISIT_CANCELLED',
-      cancelled._id,
-      { 
+    auditService.logStatusChange({
+      actorId: staffId,
+      actorRole: req.user.role,
+      targetType: 'Visit',
+      targetId: cancelled._id,
+      statusFrom: cancelled.previousStatus || 'ACTIVE',
+      statusTo: 'CANCELLED',
+      reason,
+      category: AUDIT_CATEGORIES.ADMINISTRATIVE,
+      severity: AUDIT_SEVERITIES.WARNING,
+      details: { 
         tokenString: cancelled.tokenString, 
         departmentId: cancelled.departmentId,
-        reason 
+        patientId: cancelled.patientId,
       },
-      req.ip
-    );
+      ipAddress: req.ip,
+    });
 
     return success(res, cancelled, 'Visit cancelled and queue token revoked successfully', 200);
   });
@@ -72,7 +127,19 @@ class VisitController {
 
   getQueue = catchAsync(async (req, res) => {
     const { status } = req.params;
-    const queue = await visitService.getQueue(status, req.query);
+    const filters = { ...req.query };
+
+    // Strict Department Isolation for Nurses:
+    // Nurses (OPD Nurse, Nurse, IPD Nurse) can ONLY access their assigned department's triage/clinical queue.
+    const nurseRoles = ['OPD Nurse', 'Nurse', 'IPD Nurse'];
+    if (nurseRoles.includes(req.user.role)) {
+      if (!req.user.departmentId) {
+        return success(res, [], 'Queue retrieved successfully (No department assigned to nurse profile)', 200);
+      }
+      filters.departmentId = req.user.departmentId;
+    }
+
+    const queue = await visitService.getQueue(status, filters);
     return success(res, queue, 'Queue retrieved successfully', 200);
   });
 
@@ -80,10 +147,11 @@ class VisitController {
 
   recordVitals = catchAsync(async (req, res) => {
     const { id } = req.params;
-    const visit = await visitService.recordVitals(id, req.body, req.user.staffId);
+    const nurseId = req.user.staffId || req.user.userId || req.user.id;
+    const visit = await visitService.recordVitals(id, req.body, nurseId);
 
     auditService.logEvent(
-      req.user.staffId || req.user.userId,
+      nurseId,
       req.user.role,
       'VITALS_RECORDED',
       visit._id,
@@ -175,13 +243,35 @@ class VisitController {
     return success(res, history, 'Doctor consultation history retrieved successfully', 200);
   });
 
+  getNurseTriageHistory = catchAsync(async (req, res) => {
+    const nurseId = req.user.staffId || req.user.userId || req.user.id;
+    const departmentId = req.user.departmentId || req.query.departmentId;
+
+    const history = await visitService.getNurseTriageHistory(nurseId, departmentId, req.query, req.user);
+
+    auditService.logEvent(
+      nurseId,
+      req.user.role,
+      'NURSE_TRIAGE_HISTORY_VIEWED',
+      null,
+      { departmentId, resultsCount: history.total },
+      req.ip
+    );
+
+    return success(res, history, 'Nurse triage history retrieved successfully', 200);
+  });
+
   getHospitalStats = catchAsync(async (req, res) => {
     const stats = await visitService.getHospitalStats();
     return success(res, stats, 'Hospital stats retrieved successfully', 200);
   });
 
   getVisitsByPatientId = catchAsync(async (req, res) => {
-    const visits = await visitService.getVisitsByPatientId(req.params.patientId, req.user?.role);
+    const { patientId } = req.params;
+    if (!patientId || !mongoose.Types.ObjectId.isValid(patientId)) {
+      return success(res, [], 'Patient visits retrieved successfully (No records for invalid or unassigned ID)', 200);
+    }
+    const visits = await visitService.getVisitsByPatientId(patientId, req.user?.role);
     return success(res, visits, 'Patient visits retrieved successfully', 200);
   });
 }

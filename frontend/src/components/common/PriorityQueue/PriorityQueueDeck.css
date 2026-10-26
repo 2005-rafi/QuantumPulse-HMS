@@ -1,0 +1,323 @@
+/* PriorityQueueDeck.css - Universal DSA Priority Queue Deck Styling */
+
+.pq-deck {
+  display: flex;
+  flex-direction: column;
+  background: var(--md-sys-color-surface, #ffffff);
+  border-radius: var(--md-sys-shape-corner-medium, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+  width: 100%;
+}
+
+.pq-deck:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* ─── Header ─── */
+.pq-deck__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, var(--md-sys-color-surface-container-low, #f8fafc) 0%, var(--md-sys-color-surface-container, #f1f5f9) 100%);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+}
+
+.pq-deck__title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pq-deck__icon-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--md-sys-color-primary-container, #e0f2fe);
+  color: var(--md-sys-color-primary, #0284c7);
+  flex-shrink: 0;
+}
+
+.pq-deck__icon-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pq-deck__title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.pq-deck__subtitle {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  margin: 0;
+}
+
+.pq-deck__controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pq-deck__refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cbd5e1);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #475569);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pq-deck__refresh-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #e2e8f0);
+  color: var(--md-sys-color-primary, #0284c7);
+}
+
+.pq-deck__refresh--spinning svg {
+  animation: pq-spin 0.8s linear infinite;
+}
+
+@keyframes pq-spin {
+  100% { transform: rotate(360deg); }
+}
+
+/* ─── Search & DSA Filter Bar ─── */
+.pq-deck__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f1f5f9);
+  flex-wrap: wrap;
+}
+
+.pq-deck__search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 180px;
+}
+
+.pq-deck__search-icon {
+  position: absolute;
+  left: 8px;
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.pq-deck__search-input {
+  width: 100%;
+  height: 28px;
+  padding: 0 26px 0 28px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  font-size: 0.74rem;
+  color: #1e293b;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.pq-deck__search-input:focus {
+  outline: none;
+  border-color: var(--md-sys-color-primary, #0284c7);
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+}
+
+.pq-deck__search-clear {
+  position: absolute;
+  right: 6px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.pq-deck__search-clear:hover {
+  color: #475569;
+}
+
+/* ─── Filter Pills ─── */
+.pq-deck__pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.pq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 9999px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 0.65rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.pq-pill:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.pq-pill--active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+}
+
+.pq-pill--emergency.pq-pill--active {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.pq-pill--redraw.pq-pill--active {
+  background: #ea580c;
+  border-color: #ea580c;
+}
+
+.pq-pill--stat.pq-pill--active {
+  background: #d97706;
+  border-color: #d97706;
+}
+
+.pq-pill__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 14px;
+  height: 14px;
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.08);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0 3px;
+}
+
+.pq-pill--active .pq-pill__count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* ─── Queue Body / Cards Container ─── */
+.pq-deck__body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 14px;
+  min-height: 200px;
+  max-height: 540px;
+  overflow-y: auto;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+.pq-deck__body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.pq-deck__body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+/* ─── Priority Badges ─── */
+.pq-badge-emergency {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.pq-badge-redraw {
+  background: #fff7ed;
+  color: #ea580c;
+  border: 1px solid #ffedd5;
+  animation: pq-pulse 2s infinite ease-in-out;
+}
+
+.pq-badge-stat {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fef3c7;
+}
+
+.pq-badge-urgent {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+}
+
+.pq-badge-routine {
+  background: #f0fdf4;
+  color: #059669;
+  border: 1px solid #dcfce7;
+}
+
+@keyframes pq-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.02); opacity: 0.9; }
+}
+
+/* ─── Empty & Loading States ─── */
+.pq-deck__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 16px;
+  color: #64748b;
+  text-align: center;
+}
+
+.pq-deck__empty-icon {
+  width: 36px;
+  height: 36px;
+  color: #94a3b8;
+}
+
+.pq-deck__empty-text {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+.pq-deck__empty-sub {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin: 0;
+}

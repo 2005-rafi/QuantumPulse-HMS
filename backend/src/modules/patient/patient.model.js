@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const medicalHistorySchema = new mongoose.Schema({
   condition: { type: String, required: true },
@@ -8,16 +8,27 @@ const medicalHistorySchema = new mongoose.Schema({
   addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true }
 }, { timestamps: true });
 
+const surgicalHistorySchema = new mongoose.Schema({
+  otSessionId: { type: mongoose.Schema.Types.ObjectId, ref: 'OTSession', default: null },
+  procedureName: { type: String, required: true, trim: true },
+  surgeryDate: { type: Date, default: Date.now },
+  leadSurgeonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', default: null },
+  outcome: { type: String, enum: ['SUCCESSFUL', 'COMPLICATED', 'ABANDONED', 'PENDING'], default: 'SUCCESSFUL' },
+  notes: { type: String, trim: true, default: '' },
+  addedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', default: null }
+}, { timestamps: true });
+
 const patientSchema = new mongoose.Schema(
   {
-    mrn: { type: String, required: true, unique: true, trim: true },
+    mrn: { type: String, required: true, unique: true, uppercase: true, trim: true, index: true },
+    previousMrns: [{ type: String, trim: true, uppercase: true }],
     firstName: { type: String, required: true, trim: true },
     lastName: { type: String, required: true, trim: true },
     dob: { type: Date, required: true },
     age: { type: Number },
     gender: { type: String, enum: ['Male', 'Female', 'Other'], required: true },
     bloodGroup: { type: String, enum: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-', 'Unknown'], default: 'Unknown' },
-    aadhaar: { type: String, trim: true, unique: true, sparse: true },
+    aadhaar: { type: String, trim: true },
     phone: { type: String, required: true, trim: true },
     whatsapp: { type: String, trim: true },
     email: { type: String, trim: true, lowercase: true },
@@ -38,7 +49,12 @@ const patientSchema = new mongoose.Schema(
       relation: { type: String, trim: true },
       phone: { type: String, trim: true }
     },
-    medicalHistory: [medicalHistorySchema]
+    medicalHistory: [medicalHistorySchema],
+    surgicalHistory: [surgicalHistorySchema],
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', default: null },
+    deletionReason: { type: String, trim: true, default: '' }
   },
   { 
     timestamps: true, 
@@ -52,6 +68,8 @@ patientSchema.virtual('fullName').get(function () {
   return `${this.firstName || ''} ${this.lastName || ''}`.trim();
 });
 
+patientSchema.index({ mrn: 1, isDeleted: 1 });
+patientSchema.index({ previousMrns: 1 });
 patientSchema.index({ firstName: 1, lastName: 1, phone: 1 });
 patientSchema.index({ firstName: 1, lastName: 1, createdAt: -1 });
 patientSchema.index({ phone: 1 });
@@ -59,6 +77,13 @@ patientSchema.index({ createdAt: -1, _id: -1 });
 patientSchema.index({ 'address.state': 1, createdAt: -1 });
 patientSchema.index({ 'address.city': 1, createdAt: -1 });
 patientSchema.index({ 'address.country': 1 });
+patientSchema.index(
+  { aadhaar: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { aadhaar: { $type: 'string', $gt: '' } },
+  }
+);
 
 
 patientSchema.pre('save', function () {
@@ -93,3 +118,4 @@ patientSchema.pre('findOneAndUpdate', function () {
 });
 
 module.exports = mongoose.model('Patient', patientSchema);
+

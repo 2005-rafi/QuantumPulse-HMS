@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { authAPI } from '../services/api';
+import { authAPI, refreshAccessToken } from '../services/api';
 import sessionStore, {
   getAccessToken,
   getRefreshToken,
@@ -11,9 +11,16 @@ import sessionStore, {
 
 const AuthContext = createContext(null);
 
+const authBroadcastChannel = typeof window !== 'undefined' && 'BroadcastChannel' in window
+  ? new BroadcastChannel('hms_auth_channel')
+  : null;
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [departmentId, setDepartmentId] = useState(null);
+  const [department, setDepartment] = useState(null);
+  const [facility, setFacility] = useState(null);
+  const [securityMetadata, setSecurityMetadata] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,18 +35,28 @@ export const AuthProvider = ({ children }) => {
       // If no accessToken in memory, but refreshToken exists, perform silent bootstrap refresh
       if ((!accessToken || isTokenExpired(accessToken)) && refreshToken) {
         try {
-          const { data } = await authAPI.refresh(refreshToken);
-          if (data?.data?.accessToken) {
-            accessToken = data.data.accessToken;
-            setTokens(accessToken, data.data.refreshToken || refreshToken);
+          const freshToken = await refreshAccessToken();
+          if (freshToken) {
+            accessToken = freshToken;
           }
         } catch (refreshErr) {
           console.warn('Session bootstrap refresh failed:', refreshErr?.message);
-          clearTokens(false);
-          if (isMounted) {
-            setUser(null);
-            setLoading(false);
+          const isPermanentAuthError =
+            refreshErr.response?.status === 401 ||
+            refreshErr.response?.status === 403 ||
+            ['AUTH_001', 'AUTH_002', 'AUTH_003', 'AUTH_004', 'AUTH_005'].includes(refreshErr.response?.data?.errorCode);
+
+          if (isPermanentAuthError) {
+            clearTokens(false);
+            if (isMounted) {
+              setUser(null);
+              setDepartmentId(null);
+              setDepartment(null);
+              setLoading(false);
+            }
+            return;
           }
+          if (isMounted) setLoading(false);
           return;
         }
       }
@@ -50,16 +67,45 @@ export const AuthProvider = ({ children }) => {
       }
 
       try {
-        const { data } = await authAPI.me();
-        if (isMounted) {
-          setUser(data.data);
-          if (data.data?.departmentId) {
-            setDepartmentId(data.data.departmentId);
+        // Single-flight composite BFF session bootstrap
+        const { data } = await authAPI.bootstrap();
+        const payload = data.data;
+        if (isMounted && payload) {
+          setUser(payload.user);
+          if (payload.user?.departmentId) {
+            setDepartmentId(payload.user.departmentId);
+          }
+          if (payload.department) {
+            setDepartment(payload.department);
+          }
+          if (payload.facility) {
+            setFacility(payload.facility);
+          }
+          if (payload.security) {
+            setSecurityMetadata(payload.security);
           }
         }
       } catch (err) {
-        clearTokens(false);
-        if (isMounted) setUser(null);
+        // Fallback to me() if bootstrap endpoint returns an unexpected error
+        try {
+          const { data } = await authAPI.me();
+          if (isMounted) {
+            setUser(data.data);
+            if (data.data?.departmentId) {
+              setDepartmentId(data.data.departmentId);
+            }
+          }
+        } catch (meErr) {
+          const isAuthError = meErr.response?.status === 401 || meErr.response?.status === 403;
+          if (isAuthError) {
+            clearTokens(false);
+            if (isMounted) {
+              setUser(null);
+              setDepartmentId(null);
+              setDepartment(null);
+            }
+          }
+        }
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -72,6 +118,9 @@ export const AuthProvider = ({ children }) => {
       if (event.type === 'LOGOUT' && isMounted) {
         setUser(null);
         setDepartmentId(null);
+        setDepartment(null);
+        setFacility(null);
+        setSecurityMetadata(null);
       }
     });
 
@@ -80,6 +129,34 @@ export const AuthProvider = ({ children }) => {
       unsubscribe();
     };
   }, []);
+
+  // Proactive JWT Token Lifecycle Heartbeat (Refreshes access token before expiration during active sessions)
+  useEffect(() => {
+    if (!user) return;
+
+    const HEARTBEAT_INTERVAL_MS = 2 * 60 * 1000; // Check every 2 minutes
+    const EXPIRY_THRESHOLD_SECONDS = 5 * 60; // Refresh if less than 5 minutes remain
+
+    const heartbeat = setInterval(async () => {
+      const token = getAccessToken();
+      const refreshToken = getRefreshToken();
+      if (!token || !refreshToken) return;
+
+      const isLocked = typeof window !== 'undefined' && sessionStorage.getItem('hms_terminal_locked') === 'true';
+      if (isLocked) return; // Do not refresh while workstation is locked
+
+      if (isTokenExpired(token, EXPIRY_THRESHOLD_SECONDS)) {
+        try {
+          const { refreshAccessToken } = await import('../services/api');
+          await refreshAccessToken();
+        } catch (err) {
+          console.warn('Proactive background token refresh postponed:', err?.message);
+        }
+      }
+    }, HEARTBEAT_INTERVAL_MS);
+
+    return () => clearInterval(heartbeat);
+  }, [user]);
 
   const login = useCallback(async (username, password) => {
     setError(null);
@@ -95,19 +172,58 @@ export const AuthProvider = ({ children }) => {
         sessionStorage.setItem('hms_last_activity', String(Date.now()));
       }
 
-      // Fetch full me() to verify fresh permissions
-      const meRes = await authAPI.me();
-      const fullUser = meRes.data.data || userData;
-      setUser(fullUser);
-      if (fullUser?.departmentId) {
-        setDepartmentId(fullUser.departmentId);
+      // Composite session bootstrap
+      try {
+        const bootRes = await authAPI.bootstrap();
+        const bootData = bootRes.data.data;
+        if (bootData?.user) {
+          setUser(bootData.user);
+          if (bootData.user?.departmentId) setDepartmentId(bootData.user.departmentId);
+          if (bootData.department) setDepartment(bootData.department);
+          if (bootData.facility) setFacility(bootData.facility);
+          if (bootData.security) setSecurityMetadata(bootData.security);
+          return bootData.user;
+        }
+      } catch (_) {
+        // Fallback to me endpoint if bootstrap is not supported or fails
+        try {
+          const meRes = await authAPI.me();
+          const fullUser = meRes.data.data || userData;
+          setUser(fullUser);
+          if (fullUser?.departmentId) setDepartmentId(fullUser.departmentId);
+          return fullUser;
+        } catch {
+          setUser(userData);
+          if (userData?.departmentId) setDepartmentId(userData.departmentId);
+          return userData;
+        }
       }
-      return fullUser;
     } catch (err) {
       const msg = err.response?.data?.message || 'Login failed';
       setError(msg);
       throw err;
     }
+  }, []);
+
+  // Synchronize logout across browser tabs on shared terminals
+  useEffect(() => {
+    if (!authBroadcastChannel) return;
+    const handleBroadcast = (event) => {
+      if (event.data?.type === 'SESSION_TERMINATED') {
+        clearTokens(true);
+        setUser(null);
+        setDepartmentId(null);
+        setDepartment(null);
+        setFacility(null);
+        setSecurityMetadata(null);
+        if (typeof window !== 'undefined') {
+          sessionStorage.clear();
+          localStorage.clear();
+        }
+      }
+    };
+    authBroadcastChannel.addEventListener('message', handleBroadcast);
+    return () => authBroadcastChannel.removeEventListener('message', handleBroadcast);
   }, []);
 
   const logout = useCallback(async () => {
@@ -118,12 +234,19 @@ export const AuthProvider = ({ children }) => {
     }
     clearTokens(true);
     if (typeof window !== 'undefined') {
-      sessionStorage.removeItem('hms_auth_username');
-      sessionStorage.removeItem('hms_terminal_locked');
-      sessionStorage.removeItem('hms_last_activity');
+      localStorage.clear();
+      sessionStorage.clear();
+    }
+    if (authBroadcastChannel) {
+      try {
+        authBroadcastChannel.postMessage({ type: 'SESSION_TERMINATED' });
+      } catch (_) {}
     }
     setUser(null);
     setDepartmentId(null);
+    setDepartment(null);
+    setFacility(null);
+    setSecurityMetadata(null);
   }, []);
 
   const hasPermission = useCallback(
@@ -137,6 +260,9 @@ export const AuthProvider = ({ children }) => {
         user,
         departmentId,
         setDepartmentId,
+        department,
+        facility,
+        securityMetadata,
         loading,
         error,
         login,

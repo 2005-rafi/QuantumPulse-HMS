@@ -70,7 +70,7 @@ export const CheckInDialog = ({
             <p className="appt-success-sub">
               Visit Ticket: <code>{checkedInResult.visit?.visitNumber}</code>
               <br />
-              Status: <strong>Waiting for Nurse Triage</strong>
+              Status: <strong>Waiting for Nurse</strong>
             </p>
             <div className="appt-modal-actions">
               <Md3Button variant="primary" onClick={onClose}>
@@ -119,7 +119,7 @@ export const CheckInDialog = ({
             </div>
 
             <p className="appt-checkin-tip">
-              Checking in will immediately route the patient to the <strong>Nurse Triage Queue</strong>.
+              Checking in will immediately route the patient to the <strong>Nurse Queue</strong>.
             </p>
 
             <div className="appt-modal-actions">

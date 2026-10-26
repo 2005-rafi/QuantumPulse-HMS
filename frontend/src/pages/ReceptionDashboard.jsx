@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useConfig } from '../contexts/ConfigContext';
+import { useConfig } from '../context/ConfigContext';
 import { useReceptionDashboard } from '../hooks/useReceptionDashboard';
 import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
 import { Md3Button } from '../components/md3/Md3FormComponents';
@@ -48,10 +48,13 @@ const ReceptionDashboard = () => {
     { id: 'patients', label: 'Walk-in & Patients', icon: <Icon.Users /> },
     { id: 'appointments', label: 'Appointments', icon: <Icon.Calendar /> },
     { id: 'bed-map', label: 'IPD Bed Map', icon: <span className="material-symbols-rounded">bed</span> },
+    { id: 'receipts', label: 'Receipts & History', icon: <span className="material-symbols-rounded">receipt_long</span> },
   ];
 
   // Derive active tab directly from URL path
-  const activeTab = location.pathname.includes('/bed-map')
+  const activeTab = location.pathname.includes('/receipts')
+    ? 'receipts'
+    : location.pathname.includes('/bed-map')
     ? 'bed-map'
     : location.pathname.includes('/appointments')
     ? 'appointments'

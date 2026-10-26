@@ -1,11 +1,17 @@
+/**
+ * src/services/medicinePriceAPI.js
+ * Medicine catalog price configuration and lookups.
+ */
 import api from './api';
+import { API_ENDPOINTS } from '../constants/endpoints';
 
-export const medicinePriceAPI = {
-  list: (params = {}) => api.get('/tariff/medicine-prices', { params }),
-  getByName: (name) => api.get(`/tariff/medicine-prices/lookup/${encodeURIComponent(name)}`),
-  create: (data) => api.post('/tariff/medicine-prices', data),
-  update: (id, data) => api.put(`/tariff/medicine-prices/${id}`, data),
-  deactivate: (id) => api.delete(`/tariff/medicine-prices/${id}`),
+export const medicinePriceApi = {
+  list: (params = {}) => api.get(API_ENDPOINTS.TARIFF.MEDICINE_PRICES, { params }),
+  getByName: (name) => api.get(API_ENDPOINTS.TARIFF.MEDICINE_PRICE_LOOKUP(name)),
+  create: (data) => api.post(API_ENDPOINTS.TARIFF.MEDICINE_PRICES, data),
+  update: (id, data) => api.put(API_ENDPOINTS.TARIFF.MEDICINE_PRICE_BY_ID(id), data),
+  deactivate: (id) => api.delete(API_ENDPOINTS.TARIFF.MEDICINE_PRICE_BY_ID(id)),
 };
 
-export default medicinePriceAPI;
+export const medicinePriceAPI = medicinePriceApi;
+export default medicinePriceApi;

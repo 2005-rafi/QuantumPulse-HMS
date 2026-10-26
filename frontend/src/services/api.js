@@ -4,6 +4,7 @@
  * structured error sanitization, and rate-limit handling.
  */
 import axios from 'axios';
+import { API_ENDPOINTS } from '../constants/endpoints';
 import {
   getAccessToken,
   getRefreshToken,
@@ -11,6 +12,7 @@ import {
   clearTokens,
   isTokenExpired,
 } from '../core/useSessionStore';
+import { sanitizeQueryParams, sanitizePayload } from '../core/security/query-sanitizer';
 
 /**
  * Dynamic API Base URL resolution:
@@ -35,16 +37,110 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
-let refreshPromise = null;
+/**
+ * TokenRefreshCoordinator
+ * Concurrency coordinator enforcing a Single-Flight Mutex lock and FIFO queue drainage
+ * for JWT token refresh operations (prevents thundering herd, starvation, and race conditions).
+ */
+class TokenRefreshCoordinator {
+  constructor() {
+    this.refreshPromise = null;
+    this.subscribers = [];
+    this.timeoutId = null;
+  }
 
-const refreshAccessToken = async (refreshToken) => {
-  const { data } = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-  const { accessToken, refreshToken: newRefreshToken } = data.data;
-  setTokens(accessToken, newRefreshToken);
-  return accessToken;
-};
+  /**
+   * Subscribe a pending request to be resolved when the active refresh completes.
+   */
+  subscribe(callback) {
+    this.subscribers.push(callback);
+  }
+
+  /**
+   * Notify all queued subscribers with the newly acquired access token.
+   */
+  notifySubscribers(token) {
+    const queue = [...this.subscribers];
+    this.subscribers = [];
+    queue.forEach((cb) => {
+      try {
+        cb(null, token);
+      } catch (err) {
+        console.error('Subscriber notification error:', err);
+      }
+    });
+  }
+
+  /**
+   * Reject all queued subscribers if refresh permanently failed.
+   */
+  rejectSubscribers(error) {
+    const queue = [...this.subscribers];
+    this.subscribers = [];
+    queue.forEach((cb) => {
+      try {
+        cb(error, null);
+      } catch (err) {
+        console.error('Subscriber rejection error:', err);
+      }
+    });
+  }
+
+  /**
+   * Execute atomic refresh mutex
+   */
+  async acquireFreshToken() {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      throw new Error('No refresh token present in session store');
+    }
+
+    if (this.refreshPromise) {
+      // Return existing in-flight promise (Single-Flight deduplication)
+      return this.refreshPromise;
+    }
+
+    // Set starvation guard (10s max timeout)
+    this.refreshPromise = new Promise(async (resolve, reject) => {
+      this.timeoutId = setTimeout(() => {
+        const timeoutErr = new Error('Token refresh timeout');
+        this.rejectSubscribers(timeoutErr);
+        this.refreshPromise = null;
+        reject(timeoutErr);
+      }, 10000);
+
+      try {
+        const { data } = await axios.post(
+          `${API_BASE_URL}/auth/refresh`,
+          { refreshToken },
+          { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+        );
+
+        if (this.timeoutId) clearTimeout(this.timeoutId);
+
+        const { accessToken, refreshToken: newRefreshToken } = data.data;
+        setTokens(accessToken, newRefreshToken || refreshToken);
+        this.notifySubscribers(accessToken);
+        resolve(accessToken);
+      } catch (err) {
+        if (this.timeoutId) clearTimeout(this.timeoutId);
+        this.rejectSubscribers(err);
+        reject(err);
+      } finally {
+        this.refreshPromise = null;
+      }
+    });
+
+    return this.refreshPromise;
+  }
+}
+
+const refreshCoordinator = new TokenRefreshCoordinator();
+
+export const refreshAccessToken = () => refreshCoordinator.acquireFreshToken();
 
 let errorCallback = null;
 export const registerErrorCallback = (cb) => {
@@ -70,6 +166,29 @@ const ERROR_CODE_MAP = {
 
 export const sanitizeClinicalErrorMessage = (apiError, status, rawError = '') => {
   if (!apiError && !rawError) return 'An unexpected error occurred. Please try again.';
+
+  // 1. Handle 422/400 validation details explicitly
+  if (status === 422 || status === 400) {
+    const details = apiError?.details || apiError?.invalidParams || (Array.isArray(apiError?.data) ? apiError.data : null);
+    if (Array.isArray(details) && details.length > 0) {
+      const fieldList = details
+        .map(d => d.message ? d.message.replace(/"/g, '') : (d.field ? `${d.field}: invalid value` : 'Invalid field value'))
+        .filter(Boolean);
+      if (fieldList.length > 0) {
+        return `Validation Notice: ${fieldList.join(' • ')}`;
+      }
+    }
+  }
+
+  // 2. If backend provided a specific human-readable message (like GENDER_MISMATCH or custom AppError)
+  if (apiError?.message && apiError.message !== 'Validation failed' && apiError.message !== 'Internal Server Error') {
+    const raw = apiError.message;
+    if (
+      !/Route (GET|POST|PUT|PATCH|DELETE)|Cannot read properties|ObjectId|Cast to|buffering timed out|E11000|syntax|stack trace/i.test(raw)
+    ) {
+      return raw;
+    }
+  }
 
   if (apiError?.errorCode && ERROR_CODE_MAP[apiError.errorCode]) {
     return ERROR_CODE_MAP[apiError.errorCode];
@@ -99,7 +218,7 @@ export const sanitizeClinicalErrorMessage = (apiError, status, rawError = '') =>
 
   // Proactively filter out raw developer notes, route traces, and database strings
   if (
-    /Route (GET|POST|PUT|PATCH|DELETE)|Cannot read properties|ObjectId|Cast to|buffering timed out|E11000|validation failed|syntax|stack trace/i.test(raw)
+    /Route (GET|POST|PUT|PATCH|DELETE)|Cannot read properties|ObjectId|Cast to|buffering timed out|E11000|syntax|stack trace/i.test(raw)
   ) {
     return 'Clinical data synchronization in progress. Please refresh the terminal or try again.';
   }
@@ -107,28 +226,53 @@ export const sanitizeClinicalErrorMessage = (apiError, status, rawError = '') =>
   return raw || 'An error occurred while processing your request.';
 };
 
+let rateLimitCooldownUntil = 0;
+
 // 1. Request Interceptor — Attach in-memory access token & preemptive refresh
 api.interceptors.request.use(
   async (config) => {
+    // Client-side circuit breaker: prevent background telemetry storms while rate-limited
+    if (Date.now() < rateLimitCooldownUntil) {
+      const url = config.url || '';
+      const isRoutinePoll = url.includes('/visits/stats') || url.includes('/queue') || url.includes('/bed-map');
+      if (isRoutinePoll) {
+        return Promise.reject(new axios.Cancel('Temporarily paused due to server rate-limit backpressure.'));
+      }
+    }
+
+    // 0. Neutralize outbound query injection and prototype pollution
+    if (config.params && typeof config.params === 'object') {
+      config.params = sanitizeQueryParams(config.params);
+    }
+    if (
+      config.data &&
+      typeof config.data === 'object' &&
+      typeof FormData !== 'undefined' &&
+      !(config.data instanceof FormData) &&
+      typeof Blob !== 'undefined' &&
+      !(config.data instanceof Blob)
+    ) {
+      config.data = sanitizePayload(config.data);
+    }
+
     // Skip token logic on auth endpoints
-    if (config.url?.includes('/auth/refresh') || config.url?.includes('/auth/login')) {
+    if (
+      config.url?.includes('/auth/refresh') ||
+      config.url?.includes('/auth/login') ||
+      config.url?.includes('/auth/unlock')
+    ) {
       return config;
     }
 
     let token = getAccessToken();
     const refreshToken = getRefreshToken();
 
-    // If token is missing or expiring within 5s, try preemptive refresh
-    if ((!token || isTokenExpired(token)) && refreshToken) {
+    // If token is missing or expiring within safety window (60s), proactively refresh via Mutex
+    if ((!token || isTokenExpired(token, 60)) && refreshToken) {
       try {
-        if (!refreshPromise) {
-          refreshPromise = refreshAccessToken(refreshToken).finally(() => {
-            refreshPromise = null;
-          });
-        }
-        token = await refreshPromise;
+        token = await refreshCoordinator.acquireFreshToken();
       } catch (err) {
-        console.warn('Preemptive token refresh unsuccessful:', err?.message);
+        console.warn('Preemptive token refresh deferred to retry interceptor:', err?.message);
       }
     }
 
@@ -144,6 +288,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (axios.isCancel(error)) {
+      return Promise.reject(error);
+    }
+
     const original = error.config;
 
     // Attach sanitized clinical error details
@@ -158,6 +306,8 @@ api.interceptors.response.use(
       if (error.response.status === 429) {
         error.isRateLimit = true;
         error.userMessage = error.userMessage || ERROR_CODE_MAP.RATE_LIMIT_EXCEEDED;
+        const retryAfterSec = parseInt(error.response.headers?.['retry-after'], 10) || 5;
+        rateLimitCooldownUntil = Date.now() + Math.min(Math.max(retryAfterSec, 3), 30) * 1000;
       } else if (error.response.status === 400 && apiError.errorCode === 'VALIDATION_001') {
         error.isValidationError = true;
       }
@@ -167,8 +317,8 @@ api.interceptors.response.use(
       error.userMessage = 'An unexpected clinical service error occurred. Please try again.';
     }
 
-    // Trigger registered UI Toast notification callback
-    if (errorCallback) {
+    // Trigger registered UI Toast notification callback (unless caller opted out via skipGlobalToast)
+    if (errorCallback && !original?.skipGlobalToast) {
       try {
         errorCallback(error);
       } catch (cbErr) {
@@ -181,9 +331,10 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 401 Unauthorized handling — attempt one-time refresh & retry
+    // 401 Unauthorized handling — attempt synchronized mutex refresh & retry
     if (
       error.response?.status === 401 &&
+      original &&
       !original._retry &&
       !original.url?.includes('/auth/refresh') &&
       !original.url?.includes('/auth/login') &&
@@ -191,21 +342,20 @@ api.interceptors.response.use(
     ) {
       original._retry = true;
       try {
-        const refreshToken = getRefreshToken();
-        if (!refreshToken) throw new Error('No refresh token available');
-
-        if (!refreshPromise) {
-          refreshPromise = refreshAccessToken(refreshToken).finally(() => {
-            refreshPromise = null;
-          });
-        }
-        const newAccessToken = await refreshPromise;
+        const newAccessToken = await refreshCoordinator.acquireFreshToken();
         original.headers.Authorization = `Bearer ${newAccessToken}`;
         return api(original);
       } catch (refreshErr) {
-        clearTokens(true);
-        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        const isAuthRejection =
+          refreshErr.response?.status === 401 ||
+          refreshErr.response?.data?.errorCode === 'AUTH_003' ||
+          refreshErr.response?.data?.errorCode === 'AUTH_004';
+
+        if (isAuthRejection) {
+          clearTokens(true);
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
         return Promise.reject(refreshErr);
       }
@@ -215,16 +365,19 @@ api.interceptors.response.use(
   }
 );
 
-export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-  unlock: (payload) => api.post('/auth/unlock', payload),
-  logout: () => api.post('/auth/logout'),
-  refresh: (refreshToken) => api.post('/auth/refresh', { refreshToken }),
-  me: () => api.get('/auth/me'),
+export const authApi = {
+  login: (credentials) => api.post(API_ENDPOINTS.AUTH.LOGIN, credentials),
+  unlock: (payload) => api.post(API_ENDPOINTS.AUTH.UNLOCK, payload),
+  logout: () => api.post(API_ENDPOINTS.AUTH.LOGOUT),
+  refresh: () => refreshCoordinator.acquireFreshToken(),
+  me: () => api.get(API_ENDPOINTS.AUTH.ME),
+  bootstrap: () => api.get(API_ENDPOINTS.AUTH.BOOTSTRAP),
   uploadFile: (visitId, orderId, formData) =>
-    api.post(`/laboratory/orders/${visitId}/${orderId}/scan`, formData, {
+    api.post(API_ENDPOINTS.LABORATORY.SCAN_UPLOAD(visitId, orderId), formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
 };
+
+export const authAPI = authApi;
 
 export default api;

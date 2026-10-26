@@ -1,0 +1,531 @@
+/**
+ * features/admin/AdminSurgeriesView.css
+ * Enterprise Material 3 styling for Administrator Surgical Command Deck
+ */
+
+.admin-surgeries-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--admin-section-gap, 14px);
+  width: 100%;
+  padding: var(--admin-workflow-card-padding, 14px);
+  box-sizing: border-box;
+  background: var(--md-sys-color-surface, #fbf8fd);
+  min-height: 100%;
+}
+
+/* ─── Header ─── */
+.admin-surgeries-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--admin-header-gap, 10px);
+  background: var(--md-sys-color-surface-container-low, #f5f2fa);
+  padding: var(--clinical-deck-padding, 10px 16px);
+  border-radius: var(--admin-card-border-radius, 14px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.admin-surgeries-header__title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-surgeries-header__icon {
+  width: var(--clinical-deck-icon-size, 36px);
+  height: var(--clinical-deck-icon-size, 36px);
+  border-radius: 10px;
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.admin-surgeries-header__title {
+  margin: 0;
+  font-size: var(--clinical-deck-title-size, 1.15rem);
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: -0.015em;
+}
+
+.admin-surgeries-header__subtitle {
+  margin: 2px 0 0;
+  font-size: var(--clinical-deck-sub-size, 0.8rem);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ─── Executive KPI Tiles ─── */
+.admin-surg-kpis {
+  display: grid;
+  grid-template-columns: var(--clinical-kpi-grid-cols, repeat(5, minmax(0, 1fr)));
+  gap: var(--admin-grid-gap, 10px);
+}
+
+.admin-surg-kpi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--md-sys-color-surface-container, #f0ecf4);
+  padding: var(--clinical-kpi-padding, 8px 12px);
+  border-radius: var(--admin-card-border-radius, 12px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  min-height: var(--clinical-kpi-min-height, 68px);
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.admin-surg-kpi:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.admin-surg-kpi__icon-box {
+  width: var(--clinical-kpi-icon-size, 32px);
+  height: var(--clinical-kpi-icon-size, 32px);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.admin-surg-kpi__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-surg-kpi__val {
+  font-size: var(--clinical-kpi-val-size, 1.25rem);
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  line-height: 1.1;
+}
+
+.admin-surg-kpi__label {
+  font-size: var(--clinical-kpi-label-size, 0.68rem);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-top: 1px;
+}
+
+/* ─── Nav Tabs ─── */
+.admin-surg-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding-bottom: 6px;
+}
+
+.admin-surg-nav-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: var(--clinical-tab-padding, 6px 14px);
+  border-radius: var(--md-sys-shape-corner-full, 100px);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: var(--clinical-tab-font-size, 0.8125rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+}
+
+.admin-surg-nav-tab .material-symbols-rounded {
+  font-size: 17px;
+}
+
+.admin-surg-nav-tab:hover {
+  background: var(--md-sys-color-surface-container-high, #eae7ef);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.admin-surg-nav-tab--active {
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+/* ─── Suite Occupancy Deck ─── */
+.admin-surg-deck {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-surg-deck__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-surg-deck__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.admin-surg-deck__meta {
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.admin-surg-suites-grid {
+  display: grid;
+  grid-template-columns: var(--clinical-suite-grid-cols, repeat(auto-fill, minmax(320px, 1fr)));
+  gap: var(--admin-grid-gap, 12px);
+}
+
+.admin-surg-suite-card {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: var(--admin-card-border-radius, 14px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  padding: var(--clinical-suite-padding, 12px 14px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s ease;
+}
+
+.admin-surg-suite-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+.admin-surg-suite-card--occupied {
+  border-left: 4px solid #ba1a1a;
+  background: linear-gradient(180deg, rgba(186, 26, 26, 0.02) 0%, rgba(255, 255, 255, 1) 100%);
+}
+
+.admin-surg-suite-card--vacant {
+  border-left: 4px solid #146c2e;
+}
+
+.admin-surg-suite-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-surg-suite-card__title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-surg-suite-card__icon {
+  font-size: 20px;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.admin-surg-suite-card__name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.admin-surg-suite-card__type {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.admin-surg-status-pill {
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+.admin-surg-status-pill--active {
+  background: #ffdad6;
+  color: #ba1a1a;
+}
+
+.admin-surg-status-pill--vacant {
+  background: #c4eed0;
+  color: #146c2e;
+}
+
+.admin-surg-suite-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-surg-suite-card__proc {
+  background: var(--md-sys-color-surface-container-low, #f5f2fa);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  overflow: hidden;
+}
+
+.admin-surg-suite-card__meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.78rem;
+}
+
+.admin-surg-suite-card__meta-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.admin-surg-suite-card__meta-item span {
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.admin-surg-suite-card__meta-item strong {
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-weight: 600;
+}
+
+.admin-surg-suite-card__empty-body {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 4px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.78rem;
+}
+
+.admin-surg-suite-card__empty-body .material-symbols-rounded {
+  font-size: 22px;
+  color: #146c2e;
+  margin-bottom: 0;
+  flex-shrink: 0;
+}
+
+.admin-surg-suite-card__next-up {
+  margin-top: 4px;
+  padding: 5px 8px;
+  background: var(--md-sys-color-surface-container, #f0ecf4);
+  border-radius: 6px;
+  font-size: 0.74rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ─── Emergency Radar Grid ─── */
+.admin-surg-radar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
+}
+
+.admin-surg-radar-card {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 18px;
+  border: 1px solid #ff897d;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 4px 14px rgba(186, 26, 26, 0.08);
+}
+
+.admin-surg-radar-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.admin-surg-radar-card__tag {
+  background: #ffdad6;
+  color: #ba1a1a;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.admin-surg-radar-card__status {
+  background: var(--md-sys-color-surface-container-high, #eae7ef);
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-surg-radar-card__title {
+  font-weight: 700;
+  font-size: 0.96rem;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  overflow: hidden;
+}
+
+.admin-surg-radar-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.admin-surg-radar-card__meta div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.admin-surg-radar-card__notes {
+  background: var(--md-sys-color-surface-container-low, #f5f2fa);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+}
+
+.admin-surg-radar-card__notes p {
+  margin: 2px 0 0;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+/* ─── Staff Roster Table ─── */
+.admin-surg-roster-table-wrap {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 18px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  overflow-x: auto;
+}
+
+.admin-surg-roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+  text-align: left;
+}
+
+.admin-surg-roster-table th {
+  background: var(--md-sys-color-surface-container-low, #f5f2fa);
+  padding: 14px 16px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  white-space: nowrap;
+}
+
+.admin-surg-roster-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f0ecf4);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.admin-surg-roster-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-surg-roster-name-cell .material-symbols-rounded {
+  color: var(--md-sys-color-primary, #6750a4);
+  font-size: 20px;
+}
+
+.admin-surg-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--md-sys-color-surface-container, #f0ecf4);
+}
+
+.admin-surg-badge--active {
+  background: #ffdad6;
+  color: #ba1a1a;
+  font-weight: 800;
+}
+
+.admin-surg-roster-case-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.admin-surg-empty-radar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.admin-surg-empty-radar .material-symbols-rounded {
+  font-size: 48px;
+  color: #146c2e;
+  margin-bottom: 12px;
+}
+
+.admin-surgeries-board-frame {
+  width: 100%;
+}
+
+/* ─── Responsive Tablet & Mobile ─── */
+@media (max-width: 640px) {
+  .admin-surgeries-container {
+    padding: 8px;
+  }
+
+  .admin-surg-nav-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    width: 100% !important;
+    border-bottom: none !important;
+  }
+
+  .admin-surg-nav-tab {
+    width: 100% !important;
+    padding: 8px 10px !important;
+    font-size: 0.76rem !important;
+    border-radius: 8px !important;
+    background: var(--md-sys-color-surface-container, #f3edf7) !important;
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0) !important;
+    justify-content: flex-start !important;
+  }
+
+  .admin-surg-nav-tab--active {
+    background: var(--md-sys-color-primary-container, #eaddff) !important;
+    border-color: var(--md-sys-color-primary, #6750a4) !important;
+  }
+
+  .admin-surg-nav-tab span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .admin-surg-suites-grid,
+  .admin-surg-radar-grid {
+    grid-template-columns: 1fr;
+  }
+}

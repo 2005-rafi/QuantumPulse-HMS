@@ -1,16 +1,19 @@
 const repo = require('./administration.repository');
-const AppError = require('../../core/errors/AppError');
+const AppError = require('../../core/errors/app-error');
+const cacheService = require('../../core/cache/cache.service');
 
 // ── Role & Permission Operations ─────────────────────────────────────────────────
 
-const listRoles = () => repo.listRoles();
+const listRoles = () => cacheService.wrap('ref:roles:all', 600, () => repo.listRoles());
 
-const listPermissions = () => repo.listPermissions();
+const listPermissions = () => cacheService.wrap('ref:permissions:all', 600, () => repo.listPermissions());
 
 const createRole = async (name, description) => {
   const existing = await repo.findRoleByName(name);
   if (existing) throw new AppError('BUSINESS_001');
-  return repo.createRole({ name, description });
+  const role = await repo.createRole({ name, description });
+  cacheService.del('ref:roles:all');
+  return role;
 };
 
 const assignPermissionsToRole = async (roleId, permissionIds) => {
@@ -42,10 +45,10 @@ const getDepartmentById = async (id) => {
 };
 
 /** Active departments — used by all modules that need to display dept options. */
-const listDepartments = () => repo.listDepartments();
+const listDepartments = () => cacheService.wrap('ref:departments:active', 600, () => repo.listDepartments());
 
 /** All departments including inactive — for admin management view. */
-const listAllDepartments = () => repo.listAllDepartments();
+const listAllDepartments = () => cacheService.wrap('ref:departments:all', 600, () => repo.listAllDepartments());
 
 /**
  * Create a new department.
@@ -67,7 +70,9 @@ const createDepartment = async (data) => {
     }
   }
 
-  return repo.createDepartment(data);
+  const dept = await repo.createDepartment(data);
+  cacheService.delByPattern('ref:departments:');
+  return dept;
 };
 
 /**
@@ -100,7 +105,9 @@ const updateDepartment = async (id, data) => {
     }
   }
 
-  return repo.updateDepartment(id, data);
+  const updated = await repo.updateDepartment(id, data);
+  cacheService.delByPattern('ref:departments:');
+  return updated;
 };
 
 /**
@@ -138,7 +145,9 @@ const assignHod = async (deptId, staffId) => {
     );
   }
 
-  return repo.updateDepartment(deptId, { headOfDepartment: staffId });
+  const res = await repo.updateDepartment(deptId, { headOfDepartment: staffId });
+  cacheService.delByPattern('ref:departments:');
+  return res;
 };
 
 /**
@@ -173,20 +182,36 @@ const deleteDepartment = async (id) => {
     throw new AppError('BUSINESS_002', 'Cannot deactivate department: active patient visits are still routed to it');
   }
 
-  return repo.softDeleteDepartment(id);
+  const res = await repo.softDeleteDepartment(id);
+  cacheService.delByPattern('ref:departments:');
+  return res;
 };
 
 // ── Settings Operations ──────────────────────────────────────────────────────────
 
 const getSetting = async (key) => {
-  const setting = await repo.getSetting(key);
-  if (!setting) return null;
-  return setting.value;
+  return cacheService.wrap('ref:settings:' + key, 600, async () => {
+    const setting = await repo.getSetting(key);
+    if (!setting) return null;
+    return setting.value;
+  });
 };
 
 const updateSetting = async (key, value) => {
   const setting = await repo.updateSetting(key, value);
+  cacheService.del('ref:settings:' + key);
   return setting.value;
+};
+
+// ── Cache Operations ─────────────────────────────────────────────────────────────
+
+const flushCache = async () => {
+  cacheService.flush();
+  return { flushed: true, timestamp: new Date() };
+};
+
+const getCacheStats = async () => {
+  return cacheService.getStats();
 };
 
 module.exports = {
@@ -204,5 +229,7 @@ module.exports = {
   deleteDepartment,
   getSetting,
   updateSetting,
+  flushCache,
+  getCacheStats,
 };
 

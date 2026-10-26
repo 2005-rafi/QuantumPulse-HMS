@@ -62,6 +62,12 @@ export const LaboratoryCard = ({
         </div>
 
         <div className="md3-lab-card-badges">
+          {lab.requireVitalsCollection && (
+            <span className="md3-lab-vitals-pill" title="Pre-Analytical Vitals Collection Required for Nurses">
+              <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>monitor_heart</span>
+              Vitals Req.
+            </span>
+          )}
           <span className={`md3-lab-status-pill ${isActive ? 'md3-lab-status-pill--active' : 'md3-lab-status-pill--inactive'}`}>
             {isActive ? 'Active' : 'Inactive'}
           </span>

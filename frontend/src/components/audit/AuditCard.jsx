@@ -77,9 +77,9 @@ export const AuditCard = ({
 }) => {
   if (!log) return null;
 
-  const actor = log.actorId || {};
-  const actorName = actor.fullName || actor.username || 'System Administrator';
-  const actorRole = log.actorRole || 'ADMINISTRATOR';
+  const actor = log.actorSnapshot || log.actorId || {};
+  const actorName = actor.fullName || actor.username || log.actorRole || 'System Administrator';
+  const actorRole = log.actorSnapshot?.role || log.actorRole || 'ADMINISTRATOR';
   const roleClass = actorRole.toLowerCase().includes('admin')
     ? 'admin'
     : actorRole.toLowerCase().includes('doc')
@@ -93,7 +93,7 @@ export const AuditCard = ({
   const initials = getActorInitials(actorName, actorRole);
   const relTime = formatRelativeTime(log.timestamp);
   const fullTime = log.timestamp ? new Date(log.timestamp).toLocaleString() : '—';
-  const targetId = log.targetId || (log.details?.patientId ? String(log.details.patientId) : null);
+  const targetId = log.targetSnapshot?.identifier || log.targetSnapshot?.label || log.targetId || (log.details?.patientId ? String(log.details.patientId) : null);
   const ipAddress = log.ipAddress || 'Internal Terminal';
 
   // Details insight summary
@@ -129,7 +129,23 @@ export const AuditCard = ({
           </span>
         </div>
 
-        <div className="md3-audit-card-badges">
+        <div className="md3-audit-card-badges" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          {log.severity && log.severity !== 'INFO' && (
+            <span
+              style={{
+                fontSize: '0.64rem',
+                fontWeight: 700,
+                padding: '1px 6px',
+                borderRadius: '100px',
+                backgroundColor: log.severity === 'CRITICAL' ? '#fee2e2' : '#fef3c7',
+                color: log.severity === 'CRITICAL' ? '#b91c1c' : '#b45309',
+                border: `1px solid ${log.severity === 'CRITICAL' ? '#fca5a5' : '#fcd34d'}`,
+              }}
+              title={`Severity: ${log.severity}`}
+            >
+              {log.severity}
+            </span>
+          )}
           <span className={`md3-audit-role-pill md3-audit-role-pill--${roleClass}`} title={`Role: ${actorRole}`}>
             {actorRole}
           </span>
@@ -160,6 +176,17 @@ export const AuditCard = ({
           </span>
         </div>
 
+        {log.statusChange && (log.statusChange.from || log.statusChange.to) && (
+          <div className="md3-audit-meta-row" style={{ color: '#c2410c' }} title={`Status Transition: ${log.statusChange.from} -> ${log.statusChange.to}`}>
+            <span className="material-symbols-rounded" style={{ fontSize: '14px', color: '#ea580c' }}>
+              swap_horiz
+            </span>
+            <span className="md3-audit-meta-text" style={{ fontWeight: 600 }}>
+              {log.statusChange.from || 'START'} &rarr; {log.statusChange.to}
+            </span>
+          </div>
+        )}
+
         <div className="md3-audit-meta-row" title={`Network / Terminal: ${ipAddress}`}>
           <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>
             lan
@@ -168,6 +195,17 @@ export const AuditCard = ({
             {ipAddress}
           </span>
         </div>
+
+        {log.chainIndex !== undefined && (
+          <div className="md3-audit-meta-row" title={`SHA-256 Ledger Block #${log.chainIndex}`}>
+            <span className="material-symbols-rounded" style={{ fontSize: '14px', color: '#0284c7' }}>
+              verified
+            </span>
+            <span className="md3-audit-meta-text" style={{ fontSize: '0.72rem', color: '#0369a1', fontWeight: 600 }}>
+              Block #{log.chainIndex} Sealed
+            </span>
+          </div>
+        )}
 
         <div className="md3-audit-meta-row" title={detailSummary}>
           <span className="material-symbols-rounded" style={{ fontSize: '14px', color: '#6b7280' }}>

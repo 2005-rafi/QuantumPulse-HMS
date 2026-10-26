@@ -14,6 +14,7 @@ import DepartmentCard from '../../components/departments/DepartmentCard';
 import DepartmentListView from '../../components/departments/DepartmentListView';
 import DepartmentDetailSheet from '../../components/departments/DepartmentDetailSheet';
 import { useDepartmentLayoutPreference } from '../../hooks/useDepartmentLayoutPreference';
+import { cleanClinicalText } from '../../utils/clinicalText';
 
 const TYPE_FILTERS = [
   { value: 'ALL',                  label: 'All' },
@@ -223,14 +224,15 @@ const AdminDepartmentManager = () => {
       <section className="info-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
 
         {/* ── Header ─────────────────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px', gap: '16px', flexWrap: 'wrap' }}>
-          <div>
-            <h2 style={{ margin: 0, color: 'var(--md-sys-color-primary)' }}>Hospital Departments</h2>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+        <div className="admin-dir-header">
+          <div className="admin-dir-title-group">
+            <h2 className="admin-dir-title">Hospital Departments</h2>
+            <span className="admin-dir-count-sub">
               {filteredDepts.length} department{filteredDepts.length !== 1 ? 's' : ''} shown
-            </p>
+            </span>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+
+          <div className="admin-dir-controls">
             <Md3SearchBar
               value={searchQuery}
               onChange={setSearchQuery}
@@ -262,65 +264,34 @@ const AdminDepartmentManager = () => {
             </div>
 
             {/* Inactive toggle */}
-            <label style={{
-              display: 'flex', alignItems: 'center', gap: '8px',
-              padding: '8px 14px',
-              border: `1.5px solid ${showInactive ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
-              borderRadius: '100px', cursor: 'pointer',
-              background: showInactive ? 'var(--md-sys-color-primary-container)' : 'transparent',
-              color: showInactive ? 'var(--md-sys-color-on-primary-container)' : 'var(--md-sys-color-on-surface-variant)',
-              fontSize: '13px', fontWeight: 600,
-              userSelect: 'none',
-              height: '44px'
-            }}>
+            <label className={`admin-filter-chip ${showInactive ? 'active' : ''}`} title="Toggle Inactive Department Visibility">
               <input type="checkbox" checked={showInactive} onChange={(e) => setShowInactive(e.target.checked)} style={{ display: 'none' }} />
-              <span className="material-symbols-rounded" style={{ fontSize: '18px', display: 'flex', alignItems: 'center' }}>
+              <span className="material-symbols-rounded">
                 {showInactive ? 'visibility' : 'visibility_off'}
               </span>
               <span>{showInactive ? 'All' : 'Active'}</span>
             </label>
 
             <button
+              type="button"
               onClick={() => setIsCreateOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 20px',
-                background: 'var(--md-sys-color-primary, #00668b)',
-                color: 'var(--md-sys-color-on-primary, #ffffff)',
-                border: 'none',
-                borderRadius: '100px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                transition: 'all 200ms ease',
-                height: '44px',
-                boxShadow: 'var(--md-sys-elevation-1, 0 1px 3px rgba(0,0,0,0.12))'
-              }}
-              className="dept-add-btn"
+              className="admin-btn admin-btn-primary"
+              title="Add New Hospital Department"
             >
-              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
-              Add Department
+              <span className="material-symbols-rounded">add</span>
+              <span>Add Department</span>
             </button>
           </div>
         </div>
 
         {/* ── Type filter tabs ───────────────────────────────────────────────── */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '12px', flexWrap: 'wrap' }}>
           {TYPE_FILTERS.map((f) => (
             <button
               key={f.value}
+              type="button"
               onClick={() => setTypeFilter(f.value)}
-              style={{
-                padding: '6px 14px',
-                border: `1.5px solid ${typeFilter === f.value ? 'var(--md-sys-color-primary)' : 'var(--md-sys-color-outline-variant)'}`,
-                borderRadius: '100px',
-                background: typeFilter === f.value ? 'var(--md-sys-color-primary)' : 'transparent',
-                color: typeFilter === f.value ? 'var(--md-sys-color-on-primary)' : 'var(--md-sys-color-on-surface-variant)',
-                fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                transition: 'all 150ms ease',
-              }}
+              className={`admin-filter-chip ${typeFilter === f.value ? 'active' : ''}`}
             >
               {f.label}
             </button>
@@ -484,7 +455,7 @@ const AdminDepartmentManager = () => {
               Assign Head of Department
             </h3>
             <p style={{ margin: '0 0 16px', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
-              Department: <strong>{hodDept.name}</strong> ({hodDept.code})
+              Department: <strong>{cleanClinicalText(hodDept.name)}</strong> ({cleanClinicalText(hodDept.code)})
             </p>
 
             {deptStaffLoading ? (
@@ -499,8 +470,10 @@ const AdminDepartmentManager = () => {
                 {deptStaff.map((s) => {
                   const isSelected = hodStaffId === s._id;
                   const isHodRole = s.position === 'Head of Department';
-                  const initials = s.fullName
-                    ? s.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+                  const cleanStaffName = cleanClinicalText(s.fullName);
+                  const cleanPosition = cleanClinicalText(s.position);
+                  const initials = cleanStaffName
+                    ? cleanStaffName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                     : 'ST';
 
                   return (
@@ -548,7 +521,7 @@ const AdminDepartmentManager = () => {
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--md-sys-color-on-surface)' }}>
-                            {s.fullName}
+                            {cleanStaffName}
                           </span>
                           <span style={{
                             fontSize: '11px',
@@ -573,7 +546,7 @@ const AdminDepartmentManager = () => {
                           )}
                         </div>
                         <div style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', marginTop: '2px' }}>
-                          {s.position} · <span style={{ fontFamily: 'monospace' }}>{s.employeeId}</span>
+                          {cleanPosition} · <span style={{ fontFamily: 'monospace' }}>{cleanClinicalText(s.employeeId)}</span>
                         </div>
                       </div>
 

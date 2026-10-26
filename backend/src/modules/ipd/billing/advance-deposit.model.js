@@ -59,8 +59,6 @@ const advanceDepositSchema = new mongoose.Schema(
     idempotencyKey: {
       type: String,
       trim: true,
-      default: null,
-      index: true,
     },
     isAllocatedToFinalBill: {
       type: Boolean,
@@ -79,6 +77,12 @@ const advanceDepositSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+advanceDepositSchema.pre('validate', function () {
+  if (!this.idempotencyKey || typeof this.idempotencyKey !== 'string' || !this.idempotencyKey.trim()) {
+    this.idempotencyKey = undefined;
+  }
+});
 
 advanceDepositSchema.index({ admissionId: 1, createdAt: -1 });
 advanceDepositSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });

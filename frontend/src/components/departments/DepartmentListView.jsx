@@ -1,5 +1,6 @@
 import React from 'react';
 import { Md3Avatar } from '../md3/Md3Widgets';
+import { cleanClinicalText } from '../../utils/clinicalText';
 import './DepartmentListView.css';
 
 const TYPE_COLORS = {
@@ -11,8 +12,9 @@ const TYPE_COLORS = {
 };
 
 const getDeptInitials = (name) => {
-  if (!name) return 'DP';
-  return name
+  const clean = cleanClinicalText(name);
+  if (!clean) return 'DP';
+  return clean
     .split(' ')
     .filter(Boolean)
     .map((part) => part[0])
@@ -53,7 +55,9 @@ export const DepartmentListView = ({
             const deptId = dept._id;
             const isInactive = dept.status === 'Inactive';
             const typeColor = TYPE_COLORS[dept.type] || TYPE_COLORS.SUPPORT;
-            const initials = getDeptInitials(dept.name);
+            const cleanName = cleanClinicalText(dept.name);
+            const cleanCode = cleanClinicalText(dept.code);
+            const initials = getDeptInitials(cleanName);
             const hod = dept.headOfDepartment;
             const vitalCount = dept.vitalFields?.length || 0;
             const linkedLabs = laboratories.filter(
@@ -75,10 +79,10 @@ export const DepartmentListView = ({
                       variant={!isInactive ? 'primary' : 'neutral'}
                     />
                     <div className="md3-dept-profile-meta">
-                      <strong className="md3-dept-name" title={dept.name}>
-                        {dept.name}
+                      <strong className="md3-dept-name" title={cleanName}>
+                        {cleanName}
                       </strong>
-                      <span className="md3-dept-code">{dept.code || 'N/A'}</span>
+                      <span className="md3-dept-code">{cleanCode || 'N/A'}</span>
                     </div>
                   </div>
                 </td>
@@ -96,13 +100,13 @@ export const DepartmentListView = ({
                 {/* 3. Head of Department */}
                 <td className="col-dept-hod">
                   {hod ? (
-                    <div className="md3-dept-hod-info" title={`${hod.fullName} (${hod.position || 'HOD'})`}>
+                    <div className="md3-dept-hod-info" title={`${cleanClinicalText(hod.fullName)} (${hod.position || 'HOD'})`}>
                       <span className="material-symbols-rounded" style={{ fontSize: '16px', color: 'var(--md-sys-color-primary)' }}>
                         person
                       </span>
                       <div className="md3-dept-hod-text">
-                        <strong>{hod.fullName}</strong>
-                        {hod.position && <small>{hod.position}</small>}
+                        <strong>{cleanClinicalText(hod.fullName)}</strong>
+                        {hod.position && <small>{cleanClinicalText(hod.position)}</small>}
                       </div>
                     </div>
                   ) : (

@@ -4,7 +4,7 @@ const Staff = require('../staff/staff.model');
 const Department = require('../administration/department.model');
 const Patient = require('../patient/patient.model');
 const Role = require('../administration/role.model');
-const AppError = require('../../core/errors/AppError');
+const AppError = require('../../core/errors/app-error');
 const { withTransaction } = require('../../core/database/transaction');
 const sequenceService = require('../../core/database/sequence.service');
 
@@ -456,14 +456,36 @@ class AppointmentService {
   // ── 8. QUERIES & LISTINGS ─────────────────────────────────────────────────
 
   async getAppointments(filters = {}, pagination = {}, securityScope = {}) {
+    const mongoose = require('mongoose');
+    const sanitizedFilters = { ...filters };
+
+    // Universal Identifier Support: Resolve MRN to ObjectId if needed
+    if (sanitizedFilters.patientId && typeof sanitizedFilters.patientId === 'string' && !mongoose.Types.ObjectId.isValid(sanitizedFilters.patientId)) {
+      const patientRepo = require('../patient/patient.repository');
+      const foundPatient = await patientRepo.findByMrn(sanitizedFilters.patientId);
+      if (foundPatient && foundPatient._id) {
+        sanitizedFilters.patientId = foundPatient._id.toString();
+      } else {
+        // Patient doesn't exist for this MRN, return empty set rather than throwing a 422 CastError
+        return {
+          items: [],
+          total: 0,
+          page: pagination.page || 1,
+          limit: pagination.limit || 20,
+          pages: 0,
+          summary: { total: 0, scheduled: 0, checkedIn: 0, completed: 0, cancelled: 0 },
+        };
+      }
+    }
+
     const { QueryContext, QueryBuilder, AppointmentQueryConfig } = require('../../core/query');
 
     const queryContext = new QueryContext({
-      filters: { ...filters },
+      filters: sanitizedFilters,
       page: pagination.page || 1,
       limit: pagination.limit || 20,
-      sortBy: pagination.sortBy || filters.sortBy || 'appointmentDate',
-      sortOrder: pagination.sortOrder || filters.sortOrder || 'asc',
+      sortBy: pagination.sortBy || sanitizedFilters.sortBy || 'appointmentDate',
+      sortOrder: pagination.sortOrder || sanitizedFilters.sortOrder || 'asc',
       securityScope,
     });
 

@@ -11,9 +11,9 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-// Default timeouts (12 minutes warning, 15 minutes lock)
-const DEFAULT_WARN_MS = 12 * 60 * 1000;
-const DEFAULT_LOCK_MS = 15 * 60 * 1000;
+// Clinical Station Default Timeouts: Exactly 1 hour (60 minutes) lock, 55 minutes warning (5m countdown)
+const DEFAULT_WARN_MS = 55 * 60 * 1000;
+const DEFAULT_LOCK_MS = 60 * 60 * 1000;
 const THROTTLE_MS = 1000;
 
 export const useIdleTimer = ({
@@ -23,20 +23,35 @@ export const useIdleTimer = ({
   onLock,
   enabled = true,
 } = {}) => {
-  // Check if terminal was previously locked or elapsed idle exceeds lock threshold
+  // Check if terminal was explicitly locked or elapsed idle exceeds lock threshold
   const getInitialLockState = () => {
     if (typeof window === 'undefined') return false;
     const isSavedLocked = sessionStorage.getItem('hms_terminal_locked') === 'true';
     if (isSavedLocked) return true;
     const savedActivity = sessionStorage.getItem('hms_last_activity');
     if (savedActivity) {
-      const elapsed = Date.now() - parseInt(savedActivity, 10);
-      if (elapsed >= lockTimeMs) {
-        sessionStorage.setItem('hms_terminal_locked', 'true');
-        return true;
+      const parsed = parseInt(savedActivity, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        const elapsed = Date.now() - parsed;
+        if (elapsed >= lockTimeMs) {
+          sessionStorage.setItem('hms_terminal_locked', 'true');
+          return true;
+        }
       }
     }
     return false;
+  };
+
+  const getInitialActivityTime = () => {
+    if (typeof window === 'undefined') return Date.now();
+    const saved = sessionStorage.getItem('hms_last_activity');
+    if (saved) {
+      const parsed = parseInt(saved, 10);
+      if (!isNaN(parsed) && parsed > 0 && Date.now() - parsed < lockTimeMs) {
+        return parsed;
+      }
+    }
+    return Date.now();
   };
 
   const initialLocked = getInitialLockState();
@@ -44,10 +59,7 @@ export const useIdleTimer = ({
   const [isLocked, setIsLocked] = useState(initialLocked);
   const [remainingSeconds, setRemainingSeconds] = useState(Math.round((lockTimeMs - warnTimeMs) / 1000));
 
-  const lastActivityRef = useRef(() => {
-    const saved = typeof window !== 'undefined' ? sessionStorage.getItem('hms_last_activity') : null;
-    return saved ? parseInt(saved, 10) : Date.now();
-  });
+  const lastActivityRef = useRef(getInitialActivityTime());
   const lastThrottleRef = useRef(0);
   const warnFiredRef = useRef(false);
   const lockFiredRef = useRef(initialLocked);
@@ -102,7 +114,21 @@ export const useIdleTimer = ({
       onLock();
     }
 
-    const events = ['mousemove', 'keydown', 'touchstart', 'scroll', 'click', 'pointerdown'];
+    const events = [
+      'mousemove',
+      'mousedown',
+      'mouseup',
+      'keydown',
+      'keyup',
+      'touchstart',
+      'touchmove',
+      'scroll',
+      'wheel',
+      'click',
+      'pointerdown',
+      'pointermove',
+      'focus',
+    ];
     const listenerOptions = { passive: true };
 
     events.forEach((event) => {
@@ -139,10 +165,35 @@ export const useIdleTimer = ({
       }
     }, 1000);
 
+    // Programmatic lock/warn triggers for unit tests and E2E simulation
+    const handleTriggerLock = () => {
+      lockFiredRef.current = true;
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('hms_terminal_locked', 'true');
+      }
+      setIsLocked(true);
+      setIsWarning(false);
+      if (onLock) onLock();
+    };
+
+    const handleTriggerWarn = (e) => {
+      const customRemaining = e?.detail?.remaining || 300;
+      warnFiredRef.current = true;
+      setIsWarning(true);
+      setIsLocked(false);
+      setRemainingSeconds(customRemaining);
+      if (onWarn) onWarn();
+    };
+
+    window.addEventListener('hms_trigger_lock', handleTriggerLock);
+    window.addEventListener('hms_trigger_warn', handleTriggerWarn);
+
     return () => {
       events.forEach((event) => {
         window.removeEventListener(event, handleActivity, listenerOptions);
       });
+      window.removeEventListener('hms_trigger_lock', handleTriggerLock);
+      window.removeEventListener('hms_trigger_warn', handleTriggerWarn);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }

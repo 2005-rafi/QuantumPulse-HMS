@@ -1,7 +1,8 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { formatDob, getPatientInitials } from '../../utils/patientFormatters';
-import { useConfig } from '../../contexts/ConfigContext';
+import { BarcodeRenderer } from '../common/BarcodeRenderer';
+import { useConfig } from '../../context/ConfigContext';
 import './PrintablePatientIdCard.css';
 
 /* ── SVG Icons ── */
@@ -26,51 +27,7 @@ const IconClose = () => (
   </svg>
 );
 
-/* ── Vector Barcode Graphic ── */
-const SvgBarcode = () => (
-  <svg className="id-card-barcode-svg" viewBox="0 0 200 30" preserveAspectRatio="none">
-    <rect x="0" y="0" width="3" height="30" fill="currentColor" />
-    <rect x="5" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="8" y="0" width="4" height="30" fill="currentColor" />
-    <rect x="15" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="20" y="0" width="5" height="30" fill="currentColor" />
-    <rect x="27" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="30" y="0" width="3" height="30" fill="currentColor" />
-    <rect x="35" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="40" y="0" width="6" height="30" fill="currentColor" />
-    <rect x="48" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="52" y="0" width="4" height="30" fill="currentColor" />
-    <rect x="58" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="62" y="0" width="3" height="30" fill="currentColor" />
-    <rect x="67" y="0" width="5" height="30" fill="currentColor" />
-    <rect x="74" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="78" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="81" y="0" width="4" height="30" fill="currentColor" />
-    <rect x="87" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="91" y="0" width="5" height="30" fill="currentColor" />
-    <rect x="98" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="101" y="0" width="3" height="30" fill="currentColor" />
-    <rect x="106" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="110" y="0" width="6" height="30" fill="currentColor" />
-    <rect x="118" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="122" y="0" width="4" height="30" fill="currentColor" />
-    <rect x="128" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="131" y="0" width="3" height="30" fill="currentColor" />
-    <rect x="136" y="0" width="5" height="30" fill="currentColor" />
-    <rect x="143" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="147" y="0" width="4" height="30" fill="currentColor" />
-    <rect x="153" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="156" y="0" width="3" height="30" fill="currentColor" />
-    <rect x="161" y="0" width="5" height="30" fill="currentColor" />
-    <rect x="168" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="172" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="175" y="0" width="4" height="30" fill="currentColor" />
-    <rect x="181" y="0" width="2" height="30" fill="currentColor" />
-    <rect x="185" y="0" width="5" height="30" fill="currentColor" />
-    <rect x="192" y="0" width="1" height="30" fill="currentColor" />
-    <rect x="195" y="0" width="3" height="30" fill="currentColor" />
-  </svg>
-);
+/* ── Real Dynamic ISO/IEC 15417 Code 128 Barcode is rendered via BarcodeRenderer ── */
 
 const PrintablePatientIdCard = ({ patient, onClose, inline = false }) => {
   const config = useConfig();
@@ -136,7 +93,12 @@ const PrintablePatientIdCard = ({ patient, onClose, inline = false }) => {
 
         {/* Barcode Graphic */}
         <div className="id-card-barcode-section">
-          <SvgBarcode />
+          <BarcodeRenderer
+            value={patient.mrn}
+            height={28}
+            showText={false}
+            className="id-card-barcode-renderer"
+          />
           <span className="barcode-text">{patient.mrn}</span>
         </div>
 

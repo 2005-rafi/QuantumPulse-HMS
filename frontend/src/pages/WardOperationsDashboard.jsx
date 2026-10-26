@@ -17,7 +17,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useConfig } from '../contexts/ConfigContext';
+import { useConfig } from '../context/ConfigContext';
 import { Md3Tabs } from '../components/md3/Md3Widgets';
 import CommonHeader from '../components/shell/CommonHeader';
 import Md3ClinicalDrawer from '../components/md3/Md3ClinicalDrawer';
@@ -62,10 +62,21 @@ const WardOperationsDashboard = () => {
           },
         ]
       : []),
+    ...(user?.isHod
+      ? [
+          {
+            id: 'staff',
+            label: 'Department Staff',
+            icon: <span className="material-symbols-rounded">badge</span>,
+          },
+        ]
+      : []),
   ];
 
   // Derive active tab directly from URL path
-  const activeTab = location.pathname.includes('/time-monitoring')
+  const activeTab = location.pathname.includes('/staff')
+    ? 'staff'
+    : location.pathname.includes('/time-monitoring')
     ? 'time-monitoring'
     : location.pathname.includes('/facility-builder')
     ? 'facility-builder'
@@ -105,17 +116,13 @@ const WardOperationsDashboard = () => {
       <Md3ClinicalDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
-        activeSection={activeTab}
-        onSelectSection={(secId) => {
-          handleTabChange(secId);
-          setIsDrawerOpen(false);
-        }}
-        sections={[
-          {
-            title: 'Ward Operations Workstation',
-            items: tabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon })),
-          },
-        ]}
+        brandTitle={config?.SHORT_NAME || 'Quantum CareOne'}
+        brandSubtitle="Ward Operations &amp; Facility Management"
+        navItems={tabs}
+        activeTab={activeTab}
+        onNavigate={handleTabChange}
+        user={user}
+        onLogout={handleLogout}
       />
     </div>
   );

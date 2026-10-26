@@ -1,0 +1,580 @@
+/* ============================================================
+   NurseTriageHistoryView.css — Material 3 Triage Activity Ledger
+   Pure Material 3 Design Metrics & Ergonomic Scalability
+   ============================================================ */
+
+.nth-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  width: 100%;
+  padding: clamp(0.5rem, 1.25vw, 1.25rem);
+  background-color: var(--md-sys-color-background);
+  color: var(--md-sys-color-on-background);
+  box-sizing: border-box;
+  gap: 0.5rem;
+}
+
+/* ─── 1. Compact Linear Metrics Bar ─── */
+.nth-metrics-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.35rem 0.65rem;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
+}
+
+.nth-metric-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font: var(--md-sys-typescale-label-medium);
+  color: var(--md-sys-color-on-surface-variant);
+  box-sizing: border-box;
+  white-space: nowrap;
+}
+
+.nth-metric-pill__icon {
+  font-size: 1rem !important;
+  color: var(--md-sys-color-outline);
+}
+
+.nth-metric-pill__label {
+  font-size: 0.725rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nth-metric-pill__value {
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.nth-metric-pill--my {
+  border-color: var(--md-sys-color-primary-container);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.nth-metric-pill--my .nth-metric-pill__icon,
+.nth-metric-pill--my .nth-metric-pill__value {
+  color: var(--md-sys-color-primary);
+}
+
+.nth-metric-pill--success .nth-metric-pill__icon,
+.nth-metric-pill--success .nth-metric-pill__value {
+  color: var(--md-sys-color-tertiary);
+}
+
+.nth-metric-pill--warning .nth-metric-pill__icon,
+.nth-metric-pill--warning .nth-metric-pill__value {
+  color: var(--md-sys-color-secondary);
+}
+
+/* ─── 2. Alert Feedback Banners ─── */
+.nth-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--md-sys-shape-corner-small);
+  font: var(--md-sys-typescale-body-small);
+  margin-bottom: 0.25rem;
+}
+
+.nth-alert--success {
+  background: var(--md-sys-color-success-bg);
+  color: var(--md-sys-color-success-fg);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.nth-alert--error {
+  background: var(--md-sys-color-danger-bg);
+  color: var(--md-sys-color-danger-fg);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.nth-alert__close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  display: flex;
+  padding: 0;
+}
+
+/* ─── 3. Unified Adaptive Controls Bar (| Search | Filters | Refresh |) ─── */
+.nth-controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.nth-search-box {
+  flex: 1 1 0%;
+  min-width: 180px;
+  max-width: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.nth-search-box .md3-search-bar {
+  width: 100% !important;
+  max-width: 100% !important;
+  flex: 1 1 auto;
+}
+
+.nth-filters-group {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+}
+
+.nth-refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all var(--md-sys-motion-duration-short) ease;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.nth-refresh-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.nth-refresh-btn .material-symbols-rounded {
+  font-size: 1.15rem !important;
+}
+
+.nth-refresh-btn.is-loading .material-symbols-rounded {
+  animation: nth-spin 0.9s linear infinite;
+}
+
+@keyframes nth-spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Nurse Attribution Filter Dropdown (Reusable MD3 Select) */
+.nth-nurse-filter-container {
+  min-width: 180px;
+  max-width: 250px;
+  flex: 0 1 auto;
+}
+
+.nth-nurse-md3-select {
+  margin-bottom: 0 !important;
+  width: 100%;
+}
+
+/* Material 3 Segmented Pill Groups */
+.nth-pill-group {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  background: var(--md-sys-color-surface-container);
+  border-radius: var(--md-sys-shape-corner-full);
+  padding: 2px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.nth-pill {
+  border: none;
+  background: transparent;
+  padding: 0 0.6rem;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--md-sys-shape-corner-full);
+  font: var(--md-sys-typescale-label-medium);
+  font-size: 0.725rem;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: all var(--md-sys-motion-duration-short) ease;
+  white-space: nowrap;
+}
+
+.nth-pill:hover:not(.is-active) {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}
+
+.nth-pill.is-active {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+  font-weight: 600;
+}
+
+/* ─── 4. State Boxes ─── */
+.nth-state-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  font: var(--md-sys-typescale-body-medium);
+}
+
+.nth-state-icon {
+  font-size: 2.75rem !important;
+  opacity: 0.35;
+  margin-bottom: 0.5rem;
+}
+
+.nth-state-box h4 {
+  margin: 0.35rem 0 0.2rem;
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+}
+
+.nth-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid var(--md-sys-color-outline-variant);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: var(--md-sys-shape-corner-full);
+  animation: nth-spin 0.8s linear infinite;
+  margin-bottom: 0.65rem;
+}
+
+/* ─── 5. Responsive Grid: Ergonomic Layout Across Devices ─── */
+.nth-body {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.nth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.65rem;
+  width: 100%;
+  align-items: stretch;
+}
+
+/* Desktop Wide (>1440px) */
+@media (min-width: 1441px) {
+  .nth-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Desktop Standard (1100px - 1440px) */
+@media (min-width: 1101px) and (max-width: 1440px) {
+  .nth-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .nth-controls-bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "search refresh"
+      "filters filters";
+    gap: 0.45rem;
+  }
+  .nth-search-box {
+    grid-area: search;
+  }
+  .nth-refresh-btn {
+    grid-area: refresh;
+  }
+  .nth-filters-group {
+    grid-area: filters;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    width: 100%;
+  }
+  .nth-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+  }
+}
+
+/* Mobile (< 768px) */
+@media (max-width: 767px) {
+  .nth-container {
+    padding: 0.5rem;
+    gap: 0.45rem;
+  }
+  .nth-controls-bar {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "search refresh"
+      "filters filters";
+    gap: 0.4rem;
+    width: 100%;
+  }
+  .nth-search-box {
+    grid-area: search;
+  }
+  .nth-refresh-btn {
+    grid-area: refresh;
+  }
+  .nth-filters-group {
+    grid-area: filters;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.4rem;
+    width: 100%;
+  }
+  .nth-nurse-filter-container {
+    width: 100%;
+    max-width: 100%;
+  }
+  .nth-pill-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .nth-pill {
+    flex: 1;
+    text-align: center;
+  }
+  .nth-grid {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+}
+
+/* ─── 7. Modal / Dialog Styles (Standardized Typography) ─── */
+.nth-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--md-sys-glass-scrim, rgba(0, 0, 0, 0.45));
+  backdrop-filter: blur(var(--md-sys-glass-blur, 8px));
+  -webkit-backdrop-filter: blur(var(--md-sys-glass-blur, 8px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1.5rem;
+}
+
+.nth-modal-dialog {
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-large);
+  width: 100%;
+  max-width: 620px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+.nth-modal-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.nth-modal-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nth-modal-title {
+  margin: 0;
+  font: var(--md-sys-typescale-title-large);
+  letter-spacing: var(--md-sys-typescale-title-large-tracking);
+  color: var(--md-sys-color-on-surface);
+}
+
+.nth-modal-subtitle {
+  margin: 0.15rem 0 0;
+  font: var(--md-sys-typescale-body-small);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.nth-modal-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+}
+
+.nth-modal-body {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.nth-modal-nurse-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background: var(--md-sys-color-primary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--md-sys-shape-corner-small);
+  font: var(--md-sys-typescale-body-medium);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.nth-modal-nurse-box .material-symbols-rounded {
+  font-size: 1.25rem;
+  color: var(--md-sys-color-primary);
+}
+
+.nth-modal-nurse-box__sub {
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  margin-top: 0.15rem;
+}
+
+.nth-modal-section h4 {
+  margin: 0 0 0.5rem;
+  font: var(--md-sys-typescale-label-medium);
+  letter-spacing: var(--md-sys-typescale-label-medium-tracking);
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+}
+
+.nth-modal-vitals-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.5rem;
+}
+
+.nth-modal-vital-card {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--md-sys-shape-corner-small);
+  display: flex;
+  flex-direction: column;
+}
+
+.nth-modal-vital-label {
+  font: var(--md-sys-typescale-label-small);
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+}
+
+.nth-modal-vital-val {
+  font: var(--md-sys-typescale-title-medium);
+  color: var(--md-sys-color-on-surface);
+  margin-top: 0.15rem;
+}
+
+.nth-modal-dynamic-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.5rem;
+}
+
+.nth-modal-dynamic-item {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--md-sys-shape-corner-extra-small);
+  font: var(--md-sys-typescale-body-medium);
+  display: flex;
+  justify-content: space-between;
+}
+
+.nth-modal-dynamic-key {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.nth-modal-dynamic-val {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.nth-modal-notes,
+.nth-modal-allergy,
+.nth-modal-operations {
+  margin: 0;
+  font: var(--md-sys-typescale-body-medium);
+  line-height: 1.45;
+  color: var(--md-sys-color-on-surface);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--md-sys-shape-corner-small);
+}
+
+.nth-modal-allergy {
+  color: var(--md-sys-color-danger-fg);
+  background: var(--md-sys-color-danger-bg);
+  border-color: var(--md-sys-color-error);
+  margin-bottom: 0.4rem;
+}
+
+.nth-modal-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.4rem;
+  font: var(--md-sys-typescale-body-small);
+  color: var(--md-sys-color-on-surface-variant);
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--md-sys-shape-corner-small);
+}
+
+.nth-modal-meta-grid strong {
+  color: var(--md-sys-color-on-surface);
+}
+
+.nth-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+}

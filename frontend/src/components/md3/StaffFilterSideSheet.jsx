@@ -11,6 +11,24 @@ const POSITION_ROLE_MAP = {
     'Senior Consultant', 'Consultant', 'Associate Consultant',
     'Junior Consultant', 'Resident Doctor', 'Intern'
   ],
+  'Surgeon': [
+    'Chief Surgeon', 'Medical Superintendent', 'Head of Surgery Department',
+    'Senior Consultant Surgeon', 'Consultant Surgeon', 'Associate Consultant Surgeon',
+    'Junior Consultant Surgeon', 'Surgical Resident', 'Surgical Intern'
+  ],
+  'OPD Nurse': [
+    'Head OPD Nurse', 'Senior OPD Staff Nurse', 'OPD Staff Nurse',
+    'Junior OPD Nurse', 'OPD Nursing Assistant'
+  ],
+  'IPD Nurse': [
+    'Chief Nursing Officer', 'Nursing Superintendent', 'Deputy Nursing Superintendent',
+    'Head Ward Nurse', 'Senior Ward Staff Nurse', 'Ward Staff Nurse',
+    'Junior Ward Nurse', 'Ward Nursing Assistant'
+  ],
+  'Lab Nurse': [
+    'Chief Lab Nursing Officer', 'Head Lab Nurse / Phlebotomy Lead',
+    'Senior Lab Staff Nurse', 'Lab Staff Nurse', 'Junior Lab Nurse', 'Lab Nursing Assistant'
+  ],
   'Nurse': [
     'Chief Nursing Officer', 'Nursing Superintendent', 'Deputy Nursing Superintendent',
     'Head Nurse', 'Senior Staff Nurse', 'Staff Nurse', 'Junior Nurse', 'Nursing Assistant'
@@ -26,6 +44,13 @@ const POSITION_ROLE_MAP = {
   'Reception': [
     'Front Office Manager', 'Reception Supervisor', 'Senior Receptionist',
     'Receptionist', 'Front Desk Assistant'
+  ],
+  'Billing': [
+    'Billing Manager / Finance Lead', 'Billing Manager',
+    'Senior Billing Officer', 'Senior Billing Executive',
+    'Billing Executive',
+    'Cashier / Billing Associate', 'Junior Billing Executive',
+    'Billing Assistant'
   ],
   'Ward Operations': [
     'Head of Department', 'Operations Manager', 'Senior Ward Executive',

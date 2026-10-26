@@ -1,0 +1,307 @@
+/* ── Gate Pass Printable & Security Document Styles (MD3) ── */
+
+.ipd-gatepass-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  animation: ipdGatepassFadeIn 0.22s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+}
+
+@keyframes ipdGatepassFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ipd-gatepass-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border-radius: 20px;
+  padding: 28px 32px;
+  max-width: 680px;
+  width: 100%;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08);
+  color: var(--md-sys-color-on-surface, #191c1b);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: ipdGatepassSlideUp 0.25s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+  box-sizing: border-box;
+}
+
+@keyframes ipdGatepassSlideUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Header ── */
+.ipd-gatepass-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 2px solid var(--md-sys-color-primary, #006a6a);
+  padding-bottom: 14px;
+  gap: 16px;
+}
+
+.ipd-gatepass-hospital-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ipd-gatepass-logo-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-primary, #006a6a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ipd-gatepass-hospital-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary, #006a6a);
+  letter-spacing: -0.2px;
+}
+
+.ipd-gatepass-hospital-sub {
+  font-size: 0.76rem;
+  color: var(--md-sys-color-outline, #526660);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.ipd-gatepass-badge-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ipd-gatepass-num-badge {
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-primary, #006a6a);
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  letter-spacing: 0.3px;
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+}
+
+.ipd-gatepass-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.ipd-gatepass-close-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ── Demographics Table ── */
+.ipd-gatepass-table-wrap {
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+}
+
+.ipd-gatepass-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+}
+
+.ipd-gatepass-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--md-sys-color-surface-container, #edf5f1);
+}
+
+.ipd-gatepass-table tr:last-child td {
+  border-bottom: none;
+}
+
+.ipd-gp-label {
+  color: var(--md-sys-color-outline, #526660);
+  font-weight: 600;
+  width: 22%;
+  background: var(--md-sys-color-surface-container, #edf5f1);
+}
+
+.ipd-gp-value {
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  width: 28%;
+}
+
+.ipd-gp-value--bold {
+  font-weight: 700;
+}
+
+.ipd-gp-value--code {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ipd-gp-value--highlight {
+  font-weight: 700;
+  color: #15803d;
+}
+
+/* ── Clearance Card ── */
+.ipd-gatepass-clearance-card {
+  border: 1px solid #bbf2e1;
+  border-radius: 12px;
+  background: #f0fbf7;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ipd-gp-clearance-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #006a57;
+  font-weight: 700;
+  font-size: 0.86rem;
+}
+
+.ipd-gp-clearance-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ipd-gp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1px solid #a7f3d0;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #065f46;
+}
+
+.ipd-gp-badge .material-symbols-rounded {
+  font-size: 15px;
+  color: #10b981;
+}
+
+/* ── Signatures ── */
+.ipd-gatepass-signatures {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding-top: 14px;
+  text-align: center;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-outline, #526660);
+}
+
+.ipd-gp-sign-line {
+  border-top: 1px dashed var(--md-sys-color-outline-variant, #b0c4bc);
+  margin-bottom: 6px;
+  height: 1px;
+}
+
+/* ── Actions ── */
+.ipd-gatepass-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e8e4);
+  padding-top: 16px;
+}
+
+/* ── Print Media Optimization ── */
+@media print {
+  body {
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+  body:has(.ipd-gatepass-overlay) > *:not(.ipd-gatepass-overlay) {
+    display: none !important;
+  }
+  .ipd-gatepass-overlay {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    z-index: 999999 !important;
+    visibility: visible !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+  }
+  .ipd-gatepass-card {
+    box-shadow: none !important;
+    border: 2px solid #006a57 !important;
+    border-radius: 8px !important;
+    max-width: 100% !important;
+    width: 95% !important;
+    padding: 24px !important;
+    margin: 20px auto !important;
+    background: #ffffff !important;
+  }
+  .ipd-gatepass-card * {
+    visibility: visible !important;
+  }
+  .ipd-gatepass-actions,
+  .ipd-gatepass-close-btn {
+    display: none !important;
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .ipd-gatepass-card {
+    padding: 20px;
+  }
+  .ipd-gatepass-header {
+    flex-direction: column;
+  }
+  .ipd-gatepass-signatures {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}

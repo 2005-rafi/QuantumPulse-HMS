@@ -15,7 +15,8 @@ const otConsumableSchema = new mongoose.Schema(
     admissionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'IPDAdmission',
-      required: true,
+      required: false,
+      default: null,
       index: true,
     },
     itemName: {
@@ -38,11 +39,23 @@ const otConsumableSchema = new mongoose.Schema(
       type: Number,
       required: true,
       min: 0,
+      default: 0,
     },
     totalPrice: {
       type: Number,
       required: true,
       min: 0,
+      default: 0,
+    },
+    batchNumber: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    notes: {
+      type: String,
+      trim: true,
+      default: '',
     },
     isBilled: {
       type: Boolean,
@@ -51,7 +64,8 @@ const otConsumableSchema = new mongoose.Schema(
     loggedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Staff',
-      required: true,
+      required: false,
+      default: null,
     },
   },
   {
@@ -60,7 +74,9 @@ const otConsumableSchema = new mongoose.Schema(
 );
 
 otConsumableSchema.pre('save', function () {
-  this.totalPrice = this.quantity * this.unitPrice;
+  if (this.totalPrice == null || this.totalPrice === 0) {
+    this.totalPrice = (this.quantity || 1) * (this.unitPrice || 0);
+  }
 });
 
 module.exports = mongoose.model('OTConsumable', otConsumableSchema);

@@ -258,6 +258,16 @@
 }
 
 /* ── Barcode Graphic ── */
+.id-card-barcode-renderer {
+  width: 100%;
+  max-width: 180px;
+}
+
+.id-card-barcode-renderer .barcode-renderer-svg {
+  height: 20px;
+  color: var(--md-sys-color-on-surface);
+}
+
 .id-card-barcode-section {
   display: flex;
   flex-direction: column;

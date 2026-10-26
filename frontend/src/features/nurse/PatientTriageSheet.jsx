@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Md3Card,
   Md3Chip,
@@ -6,6 +7,7 @@ import {
   Md3Section,
   Md3Grid,
   Md3EmptyState,
+  Md3TextArea,
   Icon,
 } from '../../components/md3/Md3Widgets';
 import {
@@ -14,9 +16,11 @@ import {
   Md3Select,
   Md3Checkbox,
 } from '../../components/md3/Md3FormComponents';
+import ClinicalStationIdleDeck from '../../components/md3/ClinicalStationIdleDeck';
 import { visitAPI } from '../../services/visitAPI';
 import api from '../../services/api';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './PatientTriageSheet.css';
 
 /* ============================================================
@@ -32,10 +36,41 @@ const formatAddress = (addr) => {
   return '';
 };
 
+/**
+ * Formats arrival timestamp cleanly (e.g. "Today, 10:45 AM" or "28 Sep, 04:15 PM")
+ */
+const formatArrivalDateTime = (createdAt) => {
+  if (!createdAt) return '—';
+  const d = new Date(createdAt);
+  if (isNaN(d.getTime())) return '—';
+
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  const timeStr = d.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  if (isToday) return `Today, ${timeStr}`;
+  if (isYesterday) return `Yesterday, ${timeStr}`;
+
+  const dateStr = d.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+  });
+  return `${dateStr}, ${timeStr}`;
+};
+
 /* ─── 1. TriagePatientIdentity — 2-Way Column Layout Hero Card ─── */
-const TriagePatientIdentity = ({ visit, waitingSince }) => {
+const TriagePatientIdentity = ({ visit }) => {
   const patient = visit?.patientId || {};
-  const name = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || 'Unnamed Patient';
+  const name = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || patient.name || 'Unnamed Patient';
   const initials = ((patient.firstName?.charAt?.(0) || '') + (patient.lastName?.charAt?.(0) || '')).toUpperCase() || 'P';
   const ageGender = [
     patient.age ? `${patient.age} yrs` : null,
@@ -44,6 +79,9 @@ const TriagePatientIdentity = ({ visit, waitingSince }) => {
 
   const dobText = patient.dob ? new Date(patient.dob).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : null;
   const addressText = formatAddress(patient.address) || [patient.city, patient.pinCode].filter(Boolean).join(', ');
+  const tokenDisplay = visit?.tokenString || (visit?.visitNumber ? visit.visitNumber.slice(-4) : '');
+  const arrivalText = formatArrivalDateTime(visit?.createdAt);
+  const formattedPhone = patient.phone ? (patient.phone.length >= 10 ? `+91 ${patient.phone.slice(-10, -5)} ${patient.phone.slice(-5)}` : patient.phone) : '—';
 
   return (
     <div className="pts-identity-card">
@@ -74,16 +112,16 @@ const TriagePatientIdentity = ({ visit, waitingSince }) => {
                 <span>Blood: {patient.bloodGroup}</span>
               </span>
             )}
-            {visit?.tokenString && (
+            {tokenDisplay && (
               <span className="pts-identity-card__tag pts-identity-card__tag--token">
                 <span className="material-symbols-rounded">confirmation_number</span>
-                <span>Token {visit.tokenString}</span>
+                <span>Token {tokenDisplay}</span>
               </span>
             )}
-            {waitingSince && (
+            {arrivalText && arrivalText !== '—' && (
               <span className="pts-identity-card__tag pts-identity-card__tag--wait">
                 <span className="material-symbols-rounded">schedule</span>
-                <span>Waiting {waitingSince}</span>
+                <span>Arrived: {arrivalText}</span>
               </span>
             )}
           </div>
@@ -97,7 +135,7 @@ const TriagePatientIdentity = ({ visit, waitingSince }) => {
       <div className="pts-identity-card__col pts-identity-card__col--right">
         <div className="pts-identity-card__grid">
           <div className="pts-identity-card__item">
-            <span className="material-symbols-rounded pts-identity-card__item-icon">cake</span>
+            <span className="pts-identity-card__item-icon material-symbols-rounded">calendar_today</span>
             <div className="pts-identity-card__item-content">
               <span className="pts-identity-card__item-label">DOB:</span>
               <span className="pts-identity-card__item-val">{dobText || '—'}</span>
@@ -105,40 +143,32 @@ const TriagePatientIdentity = ({ visit, waitingSince }) => {
           </div>
 
           <div className="pts-identity-card__item">
-            <span className="material-symbols-rounded pts-identity-card__item-icon">call</span>
+            <span className="pts-identity-card__item-icon material-symbols-rounded">call</span>
             <div className="pts-identity-card__item-content">
               <span className="pts-identity-card__item-label">Mobile:</span>
-              <span className="pts-identity-card__item-val">{patient.phone || '—'}</span>
+              <span className="pts-identity-card__item-val">{formattedPhone}</span>
             </div>
           </div>
 
           <div className="pts-identity-card__item">
-            <span className="material-symbols-rounded pts-identity-card__item-icon">badge</span>
+            <span className="pts-identity-card__item-icon material-symbols-rounded">badge</span>
             <div className="pts-identity-card__item-content">
               <span className="pts-identity-card__item-label">Aadhaar:</span>
-              <span className="pts-identity-card__item-val">{patient.aadhaar || '—'}</span>
+              <span className="pts-identity-card__item-val">
+                {patient.aadhaarNumber ? `•••• ${patient.aadhaarNumber.slice(-4)}` : '—'}
+              </span>
             </div>
           </div>
 
-          {patient.parentsName && (
-            <div className="pts-identity-card__item">
-              <span className="material-symbols-rounded pts-identity-card__item-icon">family_restroom</span>
-              <div className="pts-identity-card__item-content">
-                <span className="pts-identity-card__item-label">Guardian:</span>
-                <span className="pts-identity-card__item-val">{patient.parentsName}</span>
-              </div>
+          <div className="pts-identity-card__item pts-identity-card__item--full">
+            <span className="pts-identity-card__item-icon material-symbols-rounded">location_on</span>
+            <div className="pts-identity-card__item-content">
+              <span className="pts-identity-card__item-label">Address:</span>
+              <span className="pts-identity-card__item-val pts-identity-card__item-val--address" title={addressText}>
+                {addressText || '—'}
+              </span>
             </div>
-          )}
-
-          {addressText && (
-            <div className="pts-identity-card__item pts-identity-card__item--full">
-              <span className="material-symbols-rounded pts-identity-card__item-icon">location_on</span>
-              <div className="pts-identity-card__item-content">
-                <span className="pts-identity-card__item-label">Address:</span>
-                <span className="pts-identity-card__item-val pts-identity-card__item-val--address" title={addressText}>{addressText}</span>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
@@ -154,21 +184,17 @@ const ChiefComplaintSection = ({ value, onChange, error }) => (
       </div>
       <div className="pts-section-card__titles">
         <h3 className="pts-section-card__title">Chief Complaint &amp; Reason for Visit</h3>
-        <p className="pts-section-card__subtitle">Presenting symptoms reported by patient during triage intake</p>
+        <p className="pts-section-card__subtitle">Presenting symptoms reported by patient during nurse intake</p>
       </div>
     </div>
     <div className="pts-section-card__body">
-      <Md3TextField
+      <Md3TextArea
         label="Presenting Complaints & Clinical History"
-        variant="outlined"
         required
-        multiline
-        rows={2}
+        rows={3}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Describe patient symptoms, duration, severity, and any relevant clinical history reported..."
         error={error}
-        fullWidth
       />
     </div>
   </div>
@@ -209,7 +235,6 @@ const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
         <div className="pts-vitals-grid">
           <Md3TextField
             label="Blood Pressure (mmHg)"
-            placeholder="120/80"
             value={vitals.bloodPressure}
             onChange={(e) => update('bloodPressure')(e.target.value)}
             leadingIcon={<span className="material-symbols-rounded">speed</span>}
@@ -220,7 +245,6 @@ const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
             label="Temperature (°F)"
             type="number"
             step="0.1"
-            placeholder="98.6"
             value={vitals.temperature}
             onChange={(e) => update('temperature')(e.target.value)}
             leadingIcon={<span className="material-symbols-rounded">device_thermostat</span>}
@@ -230,7 +254,6 @@ const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
           <Md3TextField
             label="Pulse Rate (bpm)"
             type="number"
-            placeholder="72"
             value={vitals.pulse}
             onChange={(e) => update('pulse')(e.target.value)}
             leadingIcon={<span className="material-symbols-rounded">favorite</span>}
@@ -240,7 +263,6 @@ const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
           <Md3TextField
             label="SpO₂ — Oxygen Saturation (%)"
             type="number"
-            placeholder="98"
             value={vitals.oxygenSaturation}
             onChange={(e) => update('oxygenSaturation')(e.target.value)}
             leadingIcon={<span className="material-symbols-rounded">air</span>}
@@ -250,7 +272,6 @@ const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
           <Md3TextField
             label="Height (cm)"
             type="number"
-            placeholder="175"
             value={vitals.height}
             onChange={(e) => update('height')(e.target.value)}
             leadingIcon={<span className="material-symbols-rounded">straighten</span>}
@@ -260,7 +281,6 @@ const ClinicalVitalsSection = ({ vitals, setVitals, errors = {} }) => {
           <Md3TextField
             label="Weight (kg)"
             type="number"
-            placeholder="70"
             value={vitals.weight}
             onChange={(e) => update('weight')(e.target.value)}
             leadingIcon={<span className="material-symbols-rounded">scale</span>}
@@ -291,7 +311,7 @@ const DepartmentVitalsSection = ({ fields = [], values = {}, onChange, errors = 
         </div>
         <div className="pts-section-card__titles">
           <h3 className="pts-section-card__title">Department Specific Vitals</h3>
-          <p className="pts-section-card__subtitle">Specialty diagnostic parameters</p>
+          <p className="pts-section-card__subtitle">Specialty diagnostic parameters &amp; reference clinical ranges</p>
         </div>
       </div>
       <div className="pts-section-card__body">
@@ -299,45 +319,111 @@ const DepartmentVitalsSection = ({ fields = [], values = {}, onChange, errors = 
           {fields.map((field) => {
             const key = field.name || field.label;
             const req = field.required;
-            const label = field.unit ? `${field.label} (${field.unit})` : field.label;
+            const hasMin = field.min !== undefined && field.min !== null && field.min !== '';
+            const hasMax = field.max !== undefined && field.max !== null && field.max !== '';
+            const rangeHint = (hasMin || hasMax)
+              ? ` [${hasMin ? field.min : '—'} – ${hasMax ? field.max : '—'} ${field.unit || ''}]`
+              : (field.unit ? ` (${field.unit})` : '');
+            const label = `${field.label}${rangeHint}${req ? ' *' : ''}`;
+
             if (field.type === 'boolean' || field.type?.toLowerCase() === 'boolean') {
               return (
-                <Md3Checkbox
-                  key={key}
-                  label={label + (req ? ' *' : '')}
-                  checked={values[key] === true || values[key] === 'true'}
-                  onChange={(checked) => onChange(key, checked)}
-                  error={errors[key]}
-                />
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <Md3Checkbox
+                    label={field.label + (req ? ' *' : '')}
+                    checked={values[key] === true || values[key] === 'true'}
+                    onChange={(checked) => onChange(key, checked)}
+                    error={errors[key]}
+                  />
+                  {field.clinicalPurpose && (
+                    <div style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', paddingLeft: '28px', lineHeight: '1.25' }}>
+                      {field.clinicalPurpose}
+                    </div>
+                  )}
+                </div>
               );
             }
-            if (field.type === 'select' || field.options?.length) {
-              const options = (field.options || []).map((v) => ({ value: String(v.value ?? v), label: String(v.label ?? v) }));
+
+            if (field.type === 'select' || (Array.isArray(field.options) && field.options.length > 0)) {
+              const options = (field.options || []).map((v) => {
+                if (typeof v === 'object' && v !== null) {
+                  return { value: String(v.value ?? v.label ?? ''), label: String(v.label ?? v.value ?? '') };
+                }
+                return { value: String(v), label: String(v) };
+              });
+
               return (
-                <Md3Select
-                  key={key}
-                  label={label + (req ? ' *' : '')}
-                  value={values[key] ?? ''}
-                  onChange={(v) => onChange(key, v)}
-                  options={[{ value: '', label: 'Select...' }, ...options]}
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <Md3Select
+                    label={label}
+                    value={values[key] ?? ''}
+                    onChange={(e) => onChange(key, e.target ? e.target.value : e)}
+                    options={[{ value: '', label: '-- Select observation --' }, ...options]}
+                    required={req}
+                    error={errors[key]}
+                    fullWidth
+                  />
+                  {field.clinicalPurpose && (
+                    <div style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', paddingLeft: '4px', lineHeight: '1.25' }}>
+                      {field.clinicalPurpose}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Numeric field with input sanitization
+            if (field.type === 'number') {
+              return (
+                <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <Md3TextField
+                    label={label}
+                    type="text"
+                    inputMode="decimal"
+                    required={req}
+                    value={values[key] ?? ''}
+                    onChange={(e) => {
+                      // Sanitize numeric input (allow only digits and at most one decimal point)
+                      const raw = e.target.value.replace(/[^0-9.]/g, '');
+                      const parts = raw.split('.');
+                      const sanitized = parts.length > 2 ? `${parts[0]}.${parts.slice(1).join('')}` : raw;
+                      onChange(key, sanitized);
+                    }}
+                    error={errors[key]}
+                    fullWidth
+                  />
+                  {(hasMin || hasMax) && (
+                    <div style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', paddingLeft: '4px' }}>
+                      Target: <strong>{hasMin ? field.min : 'Min'}</strong> to <strong>{hasMax ? field.max : 'Max'}</strong> {field.unit || ''}
+                    </div>
+                  )}
+                  {field.clinicalPurpose && (
+                    <div style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', paddingLeft: '4px', lineHeight: '1.25', opacity: 0.9 }}>
+                      {field.clinicalPurpose}
+                    </div>
+                  )}
+                </div>
+              );
+            }
+
+            // Text field fallback
+            return (
+              <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                <Md3TextField
+                  label={label}
+                  type="text"
                   required={req}
+                  value={values[key] ?? ''}
+                  onChange={(e) => onChange(key, e.target.value)}
                   error={errors[key]}
                   fullWidth
                 />
-              );
-            }
-            return (
-              <Md3TextField
-                key={key}
-                label={label}
-                type={field.type === 'number' ? 'number' : 'text'}
-                required={req}
-                value={values[key] ?? ''}
-                onChange={(e) => onChange(key, e.target.value)}
-                error={errors[key]}
-                placeholder={field.placeholder || ''}
-                fullWidth
-              />
+                {field.clinicalPurpose && (
+                  <div style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', paddingLeft: '4px', lineHeight: '1.25' }}>
+                    {field.clinicalPurpose}
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -380,10 +466,10 @@ const getStatusMeta = (status) => {
       return { label: 'In Consultation', bg: 'var(--md-sys-color-tertiary-container)', fg: 'var(--md-sys-color-on-tertiary-container)', icon: 'medical_services' };
     case 'WAITING_DOCTOR':
     case 'TRIAGED':
-      return { label: 'Triaged / In Queue', bg: 'var(--md-sys-color-secondary-container)', fg: 'var(--md-sys-color-on-secondary-container)', icon: 'schedule' };
+      return { label: 'Assessed / In Queue', bg: 'var(--md-sys-color-secondary-container)', fg: 'var(--md-sys-color-on-secondary-container)', icon: 'schedule' };
     case 'WAITING_TRIAGE':
     case 'CALLED':
-      return { label: 'Waiting Triage', bg: 'var(--md-sys-color-surface-container-high)', fg: 'var(--md-sys-color-on-surface-variant)', icon: 'hourglass_empty' };
+      return { label: 'Waiting Nurse', bg: 'var(--md-sys-color-surface-container-high)', fg: 'var(--md-sys-color-on-surface-variant)', icon: 'hourglass_empty' };
     case 'CANCELLED':
       return { label: 'Cancelled', bg: 'var(--md-sys-color-error-container)', fg: 'var(--md-sys-color-error)', icon: 'cancel' };
     default:
@@ -404,6 +490,28 @@ const PatientTriageSheet = ({
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Fast-Track Skip Triage State
+  const [showSkipModal, setShowSkipModal] = useState(false);
+  const [skipReason, setSkipReason] = useState('Urgent consultation required');
+  const [customReason, setCustomReason] = useState('');
+  const [skippingTriage, setSkippingTriage] = useState(false);
+
+  const handleConfirmSkip = async () => {
+    setSkippingTriage(true);
+    setSubmitError(null);
+    try {
+      const visitId = visit._id || visit.id;
+      const finalReason = skipReason === 'Other' ? (customReason.trim() || 'Fast-tracked by nurse') : skipReason;
+      await visitAPI.skipTriage(visitId, { reason: finalReason });
+      setShowSkipModal(false);
+      if (onComplete) onComplete({ visit, skipped: true });
+    } catch (err) {
+      setSubmitError(err?.response?.data?.message || err?.message || 'Failed to fast-track patient to doctor.');
+    } finally {
+      setSkippingTriage(false);
+    }
+  };
 
   // Triage Tabs
   const [triageTab, setTriageTab] = useState('vitals');
@@ -446,21 +554,21 @@ const PatientTriageSheet = ({
     setSubmitError(null);
     setTriageTab('vitals');
 
-    if (visit?.patientId) {
+    if (visit?.patientId && typeof visit.patientId === 'object') {
       setAllergies(visit.patientId.allergies || '');
       setOperations(visit.patientId.operations || '');
     } else {
       setAllergies('');
       setOperations('');
     }
-  }, [visit?._id || visit?.id, visit?.patientId]);
+  }, [visit?._id || visit?.id, visit?.patientId?._id || (typeof visit?.patientId === 'string' ? visit?.patientId : '')]);
 
   // Load patient past visits history
   useEffect(() => {
-    const patientId = visit?.patientId?._id || visit?.patientId;
-    if (patientId) {
+    const rawPatientId = visit?.patientId?._id || (typeof visit?.patientId === 'string' ? visit?.patientId : null);
+    if (rawPatientId && typeof rawPatientId === 'string' && rawPatientId.trim().length > 0) {
       setLoadingHistory(true);
-      visitAPI.getPatientVisits(patientId)
+      visitAPI.getPatientVisits(rawPatientId)
         .then((res) => {
           setPastVisits(res.data?.data || []);
         })
@@ -469,18 +577,18 @@ const PatientTriageSheet = ({
     } else {
       setPastVisits([]);
     }
-  }, [visit?.patientId?._id || visit?.patientId]);
+  }, [visit?.patientId?._id || (typeof visit?.patientId === 'string' ? visit?.patientId : '')]);
 
   // Load active doctors in current department
   useEffect(() => {
-    const deptId = visit?.departmentId?._id || visit?.departmentId;
-    if (deptId) {
-      api.get(`/staff?role=Doctor&departmentId=${deptId}`)
+    const rawDeptId = visit?.departmentId?._id || (typeof visit?.departmentId === 'string' ? visit?.departmentId : null);
+    if (rawDeptId && typeof rawDeptId === 'string' && rawDeptId.trim().length > 0) {
+      api.get(`/staff?role=Doctor&departmentId=${rawDeptId}`)
         .then((res) => {
           const docList = res.data?.data?.items || [];
           setDoctors(docList);
           
-          const preAssigned = visit?.consultation?.doctorId?._id || visit?.consultation?.doctorId;
+          const preAssigned = visit?.consultation?.doctorId?._id || (typeof visit?.consultation?.doctorId === 'string' ? visit?.consultation?.doctorId : null);
           if (preAssigned) {
             setSelectedDoctorId(preAssigned);
           } else if (docList.length > 0) {
@@ -492,7 +600,7 @@ const PatientTriageSheet = ({
       setDoctors([]);
       setSelectedDoctorId('');
     }
-  }, [visit?.departmentId, visit?.consultation?.doctorId]);
+  }, [visit?.departmentId?._id || (typeof visit?.departmentId === 'string' ? visit?.departmentId : ''), visit?.consultation?.doctorId?._id || (typeof visit?.consultation?.doctorId === 'string' ? visit?.consultation?.doctorId : '')]);
 
   const waitingSince = useMemo(() => timeSince(visit?.createdAt), [visit?.createdAt]);
   const deptVitalFields = department?.vitalFields || [];
@@ -550,8 +658,23 @@ const PatientTriageSheet = ({
     }
 
     deptVitalFields.forEach((f) => {
-      if (f.required && (dynamicVitals[f.name] === undefined || dynamicVitals[f.name] === null || String(dynamicVitals[f.name]).trim() === '')) {
+      const val = dynamicVitals[f.name];
+      const isPresent = val !== undefined && val !== null && String(val).trim() !== '';
+
+      if (f.required && !isPresent) {
         e[f.name] = `${f.label} is required`;
+      } else if (isPresent && f.type === 'number') {
+        const num = Number(val);
+        if (Number.isNaN(num)) {
+          e[f.name] = `${f.label} must be a valid number`;
+        } else {
+          if (f.min !== undefined && f.min !== null && f.min !== '' && num < Number(f.min)) {
+            e[f.name] = `${f.label} must be at least ${f.min} ${f.unit || ''}`.trim();
+          }
+          if (f.max !== undefined && f.max !== null && f.max !== '' && num > Number(f.max)) {
+            e[f.name] = `${f.label} cannot exceed ${f.max} ${f.unit || ''}`.trim();
+          }
+        }
       }
     });
     setErrors(e);
@@ -580,7 +703,17 @@ const PatientTriageSheet = ({
       numericKeys.forEach((k) => {
         if (payload[k] !== '' && !Number.isNaN(Number(payload[k]))) payload[k] = Number(payload[k]);
       });
-      if (Object.keys(dynamicVitals).length > 0) payload.dynamicVitals = dynamicVitals;
+
+      // Sanitize and format dynamic vitals
+      if (Object.keys(dynamicVitals).length > 0) {
+        const cleanDynamic = { ...dynamicVitals };
+        deptVitalFields.forEach((f) => {
+          if (f.type === 'number' && cleanDynamic[f.name] !== '' && cleanDynamic[f.name] !== undefined && cleanDynamic[f.name] !== null) {
+            cleanDynamic[f.name] = Number(cleanDynamic[f.name]);
+          }
+        });
+        payload.dynamicVitals = cleanDynamic;
+      }
       
       payload.doctorId = selectedDoctorId;
       payload.allergies = allergies;
@@ -599,18 +732,17 @@ const PatientTriageSheet = ({
   if (!visit) {
     return (
       <div className={['pts-empty-wrapper', className].filter(Boolean).join(' ')} style={style}>
-        <div className="pts-empty-card">
-          <div className="pts-empty-icon">
-            <span className="material-symbols-rounded">stethoscope</span>
-          </div>
-          <h3 className="pts-empty-title">Select a Patient for Triage</h3>
-          <p className="pts-empty-desc">
-            Choose a patient from the waiting queue on the left to review demographics, record vital signs, and assign an attending doctor.
-          </p>
-        </div>
+        <ClinicalStationIdleDeck preset="OPD_NURSE" />
       </div>
     );
   }
+
+  const isPatientInactiveOrDeleted = Boolean(
+    !visit?.patientId ||
+    visit.patientId.isDeleted === true ||
+    visit.patientId.isOrphaned === true ||
+    visit.patientId.mrn === 'DELETED-RECORD'
+  );
 
   return (
     <div
@@ -618,9 +750,16 @@ const PatientTriageSheet = ({
       style={style}
     >
       {/* ─── 1. Patient Demographics Hero Header ─── */}
-      <TriagePatientIdentity visit={visit} waitingSince={waitingSince} />
+      <TriagePatientIdentity visit={visit} />
+
+      {isPatientInactiveOrDeleted && (
+        <div className="pts-form-error" style={{ margin: '16px 20px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span className="material-symbols-rounded">error</span>
+          <span><strong>Notice:</strong> This patient record is marked as deleted or inactive. Clinical vitals and consultation actions cannot be performed.</span>
+        </div>
+      )}
       
-      {/* ─── 2. Material 3 Secondary Navigation Tabs ─── */}
+      {/* ─── 2. Segmented Navigation Bar ─── */}
       <div className="pts-tabs-bar" role="tablist">
         <button
           type="button"
@@ -701,23 +840,17 @@ const PatientTriageSheet = ({
               </div>
               <div className="pts-section-card__body">
                 <div className="pts-history-grid">
-                  <Md3TextField
+                  <Md3TextArea
                     label="Known Drug & Food Allergies"
-                    placeholder="Specify any active allergies (e.g. Penicillin, Peanuts, Latex)..."
-                    multiline
                     rows={2}
                     value={allergies}
                     onChange={(e) => setAllergies(e.target.value)}
-                    fullWidth
                   />
-                  <Md3TextField
+                  <Md3TextArea
                     label="Past Surgeries & Major Operations"
-                    placeholder="List any past operations, approximate dates, or surgical notes..."
-                    multiline
                     rows={2}
                     value={operations}
                     onChange={(e) => setOperations(e.target.value)}
-                    fullWidth
                   />
                 </div>
               </div>
@@ -952,7 +1085,7 @@ const PatientTriageSheet = ({
                           </div>
                           <div className="pts-doctor-info">
                             <span className="pts-doctor-name">
-                              Dr. {doc.fullName}
+                              {formatDoctorName(doc)}
                             </span>
                             <span className="pts-doctor-spec">
                               {doc.primarySpecialization || doc.position || 'Physician'}
@@ -989,20 +1122,104 @@ const PatientTriageSheet = ({
           <Md3Button
             variant="secondary"
             onClick={onCancel}
-            disabled={submitting}
+            disabled={submitting || skippingTriage}
           >
             Cancel Assessment
+          </Md3Button>
+          <Md3Button
+            variant="tonal"
+            onClick={() => setShowSkipModal(true)}
+            disabled={submitting || skippingTriage || isPatientInactiveOrDeleted}
+            leadingIcon={<span className="material-symbols-rounded">bolt</span>}
+          >
+            Fast-Track (Skip Triage)
           </Md3Button>
           <Md3Button
             variant="primary"
             onClick={handleSubmit}
             loading={submitting}
+            disabled={skippingTriage || isPatientInactiveOrDeleted}
             leadingIcon={<span className="material-symbols-rounded">send</span>}
           >
             Record Vitals &amp; Route to Doctor
           </Md3Button>
         </div>
       </div>
+
+      {/* ─── Fast-Track (Skip Triage) Modal ─── */}
+      {showSkipModal && createPortal(
+        <div className="pts-modal-backdrop" onClick={() => setShowSkipModal(false)}>
+          <div className="pts-modal-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="pts-modal-header">
+              <div className="pts-modal-header-icon">
+                <span className="material-symbols-rounded">bolt</span>
+              </div>
+              <div>
+                <h3 className="pts-modal-title">Fast-Track Patient to Doctor</h3>
+                <p className="pts-modal-subtitle">
+                  Bypass nursing vitals and send {visit?.patientId?.firstName || 'this patient'} directly to the consultation queue.
+                </p>
+              </div>
+            </div>
+
+            <div className="pts-modal-body">
+              <label className="pts-modal-label">Select Fast-Track Justification:</label>
+              <div className="pts-modal-reasons">
+                {[
+                  'Urgent consultation required',
+                  'Attending physician direct intake request',
+                  'Vitals assessed earlier / Follow-up intake',
+                  'Patient distress / Immediate doctor evaluation',
+                  'Other',
+                ].map((reason) => (
+                  <label key={reason} className="pts-modal-radio-card">
+                    <input
+                      type="radio"
+                      name="skipReason"
+                      value={reason}
+                      checked={skipReason === reason}
+                      onChange={(e) => setSkipReason(e.target.value)}
+                    />
+                    <span>{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              {skipReason === 'Other' && (
+                <div style={{ marginTop: '12px' }}>
+                  <Md3TextField
+                    label="Custom Fast-Track Reason *"
+                    value={customReason}
+                    onChange={(e) => setCustomReason(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <div className="pts-modal-advisory">
+                <span className="material-symbols-rounded">info</span>
+                <span>
+                  This patient will move to the Doctor Consultation Queue. You can revoke this skip and recall the patient for vitals anytime before the doctor begins consultation.
+                </span>
+              </div>
+            </div>
+
+            <div className="pts-modal-footer">
+              <Md3Button variant="secondary" onClick={() => setShowSkipModal(false)} disabled={skippingTriage}>
+                Cancel
+              </Md3Button>
+              <Md3Button
+                variant="primary"
+                onClick={handleConfirmSkip}
+                loading={skippingTriage}
+                leadingIcon={<span className="material-symbols-rounded">bolt</span>}
+              >
+                Confirm Fast-Track
+              </Md3Button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

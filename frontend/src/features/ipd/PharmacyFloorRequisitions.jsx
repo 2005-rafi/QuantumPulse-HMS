@@ -152,8 +152,9 @@ export const PharmacyFloorRequisitions = () => {
 
                   <div>
                     {ord.status === 'COMPLETED' ? (
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--md-sys-color-primary)' }}>
-                        ✓ Dispensed
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--md-sys-color-primary)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="material-symbols-rounded" style={{ fontSize: 14 }}>check_circle</span>
+                        <span>Dispensed</span>
                       </span>
                     ) : (
                       <Md3Button variant="filled" size="small" onClick={() => handleDispense(ord._id)}>

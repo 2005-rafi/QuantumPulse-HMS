@@ -6,11 +6,11 @@
 .md3-bed-picker-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
-  border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border: 1px solid var(--md-sys-color-outline-variant, #cedbd5);
   border-radius: var(--md-sys-shape-corner-large, 16px);
-  padding: 16px;
+  padding: 20px;
   box-sizing: border-box;
   width: 100%;
 }
@@ -20,120 +20,109 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .md3-bed-picker-title {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.96rem;
   font-weight: 700;
-  color: var(--md-sys-color-primary, #00668b);
+  color: var(--md-sys-color-primary, #006a6a);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .md3-bed-picker-patient-gender-tag {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
-}
-
-/* ── Filter / Navigation Bar ── */
-.md3-bed-picker-nav {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #f0ebee);
-}
-
-.md3-bed-picker-floor-btn {
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  background: var(--md-sys-color-surface-container-low, #f7f2fa);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 9999px;
   font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 150ms ease;
+  font-weight: 700;
+  background-color: var(--md-sys-color-secondary-container, #cce8e3);
+  color: var(--md-sys-color-on-secondary-container, #00201e);
+  border: 1px solid var(--md-sys-color-outline-variant, #b2d0ca);
 }
 
-.md3-bed-picker-floor-btn:hover {
-  background: var(--md-sys-color-surface-container, #ece6f0);
-  color: var(--md-sys-color-on-surface, #1d1b20);
+/* ── Floor Filter Dropdown ── */
+.md3-bed-picker-filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
 }
 
-.md3-bed-picker-floor-btn.is-active {
-  background: var(--md-sys-color-primary, #00668b);
-  color: #ffffff;
-  border-color: var(--md-sys-color-primary, #00668b);
-}
-
-/* ── Room Cards Grid ── */
+/* ── Room Cards Grid (Expands Naturally with Workspace) ── */
 .md3-bed-picker-rooms {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  max-height: 280px;
-  overflow-y: auto;
-  padding-right: 4px;
+  gap: 16px;
+  width: 100%;
 }
 
 .md3-bed-picker-room-card {
-  background: var(--md-sys-color-surface-container-low, #f7f2fa);
-  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: 12px;
-  padding: 10px 12px;
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border: 1px solid var(--md-sys-color-outline-variant, #dce7e2);
+  border-radius: 16px;
+  padding: 16px 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.md3-bed-picker-room-card:hover {
+  border-color: var(--md-sys-color-outline, #bccac4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .md3-bed-picker-room-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #eef4f1);
 }
 
 .md3-bed-picker-room-name {
-  font-size: 0.82rem;
+  font-size: 0.90rem;
   font-weight: 700;
-  color: var(--md-sys-color-on-surface, #1d1b20);
+  color: var(--md-sys-color-on-surface, #14201c);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .md3-bed-picker-room-tags {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .md3-bed-picker-tier-badge {
-  font-size: 0.65rem;
+  font-size: 0.70rem;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--md-sys-color-surface-container-highest, #ece6f0);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container-highest, #e4ede8);
+  color: var(--md-sys-color-on-surface-variant, #394a44);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .md3-bed-picker-gender-badge {
-  font-size: 0.65rem;
+  font-size: 0.70rem;
   font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .md3-bed-picker-gender-badge--female {
@@ -147,84 +136,91 @@
 }
 
 .md3-bed-picker-gender-badge--any {
-  background: #f3f4f6;
-  color: #374151;
+  background: #f1f5f9;
+  color: #475569;
 }
 
-/* ── Beds Row ── */
+/* ── Beds Grid Row ── */
 .md3-bed-picker-beds-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 12px;
 }
 
 .md3-bed-pill {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+  justify-content: space-between;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #dce7e2);
   background: var(--md-sys-color-surface, #ffffff);
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
   user-select: none;
   box-sizing: border-box;
+  min-height: 72px;
 }
 
 .md3-bed-pill.is-vacant:hover {
-  border-color: var(--md-sys-color-primary, #00668b);
-  background: var(--md-sys-color-surface-container-high, #e6f0f5);
-  transform: translateY(-1px);
+  border-color: var(--md-sys-color-primary, #006a6a);
+  background: var(--md-sys-color-surface-container-high, #e6f3f0);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 106, 106, 0.12);
 }
 
 .md3-bed-pill.is-selected {
-  background: var(--md-sys-color-primary-container, #c2e8ff) !important;
-  border-color: var(--md-sys-color-primary, #00668b) !important;
-  box-shadow: 0 2px 8px rgba(0, 102, 139, 0.2);
+  background: var(--md-sys-color-primary-container, #cce8e3) !important;
+  border-color: var(--md-sys-color-primary, #006a6a) !important;
+  box-shadow: 0 4px 14px rgba(0, 106, 106, 0.22);
+  transform: translateY(-1px);
 }
 
 .md3-bed-pill.is-occupied {
-  opacity: 0.55;
+  opacity: 0.65;
   cursor: not-allowed;
-  background: #fee2e2;
-  border-color: #fca5a5;
+  background: #fff1f2;
+  border-color: #fecdd3;
 }
 
 .md3-bed-pill.is-maintenance {
-  opacity: 0.55;
+  opacity: 0.65;
   cursor: not-allowed;
-  background: #fef3c7;
-  border-color: #fcd34d;
+  background: #fefce8;
+  border-color: #fef08a;
 }
 
 .md3-bed-pill.is-gender-mismatch {
-  opacity: 0.4;
+  opacity: 0.45;
   cursor: not-allowed;
-  background: #f3f4f6;
-  border-color: #d1d5db;
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 
 .md3-bed-pill-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 6px;
 }
 
 .md3-bed-pill-label {
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-weight: 700;
-  color: var(--md-sys-color-on-surface, #1d1b20);
+  color: var(--md-sys-color-on-surface, #14201c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .md3-bed-pill-status {
-  font-size: 0.60rem;
-  font-weight: 700;
+  font-size: 0.62rem;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 1px 4px;
-  border-radius: 3px;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .md3-bed-pill-status--vacant {
@@ -243,9 +239,9 @@
 }
 
 .md3-bed-pill-rate {
-  font-size: 0.68rem;
+  font-size: 0.70rem;
   font-weight: 600;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  color: var(--md-sys-color-outline, #556761);
 }
 
 /* ── Selected Bed Summary Card ── */
@@ -253,12 +249,13 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  background: var(--md-sys-color-primary-container, #c2e8ff);
-  color: var(--md-sys-color-on-primary-container, #004d67);
-  border-radius: 10px;
-  font-size: 0.80rem;
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #00668b) 30%, transparent);
+  padding: 12px 18px;
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-on-primary-container, #00201e);
+  border-radius: 12px;
+  font-size: 0.84rem;
+  border: 1px solid var(--md-sys-color-primary, #006a6a);
+  box-shadow: 0 2px 8px rgba(0, 106, 106, 0.1);
 }
 
 .md3-bed-gender-warning {
@@ -272,4 +269,43 @@
   border-radius: 8px;
   font-size: 0.74rem;
   font-weight: 600;
+}
+
+.md3-bed-picker-interactive-notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 14px;
+  background: #fdf2f8;
+  color: #9d174d;
+  border: 1.5px solid #fbcfe8;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  animation: fadeIn 150ms ease-in-out;
+}
+
+.md3-bed-notice-close-btn {
+  background: transparent;
+  border: none;
+  color: #9d174d;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: 50%;
+  opacity: 0.7;
+  transition: opacity 120ms ease, background-color 120ms ease;
+}
+
+.md3-bed-notice-close-btn:hover {
+  opacity: 1;
+  background-color: #fce7f3;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
 }

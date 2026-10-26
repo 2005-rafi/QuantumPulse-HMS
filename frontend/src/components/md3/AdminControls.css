@@ -5,94 +5,96 @@
 .md3-search-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   border-radius: 100px;
-  padding: 4px 12px 4px 16px;
-  min-height: 44px;
-  width: 320px;
-  max-width: 100%;
+  padding: 2px 8px 2px 12px;
+  min-height: var(--admin-btn-height, 36px);
+  height: var(--admin-btn-height, 36px);
+  width: 100%;
+  max-width: var(--admin-search-width, 100%);
   box-sizing: border-box;
-  transition: all 180ms ease;
+  transition: all 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .md3-search-bar:focus-within {
-  border-color: var(--md-sys-color-primary);
-  box-shadow: 0 0 0 1px var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary, #00668b);
 }
 
 .md3-search-icon {
-  font-size: 20px;
-  color: var(--md-sys-color-on-surface-variant);
-  opacity: 0.8;
+  font-size: var(--admin-btn-icon-size, 18px);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  opacity: 0.85;
 }
 
 .md3-search-input {
   border: none;
   background: transparent;
   outline: none;
-  font-size: 0.88rem;
+  font-size: var(--admin-btn-font-size, 0.8125rem);
   font-weight: 600;
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface, #1d1b20);
   flex: 1;
   width: 100%;
   font-family: inherit;
 }
 
 .md3-search-input::placeholder {
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   opacity: 0.7;
 }
 
 .md3-search-clear {
   border: none;
   background: transparent;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 2px;
   border-radius: 50%;
   transition: background-color 150ms ease;
 }
 
 .md3-search-clear:hover {
-  background-color: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .md3-search-clear span {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 /* Segmented Buttons */
 .md3-segmented-filter {
   display: inline-flex;
-  border: 1px solid var(--md-sys-color-outline-variant);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   border-radius: 100px;
   overflow: hidden;
   background-color: var(--md-sys-color-surface-container-lowest, #fff);
-  height: 44px;
+  height: var(--admin-toggle-height, 38px);
   box-sizing: border-box;
 }
 
 .md3-segmented-item {
   border: none;
   background: transparent;
-  padding: 8px 20px;
-  font-size: 0.84rem;
+  padding: 0 14px;
+  font-size: var(--admin-toggle-font-size, 0.78rem);
   font-weight: 700;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
   cursor: pointer;
-  transition: all 180ms ease;
+  transition: all 180ms cubic-bezier(0.2, 0, 0, 1);
   outline: none;
-  border-right: 1px solid var(--md-sys-color-outline-variant);
+  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   display: flex;
   align-items: center;
   justify-content: center;
   user-select: none;
+  white-space: nowrap;
 }
 
 .md3-segmented-item:last-child {
@@ -100,15 +102,16 @@
 }
 
 .md3-segmented-item.is-selected {
-  background-color: var(--md-sys-color-secondary-container);
-  color: var(--md-sys-color-on-secondary-container);
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
 .md3-segmented-item:hover:not(.is-selected) {
-  background-color: var(--md-sys-color-surface-container-high);
-  color: var(--md-sys-color-on-surface);
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .md3-segmented-item:active {
   opacity: 0.85;
 }
+

@@ -176,7 +176,7 @@ export const AppointmentList = ({
             {isCheckedIn && (
               <span className="appt-checkedin-indicator">
                 <Icon.CheckCircle />
-                <span>In Triage</span>
+                <span>Waiting Nurse</span>
               </span>
             )}
 

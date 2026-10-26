@@ -1,6 +1,20 @@
 const Appointment = require('./appointment.model');
-const DoctorSchedule = require('./doctorSchedule.model');
+const DoctorSchedule = require('./doctor-schedule.model');
 const { decryptPatient } = require('../patient/patient.repository');
+
+const DELETED_PATIENT_FALLBACK = Object.freeze({
+  _id: null,
+  firstName: 'Deleted',
+  lastName: 'Patient',
+  fullName: '[DELETED PATIENT]',
+  mrn: 'DELETED-RECORD',
+  age: null,
+  displayAge: '—',
+  gender: 'Unknown',
+  phone: '—',
+  isDeleted: true,
+  isOrphaned: true
+});
 
 const decryptPopulatedAppointment = (appt) => {
   if (!appt) return appt;
@@ -8,11 +22,26 @@ const decryptPopulatedAppointment = (appt) => {
     return appt.map((a) => decryptPopulatedAppointment(a));
   }
   const clone = appt.toObject ? appt.toObject({ flattenMaps: true }) : { ...appt };
-  if (clone.patientId && typeof clone.patientId === 'object') {
-    clone.patientId = decryptPatient(clone.patientId);
+  if (clone.patientId && typeof clone.patientId === 'object' && clone.patientId._id) {
+    if (clone.patientId.isDeleted) {
+      clone.patientId = { ...DELETED_PATIENT_FALLBACK, _id: clone.patientId._id, isDeleted: true };
+    } else {
+      clone.patientId = decryptPatient(clone.patientId);
+    }
+  } else if (!clone.patientId || (typeof clone.patientId === 'object' && !clone.patientId.firstName)) {
+    clone.patientId = {
+      ...DELETED_PATIENT_FALLBACK,
+      _id: clone.patientId?._id || (typeof clone.patientId === 'string' ? clone.patientId : null),
+      isDeleted: true,
+      isOrphaned: true,
+    };
   }
   if (clone.visitId && typeof clone.visitId === 'object' && clone.visitId.patientId && typeof clone.visitId.patientId === 'object') {
-    clone.visitId.patientId = decryptPatient(clone.visitId.patientId);
+    if (clone.visitId.patientId.isDeleted) {
+      clone.visitId.patientId = { ...DELETED_PATIENT_FALLBACK, _id: clone.visitId.patientId._id, isDeleted: true };
+    } else {
+      clone.visitId.patientId = decryptPatient(clone.visitId.patientId);
+    }
   }
   return clone;
 };
@@ -82,8 +111,45 @@ class AppointmentRepository {
       Appointment.countDocuments(filter),
     ]);
 
+    const items = decryptPopulatedAppointment(docs);
+
+    // If querying active operational appointments, filter out deleted/orphaned patient records
+    const isOperationalQuery = filter.status && (
+      (Array.isArray(filter.status.$in) && filter.status.$in.some(s => ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'].includes(s))) ||
+      ['SCHEDULED', 'CONFIRMED', 'CHECKED_IN'].includes(filter.status)
+    );
+
+    if (isOperationalQuery) {
+      const activeItems = [];
+      const orphanedApptIds = [];
+      for (const item of items) {
+        const p = item.patientId;
+        const isInvalid = !p || p.isDeleted === true || p.isOrphaned === true || p.mrn === 'DELETED-RECORD';
+        if (isInvalid) {
+          orphanedApptIds.push(item._id || item.id);
+        } else {
+          activeItems.push(item);
+        }
+      }
+
+      if (orphanedApptIds.length > 0) {
+        Appointment.updateMany(
+          { _id: { $in: orphanedApptIds }, status: { $nin: ['COMPLETED', 'CANCELLED'] } },
+          { status: 'CANCELLED', cancellationReason: 'Auto-cancelled: Patient record deleted or purged' }
+        ).catch(() => {});
+      }
+
+      return {
+        items: activeItems,
+        total: activeItems.length,
+        page: Number(page),
+        limit: Number(limit),
+        totalPages: Math.ceil(activeItems.length / limit),
+      };
+    }
+
     return {
-      items: decryptPopulatedAppointment(docs),
+      items,
       total,
       page: Number(page),
       limit: Number(limit),

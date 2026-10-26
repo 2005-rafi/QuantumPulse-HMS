@@ -1,0 +1,300 @@
+@import './laboratory.tokens.css';
+
+/* ── Lab Pre-Vitals Modal CSS ── */
+.lab-vitals-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1300;
+  padding: var(--md-sys-spacing-lg, 20px);
+}
+
+.lab-vitals-modal {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cedbd5);
+  border-radius: var(--md-sys-shape-corner-lg, 20px);
+  width: 100%;
+  max-width: 620px;
+  box-shadow: var(--md-sys-elevation-3);
+  overflow: hidden;
+  animation: labModalPop 0.22s cubic-bezier(0.2, 0, 0, 1);
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+@keyframes labModalPop {
+  from {
+    transform: scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.lab-vitals-header {
+  padding: var(--md-sys-spacing-md, 16px) var(--md-sys-spacing-lg, 20px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e8e4);
+  flex-shrink: 0;
+}
+
+.lab-vitals-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-md, 12px);
+}
+
+.lab-vitals-brand .material-symbols-rounded {
+  font-size: 28px;
+  color: var(--md-sys-color-primary, #00668b);
+}
+
+.lab-vitals-title {
+  font-family: var(--md-sys-typescale-title-medium-font, 'Inter', sans-serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #14201c);
+  margin: 0;
+}
+
+.lab-vitals-sub {
+  font-family: var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface-variant, #556660);
+  margin: 2px 0 0;
+}
+
+.lab-vitals-close {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #657a73);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--md-sys-shape-corner-full, 50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.lab-vitals-close:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+/* ── Department Policy Banner ── */
+.lab-vitals-policy-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: color-mix(in srgb, var(--md-sys-color-primary, #00668b) 10%, #ffffff);
+  border-bottom: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #00668b) 20%, transparent);
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface, #14201c);
+  flex-shrink: 0;
+}
+
+/* ── Segmented Mode Tabs ── */
+.lab-vitals-tab-bar {
+  display: flex;
+  background: var(--md-sys-color-surface-container-highest, #e8edf0);
+  padding: 4px;
+  margin: 14px 20px 0;
+  border-radius: 12px;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.lab-vitals-tab-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #556660);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lab-vitals-tab-btn.is-active {
+  background: #ffffff;
+  color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Modal Form Body ── */
+.lab-vitals-body {
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+.lab-vitals-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ── Skip Notice ── */
+.lab-vitals-skip-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--md-sys-color-tertiary, #7d5260) 10%, #ffffff);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary, #7d5260) 25%, transparent);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-on-surface, #14201c);
+}
+
+.lab-vitals-skip-notice p {
+  margin: 4px 0 0;
+  color: var(--md-sys-color-on-surface-variant, #556660);
+  line-height: 1.4;
+}
+
+/* ── Native Select Wrapper ── */
+.lab-vitals-select-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lab-vitals-select-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.lab-vitals-native-select {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.85rem;
+  font-family: inherit;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.lab-vitals-native-select:focus {
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #00668b) 20%, transparent);
+}
+
+/* ── Modal Footer & Rollback Zone ── */
+.lab-vitals-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e8e4);
+  flex-wrap: wrap;
+}
+
+.lab-vitals-rollback-zone {
+  display: flex;
+  align-items: center;
+}
+
+.lab-vitals-rollback-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px dashed var(--md-sys-color-outline, #79747e);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.lab-vitals-rollback-btn:hover {
+  background: color-mix(in srgb, #ba1a1a 8%, transparent);
+  border-color: #ba1a1a;
+  color: #ba1a1a;
+}
+
+.lab-vitals-rollback-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: #ba1a1a;
+  font-weight: 600;
+}
+
+.lab-vitals-rollback-confirm-btn {
+  padding: 4px 10px;
+  background: #ba1a1a;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lab-vitals-rollback-confirm-btn:hover {
+  background: #93000a;
+}
+
+.lab-vitals-rollback-cancel-btn {
+  padding: 4px 8px;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 6px;
+  font-size: 0.74rem;
+  cursor: pointer;
+}
+
+.lab-vitals-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+@media (max-width: 600px) {
+  .lab-vitals-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-vitals-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lab-vitals-footer-actions {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+}

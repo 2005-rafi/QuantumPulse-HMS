@@ -2,47 +2,47 @@ import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Md3Button, Md3TextField, Md3Select, Md3Checkbox } from './Md3FormComponents';
 
-// Clinical Specialty Presets for quick department setup
+// Clinical Specialty Presets for quick department setup per docs/staffing departments.md
 const CLINICAL_PRESETS = {
   Cardiology: [
-    { label: 'Random Blood Glucose (RBS)', type: 'number', unit: 'mg/dL', required: false },
-    { label: 'Mean Arterial Pressure (MAP)', type: 'number', unit: 'mmHg', required: false },
-    { label: 'Chest Pain Scale (1-10)', type: 'number', unit: 'score', required: false },
-    { label: 'Cardiac Murmur Present', type: 'boolean', unit: '', required: false },
-  ],
-  Ophthalmology: [
-    { label: 'Intraocular Pressure (IOP) Right Eye', type: 'number', unit: 'mmHg', required: false },
-    { label: 'Intraocular Pressure (IOP) Left Eye', type: 'number', unit: 'mmHg', required: false },
-    { label: 'Visual Acuity Right (OD)', type: 'text', unit: 'Snellen', required: false },
-    { label: 'Visual Acuity Left (OS)', type: 'text', unit: 'Snellen', required: false },
-  ],
-  Pulmonology: [
-    { label: 'Peak Expiratory Flow Rate (PEFR)', type: 'number', unit: 'L/min', required: false },
-    { label: 'End-Tidal CO2 (EtCO2)', type: 'number', unit: 'mmHg', required: false },
-    { label: 'Audible Wheeze Present', type: 'boolean', unit: '', required: false },
-    { label: 'Sputum Character', type: 'text', unit: '', required: false },
-  ],
-  Pediatrics: [
-    { label: 'Head Circumference', type: 'number', unit: 'cm', required: true },
-    { label: 'Mid-Upper Arm Circumference (MUAC)', type: 'number', unit: 'cm', required: false },
-    { label: 'Immunization Up-to-Date', type: 'boolean', unit: '', required: true },
-    { label: 'Fontanelle Status', type: 'text', unit: '', required: false },
-  ],
-  Nephrology: [
-    { label: 'Pre-Dialysis Weight', type: 'number', unit: 'kg', required: false },
-    { label: 'Urine Output (Last 24h)', type: 'number', unit: 'mL', required: false },
-    { label: 'Urine Specific Gravity', type: 'number', unit: '', required: false },
-    { label: 'Peripheral Edema Grade', type: 'text', unit: '+1 to +4', required: false },
+    { label: 'Mean Arterial Pressure (MAP)', type: 'number', unit: 'mmHg', min: 40, max: 160, clinicalPurpose: 'Evaluates organ perfusion pressure in cardiac failure/shock.', required: true },
+    { label: 'ECG Rhythm Status', type: 'select', unit: '', options: ['Normal Sinus', 'Atrial Fibrillation', 'Sinus Tachycardia', 'Bradycardia', 'Ectopics'], clinicalPurpose: 'Screen for dysrhythmias and cardiac rhythm abnormalities.', required: true },
+    { label: 'Jugular Venous Pulse', type: 'select', unit: '', options: ['Normal (<3cm)', 'Elevated (3-5cm)', 'Markedly Engorged (>5cm)'], clinicalPurpose: 'Estimation of central venous pressure and right ventricular overload.', required: true },
+    { label: 'Peripheral Pulse Volume', type: 'select', unit: '', options: ['Bounding (4+)', 'Normal (3+)', 'Weak/Thready (1+)', 'Absent (0)'], clinicalPurpose: 'Assessment of cardiac output, peripheral vascular tone and systemic perfusion.', required: false },
   ],
   General: [
-    { label: 'Capillary Blood Glucose (CBG)', type: 'number', unit: 'mg/dL', required: false },
-    { label: 'Pain Score (Visual Analog Scale)', type: 'number', unit: '1-10', required: false },
-    { label: 'Consciousness Level (AVPU)', type: 'text', unit: 'AVPU', required: false },
-    { label: 'Last Meal Time', type: 'text', unit: '', required: false },
+    { label: 'Random Blood Sugar (RBS)', type: 'number', unit: 'mg/dL', min: 30, max: 600, clinicalPurpose: 'Immediate detection of diabetic ketoacidosis or hypoglycaemia.', required: true },
+    { label: 'Body Mass Index (BMI)', type: 'number', unit: 'kg/m²', min: 10, max: 65, clinicalPurpose: 'Obesity assessment and nutritional stratification.', required: false },
+    { label: 'Waist-to-Hip Ratio', type: 'number', unit: 'ratio', min: 0.4, max: 2.5, clinicalPurpose: 'Visceral adiposity and cardiovascular risk indicator.', required: false },
+    { label: 'Pain Score (VAS 1-10)', type: 'number', unit: '1-10', min: 1, max: 10, clinicalPurpose: 'Subjective acute/chronic somatic and visceral pain quantification.', required: false },
+  ],
+  Pulmonology: [
+    { label: 'Peak Expiratory Flow (PEFR)', type: 'number', unit: 'L/min', min: 40, max: 850, clinicalPurpose: 'Bronchial obstruction assessment in acute asthma and COPD.', required: true },
+    { label: 'Fraction of Inspired O2 (FiO2)', type: 'number', unit: '%', min: 21, max: 100, clinicalPurpose: 'Ambient air (21%) vs Supplemental O2 nasal cannula or BiPAP.', required: true },
+    { label: 'Work of Breathing', type: 'select', unit: '', options: ['Normal / Eupneic', 'Mild Accessory Muscle Use', 'Severe Retractions / Gasping'], clinicalPurpose: 'Respiratory muscle fatigue, accessory muscle engagement and dyspnoea severity.', required: true },
+    { label: '6-Minute Walk Distance', type: 'number', unit: 'meters', min: 0, max: 1000, clinicalPurpose: 'Exercise tolerance in interstitial lung disease and pulmonary hypertension.', required: false },
+  ],
+  Nephrology: [
+    { label: '24-Hour Urine Output', type: 'number', unit: 'mL/24h', min: 0, max: 6000, clinicalPurpose: 'Detection of oliguria (<400mL), anuria (<100mL) or polyuria.', required: true },
+    { label: 'Dry Weight Target', type: 'number', unit: 'kg', min: 15, max: 220, clinicalPurpose: 'Target normovolemic body weight post-dialysis session.', required: true },
+    { label: 'Interdialytic Weight Gain (IDWG)', type: 'number', unit: 'kg', min: 0, max: 15, clinicalPurpose: 'Fluid accumulation between successive haemodialysis cycles.', required: true },
+    { label: 'Pedal Edema Assessment', type: 'select', unit: '', options: ['Nil (0)', 'Mild 1+ (2mm)', 'Moderate 2+ (4mm)', 'Severe 3+ (6mm)', 'Brawny 4+ (8mm)'], clinicalPurpose: 'Assessment of interstitial volume expansion and peripheral venous congestion.', required: true },
+  ],
+  Pediatrics: [
+    { label: 'Head Circumference', type: 'number', unit: 'cm', min: 25, max: 60, clinicalPurpose: 'Neurodevelopmental monitoring and micro/macrocephaly detection.', required: true },
+    { label: 'Mid-Upper Arm Circumference (MUAC)', type: 'number', unit: 'cm', min: 8, max: 25, clinicalPurpose: 'Screening for severe acute malnutrition (SAM) in under-5 age group.', required: false },
+    { label: 'Immunization Up-to-Date', type: 'boolean', unit: '', clinicalPurpose: 'Universal immunization schedule compliance and milestone verification.', required: true },
+    { label: 'Fontanelle Status', type: 'select', unit: '', options: ['Normal / Flat', 'Bulging', 'Sunken / Depressed'], clinicalPurpose: 'Assessment of intracranial pressure and hydration status in infants.', required: false },
+  ],
+  Ophthalmology: [
+    { label: 'Intraocular Pressure (IOP) Right Eye', type: 'number', unit: 'mmHg', min: 5, max: 60, clinicalPurpose: 'Glaucoma screening and ocular hypertension measurement.', required: false },
+    { label: 'Intraocular Pressure (IOP) Left Eye', type: 'number', unit: 'mmHg', min: 5, max: 60, clinicalPurpose: 'Glaucoma screening and ocular hypertension measurement.', required: false },
+    { label: 'Visual Acuity Right (OD)', type: 'text', unit: 'Snellen', clinicalPurpose: 'Distance visual acuity assessment for refractive errors.', required: false },
+    { label: 'Visual Acuity Left (OS)', type: 'text', unit: 'Snellen', clinicalPurpose: 'Distance visual acuity assessment for refractive errors.', required: false },
   ],
 };
 
-const COMMON_UNITS = ['mg/dL', 'mmHg', 'bpm', '°F', '°C', 'cm', 'kg', 'mL', 'L/min', '%', '1-10', 'AVPU'];
+const COMMON_UNITS = ['mg/dL', 'mmHg', 'bpm', '°F', '°C', 'cm', 'kg', 'mL', 'mL/24h', 'L/min', '%', 'kg/m²', 'ratio', 'meters', '1-10', 'Snellen', 'AVPU'];
 
 const slugifyName = (label, existingNames = [], currentName = '') => {
   if (!label) return '';
@@ -93,6 +93,10 @@ export const Md3DynamicVitalsConfigurator = ({
       label: newLabel,
       type: preset?.type || 'number',
       unit: preset?.unit || '',
+      min: preset?.min !== undefined && preset?.min !== null ? preset.min : '',
+      max: preset?.max !== undefined && preset?.max !== null ? preset.max : '',
+      options: preset?.options || [],
+      clinicalPurpose: preset?.clinicalPurpose || '',
       required: preset?.required || false,
     };
 
@@ -132,8 +136,12 @@ export const Md3DynamicVitalsConfigurator = ({
       name: slugifyName(p.label, existingNames),
       label: p.label,
       type: p.type,
-      unit: p.unit,
-      required: p.required,
+      unit: p.unit || '',
+      min: p.min !== undefined && p.min !== null ? p.min : '',
+      max: p.max !== undefined && p.max !== null ? p.max : '',
+      options: p.options || [],
+      clinicalPurpose: p.clinicalPurpose || '',
+      required: p.required || false,
     }));
 
     setFields([...fields, ...newEntries]);
@@ -144,8 +152,9 @@ export const Md3DynamicVitalsConfigurator = ({
     setErrorBanner('');
 
     // Validation
+    const processedFields = [];
     for (let i = 0; i < fields.length; i++) {
-      const f = fields[i];
+      const f = { ...fields[i] };
       if (!f.label || !f.label.trim()) {
         setErrorBanner(`Parameter #${i + 1} must have a display label.`);
         return;
@@ -153,10 +162,54 @@ export const Md3DynamicVitalsConfigurator = ({
       if (!f.name || !f.name.trim()) {
         f.name = slugifyName(f.label, fields.filter((_, idx) => idx !== i).map((item) => item.name));
       }
+
+      // Min/Max validation for numeric fields
+      if (f.type === 'number') {
+        const hasMin = f.min !== '' && f.min !== null && f.min !== undefined;
+        const hasMax = f.max !== '' && f.max !== null && f.max !== undefined;
+        
+        const minNum = hasMin ? Number(f.min) : null;
+        const maxNum = hasMax ? Number(f.max) : null;
+
+        if (hasMin && Number.isNaN(minNum)) {
+          setErrorBanner(`Parameter "${f.label}": Min value must be a valid number.`);
+          return;
+        }
+        if (hasMax && Number.isNaN(maxNum)) {
+          setErrorBanner(`Parameter "${f.label}": Max value must be a valid number.`);
+          return;
+        }
+        if (hasMin && hasMax && minNum > maxNum) {
+          setErrorBanner(`Parameter "${f.label}": Min value (${minNum}) cannot be greater than Max value (${maxNum}).`);
+          return;
+        }
+
+        f.min = hasMin ? minNum : null;
+        f.max = hasMax ? maxNum : null;
+      } else {
+        f.min = null;
+        f.max = null;
+      }
+
+      // Format options for select
+      if (f.type === 'select') {
+        if (typeof f.options === 'string') {
+          f.options = f.options.split(',').map((s) => s.trim()).filter(Boolean);
+        } else if (!Array.isArray(f.options)) {
+          f.options = [];
+        }
+      } else {
+        f.options = [];
+      }
+
+      // Sanitize clinicalPurpose
+      f.clinicalPurpose = typeof f.clinicalPurpose === 'string' ? f.clinicalPurpose.trim() : '';
+
+      processedFields.push(f);
     }
 
     // Check duplicate machine names
-    const names = fields.map((f) => f.name.toLowerCase());
+    const names = processedFields.map((f) => f.name.toLowerCase());
     const duplicates = names.filter((item, index) => names.indexOf(item) !== index);
     if (duplicates.length > 0) {
       setErrorBanner(`Duplicate parameter identifier detected: "${duplicates[0]}". Please use unique labels.`);
@@ -165,7 +218,7 @@ export const Md3DynamicVitalsConfigurator = ({
 
     setSaving(true);
     try {
-      await onSave(fields);
+      await onSave(processedFields);
       onClose();
     } catch (err) {
       setErrorBanner(err.response?.data?.message || err.message || 'Failed to update department vitals schema');
@@ -262,7 +315,7 @@ export const Md3DynamicVitalsConfigurator = ({
                 </span>
               </div>
               <p style={{ margin: '3px 0 0', fontSize: '0.8125rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                {department.name} · Specialized triage parameters recorded during nurse vital intake
+                {department.name} · Specialized nurse vital parameters recorded during intake
               </p>
             </div>
           </div>
@@ -378,7 +431,7 @@ export const Md3DynamicVitalsConfigurator = ({
                   }}
                 >
                   <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>add</span>
-                  <span>+ {presetKey}</span>
+                  <span>{presetKey}</span>
                 </button>
               ))}
             </div>
@@ -537,17 +590,24 @@ export const Md3DynamicVitalsConfigurator = ({
                               ? 'var(--md-sys-color-secondary-container)'
                               : field.type === 'boolean'
                               ? 'var(--md-sys-color-tertiary-container)'
+                              : field.type === 'select'
+                              ? 'var(--md-sys-color-primary-container)'
                               : 'var(--md-sys-color-surface-container-high)',
                           color:
                             field.type === 'number'
                               ? 'var(--md-sys-color-on-secondary-container)'
                               : field.type === 'boolean'
                               ? 'var(--md-sys-color-on-tertiary-container)'
+                              : field.type === 'select'
+                              ? 'var(--md-sys-color-on-primary-container)'
                               : 'var(--md-sys-color-on-surface-variant)',
                         }}
                       >
-                        {field.type === 'number' ? 'Numeric' : field.type === 'boolean' ? 'Yes / No' : 'Text'}
+                        {field.type === 'number' ? 'Numeric' : field.type === 'boolean' ? 'Yes / No' : field.type === 'select' ? 'Dropdown' : 'Text'}
                         {field.unit ? ` · ${field.unit}` : ''}
+                        {field.type === 'number' && ((field.min !== '' && field.min !== null && field.min !== undefined) || (field.max !== '' && field.max !== null && field.max !== undefined))
+                          ? ` · [${(field.min !== '' && field.min !== null && field.min !== undefined) ? field.min : '—'} to ${(field.max !== '' && field.max !== null && field.max !== undefined) ? field.max : '—'}]`
+                          : ''}
                       </span>
 
                       {field.required && (
@@ -591,7 +651,7 @@ export const Md3DynamicVitalsConfigurator = ({
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
                       gap: '12px',
                     }}
                   >
@@ -601,7 +661,7 @@ export const Md3DynamicVitalsConfigurator = ({
                         id={`vital-label-${idx}`}
                         name="label"
                         label="Display Label *"
-                        placeholder="e.g. Random Blood Glucose, Intraocular Pressure..."
+                        placeholder="e.g. Random Blood Sugar, Intraocular Pressure..."
                         value={field.label}
                         onChange={(e) => handleFieldChange(idx, 'label', e.target.value)}
                       />
@@ -619,6 +679,7 @@ export const Md3DynamicVitalsConfigurator = ({
                           { value: 'number', label: 'Numeric (Measurement)' },
                           { value: 'text', label: 'Text (Observation)' },
                           { value: 'boolean', label: 'Binary (Yes / No)' },
+                          { value: 'select', label: 'Dropdown (Categorical)' },
                         ]}
                       />
                     </div>
@@ -630,21 +691,75 @@ export const Md3DynamicVitalsConfigurator = ({
                         name="unit"
                         label="Unit (Optional)"
                         placeholder="e.g. mg/dL, mmHg, °F"
-                        value={field.unit}
+                        value={field.unit || ''}
                         onChange={(e) => handleFieldChange(idx, 'unit', e.target.value)}
                         disabled={field.type === 'boolean'}
+                      />
+                    </div>
+
+                    {/* Min & Max Inputs (Rendered for Numeric Data Types) */}
+                    {field.type === 'number' && (
+                      <>
+                        <div>
+                          <Md3TextField
+                            id={`vital-min-${idx}`}
+                            name="min"
+                            label="Min Value (Optional)"
+                            type="number"
+                            placeholder="e.g. 30"
+                            value={field.min ?? ''}
+                            onChange={(e) => handleFieldChange(idx, 'min', e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <Md3TextField
+                            id={`vital-max-${idx}`}
+                            name="max"
+                            label="Max Value (Optional)"
+                            type="number"
+                            placeholder="e.g. 600"
+                            value={field.max ?? ''}
+                            onChange={(e) => handleFieldChange(idx, 'max', e.target.value)}
+                          />
+                        </div>
+                      </>
+                    )}
+
+                    {/* Dropdown Options (Rendered for Select Data Type) */}
+                    {field.type === 'select' && (
+                      <div style={{ gridColumn: 'span 2' }}>
+                        <Md3TextField
+                          id={`vital-options-${idx}`}
+                          name="options"
+                          label="Dropdown Options (Comma-separated) *"
+                          placeholder="e.g. Normal, Elevated, Critical, Unknown"
+                          value={Array.isArray(field.options) ? field.options.join(', ') : (field.options || '')}
+                          onChange={(e) => handleFieldChange(idx, 'options', e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {/* Clinical Purpose / Medical Rationale */}
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <Md3TextField
+                        id={`vital-purpose-${idx}`}
+                        name="clinicalPurpose"
+                        label="Clinical Purpose / Diagnostic Rationale (Optional)"
+                        placeholder="e.g. Immediate detection of diabetic ketoacidosis or hypoglycaemia (guides nurse triage assessment)"
+                        value={field.clinicalPurpose || ''}
+                        onChange={(e) => handleFieldChange(idx, 'clinicalPurpose', e.target.value)}
                       />
                     </div>
                   </div>
 
                   {/* Quick Unit Chips & Required Toggle */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                    {field.type !== 'boolean' && (
+                    {field.type !== 'boolean' && field.type !== 'select' && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 600 }}>
                           Quick Units:
                         </span>
-                        {COMMON_UNITS.slice(0, 8).map((u) => (
+                        {COMMON_UNITS.slice(0, 10).map((u) => (
                           <button
                             key={u}
                             type="button"
@@ -670,7 +785,7 @@ export const Md3DynamicVitalsConfigurator = ({
                       <Md3Checkbox
                         checked={field.required}
                         onChange={(checked) => handleFieldChange(idx, 'required', checked)}
-                        label="Mandatory at Triage"
+                        label="Mandatory at Nurse Intake"
                       />
                     </div>
                   </div>

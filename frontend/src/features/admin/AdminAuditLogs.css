@@ -2,6 +2,190 @@
    AdminAuditLogs.css — Pure Material 3 Audit Management Styles
    ========================================================================== */
 
+/* ── METRICS RIBBON ── */
+.md3-audit-metrics-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.md3-audit-metric-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.md3-audit-metric-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.md3-audit-metric-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-audit-metric-icon .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.md3-audit-metric-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.md3-audit-metric-value {
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.md3-audit-metric-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 2px;
+}
+
+/* ── PULSING ENGINE STATUS DOT ── */
+.md3-audit-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  display: inline-block;
+  margin-right: 6px;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: md3-pulse-ring 2s infinite;
+}
+
+@keyframes md3-pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* ── TOOLBAR ACTION BUTTONS ── */
+.md3-audit-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.md3-audit-btn-tonal {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 100px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 0.80rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 160ms ease;
+}
+
+.md3-audit-btn-tonal:hover:not(:disabled) {
+  background: var(--md-sys-color-secondary-container, #cce8e7);
+  color: var(--md-sys-color-on-secondary-container, #051f1f);
+  border-color: var(--md-sys-color-secondary, #4a6363);
+}
+
+.md3-audit-btn-tonal:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.md3-audit-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 100px;
+  border: none;
+  background: var(--md-sys-color-primary, #00668b);
+  color: #ffffff;
+  font-size: 0.80rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  transition: all 160ms ease;
+}
+
+.md3-audit-btn-primary:hover:not(:disabled) {
+  background: #00516f;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.md3-audit-btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── INTEGRITY VERIFICATION BANNER ── */
+.md3-audit-integrity-banner {
+  padding: 12px 18px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  animation: md3-fade-slide 200ms ease;
+}
+
+.md3-audit-integrity-banner.is-valid {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+}
+
+.md3-audit-integrity-banner.is-invalid {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+}
+
+@keyframes md3-fade-slide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── CHIPS BAR & CONTROLS ── */
 .md3-audit-chips-bar {
   display: flex;
   align-items: center;

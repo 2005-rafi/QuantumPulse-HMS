@@ -20,6 +20,14 @@ body {
   min-height: 100vh;
 }
 
+/* Zero-scroll lock for Auth Workstation */
+html:has(.qc-auth-viewport),
+body:has(.qc-auth-viewport) {
+  overflow: hidden !important;
+  height: 100% !important;
+  max-height: 100% !important;
+}
+
 /* Smooth theme transition */
 html.theme-transitioning,
 html.theme-transitioning *,

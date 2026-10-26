@@ -5,7 +5,8 @@ import SummaryTab from './SummaryTab';
 import ConsultationTab from './ConsultationTab';
 import OrdersResultsTab from './OrdersResultsTab';
 import HistoryTab from './HistoryTab';
-import ClinicalPatientOverlayDialog from '../../components/md3/ClinicalPatientOverlayDialog';
+import { RecommendIpdAdmissionModal } from './ConvertOpdToIpdModal';
+import { RequestSurgeryModal } from './RequestSurgeryModal';
 
 /* ============================================================
    ClinicalWorkspace — Doctor's Consultation Hub & Active Desk
@@ -14,120 +15,15 @@ import ClinicalPatientOverlayDialog from '../../components/md3/ClinicalPatientOv
    ============================================================ */
 
 /* ─── Doctor Idle Clinical Launchpad ──────────────────────── */
-const DoctorIdleLaunchpad = ({ user, queue = [], onSelectVisit, queueStats }) => {
-  const [activeOverlayType, setActiveOverlayType] = useState(null);
-
-  const doctorName = user?.fullName
-    ? user.fullName.replace(/^Dr\.\s*/i, '')
-    : 'Physician';
-  const department = user?.department || 'General Medicine';
-
+const DoctorIdleLaunchpad = ({ queue = [], onSelectVisit }) => {
   // Find next actionable patient (FIFO: first non-completed, non-skipped)
   const nextPatient = queue.find(
     (v) => v.status === 'IN_PROGRESS' || v.status === 'WAITING_DOCTOR' || v.status === 'CALLED'
   );
 
-  const activeConsultations = queueStats?.IN_PROGRESS ?? queue.filter((v) => v.status === 'IN_PROGRESS').length;
-  const waitingPatients = queueStats?.WAITING_DOCTOR ?? queue.filter((v) => v.status === 'WAITING_DOCTOR').length;
-  const pendingReviews = queueStats?.WAITING_DOCTOR_REVIEW ?? queue.filter((v) => v.status === 'WAITING_DOCTOR_REVIEW').length;
-  const completedToday = queueStats?.COMPLETED ?? queue.filter((v) => v.status === 'COMPLETED').length;
-
-  const todayDate = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-
   return (
     <div className="doc-idle-launchpad">
-      {/* ── 1. Hero Greeting Banner ── */}
-      <div className="doc-idle__hero-card">
-        <div className="doc-idle__hero-left">
-          <div className="doc-idle__avatar-badge">
-            <span className="material-symbols-rounded">stethoscope</span>
-          </div>
-          <div className="doc-idle__hero-titles">
-            <div className="doc-idle__hero-title-row">
-              <h2 className="doc-idle__hero-name">Welcome back, Dr. {doctorName}</h2>
-              <span className="doc-idle__duty-pill">
-                <span className="doc-idle__duty-dot" />
-                <span>Active On-Duty</span>
-              </span>
-            </div>
-            <p className="doc-idle__hero-meta">
-              <span className="doc-idle__dept-tag">{department} Department</span>
-              <span className="doc-idle__sep">•</span>
-              <span className="doc-idle__date-tag">{todayDate}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 2. Real-Time Metric Tiles (Clickable On-Tap Overlays) ── */}
-      <div className="doc-idle__stats-grid">
-        <div
-          className="doc-stat-tile doc-stat-tile--progress clickable-stat-tile"
-          onClick={() => setActiveOverlayType('in_consultation')}
-          title="Click to view active in-consultation patients ledger"
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="doc-stat-tile__icon-wrap">
-            <span className="material-symbols-rounded">stethoscope</span>
-          </div>
-          <div className="doc-stat-tile__content">
-            <span className="doc-stat-tile__label">In Consultation</span>
-            <span className="doc-stat-tile__val">{activeConsultations}</span>
-          </div>
-        </div>
-
-        <div
-          className="doc-stat-tile doc-stat-tile--waiting clickable-stat-tile"
-          onClick={() => setActiveOverlayType('waiting_doctor')}
-          title="Click to view patients awaiting doctor consultation"
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="doc-stat-tile__icon-wrap">
-            <span className="material-symbols-rounded">schedule</span>
-          </div>
-          <div className="doc-stat-tile__content">
-            <span className="doc-stat-tile__label">Awaiting Doctor</span>
-            <span className="doc-stat-tile__val">{waitingPatients}</span>
-          </div>
-        </div>
-
-        <div
-          className="doc-stat-tile doc-stat-tile--review clickable-stat-tile"
-          onClick={() => setActiveOverlayType('lab_reviews')}
-          title="Click to view diagnostic lab results ready for review"
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="doc-stat-tile__icon-wrap">
-            <span className="material-symbols-rounded">biotech</span>
-          </div>
-          <div className="doc-stat-tile__content">
-            <span className="doc-stat-tile__label">Lab Reviews Ready</span>
-            <span className="doc-stat-tile__val">{pendingReviews}</span>
-          </div>
-        </div>
-
-        <div
-          className="doc-stat-tile doc-stat-tile--completed clickable-stat-tile"
-          onClick={() => setActiveOverlayType('completed_today')}
-          title="Click to view completed patient consultations today"
-          style={{ cursor: 'pointer' }}
-        >
-          <div className="doc-stat-tile__icon-wrap">
-            <span className="material-symbols-rounded">check_circle</span>
-          </div>
-          <div className="doc-stat-tile__content">
-            <span className="doc-stat-tile__label">Completed Today</span>
-            <span className="doc-stat-tile__val">{completedToday}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 3. Next Patient Action Prompt ── */}
+      {/* ── Next Patient Action Prompt ── */}
       {nextPatient ? (
         <div className="doc-idle__action-card">
           <div className="doc-idle__action-header">
@@ -187,78 +83,11 @@ const DoctorIdleLaunchpad = ({ user, queue = [], onSelectVisit, queueStats }) =>
           <div className="doc-idle__empty-texts">
             <h3 className="doc-idle__empty-title">All Consultations Clear</h3>
             <p className="doc-idle__empty-desc">
-              Your patient queue is up to date. As reception checks in patients and nursing completes vitals triage, they will appear in real time on the left sidebar.
+              Your patient queue is up to date. As reception checks in patients and nursing completes vitals recording, they will appear in real time on the left sidebar.
             </p>
           </div>
         </div>
       )}
-
-      {/* ── 4. Visual Clinical Workflow Navigation Cards ── */}
-      <div className="doc-idle__workflow-section">
-        <h4 className="doc-idle__section-title">
-          <span className="material-symbols-rounded">clinical_notes</span>
-          <span>Clinical Workstation Flow</span>
-        </h4>
-
-        <div className="doc-idle__workflow-grid">
-          <div className="doc-flow-card">
-            <div className="doc-flow-card__step-num">1</div>
-            <div className="doc-flow-card__icon-wrap">
-              <span className="material-symbols-rounded">vital_signs</span>
-            </div>
-            <h5 className="doc-flow-card__title">Intake &amp; Vitals</h5>
-            <p className="doc-flow-card__desc">
-              Inspect triage baseline vitals, BMI calculations, and recorded symptoms from nursing intake.
-            </p>
-          </div>
-
-          <div className="doc-flow-card">
-            <div className="doc-flow-card__step-num">2</div>
-            <div className="doc-flow-card__icon-wrap">
-              <span className="material-symbols-rounded">prescriptions</span>
-            </div>
-            <h5 className="doc-flow-card__title">Diagnosis &amp; Rx</h5>
-            <p className="doc-flow-card__desc">
-              Record clinical diagnosis, structured dosing schedule, and order diagnostic laboratory panels.
-            </p>
-          </div>
-
-          <div className="doc-flow-card">
-            <div className="doc-flow-card__step-num">3</div>
-            <div className="doc-flow-card__icon-wrap">
-              <span className="material-symbols-rounded">send_and_archive</span>
-            </div>
-            <h5 className="doc-flow-card__title">Finalize &amp; Route</h5>
-            <p className="doc-flow-card__desc">
-              Finalize consultation session to automatically route prescriptions to Pharmacy and orders to Diagnostics.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ─── REUSABLE CLINICAL OVERLAY FOR DOCTOR LAUNCHPAD ─── */}
-      <ClinicalPatientOverlayDialog
-        isOpen={!!activeOverlayType}
-        onClose={() => setActiveOverlayType(null)}
-        type={activeOverlayType}
-        items={
-          activeOverlayType === 'in_consultation'
-            ? queue.filter((v) => v.status === 'IN_PROGRESS')
-            : activeOverlayType === 'waiting_doctor'
-            ? queue.filter((v) => v.status === 'WAITING_DOCTOR')
-            : activeOverlayType === 'lab_reviews'
-            ? queue.filter((v) => v.status === 'WAITING_DOCTOR_REVIEW')
-            : activeOverlayType === 'completed_today'
-            ? queue.filter((v) => v.status === 'COMPLETED')
-            : null
-        }
-        onSelectPatient={(item) => {
-          if (onSelectVisit && item) {
-            onSelectVisit(item);
-          }
-        }}
-        doctorId={user?.staffId}
-      />
     </div>
   );
 };
@@ -285,15 +114,15 @@ const ClinicalWorkspace = ({
   onSelectVisit,
 }) => {
   const [activeTab, setActiveTab] = useState('summary');
+  const [showAdmitToIpdModal, setShowAdmitToIpdModal] = useState(false);
+  const [showSurgeryRequestModal, setShowSurgeryRequestModal] = useState(false);
 
   if (!visit) {
     return (
       <div className="doc-workspace doc-workspace--empty">
         <DoctorIdleLaunchpad
-          user={user}
           queue={queue}
           onSelectVisit={onSelectVisit}
-          queueStats={queueStats}
         />
       </div>
     );
@@ -345,7 +174,7 @@ const ClinicalWorkspace = ({
         <div className="doc-workspace__scroll-body">
           {activeTab === 'summary' && (
             <div className="doc-tab-panel">
-              <SummaryTab visit={visit} patient={patient} form={form} />
+              <SummaryTab visit={visit} patient={patient} form={form} laboratories={laboratories} />
             </div>
           )}
           {activeTab === 'consultation' && (
@@ -382,12 +211,50 @@ const ClinicalWorkspace = ({
           onSendToLab={onSendToLab}
           onFinalize={onFinalize}
           canFinalize={canFinalize}
+          onAdmitToIpd={() => setShowAdmitToIpdModal(true)}
+          onRequestSurgery={() => setShowSurgeryRequestModal(true)}
+          isAdmittedToIpd={Boolean(
+            visit?.ipdAdmissionId ||
+            visit?.convertedToAdmissionId ||
+            visit?.status === 'CONVERTED_TO_IPD' ||
+            visit?.status === 'ADMISSION_RECOMMENDED' ||
+            visit?.ipdAdmissionAdvice?.status === 'RECOMMENDED'
+          )}
           labOrdersCount={labOrdersCount}
           savingDraft={savingDraft}
           routingToLab={routingToLab}
           finalizing={finalizing}
         />
       </div>
+
+      {/* Recommend Inpatient (IPD) Admission Modal */}
+      <RecommendIpdAdmissionModal
+        isOpen={showAdmitToIpdModal}
+        onClose={() => setShowAdmitToIpdModal(false)}
+        visit={visit}
+        onSuccess={(updatedVisit) => {
+          setShowAdmitToIpdModal(false);
+          if (onSelectVisit && visit) {
+            onSelectVisit({
+              ...visit,
+              status: 'ADMISSION_RECOMMENDED',
+              ipdAdmissionAdvice: updatedVisit?.ipdAdmissionAdvice || { status: 'RECOMMENDED' },
+            });
+          }
+        }}
+      />
+
+      {/* Surgery & Operating Theatre Request Modal */}
+      <RequestSurgeryModal
+        isOpen={showSurgeryRequestModal}
+        onClose={() => setShowSurgeryRequestModal(false)}
+        admissionId={visit?.ipdAdmissionId || visit?.convertedToAdmissionId}
+        patient={patient}
+        visit={visit}
+        onSuccess={() => {
+          setShowSurgeryRequestModal(false);
+        }}
+      />
     </div>
   );
 };

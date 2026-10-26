@@ -1,0 +1,438 @@
+/* ── Inpatient Bed Transfer & Allocation Overlay (MD3 + Dynamic Responsive Centering) ── */
+
+.ipd-transfer-backdrop {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  background-color: rgba(15, 23, 42, 0.62);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;      /* ALWAYS vertically centered across Desktop, Tablet & Mobile */
+  justify-content: center;  /* ALWAYS horizontally centered across Desktop, Tablet & Mobile */
+  padding: clamp(10px, 2.5vw, 24px);
+  box-sizing: border-box;
+  animation: ipdTransferFadeIn 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+  overflow: hidden;
+}
+
+@keyframes ipdTransferFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ipd-transfer-modal {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c2d1cb);
+  border-radius: clamp(14px, 2vw, 20px);
+  width: min(100%, 640px);
+  max-height: min(90dvh, 740px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+  margin: auto;             /* Robust centered positioning fallback */
+  animation: ipdTransferZoomIn 0.22s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes ipdTransferZoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Modal Header ── */
+.ipd-transfer-header {
+  padding: 12px 18px;
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #dce7e2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ipd-transfer-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ipd-transfer-header-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-primary, #006a6a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ipd-transfer-header-icon .material-symbols-rounded {
+  font-size: 19px;
+}
+
+.ipd-transfer-title {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #14201c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipd-transfer-sub {
+  margin: 1px 0 0;
+  font-size: 0.74rem;
+  color: var(--md-sys-color-outline, #556761);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipd-transfer-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-outline, #556761);
+  transition: background 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ipd-transfer-close-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* ── Modal Body with Zero Visible Scrollbars ── */
+.ipd-transfer-body {
+  padding: 14px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;     /* IE / Edge */
+}
+
+.ipd-transfer-body::-webkit-scrollbar {
+  display: none;               /* Chrome, Safari, Opera, Edge Chromium */
+  width: 0;
+  height: 0;
+}
+
+/* ── Compact Transfer Route Comparison Strip ── */
+.ipd-transfer-route-strip {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border: 1px solid var(--md-sys-color-outline-variant, #dce7e2);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ipd-transfer-route-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ipd-transfer-route-item--target {
+  text-align: right;
+  align-items: flex-end;
+}
+
+.ipd-transfer-route-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-outline, #556761);
+}
+
+.ipd-transfer-route-tag .material-symbols-rounded {
+  font-size: 13px;
+}
+
+.ipd-transfer-route-tag--target {
+  color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ipd-transfer-route-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #14201c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.ipd-transfer-route-meta {
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface-variant, #394a44);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.ipd-transfer-route-rate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #14201c);
+  margin-top: 2px;
+}
+
+.ipd-transfer-stay-badge {
+  display: inline-block;
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-on-primary-container, #00201f);
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.ipd-transfer-delta-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.ipd-transfer-delta-pill--increase {
+  background: #fff8e1;
+  color: #b45309;
+  border: 1px solid #ffe082;
+}
+
+.ipd-transfer-delta-pill--decrease {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.ipd-transfer-delta-pill--neutral {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+
+.ipd-transfer-route-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.ipd-transfer-route-arrow {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-primary, #006a6a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ipd-transfer-route-arrow .material-symbols-rounded {
+  font-size: 15px;
+}
+
+.ipd-transfer-route-empty {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-outline, #556761);
+  font-style: italic;
+}
+
+/* ── Form Fields & Dynamic Grid Layouts ── */
+/* Desktop Default: 3-column row for Floor, Room, Bed */
+.ipd-transfer-cascading-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr;
+  gap: 10px;
+}
+
+/* Desktop Default: 2-column row for Category and Doctor */
+.ipd-transfer-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.ipd-transfer-field-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ipd-transfer-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--md-sys-color-on-surface, #14201c);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipd-required-star {
+  color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.ipd-transfer-no-vacant-hint {
+  font-size: 0.74rem;
+  color: var(--md-sys-color-error, #ba1a1a);
+  padding: 8px 0;
+}
+
+/* ── Gender Privacy & Status Notification Strip ── */
+.ipd-transfer-status-strip {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.ipd-transfer-gender-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  max-width: 100%;
+}
+
+.ipd-transfer-gender-badge .material-symbols-rounded {
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.ipd-transfer-gender-badge--valid {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+
+.ipd-transfer-gender-badge--invalid {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecdd3;
+}
+
+/* ── Modal Footer ── */
+.ipd-transfer-footer {
+  padding: 12px 18px;
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #dce7e2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.ipd-transfer-footer-left {
+  display: flex;
+  align-items: center;
+}
+
+.ipd-transfer-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Mobile Viewport Adaptations (<= 640px) ── */
+@media (max-width: 640px) {
+  .ipd-transfer-backdrop {
+    padding: 10px;
+    align-items: center;     /* Keep perfectly centered vertically on mobile! */
+    justify-content: center; /* Keep perfectly centered horizontally on mobile! */
+  }
+
+  .ipd-transfer-modal {
+    width: 100%;
+    max-height: 88dvh;
+    border-radius: 16px;     /* Full rounded card, never clipped bottom sheet */
+    margin: auto;
+  }
+
+  .ipd-transfer-header {
+    padding: 10px 14px;
+  }
+
+  .ipd-transfer-body {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  /* Form Elements Stacked One Below Another on Mobile */
+  .ipd-transfer-cascading-grid {
+    grid-template-columns: 1fr; /* Stack: 1. Floor -> 2. Room -> 3. Bed */
+    gap: 8px;
+  }
+
+  .ipd-transfer-field-group--bed {
+    grid-column: span 1;
+  }
+
+  .ipd-transfer-form-row {
+    grid-template-columns: 1fr; /* Stack: Category -> Doctor */
+    gap: 8px;
+  }
+
+  .ipd-transfer-route-strip {
+    grid-template-columns: 1fr auto 1fr;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .ipd-transfer-route-name {
+    font-size: 0.82rem;
+  }
+
+  .ipd-transfer-footer {
+    padding: 10px 14px;
+  }
+
+  .ipd-transfer-footer-left {
+    width: auto;
+  }
+
+  .ipd-transfer-footer-right {
+    flex: 1;
+    justify-content: flex-end;
+  }
+}

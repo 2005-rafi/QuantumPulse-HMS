@@ -6,15 +6,15 @@ import { Md3Select, Md3Button, Md3TextField } from '../../components/md3/Md3Form
 
 /* Quick Order Clinical Presets for Instant 1-Click Addition */
 const QUICK_PRESETS = [
-  { labCode: 'HAEM',    labName: 'Haematology Laboratory',   testName: 'Complete Blood Count (CBC)',        sampleType: 'EDTA Blood (3 mL)' },
-  { labCode: 'HAEM',    labName: 'Haematology Laboratory',   testName: 'Erythrocyte Sedimentation Rate (ESR)', sampleType: 'Citrate Blood (1.8 mL)' },
-  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',  testName: 'Liver Function Test (LFT)',          sampleType: 'Serum (5 mL)' },
-  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',  testName: 'Renal Function Test (RFT)',          sampleType: 'Serum (5 mL)' },
-  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',  testName: 'Blood Glucose (Fasting / Random / PP)', sampleType: 'Fluoride Plasma' },
-  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',  testName: 'Lipid Profile',                     sampleType: 'Serum (3 mL)' },
-  { labCode: 'MICRO',   labName: 'Microbiology Laboratory',  testName: 'Urine Routine & Microscopy',        sampleType: 'Clean-Catch Midstream Urine' },
-  { labCode: 'RADIO',   labName: 'Radiology & Imaging',      testName: 'Chest X-Ray (PA View)',             sampleType: 'Diagnostic Imaging' },
-  { labCode: 'RADIO',   labName: 'Radiology & Imaging',      testName: 'ECG (12-Lead Electrocardiogram)',    sampleType: 'Diagnostic Imaging' },
+  { labCode: 'HAEM',    labName: 'Hematology Laboratory',    testName: 'Complete Blood Count with Differential (CBC)', sampleType: 'EDTA Blood (3 mL)' },
+  { labCode: 'HAEM',    labName: 'Hematology Laboratory',    testName: 'Prothrombin Time / INR (PT/INR)',              sampleType: 'Citrate Blood (1.8 mL)' },
+  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',   testName: 'Liver Function Panel (LFT)',                  sampleType: 'Serum (5 mL)' },
+  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',   testName: 'Renal Function Panel (RFT / KFT)',            sampleType: 'Serum (5 mL)' },
+  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',   testName: 'Fasting Blood Sugar (FBS)',                   sampleType: 'Fluoride Plasma' },
+  { labCode: 'BIOCHEM', labName: 'Biochemistry Laboratory',   testName: 'Lipid Profile Comprehensive',                 sampleType: 'Serum (3 mL)' },
+  { labCode: 'MICRO',   labName: 'Microbiology Laboratory',   testName: 'Urine Culture & Sensitivity',                 sampleType: 'Clean-Catch Midstream Urine' },
+  { labCode: 'RADIO',   labName: 'Radiology Scan',            testName: 'Chest X-Ray PA View',                         sampleType: 'Diagnostic Imaging' },
+  { labCode: 'PAT',     labName: 'Pathology Lab',             testName: 'Urine Routine Examination',                   sampleType: 'Clean-Catch Urine' },
 ];
 
 const LabOrdersManager = ({
@@ -71,14 +71,31 @@ const LabOrdersManager = ({
   // Handle 1-Click Quick Preset
   const handleApplyPreset = (preset) => {
     const matchedLab = laboratories.find(
-      (l) => l.code === preset.labCode || l.name.toLowerCase().includes(preset.labName.toLowerCase())
+      (l) =>
+        (l.code && l.code === preset.labCode) ||
+        (preset.labCode === 'HAEM' && (l.name?.toLowerCase().includes('hematology') || l.departmentId?.name?.toLowerCase().includes('hematology') || l.departmentId?.code === 'HEM')) ||
+        (preset.labCode === 'BIOCHEM' && (l.name?.toLowerCase().includes('biochem') || l.departmentId?.name?.toLowerCase().includes('biochem') || l.departmentId?.code === 'BIO')) ||
+        (preset.labCode === 'MICRO' && (l.name?.toLowerCase().includes('microbio') || l.departmentId?.name?.toLowerCase().includes('microbio') || l.departmentId?.code === 'MIC')) ||
+        (preset.labCode === 'PAT' && (l.name?.toLowerCase().includes('pathology') || l.departmentId?.name?.toLowerCase().includes('pathology') || l.departmentId?.code === 'PAT')) ||
+        (preset.labCode === 'RADIO' && (l.name?.toLowerCase().includes('radiology') || l.name?.toLowerCase().includes('imaging') || l.departmentId?.code === 'RAD')) ||
+        l.testCatalog?.some((t) => t.name?.toLowerCase().includes(preset.testName.toLowerCase()))
     ) || laboratories[0];
 
+    const catalogItem = matchedLab?.testCatalog?.find(
+      (t) =>
+        t.name?.toLowerCase().includes(preset.testName.toLowerCase()) ||
+        preset.testName.toLowerCase().includes(t.name?.toLowerCase())
+    );
+    const testCode = preset.testCode || catalogItem?.testCode || preset.testName.toUpperCase().replace(/\s+/g, '_').slice(0, 10);
+    const labDeptId = matchedLab?.departmentId?._id || matchedLab?.departmentId;
+
     const newOrder = {
-      laboratoryId: matchedLab?._id || preset.labCode,
+      laboratoryId: matchedLab?._id,
+      labDepartmentId: labDeptId,
       labName: matchedLab?.name || preset.labName,
-      testName: preset.testName,
-      sampleType: preset.sampleType,
+      testCode,
+      testName: catalogItem?.name || preset.testName,
+      sampleType: preset.sampleType || catalogItem?.sampleType || 'Specimen',
       priority: 'ROUTINE',
       notes: '',
       status: 'PENDING_SAMPLE',
@@ -96,11 +113,17 @@ const LabOrdersManager = ({
     if (!finalTestName) return;
 
     const labObj = activeLab || laboratories[0];
+    const catalogItem = labObj?.testCatalog?.find((t) => t.name === finalTestName);
+    const testCode = catalogItem?.testCode || finalTestName.toUpperCase().replace(/\s+/g, '_').slice(0, 10);
+    const labDeptId = labObj?.departmentId?._id || labObj?.departmentId;
+
     const newOrder = {
-      laboratoryId: labObj?._id || 'default-lab',
+      laboratoryId: labObj?._id,
+      labDepartmentId: labDeptId,
       labName: labObj?.name || 'Laboratory',
+      testCode,
       testName: finalTestName,
-      sampleType: sampleType || 'Standard Specimen',
+      sampleType: sampleType || catalogItem?.sampleType || 'Standard Specimen',
       priority: priority || 'ROUTINE',
       notes: clinicalNotes.trim(),
       status: 'PENDING_SAMPLE',
@@ -158,7 +181,9 @@ const LabOrdersManager = ({
                   onClick={() => handleApplyPreset(preset)}
                   title={`Add ${preset.testName} (${preset.labName})`}
                 >
-                  <span className="lab-preset-plus">{isAlreadyOrdered ? '✓' : '+'}</span>
+                  <span className="lab-preset-plus" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                    <span className="material-symbols-rounded" style={{ fontSize: 13 }}>{isAlreadyOrdered ? 'check' : 'add'}</span>
+                  </span>
                   <span>{preset.testName}</span>
                 </button>
               );
@@ -200,7 +225,7 @@ const LabOrdersManager = ({
                   {t.name} {t.sampleType ? `— [${t.sampleType}]` : ''}
                 </option>
               ))}
-              <option value="__CUSTOM__">✍ + Enter Custom / Other Test Name</option>
+              <option value="__CUSTOM__">+ Enter Custom / Other Test Name</option>
             </Md3Select>
           </div>
 

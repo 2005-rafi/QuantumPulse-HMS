@@ -171,6 +171,25 @@ const QueuePatientCard = ({
         </div>
       </div>
 
+      {/* ─── Fast-Track / Triage Skipped Indicator ─── */}
+      {visit?.triage?.status === 'SKIPPED' && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 8px',
+          margin: '4px 0 6px 0',
+          background: 'var(--md-sys-color-tertiary-container, #ffd8e4)',
+          color: 'var(--md-sys-color-on-tertiary-container, #31111d)',
+          borderRadius: '6px',
+          fontSize: '0.72rem',
+          fontWeight: 600,
+        }}>
+          <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>bolt</span>
+          <span>Fast-Track (Triage Skipped): {visit.triage?.skipReason || 'Direct Doctor Consultation'}</span>
+        </div>
+      )}
+
       {/* ─── 2. Patient Identity & Demographics Row ─── */}
       <div className="doctor-queue-card__identity-row">
         <div className="doctor-queue-card__avatar">{initials}</div>
@@ -199,7 +218,7 @@ const QueuePatientCard = ({
 
       {/* ─── 3. Triage Vitals Quick Snapshot (Instant Doctor Insight) ─── */}
       {hasRecordedVitals && (
-        <div className="doctor-queue-card__vitals-bar" title="Check-in Triage Vitals">
+        <div className="doctor-queue-card__vitals-bar" title="Check-in Nurse Vitals">
           {bpVal && (
             <span className="doctor-queue-card__vital-item">
               <span className="material-symbols-rounded doc-vital-icon">cardiology</span>

@@ -6,12 +6,16 @@ import GatePassPrintable from '../../components/ipd/GatePassPrintable';
 import { Md3Button, Md3TextField, Md3Select } from '../../components/md3/Md3FormComponents';
 import { Md3BedComfortBadge } from '../../components/md3/Md3BedComfortBadge';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import { usePatientStatus } from '../../context/PatientStatusContext';
 import ipdApi from '../../services/ipdApi';
+import './IpdLedgerView.css';
 
-export const IpdLedgerView = () => {
-  const { admissionId } = useParams();
+export const IpdLedgerView = ({ admissionId: propAdmissionId, embedded = false, onBack = null }) => {
+  const { admissionId: routeAdmissionId } = useParams();
   const navigate = useNavigate();
+  const { subscribeToLedgerUpdates } = usePatientStatus();
 
+  const [currentAdmissionId, setCurrentAdmissionId] = useState(propAdmissionId || routeAdmissionId || '');
   const [admissionList, setAdmissionList] = useState([]);
   const [ledgerData, setLedgerData] = useState(null);
   const [clearanceData, setClearanceData] = useState(null);
@@ -36,28 +40,40 @@ export const IpdLedgerView = () => {
   const [settling, setSettling] = useState(false);
 
   useEffect(() => {
+    if (propAdmissionId) {
+      setCurrentAdmissionId(propAdmissionId);
+    } else if (routeAdmissionId) {
+      setCurrentAdmissionId(routeAdmissionId);
+    }
+  }, [propAdmissionId, routeAdmissionId]);
+
+  useEffect(() => {
     const fetchAdmissions = async () => {
       try {
         const res = await ipdApi.getAdmissions({ status: 'ADMITTED' });
         const list = res.data?.data || [];
         setAdmissionList(list);
-        if (!admissionId && list.length > 0) {
-          navigate(`/dashboard/ipd/billing/${list[0]._id}`, { replace: true });
+        if (!currentAdmissionId && list.length > 0) {
+          const firstId = list[0]._id;
+          setCurrentAdmissionId(firstId);
+          if (!embedded && !propAdmissionId && !routeAdmissionId) {
+            navigate(`/dashboard/ipd/billing/${firstId}`, { replace: true });
+          }
         }
       } catch (err) {
         console.error('Failed to load active admissions:', err);
       }
     };
     fetchAdmissions();
-  }, [admissionId, navigate]);
+  }, [currentAdmissionId, embedded, propAdmissionId, routeAdmissionId, navigate]);
 
   const loadLedger = async () => {
-    if (!admissionId) return;
+    if (!currentAdmissionId) return;
     try {
       setLoading(true);
       const [ledRes, clrRes] = await Promise.all([
-        ipdApi.getRunningLedger(admissionId),
-        ipdApi.getClearanceStatus(admissionId).catch(() => ({ data: { data: null } })),
+        ipdApi.getRunningLedger(currentAdmissionId),
+        ipdApi.getClearanceStatus(currentAdmissionId).catch(() => ({ data: { data: null } })),
       ]);
 
       setLedgerData(ledRes.data?.data || null);
@@ -71,14 +87,36 @@ export const IpdLedgerView = () => {
 
   useEffect(() => {
     loadLedger();
-  }, [admissionId]);
+  }, [currentAdmissionId]);
+
+  // Real-Time Reactive Push Synchronization for IPD Financial Ledger & Settlement
+  useEffect(() => {
+    if (!subscribeToLedgerUpdates) return;
+    const unsubscribe = subscribeToLedgerUpdates((payload) => {
+      if (!payload) return;
+      if (!currentAdmissionId || String(payload.admissionId) === String(currentAdmissionId)) {
+        loadLedger();
+      }
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  }, [currentAdmissionId, subscribeToLedgerUpdates]);
+
+  const handlePatientSelect = (e) => {
+    const nextId = e.target.value;
+    setCurrentAdmissionId(nextId);
+    if (!embedded) {
+      navigate(`/dashboard/ipd/billing/${nextId}`);
+    }
+  };
 
   // Record Deposit
   const handleSaveDeposit = async (e) => {
     e.preventDefault();
-    if (!depositAmount || parseFloat(depositAmount) <= 0) return;
+    if (!depositAmount || parseFloat(depositAmount) <= 0 || !currentAdmissionId) return;
     try {
-      await ipdApi.recordAdvanceDeposit(admissionId, {
+      await ipdApi.recordAdvanceDeposit(currentAdmissionId, {
         amount: parseFloat(depositAmount),
         paymentMethod,
         depositType,
@@ -99,27 +137,20 @@ export const IpdLedgerView = () => {
   // Finalize Settlement
   const handleFinalizeSettlement = async (e) => {
     e.preventDefault();
-    setSettling(true);
+    if (!currentAdmissionId) return;
     try {
-      const summary = ledgerData?.financialSummary || {};
-      const discount = parseFloat(settlementDiscount || 0);
-      const netPayable = Math.max(0, summary.totalGrossBilled - discount);
-      const totalDeposits = summary.totalAdvanceDeposited || 0;
-      const outstandingDue = Math.max(0, netPayable - totalDeposits);
-
+      setSettling(true);
       const payload = {
-        discountAmount: discount,
-        issueRefund,
+        discountAmount: parseFloat(settlementDiscount) || 0,
+        issueRefundOnExcess: issueRefund,
       };
 
-      if (outstandingDue > 0) {
-        payload.payment = {
-          method: settlementPaymentMethod,
-          reference: settlementTxnRef,
-        };
+      if (summary.outstandingDue > 0) {
+        payload.paymentMethod = settlementPaymentMethod;
+        payload.transactionReference = settlementTxnRef;
       }
 
-      await ipdApi.finalizeSettlement(admissionId, payload);
+      await ipdApi.finalizeSettlement(currentAdmissionId, payload);
       setShowSettlementModal(false);
       loadLedger();
       alert('Inpatient bill settled and finalized successfully!');
@@ -132,8 +163,9 @@ export const IpdLedgerView = () => {
 
   // Ingest Daily Charges
   const handleIngestCharges = async () => {
+    if (!currentAdmissionId) return;
     try {
-      const res = await ipdApi.ingestDailyCharges(admissionId);
+      const res = await ipdApi.ingestDailyCharges(currentAdmissionId);
       alert(`Daily IPD charges ingested: ${res.data?.data?.chargesAdded} items added (${CURRENCY_SYMBOL}${res.data?.data?.amountAdded})`);
       loadLedger();
     } catch (err) {
@@ -143,8 +175,9 @@ export const IpdLedgerView = () => {
 
   // 3-way Clearance Handlers
   const handleMarkClearance = async (dept, payload) => {
+    if (!currentAdmissionId) return;
     try {
-      await ipdApi.markClearance(admissionId, dept, payload);
+      await ipdApi.markClearance(currentAdmissionId, dept, payload);
       loadLedger();
     } catch (err) {
       alert(err.response?.data?.message || `Failed to mark ${dept} clearance`);
@@ -152,11 +185,12 @@ export const IpdLedgerView = () => {
   };
 
   const handleFinalizeDischarge = async () => {
+    if (!currentAdmissionId) return;
     try {
-      await ipdApi.finalizeDischarge(admissionId);
+      await ipdApi.finalizeDischarge(currentAdmissionId);
       alert('Discharge finalized! Official Gate Pass generated.');
       loadLedger();
-      const gpRes = await ipdApi.getGatePass(admissionId);
+      const gpRes = await ipdApi.getGatePass(currentAdmissionId);
       setGatePassData(gpRes.data?.data || null);
       setShowGatePassModal(true);
     } catch (err) {
@@ -165,8 +199,9 @@ export const IpdLedgerView = () => {
   };
 
   const handleViewGatePass = async () => {
+    if (!currentAdmissionId) return;
     try {
-      const gpRes = await ipdApi.getGatePass(admissionId);
+      const gpRes = await ipdApi.getGatePass(currentAdmissionId);
       setGatePassData(gpRes.data?.data || null);
       setShowGatePassModal(true);
     } catch (err) {
@@ -174,10 +209,24 @@ export const IpdLedgerView = () => {
     }
   };
 
-  if (!admissionId && admissionList.length === 0) {
+  if (!currentAdmissionId && admissionList.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px', color: 'var(--md-sys-color-outline)' }}>
-        No active inpatient admissions found.
+      <div className="ipd-ledger-view">
+        {!embedded && (
+          <div className="ipd-ledger-rollback-bar">
+            <button
+              type="button"
+              className="ipd-ledger-back-btn"
+              onClick={() => (onBack ? onBack() : navigate('/dashboard/administrator/billing'))}
+            >
+              <span className="material-symbols-rounded">arrow_back</span>
+              <span>Back to Admin Billing</span>
+            </button>
+          </div>
+        )}
+        <div style={{ textAlign: 'center', padding: '32px', color: 'var(--md-sys-color-outline)' }}>
+          No active inpatient admissions found.
+        </div>
       </div>
     );
   }
@@ -196,24 +245,36 @@ export const IpdLedgerView = () => {
   const breakdown = ledgerData?.categoryBreakdown || {};
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px' }}>
+    <div className="ipd-ledger-view">
+      {/* ── Standalone Rollback Bar ── */}
+      {!embedded && (
+        <div className="ipd-ledger-rollback-bar">
+          <button
+            type="button"
+            className="ipd-ledger-back-btn"
+            onClick={() => (onBack ? onBack() : navigate('/dashboard/administrator/billing'))}
+          >
+            <span className="material-symbols-rounded">arrow_back</span>
+            <span>Back to Admin Billing</span>
+          </button>
+          <span style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 600 }}>
+            Dedicated Inpatient Tariff Desk
+          </span>
+        </div>
+      )}
+
       {/* Top Header & Patient Switcher */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
-            Inpatient Financial Ledger & Tariff Desk
-          </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', margin: '4px 0 0 0' }}>
-            Live Stay Accumulator • Advance Deposit Collection • 3-Way Discharge Clearance
-          </p>
+      <div className="ipd-ledger-header-card">
+        <div className="ipd-ledger-title-group">
+          <h2>Inpatient Financial Ledger &amp; Tariff Desk</h2>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <div style={{ width: '260px' }}>
+        <div className="ipd-ledger-actions-bar">
+          <div className="ipd-ledger-patient-select">
             <Md3Select
               label="Select Inpatient"
-              value={admissionId || ''}
-              onChange={(e) => navigate(`/dashboard/ipd/billing/${e.target.value}`)}
+              value={currentAdmissionId || ''}
+              onChange={handlePatientSelect}
             >
               {admissionList.map((a) => (
                 <option key={a._id} value={a._id}>
@@ -224,16 +285,19 @@ export const IpdLedgerView = () => {
           </div>
 
           <Md3Button variant="tonal" onClick={handleIngestCharges}>
-            + Ingest Routine Care Charges
+            <span className="material-symbols-rounded">sync</span>
+            <span>Ingest Routine Charges</span>
           </Md3Button>
 
           <Md3Button variant="filled" onClick={() => setShowDepositModal(true)}>
-            + Collect Advance Deposit
+            <span className="material-symbols-rounded">add_card</span>
+            <span>Collect Deposit</span>
           </Md3Button>
 
           {summary.status !== 'FINALIZED' && (
             <Md3Button variant="primary" style={{ background: '#006a57', color: '#ffffff' }} onClick={() => setShowSettlementModal(true)}>
-              Final Settlement & Closure
+              <span className="material-symbols-rounded">check_circle</span>
+              <span>Final Settlement</span>
             </Md3Button>
           )}
         </div>
@@ -242,114 +306,106 @@ export const IpdLedgerView = () => {
       {/* Patient Banner */}
       {ledgerData?.admission && <IpdPatientBanner admission={ledgerData.admission} />}
 
-      {/* Financial KPI Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px' }}>
-        <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>
-            Gross Inpatient Charges
-          </span>
-          <strong style={{ fontSize: '1.5rem', color: 'var(--md-sys-color-on-surface)' }}>
+      {/* Financial KPI Summary Cards (4 Columns) */}
+      <div className="ipd-ledger-kpis-grid">
+        <div className="ipd-ledger-kpi-card">
+          <span className="ipd-ledger-kpi-label">Gross Charges</span>
+          <strong className="ipd-ledger-kpi-val">
             {CURRENCY_SYMBOL}{summary.totalGrossBilled?.toLocaleString('en-IN') || 0}
           </strong>
-          <span style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-outline)', display: 'block', marginTop: '2px' }}>
-            Live Bed: {CURRENCY_SYMBOL}{summary.bedStayCharges?.toLocaleString('en-IN') || 0} ({summary.totalStayHours || 0} hrs)
+          <span className="ipd-ledger-kpi-sub">
+            Live Bed: {CURRENCY_SYMBOL}{summary.bedStayCharges?.toLocaleString('en-IN') || 0} ({summary.totalStayHours || 0}h)
           </span>
         </div>
 
-        <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>
-            Advance Deposits Held
-          </span>
-          <strong style={{ fontSize: '1.5rem', color: 'var(--md-sys-color-primary, #006a57)' }}>
+        <div className="ipd-ledger-kpi-card" style={{ borderLeft: '3px solid #006a57' }}>
+          <span className="ipd-ledger-kpi-label">Deposits Held</span>
+          <strong className="ipd-ledger-kpi-val" style={{ color: '#006a57' }}>
             {CURRENCY_SYMBOL}{summary.totalAdvanceDeposited?.toLocaleString('en-IN') || 0}
           </strong>
-          <span style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-outline)', display: 'block', marginTop: '2px' }}>
+          <span className="ipd-ledger-kpi-sub">
             {deposits.length} Deposit Receipts
           </span>
         </div>
 
-        <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>
-            Outstanding Due
-          </span>
-          <strong style={{ fontSize: '1.5rem', color: summary.outstandingDue > 0 ? 'var(--md-sys-color-error, #ba1a1a)' : '#2e7d32' }}>
+        <div className="ipd-ledger-kpi-card" style={{ borderLeft: summary.outstandingDue > 0 ? '3px solid #ba1a1a' : '3px solid #2e7d32' }}>
+          <span className="ipd-ledger-kpi-label">Outstanding Due</span>
+          <strong className="ipd-ledger-kpi-val" style={{ color: summary.outstandingDue > 0 ? 'var(--md-sys-color-error, #ba1a1a)' : '#2e7d32' }}>
             {CURRENCY_SYMBOL}{summary.outstandingDue?.toLocaleString('en-IN') || 0}
           </strong>
-          <span style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-outline)', display: 'block', marginTop: '2px' }}>
-            {summary.excessCredit > 0 ? `Excess Refundable: ${CURRENCY_SYMBOL}${summary.excessCredit}` : 'Payable at discharge'}
+          <span className="ipd-ledger-kpi-sub">
+            {summary.excessCredit > 0 ? `Excess Refund: ${CURRENCY_SYMBOL}${summary.excessCredit}` : 'Payable at discharge'}
           </span>
         </div>
 
-        <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '14px', padding: '16px', textAlign: 'center' }}>
-          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block', textTransform: 'uppercase', fontWeight: 600 }}>
-            Ledger Status
-          </span>
-          <strong style={{ fontSize: '1.3rem', color: summary.status === 'FINALIZED' ? '#2e7d32' : '#b45309' }}>
-            {summary.status}
+        <div className="ipd-ledger-kpi-card" style={{ borderLeft: summary.status === 'FINALIZED' ? '3px solid #2e7d32' : '3px solid #b45309' }}>
+          <span className="ipd-ledger-kpi-label">Ledger Status</span>
+          <strong className="ipd-ledger-kpi-val" style={{ color: summary.status === 'FINALIZED' ? '#2e7d32' : '#b45309', fontSize: '1.15rem' }}>
+            {summary.status || 'OPEN'}
           </strong>
-          <span style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-outline)', display: 'block', marginTop: '2px' }}>
+          <span className="ipd-ledger-kpi-sub">
             Bill #{ledgerData?.bill?.billNumber || 'PENDING'}
           </span>
         </div>
       </div>
 
       {/* Multi-Bed Stay Segmentation Timeline */}
-      <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary)' }}>hotel</span>
-            Bed Stay Occupancy & Transfer Timeline
+      <div className="ipd-ledger-card">
+        <div className="ipd-ledger-card-header">
+          <h3 className="ipd-ledger-card-title">
+            <span className="material-symbols-rounded">hotel</span>
+            <span>Bed Stay Occupancy &amp; Transfer Timeline</span>
           </h3>
-          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)' }}>
+          <span style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-on-surface-variant)', fontWeight: 600 }}>
             Total Stay: {summary.totalStayHours || 0} hours
           </span>
         </div>
 
         {bedSegments.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '20px', color: 'var(--md-sys-color-outline)' }}>
+          <div style={{ textAlign: 'center', padding: '16px', color: 'var(--md-sys-color-outline)', fontSize: '0.82rem' }}>
             No bed allocation records found.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+          <div className="ipd-ledger-table-wrap">
+            <table className="ipd-ledger-table">
               <thead>
-                <tr style={{ borderBottom: '1.5px solid var(--md-sys-color-outline-variant)', textAlign: 'left' }}>
-                  <th style={{ padding: '8px 10px' }}>Bed & Location</th>
-                  <th style={{ padding: '8px 10px' }}>Comfort Tier</th>
-                  <th style={{ padding: '8px 10px' }}>Allocated Interval</th>
-                  <th style={{ padding: '8px 10px' }}>Duration</th>
-                  <th style={{ padding: '8px 10px' }}>Daily / Hourly Rate</th>
-                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>Calculated Charge</th>
+                <tr>
+                  <th>Bed &amp; Location</th>
+                  <th>Comfort Tier</th>
+                  <th>Allocated Interval</th>
+                  <th>Duration</th>
+                  <th>Daily / Hourly Rate</th>
+                  <th style={{ textAlign: 'right' }}>Calculated Charge</th>
                 </tr>
               </thead>
               <tbody>
                 {bedSegments.map((seg, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-                    <td style={{ padding: '10px' }}>
+                  <tr key={idx}>
+                    <td>
                       <strong>{seg.bedLabel}</strong> ({seg.bedNumber})
-                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
                         {seg.wardClass} • {seg.floorName}
                       </div>
                     </td>
-                    <td style={{ padding: '10px' }}>
+                    <td>
                       <Md3BedComfortBadge tier={seg.comfortTier} size="small" />
                     </td>
-                    <td style={{ padding: '10px', fontSize: '0.8rem' }}>
-                      <div>From: {new Date(seg.allocatedFrom).toLocaleString()}</div>
+                    <td style={{ fontSize: '0.78rem' }}>
+                      <div>From: {new Date(seg.allocatedFrom).toLocaleDateString()}</div>
                       <div style={{ color: seg.isActive ? '#006a57' : 'var(--md-sys-color-outline)', fontWeight: seg.isActive ? 700 : 400 }}>
-                        {seg.isActive ? 'Active (Current)' : `To: ${new Date(seg.allocatedTo).toLocaleString()}`}
+                        {seg.isActive ? 'Active (Current)' : `To: ${new Date(seg.allocatedTo).toLocaleDateString()}`}
                       </div>
                     </td>
-                    <td style={{ padding: '10px' }}>
+                    <td>
                       <strong>{seg.fullDays}d {seg.billableRemainingHours}h</strong>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                      <span style={{ fontSize: '0.70rem', color: 'var(--md-sys-color-on-surface-variant)', display: 'block' }}>
                         ({seg.totalHoursFormatted} hrs)
                       </span>
                     </td>
-                    <td style={{ padding: '10px' }}>
+                    <td>
                       {CURRENCY_SYMBOL}{seg.dailyRate}/d • {CURRENCY_SYMBOL}{seg.hourlyRate}/hr
                     </td>
-                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: 800, color: 'var(--md-sys-color-primary)' }}>
+                    <td style={{ textAlign: 'right', fontWeight: 800, color: 'var(--md-sys-color-primary)' }}>
                       {CURRENCY_SYMBOL}{seg.segmentAmount?.toLocaleString('en-IN')}
                     </td>
                   </tr>
@@ -360,70 +416,77 @@ export const IpdLedgerView = () => {
         )}
       </div>
 
-      {/* Category Breakdown & Line Items */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '16px' }}>
+      {/* Category Breakdown & Advance Deposit Receipts Grid */}
+      <div className="ipd-ledger-two-col-grid">
         {/* Category Breakdown */}
-        <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '16px', padding: '20px' }}>
-          <h3 style={{ margin: '0 0 14px 0', fontSize: '1.05rem', fontWeight: 700 }}>Charge Distribution by Category</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-              <span>Bed & Room Stay Charges</span>
+        <div className="ipd-ledger-card">
+          <h3 className="ipd-ledger-card-title">
+            <span className="material-symbols-rounded">pie_chart</span>
+            <span>Charge Distribution by Category</span>
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="ipd-ledger-breakdown-row">
+              <span>Bed &amp; Room Stay Charges</span>
               <strong>{CURRENCY_SYMBOL}{(breakdown.BED_CHARGES || summary.bedStayCharges || 0).toLocaleString('en-IN')}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-              <span>Pharmacy & Medications</span>
+            <div className="ipd-ledger-breakdown-row">
+              <span>Pharmacy &amp; Medications</span>
               <strong>{CURRENCY_SYMBOL}{(breakdown.PHARMACY || 0).toLocaleString('en-IN')}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-              <span>Lab & Diagnostics</span>
+            <div className="ipd-ledger-breakdown-row">
+              <span>Lab &amp; Diagnostics</span>
               <strong>{CURRENCY_SYMBOL}{(breakdown.DIAGNOSTICS || 0).toLocaleString('en-IN')}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-              <span>Procedures & Nursing Care</span>
+            <div className="ipd-ledger-breakdown-row">
+              <span>Procedures &amp; Nursing Care</span>
               <strong>{CURRENCY_SYMBOL}{(breakdown.PROCEDURE || 0).toLocaleString('en-IN')}</strong>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-              <span>Doctor Rounds & Consultations</span>
+            <div className="ipd-ledger-breakdown-row">
+              <span>Doctor Rounds &amp; Consultations</span>
               <strong>{CURRENCY_SYMBOL}{(breakdown.CONSULTATION || 0).toLocaleString('en-IN')}</strong>
             </div>
           </div>
         </div>
 
         {/* Advance Deposit Receipts Table */}
-        <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '16px', padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Advance Deposit Ledger</h3>
-            <Md3Button variant="tonal" onClick={() => setShowDepositModal(true)}>
-              + Add Deposit
+        <div className="ipd-ledger-card">
+          <div className="ipd-ledger-card-header">
+            <h3 className="ipd-ledger-card-title">
+              <span className="material-symbols-rounded">receipt</span>
+              <span>Advance Deposit Ledger</span>
+            </h3>
+            <Md3Button variant="tonal" onClick={() => setShowDepositModal(true)} style={{ height: '32px', fontSize: '0.78rem' }}>
+              <span className="material-symbols-rounded">add</span>
+              <span>Deposit</span>
             </Md3Button>
           </div>
 
           {deposits.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)' }}>
+            <div style={{ textAlign: 'center', padding: '16px', color: 'var(--md-sys-color-outline)', fontSize: '0.82rem' }}>
               No advance deposits recorded yet.
             </div>
           ) : (
-            <div style={{ overflowX: 'auto', maxHeight: '220px', overflowY: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.8rem' }}>
+            <div className="ipd-ledger-table-wrap" style={{ maxHeight: '180px', overflowY: 'auto' }}>
+              <table className="ipd-ledger-table">
                 <thead>
-                  <tr style={{ borderBottom: '1.5px solid var(--md-sys-color-outline-variant)', textAlign: 'left' }}>
-                    <th style={{ padding: '6px' }}>Receipt #</th>
-                    <th style={{ padding: '6px' }}>Type / Mode</th>
-                    <th style={{ padding: '6px' }}>Date</th>
-                    <th style={{ padding: '6px', textAlign: 'right' }}>Amount</th>
+                  <tr>
+                    <th>Receipt #</th>
+                    <th>Type / Mode</th>
+                    <th>Date</th>
+                    <th style={{ textAlign: 'right' }}>Amount</th>
                   </tr>
                 </thead>
                 <tbody>
                   {deposits.map((dep, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-                      <td style={{ padding: '6px', fontWeight: 600 }}>{dep.receiptNumber}</td>
-                      <td style={{ padding: '6px' }}>
+                    <tr key={idx}>
+                      <td style={{ fontWeight: 600 }}>{dep.receiptNumber}</td>
+                      <td>
                         {dep.depositType} ({dep.paymentMethod})
                       </td>
-                      <td style={{ padding: '6px', color: 'var(--md-sys-color-outline)' }}>
+                      <td style={{ color: 'var(--md-sys-color-outline)' }}>
                         {new Date(dep.createdAt).toLocaleDateString()}
                       </td>
-                      <td style={{ padding: '6px', textAlign: 'right', fontWeight: 700, color: '#006a57' }}>
+                      <td style={{ textAlign: 'right', fontWeight: 700, color: '#006a57' }}>
                         {CURRENCY_SYMBOL}{dep.amount?.toLocaleString('en-IN')}
                       </td>
                     </tr>
@@ -436,36 +499,39 @@ export const IpdLedgerView = () => {
       </div>
 
       {/* Running Ledger Line Items Table */}
-      <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700 }}>Inpatient Clinical Service Line Items</h3>
+      <div className="ipd-ledger-card">
+        <h3 className="ipd-ledger-card-title">
+          <span className="material-symbols-rounded">list_alt</span>
+          <span>Inpatient Clinical Service Line Items</span>
+        </h3>
         {(!ledgerData?.lineItems || ledgerData.lineItems.length === 0) ? (
-          <div style={{ textAlign: 'center', padding: '32px', color: 'var(--md-sys-color-outline)' }}>
-            No billable line items accumulated yet. Click "+ Ingest Routine Care Charges".
+          <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)', fontSize: '0.82rem' }}>
+            No billable line items accumulated yet. Click "Ingest Routine Charges".
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+          <div className="ipd-ledger-table-wrap">
+            <table className="ipd-ledger-table">
               <thead>
-                <tr style={{ borderBottom: '1.5px solid var(--md-sys-color-outline-variant)', textAlign: 'left' }}>
-                  <th style={{ padding: '10px' }}>Item Description</th>
-                  <th style={{ padding: '10px' }}>Category</th>
-                  <th style={{ padding: '10px' }}>Rate</th>
-                  <th style={{ padding: '10px' }}>Qty</th>
-                  <th style={{ padding: '10px', textAlign: 'right' }}>Total</th>
+                <tr>
+                  <th>Item Description</th>
+                  <th>Category</th>
+                  <th>Rate</th>
+                  <th>Qty</th>
+                  <th style={{ textAlign: 'right' }}>Total</th>
                 </tr>
               </thead>
               <tbody>
                 {ledgerData.lineItems.map((item, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid var(--md-sys-color-outline-variant)' }}>
-                    <td style={{ padding: '10px', fontWeight: 600 }}>{item.description || item.name}</td>
-                    <td style={{ padding: '10px' }}>
-                      <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.72rem', background: 'var(--md-sys-color-surface-container-highest)' }}>
+                  <tr key={idx}>
+                    <td style={{ fontWeight: 600 }}>{item.description || item.name}</td>
+                    <td>
+                      <span style={{ padding: '2px 8px', borderRadius: '6px', fontSize: '0.70rem', background: 'var(--md-sys-color-surface-container-highest)' }}>
                         {item.category}
                       </span>
                     </td>
-                    <td style={{ padding: '10px' }}>{CURRENCY_SYMBOL}{item.snapshotPrice || item.rate}</td>
-                    <td style={{ padding: '10px' }}>{item.quantity || 1}</td>
-                    <td style={{ padding: '10px', textAlign: 'right', fontWeight: 700 }}>
+                    <td>{CURRENCY_SYMBOL}{item.snapshotPrice || item.rate}</td>
+                    <td>{item.quantity || 1}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 700 }}>
                       {CURRENCY_SYMBOL}{item.lineTotal || item.amount}
                     </td>
                   </tr>
@@ -489,10 +555,10 @@ export const IpdLedgerView = () => {
 
       {/* Advance Deposit Collection Modal */}
       {showDepositModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setShowDepositModal(false)}>
-          <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', maxWidth: '460px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 16px 0' }}>Collect Inpatient Advance Deposit</h3>
-            <form onSubmit={handleSaveDeposit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div className="ipd-ledger-modal-overlay" onClick={() => setShowDepositModal(false)}>
+          <div className="ipd-ledger-modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 14px 0', fontSize: '1.1rem', fontWeight: 800 }}>Collect Inpatient Advance Deposit</h3>
+            <form onSubmit={handleSaveDeposit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <Md3Select
                 label="Deposit Purpose / Type *"
                 value={depositType}
@@ -544,7 +610,7 @@ export const IpdLedgerView = () => {
                   Cancel
                 </Md3Button>
                 <Md3Button variant="filled" type="submit">
-                  Generate Receipt & Collect
+                  Generate Receipt &amp; Collect
                 </Md3Button>
               </div>
             </form>
@@ -554,24 +620,24 @@ export const IpdLedgerView = () => {
 
       {/* Final Settlement & Closure Modal */}
       {showSettlementModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={() => setShowSettlementModal(false)}>
-          <div style={{ background: '#ffffff', borderRadius: '16px', padding: '24px', maxWidth: '520px', width: '100%' }} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.2rem', fontWeight: 800 }}>Final IPD Bill Settlement & Ledger Closure</h3>
-            <p style={{ margin: '0 0 16px 0', fontSize: '0.82rem', color: 'var(--md-sys-color-outline)' }}>
+        <div className="ipd-ledger-modal-overlay" onClick={() => setShowSettlementModal(false)}>
+          <div className="ipd-ledger-modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', fontWeight: 800 }}>Final IPD Bill Settlement &amp; Ledger Closure</h3>
+            <p style={{ margin: '0 0 14px 0', fontSize: '0.78rem', color: 'var(--md-sys-color-outline)' }}>
               Computes all live bed occupancy charges across transfers, deducts advance deposits, and closes the bill.
             </p>
 
-            <form onSubmit={handleFinalizeSettlement} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-              <div style={{ background: 'var(--md-sys-color-surface-container-low, #f7fbf8)', padding: '14px', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+            <form onSubmit={handleFinalizeSettlement} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ background: 'var(--md-sys-color-surface-container-low, #f7fbf8)', padding: '12px', borderRadius: '12px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.84rem' }}>
                   <span>Gross Total Charges:</span>
                   <strong>{CURRENCY_SYMBOL}{summary.totalGrossBilled?.toLocaleString('en-IN')}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '0.84rem' }}>
                   <span>Total Advance Deposits Held:</span>
                   <strong style={{ color: '#006a57' }}>-{CURRENCY_SYMBOL}{summary.totalAdvanceDeposited?.toLocaleString('en-IN')}</strong>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e0e0e0', paddingTop: '6px', fontSize: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #e0e0e0', paddingTop: '6px', fontSize: '0.95rem' }}>
                   <span>Net Balance Due:</span>
                   <strong style={{ color: summary.outstandingDue > 0 ? 'var(--md-sys-color-error, #ba1a1a)' : '#2e7d32' }}>
                     {CURRENCY_SYMBOL}{summary.outstandingDue?.toLocaleString('en-IN')}
@@ -603,9 +669,9 @@ export const IpdLedgerView = () => {
               )}
 
               {summary.excessCredit > 0 && (
-                <div style={{ padding: '10px 14px', background: '#e0f2fe', borderRadius: '8px', color: '#0369a1', fontSize: '0.85rem' }}>
+                <div style={{ padding: '8px 12px', background: '#e0f2fe', borderRadius: '8px', color: '#0369a1', fontSize: '0.82rem' }}>
                   <strong>Excess Advance Refund: {CURRENCY_SYMBOL}{summary.excessCredit}</strong>
-                  <div style={{ marginTop: '4px' }}>An approved refund adjustment will be recorded in the final bill.</div>
+                  <div style={{ marginTop: '2px' }}>An approved refund adjustment will be recorded in the final bill.</div>
                 </div>
               )}
 
@@ -634,4 +700,3 @@ export const IpdLedgerView = () => {
 };
 
 export default IpdLedgerView;
-

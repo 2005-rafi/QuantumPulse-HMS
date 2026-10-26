@@ -33,6 +33,12 @@ export const DOCTOR_NAV_TABS = [
     iconName: 'history_edu',
   },
   {
+    id: 'surgeries',
+    path: 'surgeries',
+    label: 'Surgical Tracking',
+    iconName: 'medical_services',
+  },
+  {
     id: 'ipd',
     path: 'ipd',
     label: 'Inpatient Ward',
@@ -172,12 +178,14 @@ export const useDoctorWorkspace = () => {
   const fetchQueue = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      if (!user?.departmentId) return;
+      const rawDept = user?.departmentId || user?.department;
+      const deptId = typeof rawDept === 'object' ? (rawDept?._id || rawDept?.id) : rawDept;
+      const queryParams = deptId ? { departmentId: deptId } : {};
 
       const [waitRes, progRes, reviewRes] = await Promise.all([
-        visitAPI.getQueue('WAITING_DOCTOR', { departmentId: user.departmentId }),
-        visitAPI.getQueue('IN_PROGRESS', { departmentId: user.departmentId }),
-        visitAPI.getQueue('WAITING_DOCTOR_REVIEW', { departmentId: user.departmentId }),
+        visitAPI.getQueue('WAITING_DOCTOR', queryParams),
+        visitAPI.getQueue('IN_PROGRESS', queryParams),
+        visitAPI.getQueue('WAITING_DOCTOR_REVIEW', queryParams),
       ]);
 
       const combined = [
@@ -258,8 +266,7 @@ export const useDoctorWorkspace = () => {
           resolvedItem = res.data?.data || res.data || resolvedItem;
           fetchQueue();
         } catch (err) {
-          showError('Failed to start consultation');
-          return;
+          console.warn('[useDoctorWorkspace] Notice starting consultation:', err);
         }
       }
 
@@ -441,13 +448,22 @@ export const useDoctorWorkspace = () => {
   }, [queue]);
 
   const headerTabs = useMemo(() => {
-    return DOCTOR_NAV_TABS.map((tab) => ({
+    const tabs = [...DOCTOR_NAV_TABS];
+    if (user?.isHod) {
+      tabs.push({
+        id: 'staff',
+        path: 'staff',
+        label: 'Department Staff',
+        iconName: 'badge',
+      });
+    }
+    return tabs.map((tab) => ({
       ...tab,
       label: tab.id === 'deletion-requests' && deletionRequests.length > 0
         ? `${tab.label} (${deletionRequests.length})`
         : tab.label,
     }));
-  }, [deletionRequests.length]);
+  }, [deletionRequests.length, user?.isHod]);
 
   return {
     queue,

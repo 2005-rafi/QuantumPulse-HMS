@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Md3Avatar } from '../md3/Md3Widgets';
+import { cleanClinicalText } from '../../utils/clinicalText';
 import './DepartmentDetailSheet.css';
 
 const TYPE_COLORS = {
@@ -42,6 +43,9 @@ export const DepartmentDetailSheet = ({
   const isInactive = department.status === 'Inactive';
   const typeColor = TYPE_COLORS[department.type] || TYPE_COLORS.SUPPORT;
   const hod = department.headOfDepartment;
+  const cleanName = cleanClinicalText(department.name);
+  const cleanCode = cleanClinicalText(department.code);
+  const cleanDescription = cleanClinicalText(department.description);
   const linkedLabs = laboratories.filter(
     (lab) => (lab.departmentId?._id || lab.departmentId) === department._id
   );
@@ -54,7 +58,7 @@ export const DepartmentDetailSheet = ({
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-label={`Details for ${department.name}`}
+        aria-label={`Details for ${cleanName}`}
       >
         {/* ── HEADER ── */}
         <div className="md3-detail-sheet-header">
@@ -65,9 +69,9 @@ export const DepartmentDetailSheet = ({
             >
               {department.type}
             </span>
-            <h2 className="md3-detail-sheet-title">{department.name}</h2>
+            <h2 className="md3-detail-sheet-title">{cleanName}</h2>
             <div className="md3-detail-header-badges">
-              <code className="md3-detail-code-badge">{department.code || 'N/A'}</code>
+              <code className="md3-detail-code-badge">{cleanCode || 'N/A'}</code>
               <span className={`md3-detail-status-pill ${!isInactive ? 'active' : 'inactive'}`}>
                 {!isInactive ? 'Active Department' : 'Inactive Department'}
               </span>
@@ -93,7 +97,7 @@ export const DepartmentDetailSheet = ({
             </h4>
             <div className="md3-detail-card">
               <p className="md3-detail-desc-text">
-                {department.description || 'No detailed description provided for this department.'}
+                {cleanDescription || 'No detailed description provided for this department.'}
               </p>
             </div>
           </section>
@@ -118,11 +122,11 @@ export const DepartmentDetailSheet = ({
             <div className="md3-detail-card">
               {hod ? (
                 <div className="md3-detail-hod-card">
-                  <Md3Avatar initials={hod.fullName?.slice(0, 2)?.toUpperCase() || 'HD'} size="medium" variant="primary" />
+                  <Md3Avatar initials={cleanClinicalText(hod.fullName)?.slice(0, 2)?.toUpperCase() || 'HD'} size="medium" variant="primary" />
                   <div className="md3-detail-hod-details">
-                    <strong>{hod.fullName}</strong>
-                    <span>{hod.position || 'Head of Department'}</span>
-                    {hod.employeeId && <small>ID: {hod.employeeId}</small>}
+                    <strong>{cleanClinicalText(hod.fullName)}</strong>
+                    <span>{cleanClinicalText(hod.position) || 'Head of Department'}</span>
+                    {hod.employeeId && <small>ID: {cleanClinicalText(hod.employeeId)}</small>}
                   </div>
                 </div>
               ) : (
@@ -167,17 +171,25 @@ export const DepartmentDetailSheet = ({
                           ) : (
                             <span className="vital-opt-badge">Optional</span>
                           )}
-                          {field.targetRange && (
+                          {((field.min !== undefined && field.min !== null && field.min !== '') || (field.max !== undefined && field.max !== null && field.max !== '')) ? (
+                            <span className="vital-range-text">Range: {field.min !== '' && field.min !== null && field.min !== undefined ? field.min : '—'} – {field.max !== '' && field.max !== null && field.max !== undefined ? field.max : '—'} {field.unit || ''}</span>
+                          ) : field.targetRange ? (
                             <span className="vital-range-text">Range: {field.targetRange}</span>
-                          )}
+                          ) : null}
                         </div>
+                        {field.clinicalPurpose && (
+                          <div className="md3-detail-vital-purpose" title={`Clinical Purpose: ${field.clinicalPurpose}`}>
+                            <span className="material-symbols-rounded">medical_information</span>
+                            <span>{field.clinicalPurpose}</span>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="md3-detail-empty-hint">
                     <span className="material-symbols-rounded">vital_signs</span>
-                    <span>No clinical vitals configured. Click Configure Schema to set triage fields.</span>
+                    <span>No clinical vitals configured. Click Configure Schema to set nurse vital fields.</span>
                   </div>
                 )}
               </div>
@@ -208,7 +220,7 @@ export const DepartmentDetailSheet = ({
                     {linkedLabs.map((lab) => (
                       <div key={lab._id} className="md3-detail-lab-row">
                         <div className="md3-detail-lab-info">
-                          <strong>{lab.name}</strong>
+                          <strong>{cleanClinicalText(lab.name)}</strong>
                           <span className="md3-detail-lab-count">
                             {(lab.testCatalog?.length || 0)} test catalog items
                           </span>

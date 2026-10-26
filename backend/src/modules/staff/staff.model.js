@@ -6,11 +6,13 @@ const staffSchema = new mongoose.Schema(
     // ── Core Identity (backward-compatible primary fields) ──────────────────
     employeeId:   { type: String, required: true, unique: true, trim: true },
     fullName:     { type: String, required: true, trim: true },
-    departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: true },
+    departmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Department', required: false, default: null },
     roleId:       { type: mongoose.Schema.Types.ObjectId, ref: 'Role', required: true },
     position:     { type: String, required: true, trim: true },
     positionRank: { type: Number, required: true, min: 1, max: 9 },
     tariffGrade:  { type: String, enum: ['GRADE_1', 'GRADE_2', 'GRADE_3', 'GRADE_4', 'GRADE_5', null], default: null },
+    salaryGrade:  { type: String, trim: true, default: '' },
+    baseSalary:   { type: Number, min: 0, default: 0 },
     status: {
       type: String,
       enum: Object.values(STAFF_STATUS),
@@ -19,6 +21,7 @@ const staffSchema = new mongoose.Schema(
     isDeleted: { type: Boolean, default: false },
 
     // ── Section 1: Personal Information ────────────────────────────────────
+    title:        { type: String, enum: ['Dr.', 'Mr.', 'Ms.', 'Mrs.', 'Smt.', 'Sri.', ''], default: '' },
     firstName:    { type: String, trim: true, default: '' },
     middleName:   { type: String, trim: true, default: '' },
     lastName:     { type: String, trim: true, default: '' },
@@ -82,6 +85,8 @@ const staffSchema = new mongoose.Schema(
     // Nurse fields
     nursingLicenseNumber:  { type: String, trim: true },
     nursingSpecialization: { type: String, trim: true, default: '' },
+    nursingDomain:         { type: String, enum: ['OPD', 'IPD', 'LAB', ''], default: '' },
+    assignedWardId:        { type: mongoose.Schema.Types.ObjectId, ref: 'FloorMaster', default: null },
 
     // Laboratory fields
     labCertificationCode: { type: String, trim: true },
@@ -111,6 +116,7 @@ staffSchema.index({ roleId: 1, status: 1, isDeleted: 1 });
 staffSchema.index({ departmentId: 1, status: 1, isDeleted: 1 });
 staffSchema.index({ positionRank: -1, fullName: 1, _id: 1 });
 staffSchema.index({ fullName: 1, _id: 1 });
+staffSchema.index({ tariffGrade: 1, status: 1 });
 staffSchema.index({ status: 1, isDeleted: 1 });
 staffSchema.index({ medicalLicenseNumber: 1 },  { unique: true, sparse: true });
 staffSchema.index({ nursingLicenseNumber: 1 },   { unique: true, sparse: true });

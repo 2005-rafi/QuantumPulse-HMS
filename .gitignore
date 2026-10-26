@@ -1,6 +1,6 @@
 # ==============================================================================
-# HMS PROJECT - STANDARD GITHUB-GRADE GITIGNORE
-# Covers React (Vite/CRA), Node.js (Express), MongoDB, IDEs, and Agent Tools
+# HMS PROJECT - ENTERPRISE PRODUCTION GITIGNORE
+# Covers React (Vite), Node.js (Express), MongoDB, Tooling, E2E & Agent Scaffolding
 # ==============================================================================
 
 # ── Dependency Directories ───────────────────────────────────────────────────
@@ -24,18 +24,22 @@ out/
 .rolldown/
 
 # ── Environment & Cryptographic Secrets ───────────────────────────────────────
-# Keep API keys, credentials, and database URIs out of Git history
+# Keep API keys, credentials, JWT salts, and database URIs out of Git history
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 *.env
-# secrets/
 .env.*
 !.env.example
+secrets/
+*.pem
+*.key
+*.cert
+*.crt
 
-# ── Logs and Diagnostics ──────────────────────────────────────────────────────
+# ── Logs & Runtime Diagnostics ────────────────────────────────────────────────
 logs/
 *.log
 npm-debug.log*
@@ -44,14 +48,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-# ── Diagnostic & Coverage Reports ─────────────────────────────────────────────
+# ── Coverage & Profiling Reports ──────────────────────────────────────────────
 coverage/
 *.lcov
 .nyc_output/
 .clinic/
 .pm2/
 
-# ── IDEs & Text Editors ───────────────────────────────────────────────────────
+# ── IDEs & Operating System Artifacts ─────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
@@ -67,8 +71,6 @@ coverage/
 .settings/
 *.sublime-project
 *.sublime-workspace
-
-# ── Operating System Junk ─────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
@@ -76,24 +78,65 @@ $RECYCLE.BIN/
 ehthumbs.db
 Icon\r
 
-# ── AI Agents & Dev Tool Cache (Graphify, Antigravity) ────────────────────────
-# Exclude auto-generated knowledge graphs and AI assistant transaction traces
+# ── AI Agents, Agent Memories & Scaffolding ───────────────────────────────────
+# Exclude auto-generated knowledge graphs, AI assistant contexts, and memories
 graphify-out/
 .gemini/
 .antigravity/
 .agy/
 .trae/
 .agents/
-**/scratch/
 .system_generated/
-*.tmp
-*.temp
-temp/
-tmp/
+.playwright-mcp/
+**/scratch/
+scratch/
+idea.json
+skills-lock.json
+
+# Markdown agent context, tracking, prompt files, and task plans
+AGENTS.md
+EXPERIENCE.md
+TASKS.md
+USER_PREFERENCES.md
 docs/
 
-# ── Storage files ─────────────────────────────────────────────────────
+# ── Seed Datasets & Database Seeding Scripts ──────────────────────────────────
+# Prevent synthetic patient, test lab, and mock data scripts from polluting repo
+*seed*.js
+*seed*.mjs
+*seed*.cjs
+*seed*.json
+**/seeds/
+backend/scripts/
+scripts/
+
+# ── E2E Testing Media, Screenshots & Visual Verification ─────────────────────
+# Prevent automated test screenshots, video traces, and test-run artifacts
+frontend/test-artifacts/
+test-artifacts/
+docs/screenshots/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.mp4
+*.webm
+*.avi
+
+# ── Storage & Local Runtime Utility Scripts ───────────────────────────────────
 certificates/
 scans/
 start-tunnel.bat
 start-tunnel.ps1
+start.bat
+stop.bat
+scripts/start.bat
+scripts/stop.bat
+scripts/browser-seed.js
+scripts/start-tunnel.bat
+scripts/start-tunnel.ps1
+*.tmp
+*.temp
+temp/
+tmp/

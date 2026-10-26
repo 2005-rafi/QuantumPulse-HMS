@@ -69,7 +69,75 @@
   margin: 6px 0 8px 0;
 }
 
-/* ── 2. Invoice Title & Encounter Bar ── */
+/* ── 2. Clinical OPD Queue Token & Routing Card ── */
+.billing-token-routing-card {
+  display: flex;
+  align-items: stretch;
+  background: #f8fafc;
+  border: 1.5px dashed #94a3b8;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.token-routing-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 8px 14px;
+  min-width: 90px;
+  text-align: center;
+}
+
+.token-routing-tag {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.token-routing-number {
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.token-routing-details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px 12px;
+  padding: 6px 12px;
+  flex: 1;
+  align-content: center;
+}
+
+.token-routing-item {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 9.5px;
+}
+
+.token-item-label {
+  color: #64748b;
+  font-weight: 600;
+  font-size: 9px;
+  min-width: 65px;
+}
+
+.token-item-val {
+  color: #0f172a;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+/* ── 2.1 Invoice Title & Encounter Bar ── */
 .billing-title {
   display: flex;
   justify-content: space-between;
@@ -152,14 +220,16 @@
   color: #64748b;
   font-weight: 600;
   font-size: 9.5px;
-  min-width: 90px;
-  flex-shrink: 0;
+  flex: 0 0 115px;
+  width: 115px;
+  white-space: nowrap;
 }
 
 .patient-info-row .info-value {
   color: #0f172a;
   font-weight: 600;
   word-break: break-word;
+  flex: 1;
 }
 
 /* ── 4. Itemized Ledger Table ── */
@@ -459,17 +529,21 @@
 
 @media print {
   @page {
-    margin: 0;
+    margin: 8mm 10mm;
     size: A4 portrait;
   }
   
-  /* Hide all screen React UI and app shells */
+  /* Hide all screen React UI, app shells, and toolbars */
   #root,
   .screen-only-preview,
   .billing-editor-layout,
   .billing-preview-panel,
   .admin-tariff-billing,
   .pharmacy-dashboard-container,
+  .unified-terminal,
+  .unified-print-modal-bar,
+  .billing-print-modal-bar,
+  .no-print,
   header,
   nav,
   aside {
@@ -478,7 +552,7 @@
 
   html, body {
     background: white !important;
-    color: black !important;
+    color: #0f172a !important;
     margin: 0 !important;
     padding: 0 !important;
     height: auto !important;
@@ -486,12 +560,51 @@
     overflow: visible !important;
   }
 
-  /* Reveal bill in dedicated billing print portal */
+  /* Ensure print modals, overlays, and containers transition to neutral static print layout */
+  .unified-print-modal-overlay,
+  .billing-print-modal-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  .unified-print-modal-container,
+  .billing-print-modal-container {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .unified-print-modal-body,
+  .billing-print-modal-content {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Reveal bill in dedicated billing print portal & print sheets using static page-flow layout */
+  .unified-print-paper-sheet,
+  .unified-print-portal,
   .billing-print-portal,
-  .print-only-document {
-    position: absolute !important;
-    top: 0 !important;
-    left: 0 !important;
+  .print-only-document,
+  .billing-print-modal-sheet,
+  .unified-bill-sheet {
+    position: static !important;
+    top: auto !important;
+    left: auto !important;
     visibility: visible !important;
     display: block !important;
     width: 100% !important;
@@ -499,40 +612,83 @@
     margin: 0 !important;
     padding: 0 !important;
     background: white !important;
-    z-index: 999999 !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
   }
 
+  .unified-print-paper-sheet *,
+  .unified-print-portal *,
   .billing-print-portal *,
-  .print-only-document * {
+  .print-only-document *,
+  .billing-print-modal-sheet *,
+  .unified-bill-sheet *,
+  .billing-template-container,
+  .billing-template-container * {
     visibility: visible !important;
   }
 
+  .unified-print-portal .billing-template-container,
   .billing-print-portal .billing-template-container,
-  .print-only-document .billing-template-container {
-    padding: 10mm 12mm !important;
+  .print-only-document .billing-template-container,
+  .billing-print-modal-sheet .billing-template-container,
+  .unified-bill-sheet .billing-template-container,
+  .unified-print-paper-sheet .billing-template-container {
+    padding: 4mm 6mm !important;
     max-width: 100% !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     width: 100% !important;
     box-sizing: border-box !important;
     background: transparent !important;
-    font-size: 10.5pt !important;
-    line-height: 1.3 !important;
+    font-size: 11px !important;
+    line-height: 1.35 !important;
   }
 
+  .unified-print-portal .hospital-name,
   .billing-print-portal .hospital-name,
-  .print-only-document .hospital-name {
-    color: black !important;
-    font-size: 15pt !important;
+  .print-only-document .hospital-name,
+  .billing-print-modal-sheet .hospital-name,
+  .unified-bill-sheet .hospital-name {
+    color: #0f172a !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
   }
 
+  .unified-print-portal .billing-title-left h2,
   .billing-print-portal .billing-title-left h2,
-  .print-only-document .billing-title-left h2 {
-    color: black !important;
-    font-size: 12pt !important;
+  .print-only-document .billing-title-left h2,
+  .billing-print-modal-sheet .billing-title-left h2,
+  .unified-bill-sheet .billing-title-left h2 {
+    color: #0f172a !important;
+    font-size: 13px !important;
   }
 
+  .unified-print-portal .billing-token-routing-card,
+  .billing-print-portal .billing-token-routing-card,
+  .print-only-document .billing-token-routing-card,
+  .unified-bill-sheet .billing-token-routing-card {
+    background: #f8fafc !important;
+    border: 1.5px dashed #64748b !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .unified-print-portal .token-routing-badge,
+  .billing-print-portal .token-routing-badge,
+  .print-only-document .token-routing-badge,
+  .unified-bill-sheet .token-routing-badge {
+    background: #1e40af !important;
+    color: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .unified-print-portal .patient-info,
   .billing-print-portal .patient-info,
-  .print-only-document .patient-info {
+  .print-only-document .patient-info,
+  .unified-bill-sheet .patient-info {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     page-break-inside: avoid !important;
@@ -541,34 +697,85 @@
     print-color-adjust: exact !important;
   }
 
-  .billing-print-portal .billing-table,
-  .print-only-document .billing-table {
-    page-break-inside: auto !important;
+  .unified-print-portal .patient-info-grid,
+  .billing-print-portal .patient-info-grid,
+  .print-only-document .patient-info-grid,
+  .unified-bill-sheet .patient-info-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 3px 14px !important;
   }
 
+  .unified-print-portal .patient-info-row,
+  .billing-print-portal .patient-info-row,
+  .print-only-document .patient-info-row,
+  .unified-bill-sheet .patient-info-row {
+    flex: 1 1 calc(50% - 14px) !important;
+    width: calc(50% - 14px) !important;
+    display: flex !important;
+    align-items: baseline !important;
+    font-size: 9.5px !important;
+    line-height: 1.35 !important;
+  }
+
+  .unified-print-portal .info-label,
+  .billing-print-portal .info-label,
+  .print-only-document .info-label,
+  .unified-bill-sheet .info-label {
+    flex: 0 0 115px !important;
+    width: 115px !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+  }
+
+  .unified-print-portal .info-value,
+  .billing-print-portal .info-value,
+  .print-only-document .info-value,
+  .unified-bill-sheet .info-value {
+    flex: 1 !important;
+    color: #0f172a !important;
+  }
+
+  .unified-print-portal .billing-table,
+  .billing-print-portal .billing-table,
+  .print-only-document .billing-table,
+  .unified-bill-sheet .billing-table {
+    page-break-inside: auto !important;
+    width: 100% !important;
+  }
+
+  .unified-print-portal .billing-table tr,
   .billing-print-portal .billing-table tr,
-  .print-only-document .billing-table tr {
+  .print-only-document .billing-table tr,
+  .unified-bill-sheet .billing-table tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
+  .unified-print-portal .billing-table th,
   .billing-print-portal .billing-table th,
-  .print-only-document .billing-table th {
+  .print-only-document .billing-table th,
+  .unified-bill-sheet .billing-table th {
     background: #f1f5f9 !important;
-    color: black !important;
+    color: #0f172a !important;
     border-bottom: 1.5px solid #94a3b8 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  .unified-print-portal .billing-table td,
   .billing-print-portal .billing-table td,
-  .print-only-document .billing-table td {
+  .print-only-document .billing-table td,
+  .unified-bill-sheet .billing-table td {
     border-bottom: 1px solid #e2e8f0 !important;
-    color: black !important;
+    color: #0f172a !important;
   }
 
+  .unified-print-portal .billing-category-header-row,
   .billing-print-portal .billing-category-header-row,
-  .print-only-document .billing-category-header-row {
+  .print-only-document .billing-category-header-row,
+  .unified-bill-sheet .billing-category-header-row {
     background: #f1f5f9 !important;
     border-top: 1.5px solid #cbd5e1 !important;
     border-bottom: 1px solid #cbd5e1 !important;
@@ -578,46 +785,58 @@
     print-color-adjust: exact !important;
   }
 
+  .unified-print-portal .billing-category-index-badge,
   .billing-print-portal .billing-category-index-badge,
-  .print-only-document .billing-category-index-badge {
+  .print-only-document .billing-category-index-badge,
+  .unified-bill-sheet .billing-category-index-badge {
     background: #1e40af !important;
     color: white !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  .unified-print-portal .dosage-tabular-strip,
   .billing-print-portal .dosage-tabular-strip,
-  .print-only-document .dosage-tabular-strip {
+  .print-only-document .dosage-tabular-strip,
+  .unified-bill-sheet .dosage-tabular-strip {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  .unified-print-portal .financial-reconciliation-section,
   .billing-print-portal .financial-reconciliation-section,
-  .print-only-document .financial-reconciliation-section {
+  .print-only-document .financial-reconciliation-section,
+  .unified-bill-sheet .financial-reconciliation-section {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
   }
 
+  .unified-print-portal .reconciliation-table-wrapper,
   .billing-print-portal .reconciliation-table-wrapper,
-  .print-only-document .reconciliation-table-wrapper {
+  .print-only-document .reconciliation-table-wrapper,
+  .unified-bill-sheet .reconciliation-table-wrapper {
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  .unified-print-portal .recon-value-highlight,
   .billing-print-portal .recon-value-highlight,
-  .print-only-document .recon-value-highlight {
+  .print-only-document .recon-value-highlight,
+  .unified-bill-sheet .recon-value-highlight {
     color: #047857 !important;
     font-weight: 800 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  .unified-print-portal .signature-area,
   .billing-print-portal .signature-area,
-  .print-only-document .signature-area {
+  .print-only-document .signature-area,
+  .unified-bill-sheet .signature-area {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     margin-top: 18px !important;

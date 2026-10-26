@@ -1,7 +1,7 @@
 const tariffService = require('./tariff.service');
 const pharmacyService = require('../pharmacy/pharmacy.service');
 const { success, error: sendError } = require('../../core/responses');
-const catchAsync = require('../../core/utils/catchAsync');
+const catchAsync = require('../../core/utils/catch-async');
 const {
   createServiceMasterSchema,
   createTariffRuleSchema,
@@ -34,10 +34,12 @@ class TariffController {
   // ── TariffRule ────────────────────────────────────────────────────────────
   listRules = catchAsync(async (req, res) => {
     const filters = {};
+    if (req.query.search) filters.search = req.query.search;
     if (req.query.category) filters.category = req.query.category;
     if (req.query.status) filters.status = req.query.status;
     if (req.query.departmentId) filters.departmentId = req.query.departmentId;
     if (req.query.tariffGrade) filters.tariffGrade = req.query.tariffGrade;
+    if (req.query.visitType) filters.visitType = req.query.visitType;
     const options = { page: parseInt(req.query.page) || 1, limit: parseInt(req.query.limit) || 50 };
     const data = await tariffService.listTariffRules(filters, options);
     return success(res, data);
@@ -89,6 +91,11 @@ class TariffController {
       staffId: req.query.staffId || null,
       visitType: req.query.visitType || null,
       appointmentType: req.query.appointmentType || null,
+      wardClass: req.query.wardClass || null,
+      floorId: req.query.floorId || null,
+      comfortTier: req.query.comfortTier || null,
+      sharingType: req.query.sharingType || null,
+      bedFeature: req.query.bedFeature || null,
     };
     if (!context.category) return sendError(res, 'VALIDATION_001', 'category is required', null, 400);
     try {

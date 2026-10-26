@@ -9,6 +9,9 @@
   min-height: 100vh;
   background-color: var(--md-sys-color-surface, #f8faf9);
   color: var(--md-sys-color-on-surface, #191c1b);
+  max-width: 100vw;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 .ward-ops-header-tabs {
@@ -19,7 +22,8 @@
   flex: 1;
   padding: 16px 28px 36px 28px;
   width: 100%;
-  max-width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   box-sizing: border-box;
 }
 

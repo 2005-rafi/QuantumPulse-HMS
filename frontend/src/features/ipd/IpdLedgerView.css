@@ -1,0 +1,250 @@
+/* ==========================================================================
+   IpdLedgerView.css — Material 3 Inpatient Financial Ledger & Tariff Desk
+   Path: frontend/src/features/ipd/IpdLedgerView.css
+   ========================================================================== */
+@import '../../styles/admin-responsive-metrics.css';
+
+.ipd-ledger-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--clinical-gap-page, 14px);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* ── Top Rollback Navigation (Standalone Route Only) ── */
+.ipd-ledger-rollback-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--billing-card-radius, 12px);
+}
+
+.ipd-ledger-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-primary, #006a6a);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.ipd-ledger-back-btn:hover {
+  background: var(--md-sys-color-primary-container, #cce8e7);
+  color: var(--md-sys-color-on-primary-container, #051f1f);
+}
+
+/* ── Header & Patient Selector Bar ── */
+.ipd-ledger-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: var(--billing-header-padding, 10px 16px);
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--billing-card-radius, 14px);
+}
+
+.ipd-ledger-title-group h2 {
+  font-size: var(--billing-title-size, 1.05rem);
+  font-weight: 800;
+  margin: 0;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: -0.01em;
+}
+
+.ipd-ledger-title-group p {
+  font-size: var(--billing-subtitle-size, 0.74rem);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 2px 0 0 0;
+}
+
+.ipd-ledger-actions-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ipd-ledger-patient-select {
+  width: 260px;
+}
+
+/* ── Financial KPI Strip (4 Columns) ── */
+.ipd-ledger-kpis-grid {
+  display: grid;
+  grid-template-columns: var(--billing-kpi-columns, repeat(4, minmax(0, 1fr)));
+  gap: var(--clinical-gap-card, 10px);
+}
+
+.ipd-ledger-kpi-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--billing-kpi-padding, 10px 14px);
+  min-height: var(--billing-kpi-min-height, 72px);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--billing-card-radius, 12px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  text-align: left;
+  position: relative;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.ipd-ledger-kpi-label {
+  font-size: var(--billing-kpi-label-size, 0.70rem);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+
+.ipd-ledger-kpi-val {
+  font-size: var(--billing-kpi-val-size, 1.35rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  letter-spacing: -0.02em;
+}
+
+.ipd-ledger-kpi-sub {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: 2px;
+}
+
+/* ── Multi-Bed Stay Timeline & Category Breakdown ── */
+.ipd-ledger-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--billing-card-padding, 12px 16px);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--billing-card-radius, 14px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-sizing: border-box;
+}
+
+.ipd-ledger-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ipd-ledger-card-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.ipd-ledger-card-title .material-symbols-rounded {
+  font-size: 18px;
+  color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ipd-ledger-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ipd-ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--billing-table-font-size, 0.82rem);
+}
+
+.ipd-ledger-table th {
+  padding: var(--billing-table-padding, 8px 10px);
+  border-bottom: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+  text-align: left;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.ipd-ledger-table td {
+  padding: var(--billing-table-padding, 8px 10px);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  vertical-align: middle;
+}
+
+.ipd-ledger-two-col-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--clinical-gap-card, 12px);
+}
+
+.ipd-ledger-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  font-size: var(--billing-table-font-size, 0.82rem);
+}
+
+.ipd-ledger-breakdown-row:last-child {
+  border-bottom: none;
+}
+
+/* ── Modal Dialogs ── */
+.ipd-ledger-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+}
+
+.ipd-ledger-modal-box {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-sizing: border-box;
+}
+
+/* ── Responsive Mobile/Tablet Breakpoints ── */
+@media (max-width: 768px) {
+  .ipd-ledger-patient-select {
+    width: 100%;
+  }
+
+  .ipd-ledger-actions-bar {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .ipd-ledger-actions-bar > * {
+    flex: 1 1 auto;
+  }
+}

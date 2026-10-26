@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./auth.controller');
-const authenticate = require('../../core/middleware/authenticate');
-const { validate } = require('../../core/validation/validate');
+const authenticate = require('../../core/middleware/authenticate.middleware');
+const { validate } = require('../../core/validation/validate.middleware');
 const { loginSchema, refreshSchema, unlockSchema } = require('./auth.validation');
 const { verifyAccessToken } = require('./token.service');
 
@@ -23,8 +23,11 @@ router.post('/login', validate(loginSchema), controller.login);
 router.post('/refresh', validate(refreshSchema), controller.refresh);
 router.post('/unlock', optionalAuthenticate, validate(unlockSchema), controller.unlock);
 
+const bootstrapController = require('./bootstrap.controller');
+
 // Protected
 router.post('/logout', authenticate, controller.logout);
 router.get('/me', authenticate, controller.me);
+router.get('/bootstrap', authenticate, bootstrapController.bootstrapSession);
 
 module.exports = router;

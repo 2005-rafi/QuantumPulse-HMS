@@ -15,7 +15,7 @@ const ConsultationTab = ({
       <ClinicalNotesEditor
         form={form}
         onChange={onFormChange}
-        triageComplaint={visit?.vitals?.chiefComplaint}
+        nurseComplaint={visit?.vitals?.chiefComplaint}
       />
       <PrescriptionManager
         medications={form?.prescribedMedications || []}

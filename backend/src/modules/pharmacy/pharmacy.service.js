@@ -1,5 +1,5 @@
 const visitRepository = require('../visits/visit.repository');
-const AppError = require('../../core/errors/AppError');
+const AppError = require('../../core/errors/app-error');
 const { withTransaction } = require('../../core/database/transaction');
 const medicinePriceRepository = require('./medicine-price.repository');
 
@@ -16,30 +16,45 @@ class PharmacyService {
       }
 
       const dispensedMedications = Array.isArray(data.dispensedMedications) ? data.dispensedMedications : [];
-      const pharmacyCharges = dispensedMedications.reduce((sum, med) => sum + (med.amount || 0), 0);
+      const pharmacyCharges = dispensedMedications.reduce((sum, med) => {
+        const q = Number(med.quantity) || 1;
+        const up = Number(med.unitPrice) || 0;
+        const lineAmt = med.amount !== undefined && med.amount !== null && !isNaN(Number(med.amount)) ? Number(med.amount) : (q * up);
+        return sum + lineAmt;
+      }, 0);
 
-      // Update visit: record pharmacy work and mark completed
+      // Update visit: record pharmacy work and route to central billing station for payment and closure
       const updatedData = {
-        status: 'COMPLETED',
+        status: 'WAITING_BILLING',
         pharmacyWork: {
           pharmacistId,
           dispensedMedications,
           totalAmount: pharmacyCharges,
-          status: 'COMPLETED',
+          status: 'DISPENSED',
           processedAt: new Date(),
         },
-        // Keep visit.billing for backward compat with existing seeded visits
+        // Preserve legacy billing fields for backward compatibility, but leave billedBy null until cashier settles
         billing: {
           consultationFee: data.consultationFee || 0,
           labCharges: data.labCharges || 0,
           pharmacyCharges,
           totalAmount: (data.consultationFee || 0) + (data.labCharges || 0) + pharmacyCharges,
-          billedBy: pharmacistId,
           billedAt: new Date(),
         },
       };
 
       const result = await visitRepository.updateById(visitId, updatedData, { session });
+
+      try {
+        const { broadcastPatientStatus } = require('../realtime/patient-status-events.service');
+        broadcastPatientStatus({
+          patientId: visit.patientId?._id || visit.patientId,
+          visitId,
+          tokenString: visit.tokenString,
+          status: 'WAITING_BILLING',
+          stage: 'Medications Dispensed - Waiting Billing',
+        });
+      } catch (_) {}
 
       // Emit BillableEvent for each dispensed medicine (async, non-blocking for session)
       // This is done after the visit update to avoid circular dependency issues in MVP
@@ -49,6 +64,11 @@ class PharmacyService {
           for (const med of dispensedMedications) {
             if (!med.recommended && !med.alternativeGiven) continue;
             const medicineName = med.alternativeGiven || med.recommended || 'Medicine';
+            const qty = Number(med.quantity) || 1;
+            const unitPrice = med.unitPrice !== undefined && med.unitPrice !== null && !isNaN(Number(med.unitPrice))
+              ? Number(med.unitPrice)
+              : (med.amount ? Number(med.amount) / qty : 0);
+
             await billingService.processBillableEvent({
               type: 'MEDICINE_DISPENSED',
               visitId,
@@ -58,10 +78,10 @@ class PharmacyService {
               resolutionContext: {
                 category: 'PHARMACY',
                 medicineName,
-                quantity: 1,
+                quantity: qty,
               },
-              preResolvedPrice: med.amount || 0,
-              description: `${medicineName}${med.quantity ? ` x${med.quantity}` : ''}`,
+              preResolvedPrice: unitPrice,
+              description: `${medicineName}${med.alternativeGiven ? ` (Substituted)` : ''} (Qty: ${qty} @ ₹${unitPrice.toFixed(2)})`,
             });
           }
         } catch (err) {

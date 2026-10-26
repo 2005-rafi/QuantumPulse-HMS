@@ -43,10 +43,10 @@ const notifyListeners = (event) => {
 /**
  * Check whether a JWT token is expired or close to expiring (within offsetSeconds)
  * @param {string} token - The JWT token string
- * @param {number} offsetSeconds - Buffer before actual expiry (default 5s)
+ * @param {number} offsetSeconds - Buffer before actual expiry (default 60s to prevent in-flight expiry)
  * @returns {boolean}
  */
-export const isTokenExpired = (token, offsetSeconds = 5) => {
+export const isTokenExpired = (token, offsetSeconds = 60) => {
   if (!token || typeof token !== 'string') return true;
   try {
     const parts = token.split('.');
@@ -54,10 +54,30 @@ export const isTokenExpired = (token, offsetSeconds = 5) => {
     const payloadB64 = parts[1];
     const decoded = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
     if (!decoded || !decoded.exp) return true;
-    // Check expiration with buffer
+    // Check expiration with safety buffer
     return decoded.exp * 1000 - offsetSeconds * 1000 < Date.now();
   } catch (e) {
     return true;
+  }
+};
+
+/**
+ * Returns the remaining lifetime of a JWT token in seconds
+ * @param {string} token
+ * @returns {number} remaining seconds (or 0 if expired/invalid)
+ */
+export const getTokenRemainingSeconds = (token) => {
+  if (!token || typeof token !== 'string') return 0;
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return 0;
+    const payloadB64 = parts[1];
+    const decoded = JSON.parse(atob(payloadB64.replace(/-/g, '+').replace(/_/g, '/')));
+    if (!decoded || !decoded.exp) return 0;
+    const remaining = Math.round((decoded.exp * 1000 - Date.now()) / 1000);
+    return Math.max(0, remaining);
+  } catch (e) {
+    return 0;
   }
 };
 
@@ -108,8 +128,10 @@ export const setRefreshToken = (token) => {
  */
 export const setTokens = (accessToken, refreshToken) => {
   _accessToken = accessToken || null;
-  setRefreshToken(refreshToken);
-  notifyListeners({ type: 'TOKENS_UPDATED', accessToken: _accessToken, refreshToken });
+  if (typeof refreshToken === 'string' && refreshToken.trim().length > 0) {
+    setRefreshToken(refreshToken.trim());
+  }
+  notifyListeners({ type: 'TOKENS_UPDATED', accessToken: _accessToken, refreshToken: getRefreshToken() });
 };
 
 /**

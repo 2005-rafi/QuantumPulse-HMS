@@ -27,7 +27,7 @@ export const PERMISSION_MODULES = [
       { code: 'NOTE_UPDATE', label: 'Edit Clinical Notes', description: 'Draft and modify consultation documentation' },
       { code: 'NOTE_FINALIZE', label: 'Finalize Notes', description: 'Sign off and lock clinical encounter notes' },
       { code: 'NOTE_AMEND', label: 'Amend Finalized Notes', description: 'Add addendums to finalized notes' },
-      { code: 'VITALS_RECORD', label: 'Record Vital Signs', description: 'Capture triage and clinical vitals' },
+      { code: 'VITALS_RECORD', label: 'Record Vital Signs', description: 'Capture nursing intake and clinical vitals' },
       { code: 'RX_CREATE', label: 'Prescribe Medications', description: 'Create electronic prescriptions' },
       { code: 'RX_CANCEL', label: 'Cancel Prescriptions', description: 'Revoke or cancel active medication orders' },
     ],
@@ -93,7 +93,7 @@ export const PERMISSION_MODULES = [
 
 /* ─── TAB 1: OVERVIEW ─── */
 export const ProfileOverviewView = () => {
-  const { staffDetails, roleName, accountStatus, formattedDate, formattedDateTime } = useOutletContext();
+  const { staffDetails, formattedDate, formattedDateTime } = useOutletContext();
   if (!staffDetails) return null;
 
   return (
@@ -105,14 +105,6 @@ export const ProfileOverviewView = () => {
           <h2>Personal &amp; Demographic Identity</h2>
         </div>
         <div className="profile-data-list">
-          <div className="profile-data-row">
-            <span className="profile-data-label">Staff Employee ID</span>
-            <span className="profile-data-value profile-data-value--mono">{staffDetails.employeeId}</span>
-          </div>
-          <div className="profile-data-row">
-            <span className="profile-data-label">Full Name</span>
-            <span className="profile-data-value">{staffDetails.fullName}</span>
-          </div>
           <div className="profile-data-row">
             <span className="profile-data-label">Gender</span>
             <span className="profile-data-value">{staffDetails.gender || 'Not specified'}</span>
@@ -140,39 +132,17 @@ export const ProfileOverviewView = () => {
         </div>
       </div>
 
-      {/* Current Assignment & Organization */}
+      {/* Organization & Assignment Details */}
       <div className="profile-md3-card">
         <div className="profile-md3-card-header">
           <span className="material-symbols-rounded">account_tree</span>
-          <h2>Current Hospital Assignment</h2>
+          <h2>Organizational Unit &amp; Assignment</h2>
         </div>
         <div className="profile-data-list">
-          <div className="profile-data-row">
-            <span className="profile-data-label">Department</span>
-            <span className="profile-data-value">{staffDetails.departmentId?.name || '—'}</span>
-          </div>
           <div className="profile-data-row">
             <span className="profile-data-label">Department Code</span>
             <span className="profile-data-value profile-data-value--mono">
               {staffDetails.departmentId?.code || '—'}
-            </span>
-          </div>
-          <div className="profile-data-row">
-            <span className="profile-data-label">Assigned Role</span>
-            <span className="profile-data-value">{roleName}</span>
-          </div>
-          <div className="profile-data-row">
-            <span className="profile-data-label">Organizational Position</span>
-            <span className="profile-data-value">{staffDetails.position}</span>
-          </div>
-          <div className="profile-data-row">
-            <span className="profile-data-label">Hierarchy Rank</span>
-            <span className="profile-data-value">Level {staffDetails.positionRank || 1}</span>
-          </div>
-          <div className="profile-data-row">
-            <span className="profile-data-label">Reporting Supervisor</span>
-            <span className="profile-data-value">
-              {staffDetails.reportingTo ? `${staffDetails.reportingTo.fullName} (${staffDetails.reportingTo.position})` : 'Independent / HOD'}
             </span>
           </div>
           <div className="profile-data-row">
@@ -181,24 +151,30 @@ export const ProfileOverviewView = () => {
               {staffDetails.departmentId?.headOfDepartment?.fullName || 'Not assigned'}
             </span>
           </div>
+          <div className="profile-data-row">
+            <span className="profile-data-label">Shift Schedule</span>
+            <span className="profile-data-value">{staffDetails.shift || 'General / Rotational'}</span>
+          </div>
+          <div className="profile-data-row">
+            <span className="profile-data-label">Date of Joining</span>
+            <span className="profile-data-value">{formattedDate(staffDetails.joiningDate)}</span>
+          </div>
+          <div className="profile-data-row">
+            <span className="profile-data-label">Years of Service</span>
+            <span className="profile-data-value">
+              {staffDetails.yearsOfExperience !== undefined ? `${staffDetails.yearsOfExperience} Years Experience` : '—'}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Contact & Address */}
+      {/* Location & Emergency Contacts */}
       <div className="profile-md3-card">
         <div className="profile-md3-card-header">
           <span className="material-symbols-rounded">contact_phone</span>
-          <h2>Contact &amp; Emergency Information</h2>
+          <h2>Location &amp; Emergency Contacts</h2>
         </div>
         <div className="profile-data-list">
-          <div className="profile-data-row">
-            <span className="profile-data-label">Official Email</span>
-            <span className="profile-data-value">{staffDetails.email || '—'}</span>
-          </div>
-          <div className="profile-data-row">
-            <span className="profile-data-label">Primary Mobile</span>
-            <span className="profile-data-value">{staffDetails.phone || '—'}</span>
-          </div>
           <div className="profile-data-row">
             <span className="profile-data-label">Alternate Phone</span>
             <span className="profile-data-value">{staffDetails.alternatePhone || '—'}</span>
@@ -222,24 +198,16 @@ export const ProfileOverviewView = () => {
         </div>
       </div>
 
-      {/* System Account Summary */}
+      {/* System Security & Account */}
       <div className="profile-md3-card">
         <div className="profile-md3-card-header">
           <span className="material-symbols-rounded">security</span>
-          <h2>System Account &amp; Security Summary</h2>
+          <h2>System Security &amp; Access Summary</h2>
         </div>
         <div className="profile-data-list">
           <div className="profile-data-row">
             <span className="profile-data-label">Login Username</span>
             <span className="profile-data-value profile-data-value--mono">{staffDetails.username || '—'}</span>
-          </div>
-          <div className="profile-data-row">
-            <span className="profile-data-label">Account Status</span>
-            <span className="profile-data-value">
-              <span className={`profile-pill-status profile-pill-status--${accountStatus.toLowerCase()}`}>
-                {accountStatus}
-              </span>
-            </span>
           </div>
           <div className="profile-data-row">
             <span className="profile-data-label">Last Successful Login</span>
@@ -546,7 +514,7 @@ export const ProfileCredentialsView = () => {
             </>
           )}
 
-          {roleName === 'Nurse' && (
+          {['Nurse', 'OPD Nurse', 'IPD Nurse', 'Lab Nurse'].includes(roleName) && (
             <>
               <div className="profile-data-row">
                 <span className="profile-data-label">Nursing License Number</span>
@@ -591,7 +559,7 @@ export const ProfileCredentialsView = () => {
             </>
           )}
 
-          {!['Doctor', 'Nurse', 'Laboratory', 'Pharmacy'].includes(roleName) && (
+          {!['Doctor', 'Surgeon', 'Nurse', 'OPD Nurse', 'IPD Nurse', 'Lab Nurse', 'Laboratory', 'Pharmacy'].includes(roleName) && (
             <div className="profile-data-row">
               <span className="profile-data-label">Administrative Status</span>
               <span className="profile-data-value">Hospital Operations &amp; Support</span>

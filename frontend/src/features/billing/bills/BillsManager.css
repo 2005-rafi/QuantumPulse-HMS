@@ -76,6 +76,20 @@
   padding: 4px 0;
 }
 
+.bills-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 200px;
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.bills-status-select-wrapper {
+  min-width: 140px;
+  flex: 1 1 180px;
+}
+
 .bills-toggle-chip {
   display: inline-flex;
   align-items: center;
@@ -216,15 +230,110 @@
   font-size: 16px !important;
 }
 
-/* ─── RESPONSIVE BREAKPOINT ─── */
-@media (max-width: 900px) {
+/* ─── RESPONSIVE BREAKPOINT (TABLET 641px - 1023px) ─── */
+@media (max-width: 1023px) {
   .bills-kpi-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .bills-kpi-card {
+    padding: 6px 10px;
+    min-height: 46px;
+    gap: 8px;
+  }
+
+  .bills-kpi-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .bills-kpi-value {
+    font-size: 1.05rem;
+  }
+
+  .bills-table th {
+    padding: 7px 10px;
+    font-size: 0.72rem;
+  }
+
+  .bills-row td {
+    padding: 7px 10px;
+    font-size: 0.78rem;
+  }
+
+  .bills-search-wrapper {
+    max-width: 100%;
+    flex: 1 1 100%;
+  }
+
+  .bills-status-select-wrapper {
+    flex: 1 1 160px;
+    min-width: 130px;
+  }
+
+  .bills-action-btn {
+    width: 26px;
+    height: 26px;
+    padding: 0;
   }
 }
 
-@media (max-width: 540px) {
+/* ─── RESPONSIVE BREAKPOINT (MOBILE <= 640px) ─── */
+@media (max-width: 640px) {
   .bills-kpi-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .bills-kpi-card {
+    padding: 5px 8px;
+    min-height: 42px;
+    gap: 6px;
+  }
+
+  .bills-kpi-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .bills-kpi-label {
+    font-size: 0.58rem;
+  }
+
+  .bills-kpi-value {
+    font-size: 0.95rem;
+  }
+
+  .bills-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .bills-search-wrapper {
+    min-width: 100%;
+    max-width: 100%;
+  }
+
+  .bills-status-select-wrapper {
+    flex: 1 1 100%;
+    min-width: 100%;
+  }
+
+  .bills-toggle-chip {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .bills-table th {
+    padding: 6px 8px;
+    font-size: 0.68rem;
+  }
+
+  .bills-row td {
+    padding: 6px 8px;
+    font-size: 0.75rem;
   }
 }
+

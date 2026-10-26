@@ -10,6 +10,9 @@ export default defineConfig({
     strictPort: true,
     host: true,
     allowedHosts: true,
+    watch: {
+      ignored: ['**/test-artifacts/**', '**/docs/**', '**/*.png', '**/*.log'],
+    },
     proxy: {
       '/api': {
         target: portsConfig?.BACKEND?.URL || 'http://localhost:7722',

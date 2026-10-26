@@ -1,14 +1,19 @@
 {
   "name": "hms-backend",
   "version": "1.0.0",
-  "description": "OPD Hospital Management System — Backend API",
-  "main": "src/server/index.js",
+  "description": "OPD Hospital Management System \u2014 Backend API",
+  "main": "src/server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node src/server/index.js",
-    "dev": "nodemon src/server/index.js",
-    "seed": "node scripts/seed-complete-hms.js",
-    "test": "echo \"No tests yet\" && exit 0"
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed": "node scripts/database/seed.js",
+    "db:clean": "node scripts/database/clean-database.js --clinical",
+    "db:reset": "node scripts/database/clean-database.js --all && node scripts/database/seed.js",
+    "unlock:admin": "node scripts/database/unlock-admin.js admin --reset-password Password123!",
+    "unlock:user": "node scripts/database/unlock-admin.js",
+    "test": "node scripts/testing/run-all-tests.js",
+    "test:endpoints": "node scripts/testing/test-all-endpoints.js"
   },
   "keywords": [],
   "author": "",
@@ -26,6 +31,7 @@
     "mongoose": "^9.8.1",
     "morgan": "^1.11.0",
     "multer": "^2.2.0",
+    "node-cache": "^5.1.2",
     "node-cron": "^4.6.0",
     "sanitize-html": "^2.17.6",
     "uuid": "^14.0.1",

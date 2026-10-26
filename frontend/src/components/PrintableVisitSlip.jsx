@@ -1,9 +1,10 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from './md3/Md3Widgets';
-import { useConfig } from '../contexts/ConfigContext';
+import { useConfig } from '../context/ConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { CURRENCY_SYMBOL } from '../constants/currency';
+import { formatDoctorName } from '../utils/patientFormatters';
 import './PrintableVisitSlip.css';
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -50,10 +51,8 @@ const formatDateTime = (dateStr) => {
 
 /* ─── Slip 1: OPD Visit Slip ─────────────────────────────────────────────── */
 const OpdVisitSlip = ({ patient, visit }) => {
-  const deptName = visit.departmentId?.name || 'Triage / General';
-  const doctorName = visit.consultation?.doctorId
-    ? `Dr. ${visit.consultation.doctorId.firstName || ''} ${visit.consultation.doctorId.lastName || ''}`.trim()
-    : 'To Be Assigned';
+  const deptName = visit.departmentId?.name || 'Nursing / General';
+  const doctorName = formatDoctorName(visit.consultation?.doctorId || 'To Be Assigned');
 
   return (
     <article className="print-slip print-slip--opd" aria-label="OPD Visit Slip">
@@ -175,14 +174,23 @@ const PaymentReceipt = ({ patient, visit }) => {
             <td className="print-slip__td">Registration Fee</td>
             <td className="print-slip__td print-slip__td--right">{CURRENCY_SYMBOL}{regFee.toFixed(2)}</td>
           </tr>
-          <tr>
-            <td className="print-slip__td">Consultation Fee</td>
-            <td className="print-slip__td print-slip__td--right">{CURRENCY_SYMBOL}{consultFee.toFixed(2)}</td>
-          </tr>
+          {consultFee > 0 ? (
+            <tr>
+              <td className="print-slip__td">Consultation Fee</td>
+              <td className="print-slip__td print-slip__td--right">{CURRENCY_SYMBOL}{consultFee.toFixed(2)}</td>
+            </tr>
+          ) : (
+            <tr>
+              <td className="print-slip__td print-slip__td--muted" style={{ fontStyle: 'italic', fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
+                * Doctor consultation &amp; medication charges payable at Central Billing Station
+              </td>
+              <td className="print-slip__td print-slip__td--right print-slip__td--muted">—</td>
+            </tr>
+          )}
         </tbody>
         <tfoot>
           <tr className="print-slip__total-row">
-            <td className="print-slip__td print-slip__td--total">Total Paid</td>
+            <td className="print-slip__td print-slip__td--total">Reception Paid Total</td>
             <td className="print-slip__td print-slip__td--right print-slip__td--total">
               {CURRENCY_SYMBOL}{total.toFixed(2)}
             </td>

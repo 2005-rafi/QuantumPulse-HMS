@@ -1,0 +1,112 @@
+/**
+ * BillingDashboard.css
+ * Material 3 Expressive workstation layout for Billing & Cashier station.
+ * Seamless topbar tab integration with smooth animations.
+ */
+
+.billing-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  box-sizing: border-box;
+}
+
+/* ─── HEADER TAB OVERRIDES (IN TOPBAR CENTER SLOT) ─── */
+.billing-header-tabs {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.billing-header-tabs .md3-tab {
+  padding: 4px 12px;
+  font-size: 0.775rem;
+  font-weight: 600;
+  height: 30px;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  transition: all 180ms cubic-bezier(0.2, 0, 0, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.billing-header-tabs .md3-tab .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.billing-header-tabs .md3-tab--active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  box-shadow: var(--md-sys-elevation-level1, 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent));
+}
+
+/* ─── MAIN WORKSPACE & ANIMATED TAB PANELS ─── */
+.billing-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  box-sizing: border-box;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.billing-tab-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  animation: billingFadeSlideIn 240ms cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes billingFadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1199px) {
+  .billing-page {
+    height: auto;
+    max-height: none;
+    min-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .billing-main {
+    padding: 0.5rem 0.5rem 0.75rem 0.5rem;
+    overflow: visible;
+  }
+
+  .billing-tab-panel {
+    height: auto;
+    min-height: auto;
+    overflow: visible;
+  }
+}
+
+@media (max-width: 768px) {
+  .billing-header-tabs {
+    display: none;
+  }
+}

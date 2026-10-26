@@ -118,8 +118,26 @@ export const IoBalanceCard = ({
           </div>
         </div>
       ) : (
-        <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)', fontSize: '0.85rem' }}>
-          No fluid balance recorded for current admission yet.
+        <div
+          style={{
+            background: 'var(--md-sys-color-surface-container-low, #f7f9f8)',
+            border: '1.5px dashed var(--md-sys-color-outline-variant, #cedbd5)',
+            borderRadius: '12px',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            gap: '6px',
+          }}
+        >
+          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>
+            No Fluid Balance Recorded for Current Admission
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline, #707973)', maxWidth: '380px' }}>
+            Track oral hydration, IV infusion fluids, urine excretion, and drainage to compute shift hemodynamic volume balance.
+          </div>
         </div>
       )}
 

@@ -1,19 +1,19 @@
 const service = require('./staff.service');
 const { success } = require('../../core/responses');
-const AppError = require('../../core/errors/AppError');
-const CloudinaryStorageService = require('../../core/storage/CloudinaryStorageService');
+const AppError = require('../../core/errors/app-error');
+const CloudinaryStorageService = require('../../core/storage/cloudinary-storage.service');
 const config = require('../../core/config');
 
 const create = async (req, res, next) => {
   try {
-    const staff = await service.create(req.body, req.user?.staffId);
+    const staff = await service.create(req.body, req.user);
     return success(res, staff, 'Staff record created successfully', 201);
   } catch (err) { next(err); }
 };
 
 const getById = async (req, res, next) => {
   try {
-    const staff = await service.getById(req.params.id);
+    const staff = await service.getById(req.params.id, req.user);
     if (!staff) throw new AppError('NOT_FOUND', 'Staff record not found');
     return success(res, staff, 'Staff record retrieved successfully');
   } catch (err) { next(err); }
@@ -21,7 +21,7 @@ const getById = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   try {
-    const staff = await service.update(req.params.id, req.body, req.user?.staffId);
+    const staff = await service.update(req.params.id, req.body, req.user);
     return success(res, staff, 'Staff record updated successfully');
   } catch (err) { next(err); }
 };
@@ -32,35 +32,46 @@ const list = async (req, res, next) => {
     const maxLimit = config.query?.maxLimit || 100;
     const safeLimit = limit ? Math.min(Math.max(1, parseInt(limit, 10)), maxLimit) : 50;
 
-    const result = await service.list({ 
-      page: Math.max(1, parseInt(page, 10) || 1), 
-      limit: safeLimit, 
-      status, 
-      departmentId, 
-      roleId, 
-      role 
-    });
+    const result = await service.list(
+      { 
+        page: Math.max(1, parseInt(page, 10) || 1), 
+        limit: safeLimit, 
+        status, 
+        departmentId, 
+        roleId, 
+        role 
+      },
+      {},
+      req.user
+    );
     return success(res, result, 'Staff list retrieved successfully');
   } catch (err) { next(err); }
 };
 
 const disableStaff = async (req, res, next) => {
   try {
-    const result = await service.disableStaff(req.params.id);
+    const result = await service.disableStaff(req.params.id, req.user);
     return success(res, result, 'Staff account disabled successfully');
   } catch (err) { next(err); }
 };
 
 const enableStaff = async (req, res, next) => {
   try {
-    const result = await service.enableStaff(req.params.id);
+    const result = await service.enableStaff(req.params.id, req.user);
     return success(res, result, 'Staff account re-enabled successfully');
+  } catch (err) { next(err); }
+};
+
+const unlockStaff = async (req, res, next) => {
+  try {
+    const result = await service.unlockStaff(req.params.id, req.user);
+    return success(res, result, 'Staff account unlocked successfully');
   } catch (err) { next(err); }
 };
 
 const deleteStaff = async (req, res, next) => {
   try {
-    const result = await service.deleteStaff(req.params.id);
+    const result = await service.deleteStaff(req.params.id, req.user);
     return success(res, result, 'Staff account deleted successfully');
   } catch (err) { next(err); }
 };
@@ -71,7 +82,7 @@ const changePosition = async (req, res, next) => {
       req.params.id,
       req.body.position,
       req.body.reason,
-      req.user?.staffId
+      req.user
     );
     return success(res, staff, 'Staff position updated successfully');
   } catch (err) { next(err); }
@@ -79,7 +90,7 @@ const changePosition = async (req, res, next) => {
 
 const getPositionHistory = async (req, res, next) => {
   try {
-    const history = await service.getPositionHistory(req.params.id);
+    const history = await service.getPositionHistory(req.params.id, req.user);
     return success(res, history, 'Staff position history retrieved successfully');
   } catch (err) { next(err); }
 };
@@ -173,6 +184,7 @@ module.exports = {
   list, 
   disableStaff, 
   enableStaff, 
+  unlockStaff,
   deleteStaff, 
   changePosition, 
   getPositionHistory,

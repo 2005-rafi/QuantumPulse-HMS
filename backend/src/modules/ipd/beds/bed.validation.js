@@ -14,6 +14,7 @@ const createFloorSchema = Joi.object({
 });
 
 const updateFloorSchema = Joi.object({
+  floorNumber: Joi.number().integer(),
   floorName: Joi.string().trim().min(1).max(100),
   wing: Joi.string().trim().max(100),
   description: Joi.string().trim().allow('').max(300),
@@ -27,13 +28,16 @@ const createRoomSchema = Joi.object({
   roomType: Joi.string().valid(...ROOM_TYPES).required(),
   genderRestriction: Joi.string().valid('MALE_ONLY', 'FEMALE_ONLY', 'UNRESTRICTED').default('UNRESTRICTED'),
   totalBeds: Joi.number().integer().min(1).max(50).default(1),
+  baseTariff: Joi.number().min(0).allow(null).optional(),
 });
 
 const updateRoomSchema = Joi.object({
+  roomNumber: Joi.string().trim().min(1).max(50),
   roomName: Joi.string().trim().min(1).max(100),
   roomType: Joi.string().valid(...ROOM_TYPES),
   genderRestriction: Joi.string().valid('MALE_ONLY', 'FEMALE_ONLY', 'UNRESTRICTED'),
   totalBeds: Joi.number().integer().min(1).max(50),
+  baseTariff: Joi.number().min(0).allow(null).optional(),
   isActive: Joi.boolean(),
 });
 
@@ -42,9 +46,23 @@ const createBedSchema = Joi.object({
   bedNumber: Joi.string().trim().min(1).max(50).required(),
   bedLabel: Joi.string().trim().min(1).max(100).required(),
   wardClass: Joi.string().trim().max(50).optional(),
+  comfortTier: Joi.string().valid('STANDARD', 'COMFORT', 'DELUXE', 'SUPER_DELUXE_SUITE', 'EXECUTIVE_PRESIDENTIAL').optional(),
+  sharingType: Joi.string().valid('GENERAL_WARD', 'SEMI_PRIVATE', 'PRIVATE_SINGLE', 'VIP_ISOLATION').optional(),
   features: Joi.array().items(Joi.string().valid(...BED_FEATURES)).default([]),
   dailyRateOverride: Joi.number().min(0).allow(null).optional(),
   notes: Joi.string().trim().allow('').max(300).default(''),
+});
+
+const updateBedSchema = Joi.object({
+  bedNumber: Joi.string().trim().min(1).max(50),
+  bedLabel: Joi.string().trim().min(1).max(100),
+  wardClass: Joi.string().trim().max(50),
+  comfortTier: Joi.string().valid('STANDARD', 'COMFORT', 'DELUXE', 'SUPER_DELUXE_SUITE', 'EXECUTIVE_PRESIDENTIAL'),
+  sharingType: Joi.string().valid('GENERAL_WARD', 'SEMI_PRIVATE', 'PRIVATE_SINGLE', 'VIP_ISOLATION'),
+  features: Joi.array().items(Joi.string().valid(...BED_FEATURES)),
+  dailyRateOverride: Joi.number().min(0).allow(null),
+  notes: Joi.string().trim().allow('').max(300),
+  isActive: Joi.boolean(),
 });
 
 const updateBedStatusSchema = Joi.object({
@@ -63,6 +81,7 @@ module.exports = {
   createRoomSchema,
   updateRoomSchema,
   createBedSchema,
+  updateBedSchema,
   updateBedStatusSchema,
   transferBedSchema,
 };

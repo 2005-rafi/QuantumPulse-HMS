@@ -1,51 +1,96 @@
 /**
  * features/ipd/AdminFacilityBuilder.jsx
- * Administrator Physical Hospital Facility & Spatial Bed Management Command Center.
- * Integrates 2D BookMyShow Bed Canvas, real-time KPI metrics, and on-tap FacilityBuilderSheet modals.
+ * Unified Bed Map & Hospital Facility Setup Command Center.
+ * Integrates 2D Spatial Bed Canvas, Real-time Occupancy Metrics, Doctor Inpatient Admission
+ * Advice Queue, and full Physical Infrastructure Setup (Floors, Rooms, Beds).
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import BedMapCanvas from '../../components/ipd/BedMapCanvas';
 import BedDetailDrawer from '../../components/ipd/BedDetailDrawer';
 import FacilityBuilderSheet from './FacilityBuilderSheet';
-import { Md3Button, Md3Select } from '../../components/md3/Md3FormComponents';
+import AdmissionSheet from '../../components/ipd/AdmissionSheet';
+import BedTransferDialog from '../../components/ipd/BedTransferDialog';
+import Md3ConfirmDialog from '../../components/md3/Md3ConfirmDialog';
+import { Md3Select } from '../../components/md3/Md3FormComponents';
+import { formatDoctorName } from '../../utils/patientFormatters';
+import { cleanClinicalText } from '../../utils/clinicalText';
 import { useToast } from '../../context/ToastContext';
 import ipdApi from '../../services/ipdApi';
+import './AdminFacilityBuilder.css';
 
 export const AdminFacilityBuilder = () => {
   const { showSuccess, showError } = useToast();
   const [floors, setFloors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBed, setSelectedBed] = useState(null);
+  const [activeFloorId, setActiveFloorId] = useState('');
+
+  // Reusable MD3 Confirmation Dialog State
+  const [confirmDialog, setConfirmDialog] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmLabel: 'Delete',
+    cancelLabel: 'Cancel',
+    variant: 'danger',
+    icon: 'delete',
+    loading: false,
+    onConfirm: null,
+  });
+
+  // Doctor Admission Advice Queue
+  const [pendingAdviceList, setPendingAdviceList] = useState([]);
+  const [activeAdvice, setActiveAdvice] = useState(null);
+  const [showAdviceQueue, setShowAdviceQueue] = useState(false);
 
   // Filters
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [wardClassFilter, setWardClassFilter] = useState('ALL');
 
-  // Modal Sheet state
+  // Modals
+  const [showAdmitSheet, setShowAdmitSheet] = useState(false);
+  const [showTransferDialog, setShowTransferDialog] = useState(false);
+  const [transferTarget, setTransferTarget] = useState({ bed: null, admission: null });
+
+  // Facility Builder Modal Sheet state
   const [sheetState, setSheetState] = useState({
     isOpen: false,
     mode: 'BED', // 'FLOOR' | 'ROOM' | 'BED'
     floorId: '',
     roomId: '',
+    isEdit: false,
+    editItem: null,
   });
 
-  const loadFacilityData = async () => {
+  const loadFacilityData = async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const res = await ipdApi.getBedMap();
       setFloors(res.data?.data || []);
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     } catch (err) {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
       console.error('Failed to load facility bed map:', err);
-      showError('Failed to load live facility layout');
+      if (!isSilent) showError('Failed to load live facility layout');
+    }
+  };
+
+  const loadPendingAdvice = async () => {
+    try {
+      const res = await ipdApi.getPendingAdmissionAdvice();
+      setPendingAdviceList(res.data?.data || []);
+    } catch (err) {
+      console.warn('Failed to load pending admission advice:', err);
     }
   };
 
   useEffect(() => {
     loadFacilityData();
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(loadFacilityData, 30000);
+    loadPendingAdvice();
+    const interval = setInterval(() => {
+      loadFacilityData(true);
+      loadPendingAdvice();
+    }, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -86,17 +131,19 @@ export const AdminFacilityBuilder = () => {
     };
   }, [floors]);
 
-  const handleOpenSheet = (mode = 'BED', floorId = '', roomId = '') => {
+  const handleOpenSheet = (mode = 'BED', floorId = '', roomId = '', isEdit = false, editItem = null) => {
     setSheetState({
       isOpen: true,
       mode,
       floorId: floorId || (floors.length > 0 ? floors[0]._id : ''),
       roomId,
+      isEdit,
+      editItem,
     });
   };
 
   const handleCloseSheet = () => {
-    setSheetState((prev) => ({ ...prev, isOpen: false }));
+    setSheetState((prev) => ({ ...prev, isOpen: false, isEdit: false, editItem: null }));
   };
 
   const handleSheetSuccess = () => {
@@ -106,13 +153,138 @@ export const AdminFacilityBuilder = () => {
 
   const handleSelectBed = (bed) => {
     setSelectedBed(bed);
+    if (activeAdvice && bed.status === 'VACANT') {
+      setShowAdmitSheet(true);
+    }
   };
 
-  const handleUpdateStatus = async (bedId, status) => {
+  const handleStartAdviceAllocation = (advice) => {
+    if (activeAdvice?._id === advice._id) {
+      setActiveAdvice(null);
+      return;
+    }
+    setActiveAdvice(advice);
+    if (advice.ipdAdmissionAdvice?.targetWardClass) {
+      setWardClassFilter(advice.ipdAdmissionAdvice.targetWardClass);
+    }
+    setStatusFilter('VACANT');
+  };
+
+  const handleAdmissionSuccess = () => {
+    setSelectedBed(null);
+    setActiveAdvice(null);
+    setShowAdmitSheet(false);
+    loadFacilityData();
+    loadPendingAdvice();
+  };
+
+  // ── Infrastructure Edit & Delete Handlers ──
+  const handleEditFloor = (floor) => {
+    handleOpenSheet('FLOOR', floor._id, '', true, { type: 'FLOOR', data: floor });
+  };
+
+  const handleDeleteFloor = (floor) => {
+    const cleanName = cleanClinicalText(floor.floorName || `Floor ${floor.floorNumber}`);
+    setConfirmDialog({
+      isOpen: true,
+      title: `Delete Floor ${floor.floorNumber}?`,
+      message: `Are you sure you want to delete Floor ${floor.floorNumber} (${cleanName})? All inactive rooms and vacant beds on this floor will also be permanently removed.`,
+      confirmLabel: 'Delete Floor',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      icon: 'delete',
+      loading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmDialog((prev) => ({ ...prev, loading: true }));
+          await ipdApi.deleteFloor(floor._id);
+          showSuccess(`Floor ${floor.floorNumber} deleted successfully.`);
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false, loading: false }));
+          loadFacilityData();
+        } catch (err) {
+          setConfirmDialog((prev) => ({ ...prev, loading: false }));
+          showError(err.response?.data?.message || 'Failed to delete floor');
+        }
+      },
+    });
+  };
+
+  const handleEditRoom = (floor, room) => {
+    handleOpenSheet('ROOM', floor?._id || room.floorId, room._id, true, { type: 'ROOM', data: room });
+  };
+
+  const handleDeleteRoom = (room) => {
+    const cleanName = cleanClinicalText(room.roomName || room.roomNumber);
+    setConfirmDialog({
+      isOpen: true,
+      title: `Delete Room ${room.roomNumber}?`,
+      message: `Are you sure you want to delete Room ${room.roomNumber} (${cleanName})? All vacant beds in this room will also be removed.`,
+      confirmLabel: 'Delete Room',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      icon: 'delete',
+      loading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmDialog((prev) => ({ ...prev, loading: true }));
+          await ipdApi.deleteRoom(room._id);
+          showSuccess(`Room ${room.roomNumber} deleted successfully.`);
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false, loading: false }));
+          loadFacilityData();
+        } catch (err) {
+          setConfirmDialog((prev) => ({ ...prev, loading: false }));
+          showError(err.response?.data?.message || 'Failed to delete room');
+        }
+      },
+    });
+  };
+
+  const handleEditBed = (bed) => {
+    setSelectedBed(null);
+    handleOpenSheet('BED', bed.floorId?._id || bed.floorId, bed.roomId?._id || bed.roomId, true, {
+      type: 'BED',
+      data: bed,
+    });
+  };
+
+  const handleDeleteBed = (bed) => {
+    if (bed.status === 'OCCUPIED') {
+      showError('Cannot delete an occupied bed. Discharge or transfer the patient first.');
+      return;
+    }
+
+    setConfirmDialog({
+      isOpen: true,
+      title: `Delete Bed ${bed.bedNumber}?`,
+      message: `Are you sure you want to permanently delete Bed ${bed.bedNumber}? This action cannot be undone.`,
+      confirmLabel: 'Delete Bed',
+      cancelLabel: 'Cancel',
+      variant: 'danger',
+      icon: 'delete',
+      loading: false,
+      onConfirm: async () => {
+        try {
+          setConfirmDialog((prev) => ({ ...prev, loading: true }));
+          await ipdApi.deleteBed(bed._id);
+          setSelectedBed(null);
+          showSuccess(`Bed ${bed.bedNumber} deleted successfully.`);
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false, loading: false }));
+          loadFacilityData();
+        } catch (err) {
+          setConfirmDialog((prev) => ({ ...prev, loading: false }));
+          showError(err.response?.data?.message || 'Failed to delete bed');
+        }
+      },
+    });
+  };
+
+  const handleUpdateStatus = async (bedId, newStatus) => {
     try {
-      await ipdApi.updateBedStatus(bedId, status);
-      showSuccess(`Bed status updated to ${status}`);
-      setSelectedBed(null);
+      await ipdApi.updateBedStatus(bedId, newStatus);
+      showSuccess(`Bed status updated to ${newStatus.replace(/_/g, ' ')}`);
+      if (selectedBed && String(selectedBed._id) === String(bedId)) {
+        setSelectedBed((prev) => (prev ? { ...prev, status: newStatus } : null));
+      }
       loadFacilityData();
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to update bed status');
@@ -120,258 +292,38 @@ export const AdminFacilityBuilder = () => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px' }}>
-      {/* ── Top Header & Actions ── */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-        }}
-      >
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span className="material-symbols-rounded" style={{ fontSize: '28px', color: 'var(--md-sys-color-primary)' }}>
-              domain_add
-            </span>
-            <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
-              Hospital Facility & Spatial Bed Management
-            </h1>
+    <div className="facility-builder-page">
+      {/* ── 1. Unified Action & Filter Toolbar (Zero redundant whitespace) ── */}
+      <div className="facility-top-toolbar">
+        <div className="facility-top-toolbar__filters">
+          {/* Floor Selection Dropdown */}
+          <div className="facility-top-toolbar__floor-select">
+            <Md3Select
+              label="Select Floor"
+              leadingIcon="layers"
+              value={activeFloorId || (floors[0]?._id ? String(floors[0]._id) : '')}
+              onChange={(e) => setActiveFloorId(e.target.value)}
+            >
+              {floors.map((f) => {
+                const cleanFloorName = cleanClinicalText(f.floorName || '');
+                const cleanWing = cleanClinicalText(f.wing || '');
+                const shortName = cleanWing || cleanFloorName.split('—')[0].trim() || `Floor ${f.floorNumber}`;
+                const freeCount = f.stats
+                  ? f.stats.vacantBeds
+                  : (f.rooms || []).reduce(
+                      (acc, rm) => acc + (rm.beds || []).filter((b) => b.status === 'VACANT').length,
+                      0
+                    );
+                return (
+                  <option key={f._id} value={String(f._id)}>
+                    Floor {f.floorNumber}: {shortName} ({freeCount} Free)
+                  </option>
+                );
+              })}
+            </Md3Select>
           </div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', margin: '4px 0 0 0' }}>
-            Interactive Spatial Ward Canvas • Infrastructure Planning & Bed Inventory Control
-          </p>
-        </div>
 
-        {/* ── Action Trigger Buttons ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <Md3Button
-            variant="tonal"
-            onClick={() => handleOpenSheet('FLOOR')}
-            type="button"
-          >
-            <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '6px' }}>
-              layers
-            </span>
-            + Add Floor
-          </Md3Button>
-
-          <Md3Button
-            variant="tonal"
-            onClick={() => handleOpenSheet('ROOM')}
-            type="button"
-          >
-            <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '6px' }}>
-              meeting_room
-            </span>
-            + Add Room
-          </Md3Button>
-
-          <Md3Button
-            variant="filled"
-            onClick={() => handleOpenSheet('BED')}
-            type="button"
-          >
-            <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '6px' }}>
-              single_bed
-            </span>
-            + Add Bed
-          </Md3Button>
-        </div>
-      </div>
-
-      {/* ── KPI Hospital Metrics Row ── */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-          gap: '14px',
-        }}
-      >
-        {/* Total Beds */}
-        <div
-          style={{
-            padding: '16px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--md-sys-color-surface-container, #f0f4f2)',
-            border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
-          }}
-        >
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--md-sys-color-primary-container, #c3e7ff)',
-              color: 'var(--md-sys-color-on-primary-container, #001e2e)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span className="material-symbols-rounded">bed</span>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600 }}>Total Beds</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{globalStats.totalBeds}</div>
-          </div>
-        </div>
-
-        {/* Occupancy Rate */}
-        <div
-          style={{
-            padding: '16px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--md-sys-color-surface-container, #f0f4f2)',
-            border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
-          }}
-        >
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--md-sys-color-error-container, #ffdad6)',
-              color: 'var(--md-sys-color-on-error-container, #410002)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span className="material-symbols-rounded">analytics</span>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600 }}>Occupied</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>
-              {globalStats.occupiedBeds}{' '}
-              <span style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--md-sys-color-outline)' }}>
-                ({globalStats.occupancyRate}%)
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Vacant Beds */}
-        <div
-          style={{
-            padding: '16px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--md-sys-color-surface-container, #f0f4f2)',
-            border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
-          }}
-        >
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--md-sys-color-primary-container, #bbf2e1)',
-              color: 'var(--md-sys-color-on-primary-container, #00211a)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span className="material-symbols-rounded">check_circle</span>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600 }}>Vacant & Ready</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{globalStats.vacantBeds}</div>
-          </div>
-        </div>
-
-        {/* Critical Care (ICU) */}
-        <div
-          style={{
-            padding: '16px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--md-sys-color-surface-container, #f0f4f2)',
-            border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
-          }}
-        >
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--md-sys-color-tertiary-container, #ffddb3)',
-              color: 'var(--md-sys-color-on-tertiary-container, #2b1700)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span className="material-symbols-rounded">monitor_heart</span>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600 }}>Critical Care / ICU</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{globalStats.icuBeds}</div>
-          </div>
-        </div>
-
-        {/* Maintenance / Sanitizing */}
-        <div
-          style={{
-            padding: '16px',
-            borderRadius: '16px',
-            backgroundColor: 'var(--md-sys-color-surface-container, #f0f4f2)',
-            border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '14px',
-          }}
-        >
-          <div
-            style={{
-              width: '42px',
-              height: '42px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--md-sys-color-surface-container-high, #e0e8e4)',
-              color: 'var(--md-sys-color-on-surface-variant, #404944)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <span className="material-symbols-rounded">cleaning_services</span>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', fontWeight: 600 }}>Sanitizing / Maint</div>
-            <div style={{ fontSize: '1.3rem', fontWeight: 800 }}>{globalStats.maintenanceBeds}</div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Filters & Controls Bar ── */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '12px',
-          padding: '12px 18px',
-          background: 'var(--md-sys-color-surface, #ffffff)',
-          borderRadius: '16px',
-          border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <div style={{ width: '160px' }}>
+          <div className="facility-top-toolbar__status-select">
             <Md3Select
               label="Bed Status"
               value={statusFilter}
@@ -386,9 +338,9 @@ export const AdminFacilityBuilder = () => {
             </Md3Select>
           </div>
 
-          <div style={{ width: '180px' }}>
+          <div className="facility-top-toolbar__ward-select">
             <Md3Select
-              label="Ward Billing Class"
+              label="Ward Class"
               value={wardClassFilter}
               onChange={(e) => setWardClassFilter(e.target.value)}
             >
@@ -397,36 +349,218 @@ export const AdminFacilityBuilder = () => {
               <option value="SEMI_PRIVATE">Semi-Private</option>
               <option value="PRIVATE">Private Single</option>
               <option value="DELUXE_PRIVATE">Deluxe Suite</option>
-              <option value="ICU">ICU Critical Care</option>
+              <option value="ICU">ICU / Critical Care</option>
             </Md3Select>
+          </div>
+
+          {(statusFilter !== 'ALL' || wardClassFilter !== 'ALL') && (
+            <button
+              type="button"
+              className="facility-filter-bar__reset-btn"
+              onClick={() => {
+                setStatusFilter('ALL');
+                setWardClassFilter('ALL');
+              }}
+            >
+              Reset
+            </button>
+          )}
+        </div>
+
+        <div className="admin-dir-controls">
+          <button
+            type="button"
+            className="admin-btn admin-btn-tonal"
+            onClick={() => handleOpenSheet('FLOOR')}
+          >
+            <span className="material-symbols-rounded">layers</span>
+            Add Floor
+          </button>
+
+          <button
+            type="button"
+            className="admin-btn admin-btn-tonal"
+            onClick={() => handleOpenSheet('ROOM', activeFloorId || (floors.length > 0 ? floors[0]._id : ''))}
+          >
+            <span className="material-symbols-rounded">meeting_room</span>
+            Add Room
+          </button>
+
+          <button
+            type="button"
+            className="admin-btn admin-btn-primary"
+            onClick={() => handleOpenSheet('BED', activeFloorId || (floors.length > 0 ? floors[0]._id : ''))}
+          >
+            <span className="material-symbols-rounded">single_bed</span>
+            Add Bed
+          </button>
+
+          <button
+            type="button"
+            className="admin-btn admin-btn-tonal"
+            onClick={() => {
+              loadFacilityData();
+              loadPendingAdvice();
+            }}
+            disabled={loading}
+          >
+            <span className="material-symbols-rounded">sync</span>
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+        </div>
+      </div>
+
+      {/* ── Doctor Admission Advice Queue Alert (Optional Strip) ── */}
+      {pendingAdviceList.length > 0 && (
+        <div className="facility-advice-alert">
+          <div className="facility-advice-alert__header">
+            <div className="facility-advice-alert__info">
+              <span className="material-symbols-rounded facility-advice-alert__icon">clinical_notes</span>
+              <div>
+                <strong className="facility-advice-alert__title">Doctor Inpatient Admission Advice Queue</strong>
+                <span className="facility-advice-alert__count">
+                  {pendingAdviceList.length} patient(s) advised for admission awaiting bed allocation
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="facility-advice-alert__toggle-btn"
+              onClick={() => setShowAdviceQueue(!showAdviceQueue)}
+            >
+              {showAdviceQueue ? 'Hide Queue' : 'Show Queue'} ({pendingAdviceList.length})
+            </button>
+          </div>
+
+          {activeAdvice && (
+            <div className="facility-active-advice-banner">
+              <span className="material-symbols-rounded">person_pin</span>
+              <span>
+                Allocating bed for <strong>{activeAdvice.patientId?.firstName} {activeAdvice.patientId?.lastName}</strong> (MRN: {activeAdvice.patientId?.mrn}) — Click any <strong>VACANT</strong> bed below to confirm check-in.
+              </span>
+              <button
+                type="button"
+                className="facility-advice-cancel-btn"
+                onClick={() => setActiveAdvice(null)}
+              >
+                Cancel Allocation
+              </button>
+            </div>
+          )}
+
+          {showAdviceQueue && (
+            <div className="facility-advice-list">
+              {pendingAdviceList.map((advice) => {
+                const isSelected = activeAdvice?._id === advice._id;
+                const p = advice.patientId || {};
+                const doc = advice.doctorId || {};
+                const urgency = advice.ipdAdmissionAdvice?.urgency || 'ROUTINE';
+                const wardClass = advice.ipdAdmissionAdvice?.targetWardClass || 'GENERAL_WARD';
+
+                return (
+                  <div
+                    key={advice._id}
+                    className={`facility-advice-card ${isSelected ? 'facility-advice-card--selected' : ''}`}
+                  >
+                    <div className="facility-advice-card__head">
+                      <div>
+                        <strong>{p.firstName} {p.lastName || ''}</strong>
+                        <div className="facility-advice-card__meta">
+                          MRN: {p.mrn || '—'} • {p.gender || '—'} / {p.age || '—'}y
+                        </div>
+                      </div>
+                      <span className={`facility-advice-badge facility-advice-badge--${urgency.toLowerCase()}`}>
+                        {urgency}
+                      </span>
+                    </div>
+
+                    <div className="facility-advice-card__details">
+                      <div><strong>Tier:</strong> {wardClass.replace(/_/g, ' ')}</div>
+                      <div><strong>Doctor:</strong> {formatDoctorName(doc)}</div>
+                    </div>
+
+                    <div className="facility-advice-card__action">
+                      <button
+                        type="button"
+                        className={`admin-btn ${isSelected ? 'admin-btn-primary' : 'admin-btn-tonal'}`}
+                        onClick={() => handleStartAdviceAllocation(advice)}
+                      >
+                        <span className="material-symbols-rounded">hotel</span>
+                        {isSelected ? 'Selecting Bed...' : 'Allocate Bed'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── 2. KPI Hospital Metrics Row (5 Cards) ── */}
+      <div className="facility-kpi-grid">
+        {/* Total Beds */}
+        <div className="facility-kpi-card">
+          <div className="facility-kpi-card__icon facility-kpi-card__icon--primary">
+            <span className="material-symbols-rounded">hotel</span>
+          </div>
+          <div className="facility-kpi-card__content">
+            <span className="facility-kpi-card__label">Total Inpatient Beds</span>
+            <span className="facility-kpi-card__value">
+              {globalStats.totalBeds} <span className="facility-kpi-card__sub">Beds</span>
+            </span>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={loadFacilityData}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            padding: '8px 14px',
-            borderRadius: '10px',
-            border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
-            backgroundColor: 'var(--md-sys-color-surface-container-low, #f4f4f7)',
-            color: 'var(--md-sys-color-on-surface, #1b1b1f)',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
-            refresh
-          </span>
-          Refresh Layout
-        </button>
+        {/* Occupied Beds */}
+        <div className="facility-kpi-card">
+          <div className="facility-kpi-card__icon facility-kpi-card__icon--occupied">
+            <span className="material-symbols-rounded">analytics</span>
+          </div>
+          <div className="facility-kpi-card__content">
+            <span className="facility-kpi-card__label">Occupied</span>
+            <span className="facility-kpi-card__value">
+              {globalStats.occupiedBeds}{' '}
+              <span className="facility-kpi-card__sub">({globalStats.occupancyRate}%)</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Vacant Beds */}
+        <div className="facility-kpi-card">
+          <div className="facility-kpi-card__icon facility-kpi-card__icon--vacant">
+            <span className="material-symbols-rounded">check_circle</span>
+          </div>
+          <div className="facility-kpi-card__content">
+            <span className="facility-kpi-card__label">Vacant &amp; Ready</span>
+            <span className="facility-kpi-card__value">{globalStats.vacantBeds}</span>
+          </div>
+        </div>
+
+        {/* Critical Care (ICU) */}
+        <div className="facility-kpi-card">
+          <div className="facility-kpi-card__icon facility-kpi-card__icon--icu">
+            <span className="material-symbols-rounded">monitor_heart</span>
+          </div>
+          <div className="facility-kpi-card__content">
+            <span className="facility-kpi-card__label">Critical Care / ICU</span>
+            <span className="facility-kpi-card__value">{globalStats.icuBeds}</span>
+          </div>
+        </div>
+
+        {/* Maintenance / Sanitizing */}
+        <div className="facility-kpi-card">
+          <div className="facility-kpi-card__icon facility-kpi-card__icon--maint">
+            <span className="material-symbols-rounded">cleaning_services</span>
+          </div>
+          <div className="facility-kpi-card__content">
+            <span className="facility-kpi-card__label">Sanitizing / Maint</span>
+            <span className="facility-kpi-card__value">{globalStats.maintenanceBeds}</span>
+          </div>
+        </div>
       </div>
 
-      {/* ── 2D Spatial Bed Map Canvas ── */}
+      {/* ── 4. 2D Spatial Bed Map Canvas ── */}
       {loading && floors.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--md-sys-color-outline)' }}>
           Loading live hospital spatial layout...
@@ -439,21 +573,35 @@ export const AdminFacilityBuilder = () => {
           statusFilter={statusFilter}
           wardClassFilter={wardClassFilter}
           isAdminView={true}
+          activeFloorId={activeFloorId}
+          onFloorChange={setActiveFloorId}
           onAddBedToRoom={(floorId, roomId) => handleOpenSheet('BED', floorId, roomId)}
+          onEditFloor={handleEditFloor}
+          onDeleteFloor={handleDeleteFloor}
+          onEditRoom={handleEditRoom}
+          onDeleteRoom={handleDeleteRoom}
         />
       )}
 
-      {/* ── Administrative Bed Detail Drawer ── */}
+      {/* ── 5. Administrative Bed Detail Drawer ── */}
       <BedDetailDrawer
         bed={selectedBed}
         isOpen={Boolean(selectedBed)}
         onClose={() => setSelectedBed(null)}
         onUpdateStatus={handleUpdateStatus}
-        onAdmit={() => {}}
-        onTransfer={() => {}}
+        onEditBed={handleEditBed}
+        onDeleteBed={handleDeleteBed}
+        onOpenAdmit={(b) => {
+          setSelectedBed(b);
+          setShowAdmitSheet(true);
+        }}
+        onOpenTransfer={(b, adm) => {
+          setTransferTarget({ bed: b, admission: adm });
+          setShowTransferDialog(true);
+        }}
       />
 
-      {/* ── On-Tap Facility Builder Slide-Over Sheet (Modal) ── */}
+      {/* ── 6. On-Tap Facility Builder Slide-Over Sheet (Modal) ── */}
       <FacilityBuilderSheet
         isOpen={sheetState.isOpen}
         onClose={handleCloseSheet}
@@ -462,6 +610,45 @@ export const AdminFacilityBuilder = () => {
         floors={floors}
         preselectedFloorId={sheetState.floorId}
         preselectedRoomId={sheetState.roomId}
+        isEdit={sheetState.isEdit}
+        editItem={sheetState.editItem}
+      />
+
+      {/* ── 7. Walk-in or Doctor-Advised Admission Sheet ── */}
+      {showAdmitSheet && selectedBed && (
+        <AdmissionSheet
+          bed={selectedBed}
+          initialAdvice={activeAdvice}
+          onClose={() => setShowAdmitSheet(false)}
+          onSuccess={handleAdmissionSuccess}
+        />
+      )}
+
+      {/* ── 8. Bed Transfer Dialog ── */}
+      {showTransferDialog && (
+        <BedTransferDialog
+          bed={transferTarget.bed}
+          admission={transferTarget.admission}
+          onClose={() => setShowTransferDialog(false)}
+          onSuccess={() => {
+            setSelectedBed(null);
+            loadFacilityData();
+          }}
+        />
+      )}
+
+      {/* ── 9. Reusable Material Design 3 Confirmation Dialog ── */}
+      <Md3ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={confirmDialog.confirmLabel}
+        cancelLabel={confirmDialog.cancelLabel}
+        variant={confirmDialog.variant}
+        icon={confirmDialog.icon}
+        loading={confirmDialog.loading}
+        onConfirm={confirmDialog.onConfirm}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false, loading: false }))}
       />
     </div>
   );

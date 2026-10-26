@@ -1,25 +1,47 @@
 /**
  * components/ipd/BedMapCanvas.css
- * 2D Spatial Floor and Room Cluster Grid Layout.
+ * 2D Spatial Floor and Room Cluster Grid Layout with Material 3 expressive tokens,
+ * robust text wrapping, 32px button alignments, and empty-state layout.
  */
 
 .ipd-map-container {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   width: 100%;
 }
 
+/* ── 1. Floor KPI Summary Header Bar ── */
 .ipd-map-stats-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
-  padding: 12px 18px;
+  gap: 10px;
+  padding: 10px 14px;
   background: var(--md-sys-color-surface-container, #f0f5f2);
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.ipd-map-stats-bar__title-wrap {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ipd-map-stats-bar__floor-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.ipd-map-stats-bar__floor-sub {
+  font-size: 0.8rem;
+  color: var(--md-sys-color-outline, #707974);
+  font-weight: 500;
 }
 
 .ipd-map-stats-chips {
@@ -36,7 +58,8 @@
   padding: 4px 10px;
   border-radius: 100px;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .ipd-stat-pill--vacant {
@@ -59,144 +82,375 @@
   color: var(--md-sys-color-on-surface-variant, #404944);
 }
 
+/* ── 2. 2D Room Grid & Room Cards ── */
 .ipd-rooms-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 18px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .ipd-room-card {
   background: var(--md-sys-color-surface, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
-  border-radius: 18px;
-  padding: 16px;
+  border-radius: 16px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: box-shadow 0.2s;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  min-width: 0;
 }
 
 .ipd-room-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+  border-color: var(--md-sys-color-primary, #00668b);
 }
 
 .ipd-room-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
 
 .ipd-room-title-group {
   display: flex;
   flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.ipd-room-number-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .ipd-room-number {
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 0.90rem;
+  font-weight: 800;
   color: var(--md-sys-color-on-surface, #191c1b);
-}
-
-.ipd-room-name {
-  font-size: 0.75rem;
-  color: var(--md-sys-color-on-surface-variant, #404944);
+  white-space: nowrap;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
 }
 
 .ipd-room-type-badge {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 2px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
   border-radius: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
   background: var(--md-sys-color-surface-container-highest, #dce5e0);
   color: var(--md-sys-color-on-surface, #191c1b);
+  max-width: 100%;
 }
 
-.ipd-room-beds {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+/* Semantic Badges for Clinical Room Types */
+.ipd-room-type-badge--icu {
+  background: #ffebee;
+  color: #b71c1c;
+}
+
+.ipd-room-type-badge--ward {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+.ipd-room-type-badge--private {
+  background: #f3e5f5;
+  color: #4a148c;
+}
+
+.ipd-room-type-badge--ot {
+  background: #e0f2f1;
+  color: #004d40;
+}
+
+.ipd-room-name {
+  font-size: 0.76rem;
+  color: var(--md-sys-color-on-surface-variant, #404944);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  width: 100%;
+}
+
+/* ── 3. Administrative Action Buttons ── */
+.ipd-admin-btn-group {
+  display: inline-flex;
   align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .ipd-admin-add-bed-btn {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 8px;
+  justify-content: center;
+  gap: 3px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 7px;
   border: 1px solid var(--md-sys-color-primary, #00668b);
   background: var(--md-sys-color-primary-container, #c3e7ff);
   color: var(--md-sys-color-on-primary-container, #001e2e);
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+  user-select: none;
 }
 
 .ipd-admin-add-bed-btn:hover {
   background: var(--md-sys-color-primary, #00668b);
-  color: var(--md-sys-color-on-primary, #ffffff);
-  box-shadow: var(--md-sys-elevation-1, 0 1px 3px rgba(0, 0, 0, 0.12));
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(0, 102, 139, 0.25);
+  transform: translateY(-1px);
 }
 
 .ipd-admin-add-bed-btn:active {
   transform: scale(0.97);
 }
 
+.ipd-admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  background: var(--md-sys-color-surface-container, #f0f4f2);
+  color: var(--md-sys-color-on-surface-variant, #404944);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.ipd-admin-icon-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #e0e8e4);
+  color: var(--md-sys-color-primary, #00668b);
+  border-color: var(--md-sys-color-primary, #00668b);
+  transform: translateY(-1px);
+}
+
+.ipd-admin-icon-btn--delete:hover {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-error, #ba1a1a);
+  border-color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.ipd-admin-icon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.ipd-admin-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.ipd-admin-pill-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #e0e8e4);
+  color: var(--md-sys-color-on-surface, #1b1b1f);
+  border-color: var(--md-sys-color-primary, #00668b);
+  transform: translateY(-1px);
+}
+
+.ipd-admin-pill-btn--danger:hover {
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-error, #ba1a1a);
+  border-color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.ipd-admin-pill-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── 4. Bed Matrix & Empty State ── */
+.ipd-room-beds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+}
+
 .ipd-room-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 14px;
+  width: 100%;
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  border-radius: 14px;
+  border: 1.5px dashed var(--md-sys-color-outline-variant, #c0c9c4);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.ipd-room-empty-state__info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--md-sys-color-outline, #707974);
+}
+
+.ipd-room-empty-state__info .material-symbols-rounded {
+  font-size: 18px;
+}
+
+/* ── 4. Unified Top Workstation Toolbar ── */
+.ipd-bedmap-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px;
-  background: var(--md-sys-color-surface-container-low, #f2f7f4);
-  border-radius: 12px;
-  font-size: 0.8rem;
-  color: var(--md-sys-color-outline, #707974);
-  border: 1px dashed var(--md-sys-color-outline-variant, #c0c9c4);
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-/* ── Responsive Adaptations for IPD Bed Map (MD3 Window Size Classes) ── */
+.ipd-bedmap-top-bar__filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
 
-/* Medium: Tablet (600px - 1023px) */
-@media (min-width: 600px) and (max-width: 1023px) {
+.ipd-bedmap-top-bar__floor-select {
+  min-width: 220px;
+  max-width: 320px;
+  flex: 1 1 240px;
+}
+
+.ipd-bedmap-top-bar__status-select {
+  min-width: 130px;
+  max-width: 170px;
+  flex: 1 1 140px;
+}
+
+.ipd-bedmap-top-bar__ward-select {
+  min-width: 140px;
+  max-width: 190px;
+  flex: 1 1 150px;
+}
+
+.ipd-bedmap-top-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+/* ── Responsive Adaptations ── */
+@media (min-width: 1200px) {
+  .ipd-rooms-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .ipd-rooms-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
   .ipd-rooms-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
 }
 
-/* Compact: Mobile (< 600px) */
+@media (max-width: 767px) {
+  .ipd-bedmap-top-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .ipd-bedmap-top-bar__filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .ipd-bedmap-top-bar__floor-select {
+    grid-column: 1 / -1;
+    min-width: 100%;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .ipd-bedmap-top-bar__status-select,
+  .ipd-bedmap-top-bar__ward-select {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .ipd-bedmap-top-bar__actions {
+    width: 100%;
+  }
+
+  .ipd-bedmap-top-bar__actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 599px) {
-  .ipd-map-container {
+  .ipd-rooms-grid {
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
-  .ipd-map-stats-bar {
-    padding: 10px 12px;
-    border-radius: 12px;
-    gap: 8px;
-  }
-
-  .ipd-map-stats-chips {
-    gap: 6px;
-  }
-
-  .ipd-stat-pill {
-    padding: 3px 8px;
-    font-size: 0.7rem;
-  }
-
-  .ipd-rooms-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
   .ipd-room-card {
-    padding: 12px;
-    border-radius: 14px;
-    gap: 10px;
+    padding: 14px;
   }
 
   .ipd-room-beds {

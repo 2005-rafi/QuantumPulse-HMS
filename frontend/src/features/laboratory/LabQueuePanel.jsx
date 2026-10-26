@@ -109,7 +109,7 @@ const LabQueuePanel = ({
                     <div className="lab-dashboard__queue-patient-text">
                       <h3 className="lab-dashboard__queue-patient-name">{formatPatientName(patient)}</h3>
                       <p className="lab-dashboard__queue-patient-meta">
-                        {getPatientAge(patient)} yrs · {patient.gender || 'Unknown'}
+                        {getPatientAge(patient) ? `${getPatientAge(patient)} yrs · ` : ''}{patient.gender || 'Unknown'}
                       </p>
                     </div>
                   </div>

@@ -24,6 +24,8 @@ const OrdersResultsTab = ({
         <LabResultsPanel
           labOrders={visit?.labOrders || []}
           patient={visit?.patientId || {}}
+          visit={visit}
+          laboratories={laboratories}
         />
       </section>
     </div>

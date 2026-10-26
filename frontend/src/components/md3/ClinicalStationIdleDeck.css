@@ -1,0 +1,137 @@
+/* ============================================================
+   ClinicalStationIdleDeck.css — Material Design 3 Minimalist Idle Deck
+   Minimalist, centered, distraction-free empty state container
+   ============================================================ */
+
+.clinical-idle-deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  min-height: 280px;
+  box-sizing: border-box;
+  animation: clinicalDeckFadeIn 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+  padding: 32px 16px;
+}
+
+@keyframes clinicalDeckFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── Minimalist Hero Container Card ── */
+.clinical-idle-deck__container {
+  width: 100%;
+  max-width: 460px;
+  background: var(--md-sys-color-surface-container-low, #f7f9f9);
+  border: 1px solid var(--md-sys-color-outline-variant, rgba(0, 104, 116, 0.12));
+  border-radius: var(--md-sys-shape-corner-large, 20px);
+  padding: 32px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Station Avatar Icon ── */
+.clinical-idle-deck__avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--md-sys-shape-corner-medium, 16px);
+  background: var(--md-sys-color-surface-container-high, #e6eded);
+  color: var(--md-sys-color-primary, #006874);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant, rgba(0, 104, 116, 0.1));
+}
+
+.clinical-idle-deck__avatar .material-symbols-rounded {
+  font-size: 28px;
+}
+
+/* ── Title & Description ── */
+.clinical-idle-deck__title {
+  font-family: var(--md-sys-typescale-title-medium-font, 'Inter', sans-serif);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  margin: 0 0 6px 0;
+  letter-spacing: -0.015em;
+}
+
+.clinical-idle-deck__description {
+  font-family: var(--md-sys-typescale-body-medium-font, 'Inter', sans-serif);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  max-width: 360px;
+  margin: 0;
+}
+
+/* ── Action Row ── */
+.clinical-idle-deck__actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+/* ────────────────────────────────────────────────────────────
+   Responsive Design Metrics (Mobile <= 480px)
+   ──────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .clinical-idle-deck {
+    padding: 16px 8px;
+    min-height: 220px;
+  }
+
+  .clinical-idle-deck__container {
+    padding: 24px 16px;
+    border-radius: 16px;
+  }
+
+  .clinical-idle-deck__avatar {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+  }
+
+  .clinical-idle-deck__avatar .material-symbols-rounded {
+    font-size: 24px;
+  }
+
+  .clinical-idle-deck__title {
+    font-size: 1.1rem;
+  }
+
+  .clinical-idle-deck__description {
+    font-size: 0.8125rem;
+  }
+
+  .clinical-idle-deck__actions-row {
+    width: 100%;
+    margin-top: 16px;
+  }
+
+  .clinical-idle-deck__actions-row button {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

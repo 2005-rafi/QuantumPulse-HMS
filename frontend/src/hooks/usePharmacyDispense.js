@@ -26,22 +26,22 @@ const DEFAULT_HOSPITAL_INFO = {
 };
 
 const DEFAULT_LABELS = {
-  title: 'OFFICIAL MEDICAL BILL',
+  title: 'PHARMACY MEDICATION DISPENSING SLIP',
   date: 'Date',
-  billNo: 'Bill No',
+  billNo: 'Slip No',
   patientName: 'Patient Name',
   mrn: 'MRN',
   ageGender: 'Age / Gender',
   doctor: 'Consulting Doctor',
-  description: 'Description',
+  description: 'Medication Description',
   quantity: 'Qty',
   amount: 'Amount',
   consultationFee: 'Doctor Consultation Fee',
   labCharges: 'Laboratory Charges',
-  totalAmount: 'TOTAL AMOUNT DUE',
+  totalAmount: 'TOTAL MEDICATION CHARGES',
   pharmacistSignature: 'Pharmacist Signature',
   hospitalSeal: 'Authorized Hospital Seal',
-  footerNote: 'Thank you for your visit. Wishing you a speedy recovery!',
+  footerNote: 'Notice: Present this dispensing slip at the Central Billing Station for payment and final visit clearance.',
 };
 
 /**
@@ -51,11 +51,15 @@ const DEFAULT_LABELS = {
  */
 const mapPrescribedMedication = (med) => {
   const isObj = typeof med === 'object' && med !== null;
+  const qty = isObj && med.quantity ? String(med.quantity) : '';
+  const uPrice = isObj && med.unitPrice != null ? String(med.unitPrice) : '';
+  const amt = (Number(qty) || 0) * (Number(uPrice) || 0);
   return {
     recommended: isObj ? (med.name || '') : String(med),
     alternativeGiven: '',
-    quantity: '',
-    amount: '',
+    quantity: qty,
+    unitPrice: uPrice,
+    amount: amt > 0 ? String(amt) : '',
     dosageSchedule: isObj ? (med.dosageSchedule || DEFAULT_DOSAGE_SCHEDULE) : DEFAULT_DOSAGE_SCHEDULE,
     isDoctorPrescribed: true,
   };
@@ -142,8 +146,8 @@ export const usePharmacyDispense = () => {
     const initialMeds = (visit.prescribedMedications || []).map(mapPrescribedMedication);
     setMedications(initialMeds);
     setValidationErrors({});
-    setConsultationFee(visit.consultation?.doctorId ? 50 : 0);
-    setLabCharges((visit.labOrders?.length || 0) > 0 ? 100 : 0);
+    setConsultationFee(0);
+    setLabCharges(0);
 
     // Auto-lookup prices for prescribed medications from catalog
     if (initialMeds.length > 0) {
@@ -154,10 +158,12 @@ export const usePharmacyDispense = () => {
           try {
             const priceRes = await medicinePriceAPI.getByName(medName);
             const priceData = priceRes.data?.data || priceRes.data;
-            if (priceData && priceData.unitPrice) {
+            if (priceData && priceData.unitPrice != null) {
               const qty = Number(updatedMeds[i].quantity) || 10;
               if (!updatedMeds[i].quantity) updatedMeds[i].quantity = '10';
-              updatedMeds[i].amount = String((priceData.unitPrice * qty) + (priceData.dispensingFee || 0));
+              const unitPrice = Number(priceData.unitPrice);
+              updatedMeds[i].unitPrice = String(unitPrice);
+              updatedMeds[i].amount = String(Number((unitPrice * qty).toFixed(2)));
             }
           } catch (e) {
             // silent fallback
@@ -190,13 +196,17 @@ export const usePharmacyDispense = () => {
   }, [fetchQueue, selectVisit, showSuccess, showError]);
 
   const handleAddMedication = useCallback((medData = null) => {
+    const qty = medData ? '1' : '';
+    const uPrice = medData && medData.unitPrice != null ? String(medData.unitPrice) : '';
+    const lineTotal = medData && medData.unitPrice != null ? String(Number((medData.unitPrice * 1).toFixed(2))) : '';
     setMedications((prev) => [
       ...prev,
       {
         recommended: medData?.medicineName || '',
         alternativeGiven: '',
-        quantity: medData ? '1' : '',
-        amount: medData ? String(medData.unitPrice + (medData.dispensingFee || 0)) : '',
+        quantity: qty,
+        unitPrice: uPrice,
+        amount: lineTotal,
         dosageSchedule: {
           morning:   { count: 1, timing: 'AFTER_FOOD' },
           afternoon: { count: 0, timing: 'N/A' },
@@ -243,23 +253,40 @@ export const usePharmacyDispense = () => {
   const handleMedChange = useCallback((index, field, value) => {
     setMedications((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
+      if (!next[index]) return prev;
+
+      const current = { ...next[index], [field]: value };
+
+      // When quantity or unitPrice changes, automatically calculate total line amount
+      if (field === 'quantity' || field === 'unitPrice') {
+        const q = field === 'quantity' ? Number(value) || 0 : Number(current.quantity) || 0;
+        const up = field === 'unitPrice' ? Number(value) || 0 : Number(current.unitPrice) || 0;
+        current.amount = q > 0 && up >= 0 ? String(Number((q * up).toFixed(2))) : '';
+      }
+
+      next[index] = current;
       return next;
     });
 
-    // Auto-calculate amount if medicine name or quantity changes
-    if (field === 'recommended' || field === 'alternativeGiven' || field === 'quantity') {
-      const targetMedName = field === 'alternativeGiven' && value ? value : (field === 'recommended' ? value : (medications[index]?.alternativeGiven || medications[index]?.recommended));
+    // Auto-lookup catalog unit price if medicine name changes
+    if (field === 'recommended' || field === 'alternativeGiven') {
+      const targetMedName = value || (field === 'recommended' ? medications[index]?.alternativeGiven : medications[index]?.recommended);
       if (targetMedName && targetMedName.length >= 3) {
         medicinePriceAPI.getByName(targetMedName).then((res) => {
           const priceData = res.data?.data || res.data;
-          if (priceData && priceData.unitPrice) {
+          if (priceData && priceData.unitPrice != null) {
             setMedications((prev) => {
               const next = [...prev];
               if (!next[index]) return prev;
-              const qty = Number(field === 'quantity' ? value : next[index].quantity) || 1;
-              const totalAmount = (priceData.unitPrice * qty) + (priceData.dispensingFee || 0);
-              next[index] = { ...next[index], amount: String(totalAmount) };
+              const qty = Number(next[index].quantity) || 1;
+              const unitPrice = Number(priceData.unitPrice);
+              const totalAmount = Number((unitPrice * qty).toFixed(2));
+              next[index] = {
+                ...next[index],
+                unitPrice: String(unitPrice),
+                quantity: next[index].quantity || '1',
+                amount: String(totalAmount),
+              };
               return next;
             });
           }
@@ -267,14 +294,17 @@ export const usePharmacyDispense = () => {
       }
     }
 
-    // Dynamically clear validation error on input change
+    // Clear validation error on input change
     setValidationErrors((prev) => {
       if (!prev[index]?.[field]) return prev;
       const next = { ...prev };
       const rowErrors = { ...next[index] };
       
-      if (field === 'quantity' && value.trim()) {
+      if (field === 'quantity' && value.trim() && Number(value) > 0) {
         delete rowErrors.quantity;
+      }
+      if (field === 'unitPrice' && value !== '' && !isNaN(Number(value)) && Number(value) >= 0) {
+        delete rowErrors.unitPrice;
       }
       if (field === 'amount' && value !== '' && !isNaN(Number(value)) && Number(value) >= 0) {
         delete rowErrors.amount;
@@ -293,16 +323,16 @@ export const usePharmacyDispense = () => {
     const errors = {};
     let hasError = false;
 
-    // Validate medication rows only if there are medication rows entered
+    // Validate medication rows
     if (medications.length > 0) {
       medications.forEach((med, idx) => {
         const rowErrors = {};
-        if (!med.quantity || !med.quantity.trim()) {
-          rowErrors.quantity = 'Required';
+        if (!med.quantity || !med.quantity.trim() || isNaN(Number(med.quantity)) || Number(med.quantity) <= 0) {
+          rowErrors.quantity = 'Required (>0)';
           hasError = true;
         }
-        if (med.amount === '' || isNaN(Number(med.amount)) || Number(med.amount) < 0) {
-          rowErrors.amount = 'Invalid price';
+        if (med.unitPrice === '' || med.unitPrice === null || med.unitPrice === undefined || isNaN(Number(med.unitPrice)) || Number(med.unitPrice) < 0) {
+          rowErrors.unitPrice = 'Required (>=0)';
           hasError = true;
         }
         if (Object.keys(rowErrors).length > 0) {
@@ -315,7 +345,7 @@ export const usePharmacyDispense = () => {
       setValidationErrors(errors);
       showError(
         'Validation Error',
-        'Please enter valid quantities and prices for the highlighted medications.'
+        'Please enter valid quantities and per-unit rates for all medications.'
       );
       return;
     }
@@ -330,16 +360,22 @@ export const usePharmacyDispense = () => {
       const payload = {
         consultationFee: Number(consultationFee),
         labCharges: Number(labCharges),
-        dispensedMedications: medications.map((m) => ({
-          recommended: m.recommended.trim(),
-          alternativeGiven: m.alternativeGiven.trim(),
-          quantity: m.quantity.trim(),
-          amount: Number(m.amount),
-          dosageSchedule: m.dosageSchedule,
-        })),
+        dispensedMedications: medications.map((m) => {
+          const qty = Number(m.quantity) || 1;
+          const unitPrice = Number(m.unitPrice) || 0;
+          const amount = Number(m.amount) || Number((qty * unitPrice).toFixed(2));
+          return {
+            recommended: (m.recommended || '').trim(),
+            alternativeGiven: (m.alternativeGiven || '').trim(),
+            quantity: String(qty),
+            unitPrice: unitPrice,
+            amount: amount,
+            dosageSchedule: m.dosageSchedule,
+          };
+        }),
       };
       await visitAPI.dispenseMedicine(selectedVisit._id, payload);
-      showSuccess('Dispensation Complete', 'Visit completed and billing recorded successfully.');
+      showSuccess('Medications Dispensed', 'Medication dispensing slip generated and routed to Central Billing Station.');
       setShowPreview(false);
       setSelectedVisit(null);
       setMedications([]);
@@ -360,12 +396,15 @@ export const usePharmacyDispense = () => {
 
   const totalBillAmount = useMemo(
     () =>
-      (
-        Number(consultationFee || 0) +
-        Number(labCharges || 0) +
-        medications.reduce((sum, m) => sum + (Number(m.amount) || 0), 0)
-      ).toFixed(2),
-    [consultationFee, labCharges, medications]
+      medications
+        .reduce((sum, m) => {
+          const q = Number(m.quantity) || 0;
+          const up = Number(m.unitPrice) || 0;
+          const lineTotal = m.amount !== '' && !isNaN(Number(m.amount)) ? Number(m.amount) : (q * up);
+          return sum + lineTotal;
+        }, 0)
+        .toFixed(2),
+    [medications]
   );
 
   return {

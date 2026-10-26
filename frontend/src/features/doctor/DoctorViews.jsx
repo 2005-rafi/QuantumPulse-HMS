@@ -1,9 +1,10 @@
 import React from 'react';
-import { useOutletContext, useNavigate } from 'react-router-dom';
+import { useOutletContext, useNavigate, useParams } from 'react-router-dom';
 import ConsultationDesk from './ConsultationDesk';
 import DeletionRequestsView from './DeletionRequestsView';
 import DoctorAppointmentView from '../appointments/DoctorAppointmentView';
 import DoctorConsultationHistory from './DoctorConsultationHistory';
+import PatientProfile from '../patients/PatientProfile';
 
 /**
  * DoctorConsultationView — Main clinical consultation workspace & patient queue.
@@ -94,5 +95,34 @@ export const DoctorDeletionRequestsView = () => {
       deletionRequests={deletionRequests}
       onRefresh={fetchQueue}
     />
+  );
+};
+
+/**
+ * DoctorPatientProfileView — Clinical Patient Dossier with instant back navigation to consultation desk.
+ */
+export const DoctorPatientProfileView = () => {
+  const { patientId } = useParams();
+  const navigate = useNavigate();
+
+  return (
+    <div
+      className="doctor-patient-profile-view"
+      style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        overflow: 'hidden',
+        background: 'var(--md-sys-color-background, #faf9f5)',
+      }}
+    >
+      <PatientProfile
+        patientId={patientId}
+        onBack={() => {
+          navigate('/dashboard/doctor/consultation');
+        }}
+      />
+    </div>
   );
 };

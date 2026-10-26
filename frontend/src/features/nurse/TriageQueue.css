@@ -1,7 +1,6 @@
 /* ==========================================================================
-   TriageQueue.css — Pure Material 3 Clinical Queue Sidebar
+   TriageQueue.css — Material 3 Collapsible Clinical Queue Styling
    Path: frontend/src/features/nurse/TriageQueue.css
-   Calibrated Spacing & Clean Material State Matrix
    ========================================================================== */
 
 .triage-queue-panel {
@@ -17,28 +16,55 @@
 
 /* ─── 1. Compact Material 3 Queue Header ─── */
 .triage-queue__header {
-  padding: 12px 16px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   flex-shrink: 0;
-  gap: 10px;
+  gap: 8px;
+  min-height: 44px;
 }
 
 .triage-queue__header-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   flex: 1;
 }
 
+.triage-queue__collapse-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.triage-queue__collapse-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+}
+
+.triage-queue__collapse-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
 .triage-queue__header-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
   background-color: var(--md-sys-color-primary-container, #eaddff);
   color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
@@ -48,13 +74,13 @@
 }
 
 .triage-queue__header-icon .material-symbols-rounded {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 .triage-queue__header-titles {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
@@ -66,29 +92,9 @@
 
 .triage-queue__header-title {
   font-family: 'Inter', sans-serif;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #1c1b1f);
-  margin: 0;
-  line-height: 1.2;
-}
-
-.triage-queue__count-badge {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background-color: var(--md-sys-color-primary, #6750a4);
-  color: var(--md-sys-color-on-primary, #ffffff);
-  line-height: 1.2;
-}
-
-.triage-queue__header-sub {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.66rem;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
   line-height: 1.2;
   white-space: nowrap;
@@ -96,16 +102,28 @@
   text-overflow: ellipsis;
 }
 
+.triage-queue__count-badge {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  line-height: 1.2;
+  flex-shrink: 0;
+}
+
 .triage-queue__header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
 .triage-queue__refresh-btn {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   background-color: var(--md-sys-color-surface, #ffffff);
@@ -119,8 +137,7 @@
 }
 
 .triage-queue__refresh-btn .material-symbols-rounded {
-  font-size: 16px;
-  transition: transform 0.3s ease;
+  font-size: 15px;
 }
 
 .triage-queue__refresh-btn:hover:not(:disabled) {
@@ -128,11 +145,6 @@
   color: var(--md-sys-color-on-primary-container, #21005d);
   border-color: var(--md-sys-color-primary, #6750a4);
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
-}
-
-.triage-queue__refresh-btn:active:not(:disabled) {
-  transform: scale(0.92);
 }
 
 .triage-queue__refresh-btn.is-loading .material-symbols-rounded {
@@ -145,7 +157,7 @@
 
 /* ─── Search / Filter Bar ─── */
 .triage-queue__search-wrap {
-  padding: 8px 14px;
+  padding: 6px 10px;
   background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
   border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   display: flex;
@@ -155,7 +167,7 @@
 }
 
 .triage-queue__search-icon {
-  font-size: 16px;
+  font-size: 15px;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
@@ -164,7 +176,7 @@
   border: none;
   background: transparent;
   font-family: 'Inter', sans-serif;
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   outline: none;
   padding: 2px 0;
@@ -186,29 +198,29 @@
 }
 
 .triage-queue__search-clear .material-symbols-rounded {
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /* ─── Queue Body & List ─── */
 .triage-queue__body {
   flex: 1;
   overflow-y: auto;
-  padding: 10px 12px;
+  padding: 8px;
   box-sizing: border-box;
 }
 
 .triage-queue__list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 /* ─── Called Patients Section ─── */
 .triage-queue__called-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding-bottom: 10px;
+  gap: 6px;
+  padding-bottom: 8px;
   margin-bottom: 6px;
   border-bottom: 1.5px dashed var(--md-sys-color-tertiary, #7d5260);
 }
@@ -216,9 +228,9 @@
 .triage-queue__section-label {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
@@ -226,25 +238,25 @@
 }
 
 .triage-queue__section-label .material-symbols-rounded {
-  font-size: 14px;
+  font-size: 13px;
 }
 
-/* ─── 2. Pure Material 3 Patient Card ─── */
+/* ─── 2. Compact Material 3 Patient Card ─── */
 .triage-queue-card {
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding: 10px 12px;
-  border-radius: var(--md-sys-shape-corner-small, 10px);
+  gap: 5px;
+  padding: 8px 10px;
+  border-radius: var(--md-sys-shape-corner-small, 8px);
   background-color: var(--md-sys-color-surface, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-left: 3.5px solid transparent;
+  border-left: 3px solid transparent;
   cursor: pointer;
   outline: none;
   position: relative;
   overflow: hidden;
   box-sizing: border-box;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow, #000) 4%, transparent);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   transition:
     background-color 0.15s ease,
     border-color 0.15s ease,
@@ -253,85 +265,56 @@
     box-shadow 0.15s ease;
 }
 
-/* ── State: HOVER ── */
 .triage-queue-card:hover {
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  border-color: color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 60%, var(--md-sys-color-outline-variant));
-  border-left-color: var(--md-sys-color-primary, #6750a4);
-  transform: translateY(-1.5px);
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 14%, transparent);
-}
-
-/* ── State: ONTAP (Active click) ── */
-.triage-queue-card:active {
-  transform: scale(0.985);
-  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
-}
-
-.triage-queue-card:focus-visible {
   border-color: var(--md-sys-color-primary, #6750a4);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+  border-left-color: var(--md-sys-color-primary, #6750a4);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
 }
 
-/* ── State: SELECTED ── */
+.triage-queue-card:active {
+  transform: scale(0.99);
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
 .triage-queue-card--selected {
   background-color: var(--md-sys-color-primary-container, #eaddff) !important;
   border-color: var(--md-sys-color-primary, #6750a4) !important;
-  border-left: 4px solid var(--md-sys-color-primary, #6750a4) !important;
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 22%, transparent) !important;
+  border-left: 3.5px solid var(--md-sys-color-primary, #6750a4) !important;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent) !important;
 }
 
 .triage-queue-card--selected .triage-queue-card__name {
   color: var(--md-sys-color-on-primary-container, #21005d);
 }
 
-.triage-queue-card--selected .triage-queue-card__token {
-  background-color: var(--md-sys-color-surface, #ffffff);
-  color: var(--md-sys-color-on-primary-container, #21005d);
-}
-
-/* ── State: CALLED (Active Summoned) ── */
 .triage-queue-card--called {
   background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
   border-color: var(--md-sys-color-tertiary, #7d5260);
-  border-left: 4px solid var(--md-sys-color-tertiary, #7d5260);
+  border-left: 3.5px solid var(--md-sys-color-tertiary, #7d5260);
 }
 
-.triage-queue-card--called .triage-queue-card__token {
-  background-color: var(--md-sys-color-surface, #ffffff);
-  color: var(--md-sys-color-on-tertiary-container, #31111d);
-}
-
-/* ── Urgency-coded rail fallback ── */
-.triage-queue-card--urgency-error:not(.triage-queue-card--selected):not(:hover) {
-  border-left-color: var(--md-sys-color-error, #ba1a1a);
-}
-
-.triage-queue-card--urgency-secondary:not(.triage-queue-card--selected):not(:hover) {
-  border-left-color: var(--md-sys-color-secondary, #625b71);
-}
-
-/* ─── Card Header Row (Token, Type, Urgency, Action) ─── */
+/* ─── Card Header Row (Token, Type, Arrival Time, Action) ─── */
 .triage-queue-card__header-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 4px;
 }
 
 .triage-queue-card__badge-cluster {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
 .triage-queue-card__token {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
   color: var(--md-sys-color-primary, #6750a4);
@@ -340,11 +323,11 @@
 
 .triage-queue-card__type-tag {
   font-family: 'Inter', sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  padding: 1px 5px;
+  padding: 1px 4px;
   border-radius: 4px;
   background-color: var(--md-sys-color-surface-container, #f3edf7);
   color: var(--md-sys-color-on-surface-variant, #49454f);
@@ -354,35 +337,25 @@
 .triage-queue-card__time-cluster {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
 }
 
-.triage-queue-card__urgency-pill {
+.triage-queue-card__arrival-pill {
   display: inline-flex;
   align-items: center;
   gap: 3px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
   font-weight: 600;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 999px;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
   color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
 }
 
-.triage-queue-card__urgency-pill .material-symbols-rounded {
+.triage-queue-card__arrival-pill .material-symbols-rounded {
   font-size: 11px;
-}
-
-.triage-queue-card__urgency-pill--error {
-  background-color: var(--md-sys-color-error-container, #ffdad6);
-  color: var(--md-sys-color-on-error-container, #410002);
-  font-weight: 700;
-}
-
-.triage-queue-card__urgency-pill--secondary {
-  background-color: var(--md-sys-color-secondary-container, #e8def8);
-  color: var(--md-sys-color-on-secondary-container, #1d192b);
 }
 
 /* ─── Action Buttons (Call / Skip) ─── */
@@ -393,16 +366,16 @@
 }
 
 .triage-card-action-btn {
-  height: 22px;
-  padding: 0 6px;
+  height: 20px;
+  padding: 0 5px;
   border-radius: 999px;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   font-family: 'Inter', sans-serif;
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   cursor: pointer;
   outline: none;
   user-select: none;
@@ -411,7 +384,7 @@
 }
 
 .triage-card-action-btn .material-symbols-rounded {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .triage-card-action-btn--call {
@@ -425,11 +398,6 @@
   color: var(--md-sys-color-on-primary, #ffffff);
   border-color: transparent;
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
-}
-
-.triage-card-action-btn--call:active:not(:disabled) {
-  transform: scale(0.92);
 }
 
 .triage-card-action-btn--skip {
@@ -441,7 +409,6 @@
   background-color: var(--md-sys-color-error-container, #ffdad6);
   color: var(--md-sys-color-on-error-container, #410002);
   border-color: var(--md-sys-color-error, #ba1a1a);
-  transform: translateY(-1px);
 }
 
 .triage-card-action-btn:disabled {
@@ -453,28 +420,23 @@
 .triage-queue-card__identity-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .triage-queue-card__avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--md-sys-color-primary, #6750a4) 0%,
-    var(--md-sys-color-primary-container, #eaddff) 100%
-  );
-  color: var(--md-sys-color-on-primary, #ffffff);
+  background: var(--md-sys-color-primary-container, #eaddff);
+  color: var(--md-sys-color-on-primary-container, #21005d);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Inter', sans-serif;
-  font-size: 0.80rem;
+  font-size: 0.74rem;
   font-weight: 700;
   flex-shrink: 0;
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
 }
 
 .triage-queue-card__identity-details {
@@ -493,11 +455,11 @@
 
 .triage-queue-card__name {
   font-family: 'Inter', sans-serif;
-  font-size: 0.84rem;
+  font-size: 0.80rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -506,21 +468,20 @@
 .triage-queue-card__tags-row {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .triage-queue-card__mrn-tag {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   font-weight: 700;
   color: var(--md-sys-color-primary, #6750a4);
-  letter-spacing: 0.01em;
 }
 
 .triage-queue-card__demog-tag {
   font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.64rem;
   font-weight: 500;
   color: var(--md-sys-color-on-surface-variant, #49454f);
 }
@@ -530,38 +491,30 @@
   align-items: center;
   gap: 2px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.65rem;
+  font-size: 0.60rem;
   font-weight: 700;
   color: var(--md-sys-color-error, #ba1a1a);
   background-color: var(--md-sys-color-error-container, #ffdad6);
-  padding: 0 4px;
-  border-radius: 4px;
+  padding: 0 3px;
+  border-radius: 3px;
 }
 
 .triage-queue-card__blood-tag .material-symbols-rounded {
-  font-size: 11px;
+  font-size: 10px;
 }
 
-/* ─── Collision Guard (DOB & Masked Phone) ─── */
-.triage-queue-card__collision-row {
+/* ─── Contact Row ─── */
+.triage-queue-card__contact-row {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.triage-queue-card__collision-item {
-  display: inline-flex;
   align-items: center;
   gap: 3px;
   font-family: 'Inter', sans-serif;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
-  letter-spacing: 0.01em;
 }
 
-.triage-queue-card__collision-item .material-symbols-rounded {
-  font-size: 12px;
+.triage-queue-card__contact-row .material-symbols-rounded {
+  font-size: 11px;
   color: var(--md-sys-color-primary, #6750a4);
 }
 
@@ -569,13 +522,13 @@
 .triage-queue-card__reason-box {
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
-  border-radius: 6px;
+  gap: 4px;
+  padding: 3px 6px;
+  border-radius: 4px;
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
-  border-left: 2.5px solid var(--md-sys-color-primary, #6750a4);
+  border-left: 2px solid var(--md-sys-color-primary, #6750a4);
   font-family: 'Inter', sans-serif;
-  font-size: 0.70rem;
+  font-size: 0.66rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   white-space: nowrap;
   overflow: hidden;
@@ -583,7 +536,7 @@
 }
 
 .triage-queue-card__reason-box .material-symbols-rounded {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--md-sys-color-primary, #6750a4);
   flex-shrink: 0;
 }
@@ -594,35 +547,198 @@
   white-space: nowrap;
 }
 
-/* ─── Info Chips (Allergies / Conditions) ─── */
-.triage-queue-card__chips-cluster {
+/* ─────────────────────────────────────────────────────────────
+ * 3. COLLAPSED (RAIL) MODE STYLING (~76px Width)
+ * ───────────────────────────────────────────────────────────── */
+.ntq-rail {
+  display: flex;
+  flex-direction: column;
+  width: 76px;
+  height: 100%;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  box-sizing: border-box;
+  overflow: hidden;
+  border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  transition: width 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.ntq-rail__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  min-height: 44px;
+  box-sizing: border-box;
+}
+
+.ntq-rail__toggle-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 4px;
-  flex-wrap: wrap;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
 }
 
-.triage-queue-card__info-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 1px 5px;
-  border-radius: 4px;
+.ntq-rail__toggle-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-primary, #6750a4);
+  border-color: var(--md-sys-color-primary, #6750a4);
+  transform: scale(1.05);
+}
+
+.ntq-rail__toggle-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.ntq-rail__count-badge {
   font-family: 'Inter', sans-serif;
-  font-size: 0.64rem;
-  font-weight: 600;
-  background-color: var(--md-sys-color-surface-container, #f3edf7);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  line-height: 1.2;
 }
 
-.triage-queue-card__info-chip .material-symbols-rounded {
-  font-size: 11px;
+.ntq-rail__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  box-sizing: border-box;
 }
 
-.triage-queue-card__info-chip--alert {
-  background-color: var(--md-sys-color-error-container, #ffdad6);
-  color: var(--md-sys-color-on-error-container, #410002);
+/* Single Rail Item */
+.ntq-rail-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  border-radius: var(--md-sys-shape-corner-sm, 8px);
+  border: 1px solid transparent;
+  background-color: var(--md-sys-color-surface-container-low, #f8fafc);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  text-align: center;
+  width: 66px;
+  box-sizing: border-box;
+}
+
+.ntq-rail-item:hover {
+  background-color: var(--md-sys-color-surface-container-high, #e2e8f0);
+  border-color: var(--md-sys-color-outline-variant, #cbd5e1);
+  transform: translateY(-1px);
+}
+
+.ntq-rail-item--selected {
+  background-color: var(--md-sys-color-primary-container, #eaddff) !important;
+  border-color: var(--md-sys-color-primary, #6750a4) !important;
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--md-sys-color-primary) 18%, transparent);
+}
+
+.ntq-rail-item--called {
+  background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
+  border-color: var(--md-sys-color-tertiary, #7d5260);
+}
+
+.ntq-rail-item__avatar-wrapper {
+  position: relative;
+  margin-bottom: 2px;
+}
+
+.ntq-rail-item__avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
   font-weight: 700;
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ntq-rail-item--selected .ntq-rail-item__avatar {
+  background-color: var(--md-sys-color-primary, #6750a4);
+  color: #ffffff;
+}
+
+.ntq-rail-item__called-dot {
+  position: absolute;
+  bottom: 0;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--md-sys-color-tertiary, #7d5260);
+  border: 1.5px solid #ffffff;
+}
+
+.ntq-rail-item__token {
+  font-size: 0.62rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-surface, #ffffff);
+  padding: 1px 3px;
+  border-radius: 3px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cbd5e1);
+  margin-bottom: 2px;
+  max-width: 58px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ntq-rail-item__name-box {
+  width: 58px;
+  max-width: 58px;
+  overflow: hidden;
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1e293b);
+  line-height: 1.1;
+}
+
+.ntq-rail-item__marquee {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.ntq-rail__spinner,
+.ntq-rail__empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-outline, #94a3b8);
+  padding: 20px 0;
+}
+
+.ntq-rail__spinner-ring {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--md-sys-color-surface-container-high);
+  border-top-color: var(--md-sys-color-primary);
+  border-radius: 50%;
+  animation: triageSpin 0.8s linear infinite;
 }
 
 /* ─── Loading & Empty States ─── */
@@ -632,23 +748,19 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 32px 16px;
+  padding: 28px 16px;
   color: var(--md-sys-color-on-surface-variant);
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 500;
 }
 
 .triage-queue__spinner {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border: 2px solid var(--md-sys-color-surface-container-high);
   border-top-color: var(--md-sys-color-primary);
   border-radius: 50%;
   animation: triageSpin 0.8s linear infinite;
-}
-
-@keyframes triageSpin {
-  to { transform: rotate(360deg); }
 }
 
 .triage-queue__empty-state {
@@ -656,28 +768,28 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 32px 16px;
-  gap: 8px;
+  padding: 28px 16px;
+  gap: 6px;
 }
 
 .triage-queue__empty-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   background-color: var(--md-sys-color-surface-container-high, #ece6f0);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
+  color: var(--md-sys-color-primary, #6750a4);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .triage-queue__empty-icon .material-symbols-rounded {
-  font-size: 22px;
+  font-size: 20px;
 }
 
 .triage-queue__empty-title {
   font-family: 'Inter', sans-serif;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #1c1b1f);
   margin: 0;
@@ -685,8 +797,61 @@
 
 .triage-queue__empty-desc {
   font-family: 'Inter', sans-serif;
-  font-size: 0.74rem;
+  font-size: 0.70rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin: 0;
   line-height: 1.4;
+}
+
+/* ─── Mobile Drawer Close Button ─── */
+.ntq-mobile-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 4px;
+  border-radius: 50%;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.ntq-mobile-close-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.ntq-mobile-close-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface);
+}
+
+/* ─── Responsive Media Queries ─── */
+@media (min-width: 1025px) {
+  .ntq-queue--collapsed-desktop {
+    display: none !important;
+  }
+
+  .ntq-mobile-close-btn {
+    display: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .ntq-rail,
+  .ntq-rail--desktop-only {
+    display: none !important;
+  }
+
+  .triage-queue__collapse-btn {
+    display: none !important;
+  }
+
+  .ntq-queue--collapsed-desktop {
+    display: flex !important;
+  }
+
+  .ntq-mobile-close-btn {
+    display: flex !important;
+  }
 }

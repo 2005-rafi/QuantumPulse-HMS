@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./appointment.controller');
-const authenticate = require('../../core/middleware/authenticate');
-const { requirePermission } = require('../../core/middleware/authorize');
-const { validate } = require('../../core/validation/validate');
+const authenticate = require('../../core/middleware/authenticate.middleware');
+const { requirePermission } = require('../../core/middleware/authorize.middleware');
+const { validate } = require('../../core/validation/validate.middleware');
 const {
   createAppointmentSchema,
   rescheduleAppointmentSchema,

@@ -2,19 +2,28 @@ import React, { useState } from 'react';
 import {
   Icon, Md3Chip,
 } from '../../components/md3/Md3Widgets';
+import { Md3Button } from '../../components/md3/Md3FormComponents';
 import Md3ScanViewerDialog from '../../components/md3/Md3ScanViewerDialog';
+import PrintableLabReportDialog from '../laboratory/PrintableLabReportDialog';
 
-const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
+const LabResultsPanel = ({ labOrders = [], patient = {}, visit = null, laboratories = [] }) => {
   const [activeScanViewer, setActiveScanViewer] = useState(null);
+  const [activePrintOrder, setActivePrintOrder] = useState(null);
 
-  const completedOrders = labOrders.filter((l) => l.status === 'COMPLETED');
-  const pendingOrders = labOrders.filter((l) => l.status !== 'COMPLETED');
+  const completedOrders = labOrders.filter((l) => l.status === 'COMPLETED' || l.status === 'VERIFIED');
+  const pendingOrders = labOrders.filter((l) => l.status !== 'COMPLETED' && l.status !== 'VERIFIED');
+
+  const resolvedVisit = visit || {
+    patientId: patient,
+    labOrders,
+    tokenString: patient?.token || 'OPD-LAB',
+  };
 
   const handleOpenScan = (order, scanId) => {
     setActiveScanViewer({
       scanReportId: scanId,
       testName: order.testName || 'Laboratory Report',
-      patientName: patient.firstName ? `${patient.firstName} ${patient.lastName || ''}`.trim() : '',
+      patientName: patient.firstName ? `${patient.firstName} ${patient.lastName || ''}`.trim() : (patient.name || patient.fullName || 'Patient'),
       mrn: patient.mrn || '',
       labName: order.labName || 'Hospital Laboratory',
     });
@@ -28,9 +37,9 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
             <Icon.Microscope size={20} />
           </span>
           <div>
-            <h3 className="lab-results-heading">Laboratory Results & Investigation Status</h3>
+            <h3 className="lab-results-heading">Laboratory Results &amp; Investigation Status</h3>
             <p className="lab-results-subheading">
-              Real-time diagnostic reports, specimen tracking, and verified laboratory measurements.
+              Real-time diagnostic reports, hospital templates, and verified laboratory measurements.
             </p>
           </div>
         </div>
@@ -51,7 +60,7 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
         <div className="lab-pending-section">
           <h4 className="lab-pending-title">
             <Icon.Clock size={16} />
-            <span>Active Specimen & Workflow Tracker ({pendingOrders.length})</span>
+            <span>Active Specimen &amp; Workflow Tracker ({pendingOrders.length})</span>
           </h4>
           <div className="lab-pending-grid">
             {pendingOrders.map((order, idx) => {
@@ -59,7 +68,7 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                 order.status === 'PENDING_SAMPLE' ? 'Sample Collection Pending' :
                 order.status === 'PENDING_TEST'   ? 'Sample Collected / Awaiting Analysis' :
                 order.status === 'IN_ANALYSIS'    ? 'Diagnostic Testing in Progress' :
-                order.status === 'PENDING_VERIFY' ? 'Awaiting Pathologist Verification' :
+                order.status === 'AWAITING_VERIFICATION' ? 'Awaiting Pathologist Authorization' :
                 order.status?.replace(/_/g, ' ') || 'Order Placed';
 
               const statusVariant =
@@ -78,6 +87,12 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                     <span>{order.labName || 'Laboratory'}</span>
                     <span>•</span>
                     <span>Specimen: {order.sampleType || 'Standard'}</span>
+                    {order.isDocumentUploadOnly && (
+                      <>
+                        <span>•</span>
+                        <span style={{ color: '#d97706', fontWeight: 600 }}>Scan / Document Upload</span>
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -91,7 +106,7 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
         <div className="lab-completed-section">
           <h4 className="lab-completed-title">
             <Icon.CheckCircle size={16} />
-            <span>Verified Laboratory Reports ({completedOrders.length})</span>
+            <span>Verified Laboratory &amp; Diagnostic Reports ({completedOrders.length})</span>
           </h4>
           <div className="lab-results__list">
             {completedOrders.map((order, idx) => {
@@ -102,6 +117,8 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                 rawResults.scanId ||
                 rawResults.attachmentId ||
                 null;
+
+              const isDocOnly = Boolean(order.isDocumentUploadOnly || order.reportType === 'DOCUMENT_UPLOAD');
 
               // Filter out metadata keys from the parameters table
               const parameterEntries = Object.entries(rawResults).filter(([k]) => {
@@ -121,12 +138,25 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                   <div className="lab-results__item-header">
                     <div className="lab-results__title-box">
                       <div className="lab-results__icon">
-                        <span className="material-symbols-rounded">biotech</span>
+                        <span className="material-symbols-rounded">
+                          {isDocOnly ? 'image' : 'biotech'}
+                        </span>
                       </div>
                       <div>
-                        <h4 className="lab-results__title">
-                          {order.testName || 'Unknown Test'}
-                        </h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <h4 className="lab-results__title">
+                            {order.testName || 'Diagnostic Report'}
+                          </h4>
+                          {isDocOnly ? (
+                            <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a' }}>
+                              Scan / Imaging
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', background: '#e0f2fe', color: '#0369a1', border: '1px solid #bae6fd' }}>
+                              Structured Data
+                            </span>
+                          )}
+                        </div>
                         <div className="lab-results__item-sub">
                           <span className="clinical-meta-pill">
                             <span className="material-symbols-rounded">domain</span>
@@ -134,19 +164,33 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                           </span>
                           <span className="clinical-meta-pill">
                             <span className="material-symbols-rounded">verified_user</span>
-                            Verified Result
+                            Verified by Pathologist
                           </span>
                         </div>
                       </div>
                     </div>
-                    <span className="clinical-status-pill clinical-status-pill--ready">
-                      <span className="material-symbols-rounded">verified</span>
-                      Verified &amp; Ready
-                    </span>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {/* View Official Branded Hospital Report Action Button */}
+                      <Md3Button
+                        variant="tonal"
+                        size="small"
+                        onClick={() => setActivePrintOrder(order)}
+                        title="View and print official branded hospital diagnostic report"
+                      >
+                        <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>picture_as_pdf</span>
+                        <span>Hospital Report Template</span>
+                      </Md3Button>
+
+                      <span className="clinical-status-pill clinical-status-pill--ready">
+                        <span className="material-symbols-rounded">verified</span>
+                        Authorized
+                      </span>
+                    </div>
                   </div>
 
                   {/* ── Structured Parameters Table ── */}
-                  {parameterEntries.length > 0 && (
+                  {!isDocOnly && parameterEntries.length > 0 && (
                     <div className="lab-results-table-wrap">
                       <table className="lab-results-table">
                         <thead>
@@ -179,7 +223,7 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                         <div className="lab-scan-text">
                           <span className="lab-scan-title">Attached Diagnostic Scan / Report Document</span>
                           <span className="lab-scan-sub">
-                            Scanned laboratory analysis document uploaded by pathology technician
+                            High-resolution imaging / document attached by diagnostic pathologist
                           </span>
                         </div>
                       </div>
@@ -191,17 +235,17 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                           onClick={() => handleOpenScan(order, scanReportId)}
                         >
                           <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>visibility</span>
-                          <span>Preview Document</span>
+                          <span>Preview High-Res Scan</span>
                         </button>
                       </div>
                     </div>
                   )}
 
-                  {parameterEntries.length === 0 && !scanReportId && (
-                    <div className="lab-results__info-callout">
-                      <span className="material-symbols-rounded lab-results__info-icon">info</span>
+                  {isDocOnly && !scanReportId && (
+                    <div className="lab-results__info-callout" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', color: '#166534' }}>
+                      <span className="material-symbols-rounded lab-results__info-icon" style={{ color: '#15803d' }}>task_alt</span>
                       <span className="lab-results__info-text">
-                        Qualitative diagnostic evaluation completed. No structured numeric telemetry values registered for this test.
+                        Diagnostic scan procedure verified and authorized by consultant radiologist/pathologist. Click "Hospital Report Template" above to view complete report.
                       </span>
                     </div>
                   )}
@@ -210,7 +254,7 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
                     <div className="lab-results__notes-box">
                       <div className="lab-results__notes-header">
                         <span className="material-symbols-rounded">edit_note</span>
-                        <span>Technician / Pathologist Notes</span>
+                        <span>Pathologist Remarks &amp; Clinical Impression</span>
                       </div>
                       <p className="lab-results__notes-body">{order.notes}</p>
                     </div>
@@ -242,6 +286,17 @@ const LabResultsPanel = ({ labOrders = [], patient = {} }) => {
           labName={activeScanViewer.labName}
         />
       )}
+
+      {/* ── Official Branded Hospital Report Dialog ── */}
+      {activePrintOrder && (
+        <PrintableLabReportDialog
+          isOpen={Boolean(activePrintOrder)}
+          onClose={() => setActivePrintOrder(null)}
+          visit={resolvedVisit}
+          order={activePrintOrder}
+          laboratories={laboratories}
+        />
+      )}
     </div>
   );
 };
@@ -256,3 +311,4 @@ const camelToLabel = (str) => {
 };
 
 export default LabResultsPanel;
+

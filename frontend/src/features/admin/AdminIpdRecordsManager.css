@@ -1,0 +1,613 @@
+/* AdminIpdRecordsManager.css — Material 3 Inpatient Census & Export Styling */
+
+.admin-ipd-manager {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Header */
+.admin-ipd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  background: var(--md-sys-color-surface, #ffffff);
+  padding: 20px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.admin-ipd-header__left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.admin-ipd-icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: var(--md-sys-color-primary-container, #97f0ff);
+  color: var(--md-sys-color-on-primary-container, #001f24);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-ipd-icon-circle .material-symbols-rounded {
+  font-size: 28px;
+}
+
+.admin-ipd-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  margin: 0;
+}
+
+.admin-ipd-subtitle {
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  margin: 4px 0 0 0;
+}
+
+/* Modality Switcher */
+.admin-modality-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  padding: 5px;
+  border-radius: 14px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.admin-modality-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.admin-modality-tab:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.admin-modality-tab.is-active {
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-primary, #006874);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Census KPI Ribbon */
+.admin-census-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px;
+}
+
+.census-kpi-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  border-radius: 16px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.census-kpi-card--admitted {
+  border-left: 4px solid var(--md-sys-color-primary, #006874);
+}
+
+.census-kpi-card--discharged {
+  border-left: 4px solid #2e7d32;
+}
+
+.census-kpi-card--transferred {
+  border-left: 4px solid #7b1fa2;
+}
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline, #70797b);
+  letter-spacing: 0.5px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  margin: 6px 0 2px 0;
+}
+
+.kpi-value small {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+}
+
+.kpi-sub {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+}
+
+/* Filter Deck */
+.admin-filter-deck {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  border-radius: 18px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.admin-filter-deck__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.admin-search-box {
+  flex: 1;
+  min-width: 280px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--md-sys-color-surface-container-low, #f8fafb);
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  border-radius: 12px;
+  padding: 8px 14px;
+}
+
+.admin-search-box .material-symbols-rounded {
+  color: var(--md-sys-color-outline, #70797b);
+}
+
+.admin-search-box input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+/* Export Buttons */
+.admin-export-deck {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 150ms ease;
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.admin-export-btn--csv {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-color: #a5d6a7;
+}
+
+.admin-export-btn--csv:hover {
+  background: #c8e6c9;
+}
+
+.admin-export-btn--json {
+  background: #e0f2f1;
+  color: #006874;
+  border-color: #80cbc4;
+}
+
+.admin-export-btn--json:hover {
+  background: #b2dfdb;
+}
+
+.admin-export-btn--print {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.admin-export-btn--print:hover {
+  background: var(--md-sys-color-surface-container-highest, #e6e0e9);
+}
+
+.admin-export-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Secondary filter row */
+.admin-filter-deck__bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--md-sys-color-outline-variant, #c4c7c7);
+}
+
+.admin-state-chips,
+.admin-date-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-group-tag {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-sys-color-outline, #70797b);
+  margin-right: 4px;
+}
+
+.admin-state-chip,
+.admin-date-chip {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.admin-state-chip:hover,
+.admin-date-chip:hover {
+  background: var(--md-sys-color-surface-container-low, #f8fafb);
+}
+
+.admin-state-chip.is-active,
+.admin-date-chip.is-active {
+  background: var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: var(--md-sys-color-primary, #006874);
+}
+
+.admin-custom-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--md-sys-color-outline, #70797b);
+}
+
+.admin-date-field {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+/* Records Viewport & Data Table */
+.admin-records-viewport {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.admin-table-wrapper {
+  overflow-x: auto;
+}
+
+.admin-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.admin-data-table th {
+  padding: 14px 16px;
+  text-align: left;
+  background: var(--md-sys-color-surface-container, #f0f4f5);
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #c4c7c7);
+}
+
+.admin-data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--md-sys-color-surface-container, #f0f4f5);
+  color: var(--md-sys-color-on-surface, #191c1d);
+  vertical-align: middle;
+}
+
+.admin-data-table tr:hover td {
+  background: var(--md-sys-color-surface-container-lowest, #fbfdfd);
+}
+
+.adm-num-text {
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #006874);
+  font-size: 13px;
+}
+
+.adm-type-sub {
+  font-size: 11px;
+  color: var(--md-sys-color-outline, #70797b);
+  margin-top: 2px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.patient-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.patient-avatar-mini {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary-container, #97f0ff);
+  color: var(--md-sys-color-on-primary-container, #001f24);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.patient-name-bold {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.patient-meta-mini {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  display: flex;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.bed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #006874);
+  background: rgba(0, 104, 116, 0.08);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.bed-badge .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.ward-sub-text,
+.dept-sub-text,
+.fee-sub-text,
+.time-sub-text {
+  font-size: 11px;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  margin-top: 3px;
+}
+
+.doctor-text {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.stay-date-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.los-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #006874);
+  margin-top: 2px;
+}
+
+.dx-text {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.rounds-count-sub {
+  font-size: 11px;
+  color: #2e7d32;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* Status Badges */
+.admin-status-badge,
+.opd-status-badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.admin-status-badge--discharged,
+.opd-status-badge--completed {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #a5d6a7;
+}
+
+.admin-status-badge--admitted,
+.admin-status-badge--initiated,
+.opd-status-badge--in_consultation {
+  background: #e0f2f1;
+  color: #006874;
+  border: 1px solid #80cbc4;
+}
+
+.admin-status-badge--transferred {
+  background: #ede7f6;
+  color: #512da8;
+  border: 1px solid #d1c4e9;
+}
+
+.admin-status-badge--cancelled {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef9a9a;
+}
+
+.token-sub-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #006874);
+  background: var(--md-sys-color-primary-container, #97f0ff);
+  padding: 1px 6px;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.fee-text {
+  font-weight: 700;
+  color: #2e7d32;
+}
+
+/* Actions */
+.th-action,
+.td-action {
+  text-align: right;
+}
+
+.admin-case-file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-primary, #006874);
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-primary, #006874);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.admin-case-file-btn:hover {
+  background: var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-on-primary, #ffffff);
+}
+
+.admin-case-file-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+/* Loading & Empty */
+.admin-loading-state,
+.admin-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  gap: 12px;
+  text-align: center;
+}
+
+.admin-loading-state .spin {
+  animation: spin 1s linear infinite;
+  font-size: 36px;
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.admin-empty-state .material-symbols-rounded {
+  font-size: 48px;
+  color: var(--md-sys-color-outline, #70797b);
+}
+
+.admin-empty-state h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.admin-empty-state p {
+  font-size: 13px;
+  margin: 0;
+}
+
+/* Print Rules */
+@media print {
+  body:has(.admin-ipd-manager) * {
+    visibility: hidden;
+  }
+  .admin-ipd-manager,
+  .admin-ipd-manager * {
+    visibility: visible;
+  }
+  .admin-ipd-manager {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+  }
+  .admin-modality-switcher,
+  .admin-filter-deck,
+  .admin-case-file-btn,
+  .th-action,
+  .td-action {
+    display: none !important;
+  }
+}

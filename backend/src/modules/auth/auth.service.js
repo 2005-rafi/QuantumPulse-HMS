@@ -4,20 +4,43 @@ const identityService = require('../identity/identity.service');
 const staffService = require('../staff/staff.service');
 const administrationService = require('../administration/administration.service');
 const { signAccessToken, signRefreshToken, verifyRefreshToken } = require('./token.service');
-const AppError = require('../../core/errors/AppError');
+const AppError = require('../../core/errors/app-error');
 const config = require('../../core/config');
 const { ACCOUNT_STATUS } = require('../../core/constants');
 const logger = require('../../core/logger');
+const auditService = require('../audit/audit.service');
 
 const buildUserPayload = async (identity, staff) => {
   const permissions = await administrationService.getPermissionCodesForRole(staff.roleId._id || staff.roleId);
+  const Department = require('../administration/department.model');
+
+  const deptId = staff.departmentId?._id ? staff.departmentId._id.toString() : (staff.departmentId ? staff.departmentId.toString() : '');
+  
+  let isHod = false;
+  let hodDepartmentId = null;
+
+  if (staff._id) {
+    const deptAsHod = await Department.findOne({ headOfDepartment: staff._id });
+    if (deptAsHod) {
+      isHod = true;
+      hodDepartmentId = deptAsHod._id.toString();
+    } else if (['Head of Department', 'Head of Surgery Department', 'Laboratory Director'].includes(staff.position)) {
+      isHod = true;
+      hodDepartmentId = deptId;
+    }
+  }
+
   return {
     userId: identity._id.toString(),
     staffId: staff._id.toString(),
     role: staff.roleId.name || staff.role,
     department: staff.departmentId.name || staff.department,
-    departmentId: staff.departmentId._id ? staff.departmentId._id.toString() : staff.departmentId.toString(),
+    departmentId: deptId,
     permissions,
+    isHod,
+    hodDepartmentId: hodDepartmentId || (isHod ? deptId : null),
+    position: staff.position || '',
+    positionRank: staff.positionRank || 1,
   };
 };
 
@@ -32,8 +55,22 @@ const login = async (username, password) => {
     throw new AppError('AUTH_001');
   }
 
-  // 2. Check account status
-  if (identity.accountStatus === ACCOUNT_STATUS.LOCKED) throw new AppError('AUTH_004');
+  // 2. Check account status & handle automatic lockout expiry
+  if (identity.accountStatus === ACCOUNT_STATUS.LOCKED) {
+    const isLockExpired = identity.lockUntil && Date.now() > new Date(identity.lockUntil).getTime();
+    if (isLockExpired) {
+      await identityService.unlockAccount(identity._id);
+      identity.accountStatus = ACCOUNT_STATUS.ACTIVE;
+      identity.failedLoginAttempts = 0;
+      identity.lockUntil = null;
+      logger.info('Account lock expired; automatically unlocked on login attempt', { username });
+    } else {
+      const remainingSeconds = identity.lockUntil 
+        ? Math.max(1, Math.ceil((new Date(identity.lockUntil).getTime() - Date.now()) / 1000))
+        : 900;
+      throw new AppError('AUTH_004', `Account is temporarily locked due to consecutive failed attempts. Try again in ${remainingSeconds} seconds or contact Hospital IT.`, { lockUntil: identity.lockUntil, remainingSeconds });
+    }
+  }
   if (identity.accountStatus === ACCOUNT_STATUS.DISABLED) throw new AppError('AUTH_005');
   if (identity.accountStatus === ACCOUNT_STATUS.PENDING) throw new AppError('AUTH_006');
   if (identity.accountStatus !== ACCOUNT_STATUS.ACTIVE) throw new AppError('AUTH_001');
@@ -43,7 +80,7 @@ const login = async (username, password) => {
   if (!isMatch) {
     const updated = await identityService.incrementFailedAttempts(identity._id);
     if (updated.failedLoginAttempts >= config.maxFailedAttempts) {
-      await identityService.lockAccount(identity._id);
+      await identityService.lockAccount(identity._id, config.lockoutDurationMs);
       logger.warn('Account locked after failed attempts', { username, attempts: updated.failedLoginAttempts });
     }
     throw new AppError('AUTH_001');
@@ -77,7 +114,12 @@ const login = async (username, password) => {
       fullName: staff.fullName,
       role: payload.role,
       department: payload.department,
-      departmentId: payload.departmentId
+      departmentId: payload.departmentId,
+      isHod: payload.isHod,
+      hodDepartmentId: payload.hodDepartmentId,
+      position: payload.position,
+      positionRank: payload.positionRank,
+      permissions: payload.permissions,
     },
   };
 };
@@ -90,9 +132,11 @@ const logout = async (userId) => {
   logger.info('User logged out', { userId });
 };
 
+const REFRESH_GRACE_WINDOW_MS = 30 * 1000; // 30-second lease grace window for concurrent requests/tabs
+
 /**
  * Refresh: validate refresh token, rotate, issue new access token.
- * Rotation: old refresh token is immediately invalidated after use.
+ * Concurrency-safe: RFC 6749 grace period protects against race conditions across browser tabs.
  */
 const refresh = async (refreshToken) => {
   // 1. Verify JWT signature and expiry
@@ -110,11 +154,50 @@ const refresh = async (refreshToken) => {
     throw new AppError('AUTH_003');
   }
 
-  // 3. Compare incoming token hash against stored hash (rotation check)
+  // 3. Compare incoming token hash against current or previous grace window hash
   const incomingHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-  if (incomingHash !== identityWithSecrets.refreshTokenHash) {
-    // Hash mismatch — token was already rotated or tampered
-    throw new AppError('AUTH_003');
+  const isCurrentHashMatch = incomingHash === identityWithSecrets.refreshTokenHash;
+
+  const isGraceWindowMatch =
+    !isCurrentHashMatch &&
+    identityWithSecrets.previousRefreshTokenHash &&
+    incomingHash === identityWithSecrets.previousRefreshTokenHash &&
+    identityWithSecrets.refreshTokenRotatedAt &&
+    Date.now() - new Date(identityWithSecrets.refreshTokenRotatedAt).getTime() < REFRESH_GRACE_WINDOW_MS;
+
+  if (!isCurrentHashMatch && !isGraceWindowMatch) {
+    logger.error('CRITICAL: Token replay attack detected! Revoking all sessions for user', {
+      userId: payload.userId,
+      familyId: payload.familyId,
+      isGraceWindowMatch,
+    });
+    // Neutralize replay attack: revoke all tokens for this user family
+    await identityService.updateRefreshToken(identityWithSecrets._id, null);
+
+    auditService.logEvent(
+      identityWithSecrets.staffId || payload.userId,
+      'SECURITY',
+      'TOKEN_FAMILY_REPLAY_ATTACK_DETECTED',
+      payload.userId,
+      {
+        userId: payload.userId,
+        familyId: payload.familyId || null,
+        action: 'ALL_SESSIONS_REVOKED',
+        reason: 'Consumed refresh token replayed outside grace window',
+      },
+      null,
+      {
+        category: 'SECURITY',
+        severity: 'CRITICAL',
+        statusChange: {
+          from: 'ACTIVE_SESSION',
+          to: 'TOKEN_FAMILY_REVOKED',
+          reason: 'Replay attack neutralization',
+        },
+      }
+    );
+
+    throw new AppError('AUTH_003', 'Invalid or revoked token family');
   }
 
   // 4. Check account is still active
@@ -126,13 +209,39 @@ const refresh = async (refreshToken) => {
   const staff = await staffService.getById(identityWithSecrets.staffId.toString());
   const newPayload = await buildUserPayload(identityWithSecrets, staff);
 
-  // 6. Issue new token pair (jti in refresh token guarantees uniqueness even within same second)
-  const newAccessToken = signAccessToken(newPayload);
-  const newRefreshToken = signRefreshToken({ userId: payload.userId });
+  if (isGraceWindowMatch) {
+    // Grace window hit: concurrent request from another tab or in-flight queue.
+    // Return a fresh access token without returning the revoked refresh token.
+    const newAccessToken = signAccessToken(newPayload);
+    logger.info('Refresh token matched within concurrent grace window', { userId: payload.userId });
+    return { accessToken: newAccessToken, refreshToken: null };
+  }
 
-  // 7. Immediately rotate: store new hash, invalidating the old token
+  // 6. Issue new token pair preserving the token family
+  const newAccessToken = signAccessToken(newPayload);
+  const newRefreshToken = signRefreshToken({ userId: payload.userId, familyId: payload.familyId });
   const newHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
-  await identityService.updateRefreshToken(identityWithSecrets._id.toString(), newHash);
+
+  // 7. Atomic CAS rotation: update current hash and retain previous with rotation timestamp
+  const rotated = await identityService.rotateRefreshTokenAtomic(identityWithSecrets._id, identityWithSecrets.refreshTokenHash, newHash);
+  if (!rotated) {
+    // Another concurrent request updated the token in the interim.
+    // Re-verify against latest state to see if our token became the previousRefreshTokenHash within grace window.
+    const latestIdentity = await identityService.findByIdWithSecrets(payload.userId);
+    const isNowGraceMatch =
+      latestIdentity &&
+      latestIdentity.previousRefreshTokenHash === incomingHash &&
+      latestIdentity.refreshTokenRotatedAt &&
+      Date.now() - new Date(latestIdentity.refreshTokenRotatedAt).getTime() < REFRESH_GRACE_WINDOW_MS;
+
+    if (isNowGraceMatch) {
+      logger.info('Concurrent refresh CAS race resolved: token accepted under grace window', { userId: payload.userId });
+      return { accessToken: newAccessToken, refreshToken: null };
+    }
+
+    logger.warn('Refresh token CAS rotation failed and not eligible for grace window', { userId: payload.userId });
+    throw new AppError('AUTH_003');
+  }
 
   return { accessToken: newAccessToken, refreshToken: newRefreshToken };
 };
@@ -148,6 +257,22 @@ const me = async (userId) => {
   const roleId = staff?.roleId?._id || staff?.roleId;
   const permissions = roleId ? await administrationService.getPermissionCodesForRole(roleId) : [];
 
+  const Department = require('../administration/department.model');
+  const deptId = staff?.departmentId?._id ? staff.departmentId._id.toString() : (staff?.departmentId?.toString() || '');
+  let isHod = false;
+  let hodDepartmentId = null;
+
+  if (staff?._id) {
+    const deptAsHod = await Department.findOne({ headOfDepartment: staff._id });
+    if (deptAsHod) {
+      isHod = true;
+      hodDepartmentId = deptAsHod._id.toString();
+    } else if (['Head of Department', 'Head of Surgery Department', 'Laboratory Director'].includes(staff?.position)) {
+      isHod = true;
+      hodDepartmentId = deptId;
+    }
+  }
+
   return {
     id: userId,
     username: identity.username,
@@ -156,9 +281,13 @@ const me = async (userId) => {
     employeeId: staff?.employeeId || '',
     role: staff?.roleId?.name || staff?.role || 'Staff',
     department: staff?.departmentId?.name || staff?.department || 'General',
-    departmentId: staff?.departmentId?._id ? staff.departmentId._id.toString() : (staff?.departmentId?.toString() || ''),
+    departmentId: deptId,
     permissions,
     accountStatus: identity.accountStatus,
+    isHod,
+    hodDepartmentId: hodDepartmentId || (isHod ? deptId : null),
+    position: staff?.position || '',
+    positionRank: staff?.positionRank || 1,
   };
 };
 
@@ -177,8 +306,22 @@ const unlock = async (userId, username, password) => {
     throw new AppError('AUTH_001');
   }
 
-  // Check account status
-  if (identity.accountStatus === ACCOUNT_STATUS.LOCKED) throw new AppError('AUTH_004');
+  // Check account status & handle automatic lockout expiry
+  if (identity.accountStatus === ACCOUNT_STATUS.LOCKED) {
+    const isLockExpired = identity.lockUntil && Date.now() > new Date(identity.lockUntil).getTime();
+    if (isLockExpired) {
+      await identityService.unlockAccount(identity._id);
+      identity.accountStatus = ACCOUNT_STATUS.ACTIVE;
+      identity.failedLoginAttempts = 0;
+      identity.lockUntil = null;
+      logger.info('Account lock expired; automatically unlocked on unlock screen attempt', { userId: identity._id });
+    } else {
+      const remainingSeconds = identity.lockUntil 
+        ? Math.max(1, Math.ceil((new Date(identity.lockUntil).getTime() - Date.now()) / 1000))
+        : 900;
+      throw new AppError('AUTH_004', `Account is temporarily locked due to consecutive failed attempts. Try again in ${remainingSeconds} seconds or contact Hospital IT.`, { lockUntil: identity.lockUntil, remainingSeconds });
+    }
+  }
   if (identity.accountStatus === ACCOUNT_STATUS.DISABLED) throw new AppError('AUTH_005');
   if (identity.accountStatus !== ACCOUNT_STATUS.ACTIVE) throw new AppError('AUTH_001');
 
@@ -187,7 +330,7 @@ const unlock = async (userId, username, password) => {
   if (!isMatch) {
     const updated = await identityService.incrementFailedAttempts(identity._id);
     if (updated.failedLoginAttempts >= config.maxFailedAttempts) {
-      await identityService.lockAccount(identity._id);
+      await identityService.lockAccount(identity._id, config.lockoutDurationMs);
       logger.warn('Account locked after failed unlock attempts', { userId: identity._id });
     }
     throw new AppError('AUTH_001');

@@ -1,6 +1,6 @@
-﻿const tariffRepository = require('./tariff.repository');
-const tariffResolver = require('./tariff-resolver');
-const AppError = require('../../core/errors/AppError');
+const tariffRepository = require('./tariff.repository');
+const tariffResolver = require('./tariff-resolver.service');
+const AppError = require('../../core/errors/app-error');
 const { RULE_STATUS } = require('./tariff-rule.model');
 
 /**
@@ -38,8 +38,35 @@ class TariffService {
     const effectiveFrom = new Date(data.effectiveFrom);
     if (isNaN(effectiveFrom)) throw new AppError('VALIDATION_001', 'effectiveFrom must be a valid date');
 
+    let ruleNumber = data.ruleNumber ? data.ruleNumber.trim().toUpperCase() : null;
+    if (!ruleNumber) {
+      ruleNumber = await tariffRepository.getNextRuleNumber(data.category);
+    }
+
+    let name = data.name ? data.name.trim() : '';
+    if (!name) {
+      if (data.serviceMasterId) {
+        const s = await tariffRepository.getServiceMasterById(data.serviceMasterId);
+        if (s && s.name) name = s.name;
+      } else if (data.testCode) {
+        name = `${data.testCode.toUpperCase()} Diagnostic Investigation`;
+      } else if (data.category === 'BED_CHARGES') {
+        name = `${(data.scope?.wardClass || 'General Ward').replace(/_/g, ' ')} ${(data.scope?.comfortTier || 'Standard').replace(/_/g, ' ')} Bed Stay`;
+      } else if (data.category === 'CONSULTATION') {
+        name = `${(data.scope?.tariffGrade || 'General').replace(/_/g, ' ')} Consultation (${data.scope?.visitType || 'OPD'} ${data.scope?.appointmentType || 'Walk-in'})`;
+      } else if (data.category === 'REGISTRATION') {
+        name = `${data.scope?.visitType || 'Hospital'} Registration Fee`;
+      } else if (data.category === 'PACKAGE') {
+        name = `Comprehensive Health & Surgical Package`;
+      } else {
+        name = `${data.category} Tariff Rule`;
+      }
+    }
+
     const ruleData = {
       ...data,
+      ruleNumber,
+      name,
       effectiveFrom,
       status: RULE_STATUS.DRAFT,
       createdBy: adminId,
@@ -80,13 +107,15 @@ class TariffService {
       throw new AppError('BUSINESS_002', `Cannot publish rule in status: ${rule.status}`);
     }
 
-    // Conflict check
+    // Conflict check across all 13 dimensions
     const conflicts = await tariffRepository.findConflictingRules(
       rule.category,
       rule.scope || {},
       rule.effectiveFrom,
       rule.effectiveTo,
-      rule._id.toString()
+      rule._id.toString(),
+      rule.serviceMasterId || null,
+      rule.testCode || null
     );
 
     if (conflicts.length > 0) {

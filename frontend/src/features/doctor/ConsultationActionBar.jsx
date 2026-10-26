@@ -7,6 +7,9 @@ const ConsultationActionBar = ({
   onSaveDraft,
   onSendToLab,
   onFinalize,
+  onAdmitToIpd,
+  onRequestSurgery,
+  isAdmittedToIpd = false,
   canFinalize,
   labOrdersCount = 0,
   savingDraft = false,
@@ -45,6 +48,46 @@ const ConsultationActionBar = ({
             <Icon.FileText size={18} />
             <span>Save Draft</span>
           </Md3Button>
+
+          {/* 2. Recommend Inpatient (IPD) Admission */}
+          {onAdmitToIpd && !isAdmittedToIpd && (
+            <Md3Button
+              type="button"
+              variant="tonal"
+              onClick={onAdmitToIpd}
+              disabled={savingDraft || routingToLab || finalizing}
+              style={{
+                background: 'var(--md-sys-color-surface-container-high, #e8f0fe)',
+                color: 'var(--md-sys-color-primary, #0b57d0)',
+                border: '1px solid var(--md-sys-color-outline-variant, #c2e7ff)',
+                fontWeight: 600,
+              }}
+              title="Advise IPD admission and route to Ward Management for physical bed allocation"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>hotel</span>
+              <span>Recommend IPD</span>
+            </Md3Button>
+          )}
+
+          {/* 3. Request Surgery / OT Booking */}
+          {onRequestSurgery && (
+            <Md3Button
+              type="button"
+              variant="tonal"
+              onClick={onRequestSurgery}
+              disabled={savingDraft || routingToLab || finalizing}
+              style={{
+                background: 'var(--md-sys-color-secondary-container, #e2eafc)',
+                color: 'var(--md-sys-color-on-secondary-container, #041e49)',
+                border: '1px solid var(--md-sys-color-outline-variant, #b6c4e2)',
+                fontWeight: 600,
+              }}
+              title="Dispatch surgical procedure request to Operating Theatre & Surgeon"
+            >
+              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>surgical</span>
+              <span>Request Surgery</span>
+            </Md3Button>
+          )}
 
           {/* 2. Send to Laboratory Action (Visible / Highlighted when lab orders are added) */}
           {labOrdersCount > 0 && (

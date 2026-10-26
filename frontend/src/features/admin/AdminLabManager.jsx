@@ -104,14 +104,15 @@ const AdminLabManager = () => {
   return (
     <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column' }}>
       <section className="info-card" style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '16px', flexWrap: 'wrap' }}>
-          <div>
-            <h2 style={{ margin: 0, color: 'var(--md-sys-color-primary)' }}>Hospital Laboratories</h2>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant)' }}>
+        <div className="admin-dir-header">
+          <div className="admin-dir-title-group">
+            <h2 className="admin-dir-title">Hospital Laboratories</h2>
+            <span className="admin-dir-count-sub">
               {filteredLaboratories.length} laborator{filteredLaboratories.length !== 1 ? 'ies' : 'y'} shown
-            </p>
+            </span>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', flexShrink: 0 }}>
+
+          <div className="admin-dir-controls">
             <Md3SearchBar 
               value={searchQuery} 
               onChange={setSearchQuery} 
@@ -151,28 +152,15 @@ const AdminLabManager = () => {
                 { value: 'CLINICAL/DIAGNOSTIC', label: 'Clin+Diag' },
               ]}
             />
+
             <button
+              type="button"
               onClick={() => setIsCreateLaboratoryOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 20px',
-                background: 'var(--md-sys-color-primary, #00668b)',
-                color: 'var(--md-sys-color-on-primary, #ffffff)',
-                border: 'none',
-                borderRadius: '100px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                transition: 'all 200ms ease',
-                height: '44px',
-                boxShadow: 'var(--md-sys-elevation-1, 0 1px 3px rgba(0,0,0,0.12))'
-              }}
-              className="lab-add-btn"
+              className="admin-btn admin-btn-primary"
+              title="Add New Diagnostic Laboratory"
             >
-              <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>add</span>
-              Add Laboratory
+              <span className="material-symbols-rounded">add</span>
+              <span>Add Laboratory</span>
             </button>
           </div>
         </div>

@@ -1,16 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./laboratory.controller');
-const authenticate = require('../../core/middleware/authenticate');
-const { requirePermission } = require('../../core/middleware/authorize');
-const { validate } = require('../../core/validation/validate');
-const { upload, handleUploadError } = require('./laboratory.upload');
+const authenticate = require('../../core/middleware/authenticate.middleware');
+const { requirePermission } = require('../../core/middleware/authorize.middleware');
+const { validate } = require('../../core/validation/validate.middleware');
+const { upload, handleUploadError } = require('./laboratory-upload.middleware');
 const {
   createLaboratorySchema,
   updateLaboratorySchema,
   addTestSchema,
   updateTestSchema,
   uploadResultsSchema,
+  verifyResultsSchema,
+  dispatchVisitSchema,
 } = require('./laboratory.validation');
 
 // ── Configuration Routes (Admin — LAB_MANAGE) ───────────────────────────────────
@@ -34,6 +36,14 @@ router.get('/reported',
   authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY', 'VISIT_VIEW']),
   controller.getReportedVisits);
 
+router.get('/history',
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY', 'VISIT_VIEW']),
+  controller.getLabHistory);
+
+router.get('/patients/:patientId/history',
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY', 'VISIT_VIEW']),
+  controller.getPatientLabHistory);
+
 router.patch('/orders/:visitId/:orderId/collect',
   authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY']),
   controller.collectSample);
@@ -42,6 +52,30 @@ router.patch('/orders/:visitId/:orderId/results',
   authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY']),
   validate(uploadResultsSchema),
   controller.uploadResults);
+
+router.post('/orders/:visitId/:orderId/vitals',
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY']),
+  controller.recordLabVitals);
+
+router.post('/orders/:visitId/:orderId/phlebotomy-risks',
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_MANAGE', 'LAB_VERIFY']),
+  controller.recordPhlebotomyRisks);
+
+router.post('/orders/:visitId/:orderId/panic-alert',
+  authenticate, requirePermission(['LAB_VERIFY', 'LAB_MANAGE']),
+  controller.broadcastPanicAlert);
+
+router.patch('/orders/:visitId/:orderId/verify',
+  authenticate, requirePermission(['LAB_VERIFY', 'LAB_MANAGE']),
+  validate(verifyResultsSchema),
+  controller.verifyResults);
+
+router.post('/visits/:visitId/dispatch',
+  authenticate, requirePermission(['LAB_PROCESS', 'LAB_VERIFY', 'LAB_MANAGE']),
+  validate(dispatchVisitSchema),
+  controller.dispatchVisit);
+
+
 
 // ── Scan File Routes (Technician — LAB_PROCESS / LAB_VERIFY) ────────────────────
 // Upload: inject dept code → multer → multer error handler → controller

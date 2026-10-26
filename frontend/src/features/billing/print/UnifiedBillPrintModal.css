@@ -1,0 +1,609 @@
+/**
+ * UnifiedBillPrintModal.css
+ * Material Design 3 Professional Flat Overlay Print Studio
+ *
+ * 100% Theme Token Governed (theme.css), Zero External Colors
+ * High-legibility typography, two-tier docked header, responsive canvas
+ */
+
+/* ── Fullscreen Translucent Scrim / Overlay ── */
+.unified-print-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 72%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem 1rem;
+  box-sizing: border-box;
+  animation: unifiedPrintOverlayFade 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes unifiedPrintOverlayFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Single Unified Flat Overlay Studio Window ── */
+.unified-print-window {
+  display: flex;
+  flex-direction: column;
+  width: min(96vw, 1180px);
+  height: min(94vh, 960px);
+  background: var(--md-sys-color-surface);
+  border-radius: var(--md-sys-shape-corner-xl, 18px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: 
+    0 24px 64px -12px color-mix(in srgb, var(--md-sys-color-shadow) 45%, transparent),
+    0 4px 16px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent);
+  overflow: hidden;
+  box-sizing: border-box;
+  animation: unifiedPrintWindowScale 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes unifiedPrintWindowScale {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ── Pinned Docked Header Bar (2-Tier Clean Hierarchy) ── */
+.unified-print-docked-header {
+  background: var(--md-sys-color-surface-container-low);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+/* ── Tier 1: Primary Document Identity & Primary Actions ── */
+.unified-print-primary-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding: 0.85rem 1.25rem 0.65rem 1.25rem;
+  box-sizing: border-box;
+  min-height: 52px;
+}
+
+/* Metadata & Clinical Info Group */
+.unified-print-header__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.unified-print-header__badge {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.unified-print-header__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+
+.unified-print-header__title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.unified-print-header__main-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.975rem;
+  line-height: 1.25;
+  color: var(--md-sys-color-on-surface);
+  white-space: normal;
+}
+
+.unified-print-header__sub-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  flex-wrap: wrap;
+  line-height: 1.2;
+}
+
+.unified-print-meta-pill {
+  font-family: var(--md-sys-typescale-label-small-font, 'Roboto Mono', monospace);
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.unified-print-meta-dot {
+  color: var(--md-sys-color-outline-variant);
+  font-size: 0.65rem;
+}
+
+.unified-print-meta-patient {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-print-meta-mrn {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-print-meta-age {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-print-meta-type {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  padding: 1px 5px;
+  border-radius: 4px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.status-pill {
+  padding: 1px 7px;
+  border-radius: 4px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.status-pill--paid,
+.status-pill--finalized {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.status-pill--open {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* ── Primary Action Buttons (Print, Export, Close) ── */
+.unified-print-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.unified-print-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8125rem;
+  height: 34px !important;
+  min-height: 34px !important;
+  padding: 0 14px !important;
+}
+
+.unified-print-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, transform 80ms ease;
+  margin-left: 2px;
+}
+
+.unified-print-close-btn:hover {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border-color: var(--md-sys-color-outline-variant);
+}
+
+.unified-print-close-btn:active {
+  transform: scale(0.92);
+}
+
+/* ── Tier 2: Secondary Control Ribbon (Format, Paper, Zoom) ── */
+.unified-print-control-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 1.25rem 0.55rem 1.25rem;
+  background: var(--md-sys-color-surface);
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+  box-sizing: border-box;
+}
+
+.unified-print-ribbon__left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.unified-print-ribbon__group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.unified-print-ribbon__label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-on-surface-variant);
+  user-select: none;
+}
+
+.unified-print-ribbon__divider {
+  width: 1px;
+  height: 20px;
+  background: var(--md-sys-color-outline-variant);
+}
+
+/* Segmented Mode Toggle Pill */
+.unified-print-mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 2px;
+  border-radius: 9999px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  gap: 2px;
+  height: 30px;
+  box-sizing: border-box;
+}
+
+.unified-print-mode-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 140ms cubic-bezier(0.2, 0, 0, 1);
+  box-sizing: border-box;
+}
+
+.unified-print-mode-btn .material-symbols-rounded {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.unified-print-mode-btn:hover:not(.unified-print-mode-btn--active) {
+  color: var(--md-sys-color-on-surface);
+  background: color-mix(in srgb, var(--md-sys-color-on-surface) 6%, transparent);
+}
+
+.unified-print-mode-btn:active {
+  transform: scale(0.96);
+  transition-duration: 60ms;
+}
+
+.unified-print-mode-btn--active {
+  background: var(--md-sys-color-surface-container-lowest);
+  color: var(--md-sys-color-primary);
+  box-shadow: 
+    0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 12%, transparent),
+    0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 6%, transparent);
+  font-weight: 700;
+}
+
+/* Paper Size Custom Dropdown */
+.unified-print-paper-select {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+}
+
+.unified-print-paper-dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 30px;
+  padding: 0 28px 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 140ms ease;
+}
+
+.unified-print-paper-dropdown:hover {
+  border-color: var(--md-sys-color-outline);
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.unified-print-paper-dropdown:focus {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+}
+
+.unified-print-dropdown-arrow {
+  position: absolute;
+  right: 6px;
+  pointer-events: none;
+  font-size: 17px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Zoom Inspection Controls */
+.unified-print-zoom-controls {
+  display: inline-flex;
+  align-items: center;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+  height: 30px;
+  box-sizing: border-box;
+}
+
+.unified-print-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, transform 80ms ease;
+}
+
+.unified-print-zoom-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.unified-print-zoom-btn:hover:not(:disabled) {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-print-zoom-btn:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.unified-print-zoom-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.unified-print-zoom-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 24px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 120ms ease;
+  font-variant-numeric: tabular-nums;
+}
+
+.unified-print-zoom-indicator:hover {
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.unified-print-zoom-btn--active {
+  background: var(--md-sys-color-primary-container) !important;
+  color: var(--md-sys-color-on-primary-container) !important;
+}
+
+/* Keyboard Hints in Ribbon */
+.unified-print-ribbon__hints {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.6875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  margin-left: auto;
+  user-select: none;
+}
+
+.unified-print-hint-key {
+  padding: 1px 5px;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 3px;
+  font-family: monospace;
+  font-size: 0.65rem;
+  color: var(--md-sys-color-on-surface);
+  font-weight: 700;
+}
+
+/* ── Realistic Document Desk Viewport ── */
+.unified-print-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+  background-color: var(--md-sys-color-surface-container);
+  background-image: radial-gradient(var(--md-sys-color-outline-variant) 1.2px, transparent 1.2px);
+  background-size: 20px 20px;
+  padding: 2.25rem 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
+
+/* Smooth zoom transform container */
+.unified-print-canvas-scaler {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  transition: transform 160ms cubic-bezier(0.2, 0, 0, 1);
+  transform-origin: top center;
+}
+
+/* Paper Preview Sheet Frame */
+.unified-print-paper-sheet {
+  width: 100%;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 4px;
+  box-shadow: 
+    0 10px 32px -4px color-mix(in srgb, var(--md-sys-color-shadow) 16%, transparent),
+    0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow) 5%, transparent);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: max-width 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.unified-print-paper-sheet--a4 {
+  max-width: 820px;
+}
+
+.unified-print-paper-sheet--a5 {
+  max-width: 600px;
+}
+
+.unified-print-paper-sheet--pos {
+  max-width: 360px;
+}
+
+/* ── Universal Print Styles for this Modal ── */
+@media print {
+  #root,
+  .unified-print-docked-header,
+  .no-print,
+  nav,
+  header,
+  aside {
+    display: none !important;
+  }
+
+  body, html {
+    background: var(--md-sys-color-surface-container-lowest) !important;
+    color: var(--md-sys-color-on-surface) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .unified-print-modal-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    animation: none !important;
+  }
+
+  .unified-print-window {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .unified-print-viewport {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .unified-print-canvas-scaler {
+    transform: none !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .unified-print-paper-sheet {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: var(--md-sys-color-surface-container-lowest) !important;
+  }
+
+  .unified-print-paper-sheet *,
+  .unified-print-paper-sheet .billing-template-container,
+  .unified-print-paper-sheet .billing-template-container * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+}

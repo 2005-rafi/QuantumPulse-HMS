@@ -1,4 +1,5 @@
 const Bill = require('./bill.model');
+const Patient = require('../patient/patient.model');
 
 class BillRepository {
   async create(data, options = {}) {
@@ -11,6 +12,19 @@ class BillRepository {
 
   async findByVisitId(visitId, options = {}) {
     return Bill.findOne({ visitId }, null, options)
+      .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
+      .populate('lineItems.addedBy', 'fullName')
+      .populate('payments.recordedBy', 'fullName')
+      .populate('adjustments.issuedBy', 'fullName')
+      .populate('adjustments.approvedBy', 'fullName')
+      .populate('generatedBy', 'fullName')
+      .populate('finalizedBy', 'fullName')
+      .lean();
+  }
+
+  async findByAdmissionId(admissionId, options = {}) {
+    return Bill.findOne({ admissionId }, null, options)
+      .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
       .populate('lineItems.addedBy', 'fullName')
       .populate('payments.recordedBy', 'fullName')
       .populate('adjustments.issuedBy', 'fullName')
@@ -22,11 +36,11 @@ class BillRepository {
 
   async findById(id, options = {}) {
     return Bill.findById(id, null, options)
+      .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
       .populate('lineItems.addedBy', 'fullName')
       .populate('payments.recordedBy', 'fullName')
       .populate('adjustments.issuedBy', 'fullName')
       .populate('generatedBy', 'fullName')
-      .populate('patientId', 'firstName lastName mrn')
       .lean();
   }
 
@@ -66,10 +80,48 @@ class BillRepository {
       }
     }
 
+    if (filters.category || filters.categoryFilter) {
+      const cats = filters.category || filters.categoryFilter;
+      const catList = Array.isArray(cats) ? cats : String(cats).split(',').map((s) => s.trim()).filter(Boolean);
+      if (catList.length > 0) {
+        const catCondition = { 'lineItems.category': { $in: catList } };
+        if (compiled.filter.$and) {
+          compiled.filter.$and.push(catCondition);
+        } else if (Object.keys(compiled.filter).length > 0) {
+          compiled.filter = { $and: [compiled.filter, catCondition] };
+        } else {
+          compiled.filter['lineItems.category'] = { $in: catList };
+        }
+      }
+    }
+
+    if (filters.search && typeof filters.search === 'string' && filters.search.trim()) {
+      const q = filters.search.trim();
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(escaped, 'i');
+      const matchingPatients = await Patient.find({
+        $or: [{ firstName: regex }, { lastName: regex }, { mrn: regex }],
+      }).select('_id').lean();
+      const pIds = matchingPatients.map((p) => p._id);
+      const searchCondition = {
+        $or: [
+          { billNumber: regex },
+          { patientId: { $in: pIds } },
+        ],
+      };
+      if (compiled.filter.$and) {
+        compiled.filter.$and.push(searchCondition);
+      } else if (Object.keys(compiled.filter).length > 0) {
+        compiled.filter = { $and: [compiled.filter, searchCondition] };
+      } else {
+        compiled.filter = searchCondition;
+      }
+    }
+
     const [items, total] = await Promise.all([
       Bill.find(compiled.filter)
         .select(compiled.projection)
-        .populate('patientId', 'firstName lastName mrn')
+        .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
         .populate('generatedBy', 'fullName')
         .sort(compiled.sort)
         .skip(compiled.pagination.skip)
@@ -90,16 +142,30 @@ class BillRepository {
       },
       { returnDocument: 'after', ...opts }
     );
-    // Recompute billedAmount
+    // Recompute billedAmount and GST statutory totals
     const newBilledAmount = bill.lineItems.reduce((sum, li) => sum + (li.lineTotal || 0), 0);
+    const newTotalTaxable = Number(bill.lineItems.filter(li => (li.taxRate || 0) > 0).reduce((sum, li) => sum + (li.taxableAmount || li.lineTotal || 0), 0).toFixed(2));
+    const newTotalExempt = Number(bill.lineItems.filter(li => !li.taxRate || li.taxRate === 0).reduce((sum, li) => sum + (li.lineTotal || 0), 0).toFixed(2));
+    const newTotalCgst = Number(bill.lineItems.reduce((sum, li) => sum + (li.cgstAmount || 0), 0).toFixed(2));
+    const newTotalSgst = Number(bill.lineItems.reduce((sum, li) => sum + (li.sgstAmount || 0), 0).toFixed(2));
+    const newTotalTax = Number((newTotalCgst + newTotalSgst).toFixed(2));
+
+    const newOutstanding = Math.max(0, newBilledAmount - (bill.discountAmount || 0) - (bill.collectedAmount || 0) - (bill.advanceCollected || 0) - (bill.adjustedAmount || 0));
     return Bill.findByIdAndUpdate(
       billId,
       {
         billedAmount: newBilledAmount,
-        outstandingAmount: newBilledAmount - bill.collectedAmount - bill.adjustedAmount,
+        outstandingAmount: newOutstanding,
+        totalTaxableAmount: newTotalTaxable,
+        totalExemptAmount: newTotalExempt,
+        totalCgst: newTotalCgst,
+        totalSgst: newTotalSgst,
+        totalTax: newTotalTax,
       },
       { returnDocument: 'after', ...opts }
-    ).lean();
+    )
+      .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
+      .lean();
   }
 
   async recordPayment(billId, payment, session = null) {
@@ -109,15 +175,32 @@ class BillRepository {
       { $push: { payments: payment } },
       { returnDocument: 'after', ...opts }
     );
-    const newCollected = bill.payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // Segregate advance deposit payments from desk/counter payments to eliminate double counting
+    const advancePayments = (bill.payments || [])
+      .filter((p) => p.reference && /DEPOSIT/i.test(p.reference))
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+    const advanceCollected = Math.max(advancePayments, bill.advanceCollected || 0);
+
+    const deskPayments = (bill.payments || [])
+      .filter((p) => !p.reference || !/DEPOSIT/i.test(p.reference))
+      .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+    const totalCollected = advanceCollected + deskPayments;
+    const newOutstanding = Math.max(
+      0,
+      (bill.billedAmount || 0) - (bill.discountAmount || 0) - totalCollected - (bill.adjustedAmount || 0)
+    );
     return Bill.findByIdAndUpdate(
       billId,
       {
-        collectedAmount: newCollected,
-        outstandingAmount: Math.max(0, bill.billedAmount - newCollected - bill.adjustedAmount),
+        advanceCollected,
+        collectedAmount: deskPayments,
+        outstandingAmount: newOutstanding,
       },
       { returnDocument: 'after', ...opts }
-    ).lean();
+    )
+      .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
+      .lean();
   }
 
   async finalizeBill(billId, staffId, session = null) {
@@ -126,7 +209,9 @@ class BillRepository {
       billId,
       { status: 'FINALIZED', finalizedBy: staffId, finalizedAt: new Date() },
       { returnDocument: 'after', ...opts }
-    ).lean();
+    )
+      .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
+      .lean();
   }
 
   async appendAdjustment(billId, adjustment, session = null) {
@@ -160,7 +245,7 @@ class BillRepository {
       billId,
       {
         adjustedAmount: newAdjusted,
-        outstandingAmount: Math.max(0, bill.billedAmount - bill.collectedAmount - newAdjusted),
+        outstandingAmount: Math.max(0, (bill.billedAmount || 0) - (bill.discountAmount || 0) - (bill.collectedAmount || 0) - (bill.advanceCollected || 0) - newAdjusted),
       },
       { returnDocument: 'after', ...opts }
     ).lean();

@@ -8,15 +8,16 @@ import { billingAPI } from '../../../services/billingAPI';
 import { adminAPI } from '../../../services/adminAPI';
 import PaymentRecordForm from './PaymentRecordForm';
 import AdjustmentForm from './AdjustmentForm';
-import BillingTemplate from '../BillingTemplate';
+import { UnifiedBillPrintModal } from '../print';
 import { CURRENCY_SYMBOL } from '../../../constants/currency';
 
-export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
+export const BillDetail = ({ isOpen, onClose, bill, onRefresh, readOnly = false }) => {
   const { showSuccess, showError } = useToast();
   const [payOpen, setPayOpen] = useState(false);
   const [adjOpen, setAdjOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [templateConfig, setTemplateConfig] = useState(null);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -102,7 +103,7 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
     <>
       {createPortal(
         <div className="appt-modal-backdrop" onClick={onClose}>
-          <div className="appt-modal-container" style={{ maxWidth: '800px' }} onClick={(e) => e.stopPropagation()}>
+          <div className="appt-modal-container" style={{ maxWidth: '800px', width: '92vw' }} onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="appt-modal-header">
               <div className="appt-modal-title-group">
@@ -110,7 +111,7 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
                   <span className="material-symbols-rounded">receipt</span>
                 </div>
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <h3 className="appt-modal-title">Bill #{bill.billNumber}</h3>
                     <span style={{
                       padding: '3px 8px',
@@ -134,7 +135,7 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
             </div>
 
             {/* Body */}
-            <div className="appt-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div className="appt-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxHeight: '65vh', overflowY: 'auto' }}>
               {/* Financial 4-Stat Strip */}
               <div style={{
                 display: 'grid',
@@ -222,7 +223,7 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
                     <span className="material-symbols-rounded" style={{ fontSize: '20px', color: '#2e7d32' }}>check_circle</span>
                     Payments Received ({payments.length})
                   </h4>
-                  {bill.outstandingAmount > 0 && bill.status !== 'CANCELLED' && (
+                  {bill.outstandingAmount > 0 && bill.status !== 'CANCELLED' && !readOnly && (
                     <Md3Button type="button" onClick={() => setPayOpen(true)} style={{ height: '36px', fontSize: '0.8125rem' }}>
                       <span className="material-symbols-rounded">add_card</span>
                       <span>Record Payment</span>
@@ -273,7 +274,7 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
                     <span className="material-symbols-rounded" style={{ fontSize: '20px', color: '#e65100' }}>price_check</span>
                     Adjustments, Credit Notes & Refunds ({adjustments.length})
                   </h4>
-                  {bill.status === 'FINALIZED' && (
+                  {bill.status === 'FINALIZED' && !readOnly && (
                     <Md3Button type="button" variant="secondary" onClick={() => setAdjOpen(true)} style={{ height: '36px', fontSize: '0.8125rem' }}>
                       <span className="material-symbols-rounded">note_add</span>
                       <span>Request Adjustment</span>
@@ -312,7 +313,7 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
                               </span>
                             </td>
                             <td style={{ padding: '10px 14px', textAlign: 'right' }}>
-                              {a.status === 'PENDING_APPROVAL' && (
+                              {a.status === 'PENDING_APPROVAL' && !readOnly && (
                                 <button
                                   type="button"
                                   onClick={() => handleApproveAdjustment(a._id)}
@@ -343,53 +344,42 @@ export const BillDetail = ({ isOpen, onClose, bill, onRefresh }) => {
 
             {/* Footer Actions */}
             <div className="appt-modal-actions" style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-              <Md3Button type="button" variant="secondary" onClick={() => window.print()}>
+              <Md3Button type="button" variant="secondary" onClick={() => setIsPrintModalOpen(true)}>
                 <span className="material-symbols-rounded">print</span>
-                <span>Print Official Invoice</span>
+                <span>Print Invoice</span>
               </Md3Button>
-              <Md3Button type="button" variant="secondary" onClick={onClose}>
-                Close
-              </Md3Button>
-              {bill.status === 'OPEN' && (
-                <Md3Button type="button" onClick={handleFinalize} disabled={actionLoading} loading={actionLoading}>
+              {bill.outstandingAmount > 0 && bill.status !== 'CANCELLED' && !readOnly && (
+                <Md3Button type="button" onClick={() => setPayOpen(true)}>
+                  <span className="material-symbols-rounded">add_card</span>
+                  <span>Record Payment</span>
+                </Md3Button>
+              )}
+              {bill.status === 'OPEN' && !readOnly && (
+                <Md3Button type="button" variant="tonal" onClick={handleFinalize} disabled={actionLoading} loading={actionLoading}>
                   <span className="material-symbols-rounded">lock</span>
                   <span>Finalize & Lock Bill</span>
                 </Md3Button>
               )}
+              <Md3Button type="button" variant="secondary" onClick={onClose}>
+                Close
+              </Md3Button>
             </div>
           </div>
         </div>,
         document.body
       )}
 
-      {/* Hidden Printable Invoice Portal (renders when window.print() is invoked) */}
-      {createPortal(
-        <div className="billing-print-portal">
-          <BillingTemplate
-            hospitalInfo={templateConfig?.hospitalInfo || { name: 'GLOBAL HEALTH HOSPITAL' }}
-            labels={templateConfig?.templates?.[bill.visitType || 'OPD']?.labels || templateConfig?.labels || {}}
-            fieldVisibility={templateConfig?.templates?.[bill.visitType || 'OPD']?.fieldVisibility || templateConfig?.fieldVisibility || {}}
-            customFields={templateConfig?.templates?.[bill.visitType || 'OPD']?.customFields || templateConfig?.customFields || []}
-            workflowType={bill.visitType || (bill.admissionId ? 'IPD' : 'OPD')}
-            visit={{
-              _id: bill.billNumber || bill._id,
-              visitType: bill.visitType,
-              createdAt: bill.createdAt,
-              patientId: bill.patientId,
-            }}
-            admission={bill.admissionId}
-            lineItems={bill.lineItems || []}
-            financials={{
-              grossBilled: bill.totalAmount || 0,
-              advancePaid: (bill.payments || []).filter(p => p.type === 'ADVANCE_DEPOSIT').reduce((acc, p) => acc + (p.amount || 0), 0),
-              insuranceApproved: (bill.payments || []).filter(p => p.type === 'INSURANCE_CLAIM').reduce((acc, p) => acc + (p.amount || 0), 0),
-              adjustments: (bill.adjustments || []).filter(a => a.status === 'APPROVED').reduce((acc, a) => acc + (a.amount || 0), 0),
-            }}
-            total={bill.totalAmount}
-          />
-        </div>,
-        document.body
-      )}
+      {/* ─── UNIFIED BILL PRINT MODAL & HIGH-FIDELITY RENDERING ENGINE ─── */}
+      <UnifiedBillPrintModal
+        isOpen={isPrintModalOpen}
+        onClose={() => setIsPrintModalOpen(false)}
+        bill={bill}
+        patient={bill.patientId}
+        admission={bill.admissionId}
+        config={templateConfig}
+        defaultMode="INVOICE"
+        title="Official Tax Invoice & Settlement Receipt"
+      />
 
       {/* Nested Dialogs */}
       <PaymentRecordForm

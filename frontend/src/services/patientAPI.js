@@ -1,75 +1,94 @@
+/**
+ * src/services/patientAPI.js
+ * Patient registry, demographics, history, deletion requests, and bulk export.
+ */
 import api from './api';
+import { API_ENDPOINTS } from '../constants/endpoints';
 
-export const patientAPI = {
+export const patientApi = {
   checkDuplicates: async (patientData) => {
-    const response = await api.post('/patients/check-duplicates', patientData);
+    const response = await api.post(API_ENDPOINTS.PATIENTS.CHECK_DUPLICATES, patientData);
     return response.data;
   },
+
   register: async (patientData) => {
-    const response = await api.post('/patients', patientData);
+    const response = await api.post(API_ENDPOINTS.PATIENTS.BASE, patientData);
     return response.data;
   },
+
   registerWithVisit: async (payload) => {
-    const response = await api.post('/patients/register-with-visit', payload);
+    const response = await api.post(API_ENDPOINTS.PATIENTS.REGISTER_WITH_VISIT, payload);
     return response.data;
   },
 
   search: async (query, page = 1, limit = 20, options = {}) => {
-    const response = await api.get('/patients', {
-      params: { q: query, page, limit, ...options }
+    const response = await api.get(API_ENDPOINTS.PATIENTS.SEARCH, {
+      params: { q: query, page, limit, ...options },
     });
     return response.data;
   },
 
   list: async (page = 1, limit = 20, query = '', options = {}) => {
-    const response = await api.get('/patients', {
-      params: { q: query, page, limit, ...options }
+    const response = await api.get(API_ENDPOINTS.PATIENTS.BASE, {
+      params: { q: query, page, limit, ...options },
     });
     return response.data;
   },
 
   getByMrn: async (mrn) => {
-    const response = await api.get(`/patients/mrn/${mrn}`);
+    const response = await api.get(API_ENDPOINTS.PATIENTS.BY_MRN(mrn));
     return response.data;
   },
 
   getById: async (id) => {
-    const response = await api.get(`/patients/${id}`);
+    const response = await api.get(API_ENDPOINTS.PATIENTS.BY_ID(id));
     return response.data;
   },
 
   update: async (id, patientData) => {
-    const response = await api.put(`/patients/${id}`, patientData);
+    const response = await api.put(API_ENDPOINTS.PATIENTS.BY_ID(id), patientData);
     return response.data;
   },
 
   addHistory: async (id, historyData) => {
-    const response = await api.post(`/patients/${id}/history`, historyData);
+    const response = await api.post(API_ENDPOINTS.PATIENTS.HISTORY(id), historyData);
     return response.data;
   },
 
   requestDeletion: async (id, reason) => {
-    const response = await api.post(`/patients/${id}/deletion-requests`, { reason });
+    const response = await api.post(API_ENDPOINTS.PATIENTS.DELETION_REQUESTS(id), { reason });
+    return response.data;
+  },
+
+  getDeleted: async (page = 1, limit = 20, query = '') => {
+    const response = await api.get(API_ENDPOINTS.PATIENTS.DELETED, {
+      params: { page, limit, q: query },
+    });
+    return response.data;
+  },
+
+  restore: async (id) => {
+    const response = await api.patch(API_ENDPOINTS.PATIENTS.RESTORE(id));
     return response.data;
   },
 
   getPendingDeletionRequests: async () => {
-    const response = await api.get('/patients/deletion-requests/pending');
+    const response = await api.get(API_ENDPOINTS.PATIENTS.DELETION_REQUESTS_PENDING);
     return response.data;
   },
 
   approveDeletion: async (id) => {
-    const response = await api.patch(`/patients/deletion-requests/${id}/approve`);
+    const response = await api.patch(API_ENDPOINTS.PATIENTS.DELETION_APPROVE(id));
     return response.data;
   },
 
   rejectDeletion: async (id, reason = 'Rejected by clinician') => {
-    const response = await api.patch(`/patients/deletion-requests/${id}/reject`, { reason });
+    const response = await api.patch(API_ENDPOINTS.PATIENTS.DELETION_REJECT(id), { reason });
     return response.data;
   },
 
   rejectDeletionRequest: async (id, reason) => {
-    const response = await api.patch(`/patients/deletion-requests/${id}/reject`, { reason });
+    const response = await api.patch(API_ENDPOINTS.PATIENTS.DELETION_REJECT(id), { reason });
     return response.data;
   },
 
@@ -78,7 +97,7 @@ export const patientAPI = {
    */
   exportData: async (exportOptions, onProgress, abortSignal) => {
     try {
-      const response = await api.post('/patients/export', exportOptions, {
+      const response = await api.post(API_ENDPOINTS.PATIENTS.EXPORT, exportOptions, {
         responseType: 'blob',
         signal: abortSignal,
         onDownloadProgress: (progressEvent) => {
@@ -111,7 +130,6 @@ export const patientAPI = {
       return { success: true, filename, totalBytes: blob.size };
     } catch (err) {
       if (err.response && err.response.data instanceof Blob) {
-        // Parse blob error back to JSON message
         try {
           const text = await err.response.data.text();
           const json = JSON.parse(text);
@@ -124,3 +142,6 @@ export const patientAPI = {
     }
   },
 };
+
+export const patientAPI = patientApi;
+export default patientApi;

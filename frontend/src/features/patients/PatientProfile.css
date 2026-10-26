@@ -75,6 +75,14 @@
   font-size: 18px;
 }
 
+.pp-back-btn__label {
+  display: inline;
+}
+
+.pp-back-btn__label-short {
+  display: none;
+}
+
 .pp-breadcrumb-trail {
   display: inline-flex;
   align-items: center;
@@ -349,6 +357,11 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.pp-hero__actions-primary,
+.pp-hero__actions-secondary {
+  display: contents;
 }
 
 /* ──────────────────────────────────────────────────────
@@ -938,6 +951,808 @@
   background: var(--md-sys-color-surface, #ffffff);
   padding: 2px 8px;
   border-radius: 4px;
+}
+
+/* ──────────────────────────────────────────────────────
+   4. MOBILE & TABLET REUSABLE DRAWER MODE & NAVIGATION
+   Strictly complies with Hick's Law, Fitt's Law, and rules.md
+   ────────────────────────────────────────────────────── */
+
+/* Desktop horizontal tab wrapper */
+.pp-desktop-tabs {
+  display: block;
+  width: 100%;
+}
+
+/* Mobile & Tablet Section Bar */
+.pp-mobile-section-bar {
+  display: none;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 4px;
+}
+
+.pp-section-drawer-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 14px;
+  background-color: var(--md-sys-color-surface-container, #f1eee1);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  cursor: pointer;
+  min-height: 52px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: background-color 0.15s ease, transform 0.12s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  user-select: none;
+  box-sizing: border-box;
+  color: inherit;
+}
+
+.pp-section-drawer-trigger:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ebe8d9);
+  border-color: var(--md-sys-color-primary, #196584);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.pp-section-drawer-trigger:active {
+  transform: scale(0.985);
+  background-color: var(--md-sys-color-surface-container-highest, #e5e2d3);
+}
+
+.pp-section-drawer-trigger:focus-visible {
+  outline: 2px solid var(--md-sys-color-primary, #196584);
+  outline-offset: 2px;
+}
+
+.pp-section-trigger-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pp-section-trigger-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background-color: var(--md-sys-color-primary-container, #c1e8ff);
+  color: var(--md-sys-color-on-primary-container, #001e2b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pp-section-trigger-icon svg,
+.pp-section-trigger-icon .material-symbols-rounded {
+  width: 20px;
+  height: 20px;
+  font-size: 20px;
+}
+
+.pp-section-trigger-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-width: 0;
+}
+
+.pp-section-trigger-sub {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-primary, #196584);
+}
+
+.pp-section-trigger-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pp-section-trigger-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pp-section-count-chip {
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-secondary-container, #dbe4e6);
+  color: var(--md-sys-color-on-secondary-container, #161d1e);
+  letter-spacing: 0.02em;
+}
+
+.pp-section-chevron {
+  font-size: 22px;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+}
+
+/* ──────────────────────────────────────────────────────
+   5. MOBILE & TABLET SIDEBAR ACCORDION / COLLAPSIBLE STRIP
+   ────────────────────────────────────────────────────── */
+.pp-sidebar-mobile-toggle-strip {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background-color: var(--md-sys-color-surface-container, #f1eee1);
+  border: 1px solid var(--md-sys-color-outline-variant, #c9c7b6);
+  border-radius: var(--md-sys-shape-corner-small, 10px);
+  cursor: pointer;
+  user-select: none;
+  min-height: 44px;
+  transition: background-color 0.15s ease;
+  margin-bottom: 8px;
+}
+
+.pp-sidebar-mobile-toggle-strip:hover {
+  background-color: var(--md-sys-color-surface-container-high, #ebe8d9);
+}
+
+.pp-sidebar-mobile-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1c1c14);
+}
+
+.pp-sidebar-mobile-toggle-left .material-symbols-rounded {
+  font-size: 18px;
+  color: var(--md-sys-color-primary, #196584);
+}
+
+.pp-sidebar-mobile-toggle-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pp-sidebar-mobile-quick-chip {
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background-color: var(--md-sys-color-primary-container, #c1e8ff);
+  color: var(--md-sys-color-on-primary-container, #001e2b);
+}
+
+.pp-sidebar-mobile-toggle-icon {
+  font-size: 20px;
+  color: var(--md-sys-color-on-surface-variant, #48473a);
+}
+
+/* ──────────────────────────────────────────────────────
+   6. RESPONSIVE SEGREGATED VIEWPORTS (rules.md)
+   Desktop: >= 1024px
+   Tablet: 641px - 1023px
+   Mobile: <= 640px
+   ────────────────────────────────────────────────────── */
+
+/* Desktop: >= 1024px */
+@media (min-width: 1024px) {
+  .pp-desktop-tabs {
+    display: block;
+  }
+  .pp-mobile-section-bar {
+    display: none;
+  }
+  .pp-sidebar-mobile-toggle-strip {
+    display: none;
+  }
+  .pp-sidebar-content-collapse-wrapper {
+    display: block !important;
+  }
+}
+
+/* Tablet Viewport: 641px - 1023px */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .pp-page {
+    gap: 12px;
+  }
+
+  /* Top Navigation & Corner Back Button */
+  .pp-top-nav-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 2px 0 6px 0;
+  }
+
+  .pp-top-nav-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .pp-back-btn {
+    width: auto !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    padding: 4px 12px !important;
+    font-size: 12.5px !important;
+    border-radius: 999px !important;
+    flex-shrink: 0;
+  }
+
+  .pp-back-btn .material-symbols-rounded {
+    font-size: 16px !important;
+  }
+
+  .pp-back-btn__label {
+    display: inline !important;
+  }
+
+  .pp-back-btn__label-short {
+    display: none !important;
+  }
+
+  .pp-breadcrumb-trail {
+    font-size: 12.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Layout & Sidebar */
+  .pp-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .pp-layout__sidebar {
+    position: static;
+    width: 100%;
+    top: 0;
+  }
+
+  .pp-desktop-tabs {
+    display: none;
+  }
+
+  .pp-mobile-section-bar {
+    display: flex;
+    margin-bottom: 2px;
+  }
+
+  .pp-section-drawer-trigger {
+    min-height: 44px;
+    padding: 8px 14px;
+  }
+
+  .pp-section-trigger-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .pp-sidebar-mobile-toggle-strip {
+    display: flex;
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  /* Hero Card */
+  .pp-hero-card {
+    padding: 14px 18px;
+    border-radius: 16px;
+  }
+
+  .pp-hero__main-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 14px 18px;
+  }
+
+  .pp-hero__avatar-wrap .md3-avatar {
+    width: 48px !important;
+    height: 48px !important;
+    font-size: 1.1rem !important;
+  }
+
+  .pp-hero__name {
+    font-size: 1.25rem;
+  }
+
+  .pp-hero__stats {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    gap: 12px;
+  }
+
+  .pp-hero__stat-value {
+    font-size: 0.95rem;
+  }
+
+  .pp-hero__stat-label {
+    font-size: 0.65rem;
+  }
+
+  .pp-hero__sub-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .pp-hero__demographics {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .pp-hero__demo-item {
+    font-size: 0.78rem;
+  }
+
+  /* Action Buttons inline & compact on Tablet */
+  .pp-hero__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .pp-hero__actions-primary,
+  .pp-hero__actions-secondary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pp-hero__actions button {
+    width: auto !important;
+    min-height: 34px !important;
+    height: 34px !important;
+    padding: 4px 12px !important;
+    font-size: 0.80rem !important;
+    border-radius: 999px !important;
+  }
+}
+
+/* Mobile Viewport: <= 640px */
+@media (max-width: 640px) {
+  .pp-page {
+    gap: 10px;
+  }
+
+  /* 0. Top Nav Bar & Compact Corner Back Button */
+  .pp-top-nav-bar {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 0 4px 0;
+    width: 100%;
+  }
+
+  .pp-top-nav-left {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pp-back-btn {
+    width: auto !important;
+    min-width: 0 !important;
+    min-height: 30px !important;
+    height: 30px !important;
+    padding: 3px 10px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    border-radius: 999px !important;
+    flex-shrink: 0;
+    gap: 4px !important;
+  }
+
+  .pp-back-btn .material-symbols-rounded {
+    font-size: 16px !important;
+  }
+
+  .pp-back-btn__label {
+    display: none !important;
+  }
+
+  .pp-back-btn__label-short {
+    display: inline !important;
+  }
+
+  .pp-breadcrumb-trail {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .pp-breadcrumb-parent,
+  .pp-breadcrumb-separator {
+    display: none !important;
+  }
+
+  .pp-breadcrumb-current {
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface, #1c1c14);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pp-breadcrumb-mrn {
+    font-size: 10.5px;
+    font-family: monospace;
+    color: var(--md-sys-color-outline, #78786a);
+  }
+
+  .pp-top-nav-right {
+    flex-shrink: 0;
+  }
+
+  /* 1. Layout & Accordion */
+  .pp-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .pp-layout__sidebar {
+    position: static;
+    width: 100%;
+    top: 0;
+  }
+
+  .pp-desktop-tabs {
+    display: none;
+  }
+
+  .pp-mobile-section-bar {
+    display: flex;
+    margin-bottom: 2px;
+  }
+
+  .pp-section-drawer-trigger {
+    min-height: 40px;
+    padding: 6px 10px;
+    border-radius: 12px;
+  }
+
+  .pp-section-trigger-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+  }
+
+  .pp-section-trigger-icon svg,
+  .pp-section-trigger-icon .material-symbols-rounded {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  .pp-section-trigger-sub {
+    font-size: 0.60rem;
+  }
+
+  .pp-section-trigger-title {
+    font-size: 0.82rem;
+  }
+
+  .pp-section-count-chip {
+    font-size: 0.64rem;
+    padding: 2px 6px;
+  }
+
+  .pp-section-chevron {
+    font-size: 18px;
+  }
+
+  .pp-sidebar-card {
+    padding: 10px 12px;
+    border-radius: 14px;
+    gap: 10px;
+  }
+
+  .pp-sidebar-mobile-toggle-strip {
+    display: flex;
+    min-height: 36px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    margin-bottom: 4px;
+  }
+
+  .pp-sidebar-mobile-toggle-left {
+    font-size: 0.78rem;
+    gap: 6px;
+  }
+
+  .pp-sidebar-mobile-toggle-left .material-symbols-rounded {
+    font-size: 16px;
+  }
+
+  .pp-sidebar-mobile-quick-chip {
+    font-size: 0.66rem;
+    padding: 1px 6px;
+  }
+
+  /* When collapsed on mobile, hide the tall sidebar content */
+  .pp-sidebar-card--mobile-collapsed .pp-sidebar-content-collapse-wrapper {
+    display: none;
+  }
+
+  /* 2. Patient Hero Card */
+  .pp-hero-card {
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .pp-hero__main-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .pp-hero__identity {
+    width: 100%;
+    gap: 10px;
+  }
+
+  .pp-hero__avatar-wrap .md3-avatar {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 0.95rem !important;
+  }
+
+  .pp-hero__id-details {
+    gap: 2px;
+  }
+
+  .pp-hero__name-row {
+    gap: 6px;
+    align-items: center;
+  }
+
+  .pp-hero__name {
+    font-size: 1.12rem;
+    font-weight: 800;
+    line-height: 1.2;
+  }
+
+  .pp-hero__mrn-chip {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+
+  .pp-hero__meta-row {
+    font-size: 0.76rem;
+    gap: 6px;
+  }
+
+  .pp-hero__blood-chip {
+    font-size: 0.68rem;
+    padding: 1px 5px;
+  }
+
+  .pp-hero__blood-chip svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .pp-hero__stats {
+    width: 100%;
+    justify-content: space-around;
+    padding: 5px 8px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    gap: 6px;
+  }
+
+  .pp-hero__stat-item {
+    min-width: 45px;
+  }
+
+  .pp-hero__stat-value {
+    font-size: 0.88rem;
+    font-weight: 800;
+  }
+
+  .pp-hero__stat-label {
+    font-size: 0.60rem;
+    letter-spacing: 0.02em;
+  }
+
+  .pp-hero__stat-sep {
+    height: 14px;
+  }
+
+  /* Sub-Row: Demographics 2-Column Grid + Compact Button Hierarchy */
+  .pp-hero__sub-row {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .pp-hero__demographics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 10px;
+    width: 100%;
+  }
+
+  .pp-hero__demo-item {
+    font-size: 0.74rem;
+    gap: 4px;
+  }
+
+  .pp-hero__demo-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+  }
+
+  .pp-hero__demo-val {
+    font-size: 0.74rem;
+  }
+
+  /* Action Buttons: Primary on top (full width, 36px), Secondary split row (2-col, 32px) */
+  .pp-hero__actions {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .pp-hero__actions-primary {
+    display: flex;
+    width: 100%;
+  }
+
+  .pp-hero__actions-primary button {
+    width: 100% !important;
+    min-height: 36px !important;
+    height: 36px !important;
+    font-size: 0.8125rem !important;
+    font-weight: 700 !important;
+    padding: 6px 12px !important;
+    border-radius: 999px !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12) !important;
+  }
+
+  .pp-hero__actions-secondary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .pp-hero__actions-secondary button {
+    width: 100% !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 4px 8px !important;
+    border-radius: 999px !important;
+    justify-content: center !important;
+  }
+
+  .pp-hero__actions button svg {
+    width: 14px !important;
+    height: 14px !important;
+  }
+
+  /* 3. Clinical Bento & Cards on Mobile */
+  .pp-overview-hero-card {
+    padding: 12px 14px;
+    border-radius: 12px;
+    gap: 10px;
+  }
+
+  .pp-overview-meta-bar {
+    padding-bottom: 8px;
+    gap: 6px;
+  }
+
+  .pp-overview-doctor-badge {
+    font-size: 0.80rem;
+    gap: 6px;
+  }
+
+  .pp-overview-doctor-badge .material-symbols-rounded {
+    font-size: 17px !important;
+  }
+
+  .pp-overview-date-pill {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+  }
+
+  .pp-overview-clinical-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pp-clinical-bento-tile {
+    padding: 8px 10px;
+    border-radius: 10px;
+    gap: 3px;
+  }
+
+  .pp-clinical-bento-label {
+    font-size: 0.66rem;
+  }
+
+  .pp-clinical-bento-val {
+    font-size: 0.80rem;
+  }
+
+  .pp-clinical-bento-val.diagnosis {
+    font-size: 0.88rem;
+  }
+
+  .pp-prescriptions-title {
+    font-size: 0.82rem;
+  }
+
+  .pp-prescriptions-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .pp-rx-card {
+    padding: 10px 12px;
+    border-radius: 10px;
+    gap: 6px;
+  }
+
+  .pp-rx-name {
+    font-size: 0.82rem;
+  }
+
+  .pp-rx-qty-badge {
+    font-size: 0.64rem;
+    padding: 1px 6px;
+  }
+
+  .pp-rx-badge {
+    font-size: 0.66rem;
+    padding: 1px 5px;
+  }
+
+  .pp-rx-instructions {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+  }
 }
 
 

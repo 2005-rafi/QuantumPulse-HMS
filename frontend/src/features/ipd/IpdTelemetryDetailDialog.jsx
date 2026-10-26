@@ -6,6 +6,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { formatPatientName, getPatientInitials, formatDoctorName } from '../../utils/patientFormatters';
+import './IpdTelemetryDetailDialog.css';
 
 export const IpdTelemetryDetailDialog = ({
   isOpen,

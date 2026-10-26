@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { RouterProvider } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider, useToast } from './context/ToastContext';
+import { PatientStatusProvider } from './context/PatientStatusContext';
 import { router } from './routes/index';
 import { registerErrorCallback } from './services/api';
 
@@ -15,12 +16,18 @@ const GlobalApiInterceptor = ({ children }) => {
   useEffect(() => {
     registerErrorCallback((error) => {
       const responseData = error.response?.data;
-      const detailedMessage =
+      let detailedMessage =
         responseData?.message ||
         responseData?.detail ||
         error.apiMessage ||
         error.userMessage ||
         'An unexpected error occurred.';
+
+      if (Array.isArray(responseData?.details) && responseData.details.length > 0) {
+        detailedMessage = responseData.details.map(d => d.message ? d.message.replace(/"/g, '') : (d.field ? `${d.field} is required` : '')).filter(Boolean).join(' • ');
+      } else if (Array.isArray(responseData?.invalidParams) && responseData.invalidParams.length > 0) {
+        detailedMessage = responseData.invalidParams.map(d => d.message ? d.message.replace(/"/g, '') : (d.field ? `${d.field} is required` : '')).filter(Boolean).join(' • ');
+      }
 
       if (error.isRateLimit) {
         showError('Rate Limit Exceeded', detailedMessage);
@@ -71,7 +78,9 @@ const App = () => {
       <GlobalApiInterceptor>
         <CrossTabAuthSync>
           <AuthProvider>
-            <RouterProvider router={router} />
+            <PatientStatusProvider>
+              <RouterProvider router={router} />
+            </PatientStatusProvider>
           </AuthProvider>
         </CrossTabAuthSync>
       </GlobalApiInterceptor>

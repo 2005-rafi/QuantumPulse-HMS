@@ -68,11 +68,15 @@ const departmentSchema = new mongoose.Schema(
     // Configurable per-department vital fields used during patient triage.
     vitalFields: [
       {
-        name:     { type: String, required: true },
-        label:    { type: String, required: true },
-        type:     { type: String, enum: ['text', 'number', 'boolean'], default: 'text' },
-        unit:     { type: String, default: '' },
-        required: { type: Boolean, default: false },
+        name:            { type: String, required: true },
+        label:           { type: String, required: true },
+        type:            { type: String, enum: ['text', 'number', 'boolean', 'select'], default: 'text' },
+        unit:            { type: String, default: '' },
+        min:             { type: Number, default: null },
+        max:             { type: Number, default: null },
+        options:         [{ type: String }],
+        clinicalPurpose: { type: String, trim: true, default: '' },
+        required:        { type: Boolean, default: false },
       },
     ],
   },

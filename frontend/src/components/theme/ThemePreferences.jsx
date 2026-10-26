@@ -4,22 +4,17 @@ import './ThemePreferences.css';
 
 /**
  * ThemePreferences — Reusable Material 3 theme preferences component.
- * Allows users to choose between System Default, Light, and Dark modes.
+ * Allows users to choose between Light and Dark modes in profile settings.
+ * Default is Light mode.
  */
 export const ThemePreferences = ({ showHeader = true, compact = false }) => {
-  const { themeMode, effectiveTheme, setThemeMode } = useTheme();
+  const { effectiveTheme, setThemeMode } = useTheme();
 
   const themeOptions = [
     {
-      id: THEME_MODES.SYSTEM,
-      name: 'System Default',
-      description: 'Synchronize appearance automatically with your operating system theme settings.',
-      icon: 'brightness_auto',
-      previewClass: 'system-preview',
-    },
-    {
       id: THEME_MODES.LIGHT,
       name: 'Light Theme',
+      tagline: 'Recommended default',
       description: 'Clean, high-readability daylight theme engineered for clinical desktop workstations.',
       icon: 'light_mode',
       previewClass: 'light-preview',
@@ -27,7 +22,8 @@ export const ThemePreferences = ({ showHeader = true, compact = false }) => {
     {
       id: THEME_MODES.DARK,
       name: 'Dark Theme',
-      description: 'Restful, low-glare dark palette optimized for night shifts and low-light wards.',
+      tagline: 'Low-glare night shift',
+      description: 'Restful, high-contrast dark palette optimized for night shifts and low-light wards.',
       icon: 'dark_mode',
       previewClass: 'dark-preview',
     },
@@ -44,27 +40,26 @@ export const ThemePreferences = ({ showHeader = true, compact = false }) => {
             <div>
               <h3 className="theme-preferences-title">Theme &amp; Display Appearance</h3>
               <p className="theme-preferences-subtitle">
-                Customize your visual interface theme. Your choice is remembered across visits.
+                Customize your visual interface theme. Default is Light Mode; your preference is securely remembered across visits.
               </p>
             </div>
           </div>
 
           <div className="theme-status-pill">
             <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
-              {effectiveTheme === 'dark' ? 'dark_mode' : 'light_mode'}
+              {effectiveTheme === THEME_MODES.DARK ? 'dark_mode' : 'light_mode'}
             </span>
             <span>
-              Active: <strong>{effectiveTheme === 'dark' ? 'Dark Mode' : 'Light Mode'}</strong>
-              {themeMode === 'system' && ' (Auto OS)'}
+              Active: <strong>{effectiveTheme === THEME_MODES.DARK ? 'Dark Mode' : 'Light Mode'}</strong>
             </span>
           </div>
         </div>
       )}
 
-      {/* 3-Mode Choice Grid */}
-      <div className="theme-options-grid" role="radiogroup" aria-label="Choose interface theme">
+      {/* 2-Mode Choice Grid (Light vs Dark) */}
+      <div className="theme-options-grid theme-options-grid-duo" role="radiogroup" aria-label="Choose interface theme">
         {themeOptions.map((option) => {
-          const isSelected = themeMode === option.id;
+          const isSelected = effectiveTheme === option.id;
           return (
             <div
               key={option.id}
@@ -82,33 +77,24 @@ export const ThemePreferences = ({ showHeader = true, compact = false }) => {
             >
               {/* Mini Visual Preview */}
               <div className={`theme-preview-box ${option.previewClass}`} aria-hidden="true">
-                {option.id === THEME_MODES.SYSTEM ? (
-                  <>
-                    <div className="tp-half-light">
-                      <div className="tp-header" />
-                    </div>
-                    <div className="tp-half-dark">
-                      <div className="tp-header" />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="tp-header">
-                      <div className="tp-dot" />
-                      <div className="tp-dot" />
-                    </div>
-                    <div className="tp-body">
-                      <div className="tp-card" />
-                      <div className="tp-card" />
-                    </div>
-                  </>
-                )}
+                <div className="tp-header">
+                  <div className="tp-dot" />
+                  <div className="tp-dot" />
+                  <span className="tp-preview-label">{option.name}</span>
+                </div>
+                <div className="tp-body">
+                  <div className="tp-card" />
+                  <div className="tp-card" />
+                </div>
               </div>
 
               {/* Tile Details */}
               <div className="theme-tile-content">
                 <div className="theme-tile-text">
-                  <span className="theme-tile-name">{option.name}</span>
+                  <div className="theme-tile-header-row">
+                    <span className="theme-tile-name">{option.name}</span>
+                    <span className="theme-tile-tag">{option.tagline}</span>
+                  </div>
                   <span className="theme-tile-desc">{option.description}</span>
                 </div>
 
@@ -129,3 +115,4 @@ export const ThemePreferences = ({ showHeader = true, compact = false }) => {
 };
 
 export default ThemePreferences;
+

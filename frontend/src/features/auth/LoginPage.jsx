@@ -1,315 +1,297 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useConfig } from '../../contexts/ConfigContext';
+import React, { useState, useEffect, useRef } from 'react';
+import { useConfig } from '../../context/ConfigContext';
 import { useTheme } from '../../context/ThemeContext';
-import { BrandLogo } from '../../components/brand/BrandLogo';
-import { Md3TextField, Md3Button, Md3Checkbox } from '../../components/md3/Md3FormComponents';
+import { Md3TextField } from '../../components/md3/Md3FormComponents';
+import { useWorkstationAuth } from './useWorkstationAuth';
 import './LoginPage.css';
 
-const ROLE_ROUTES = {
-  Reception: '/dashboard/reception',
-  Nurse: '/dashboard/nurse',
-  Doctor: '/dashboard/doctor',
-  Laboratory: '/dashboard/laboratory',
-  Pharmacy: '/dashboard/pharmacy',
-  'Ward Operations': '/dashboard/ward-operations',
-  Administrator: '/dashboard/administrator',
-};
+// 5 Hospital Environment Background Images from assets/background
+const BACKGROUND_IMAGES = [
+  {
+    src: '/background/background-01.png',
+    title: 'Precision Care. Connected Medicine.',
+    subtitle: 'Unified inpatient, outpatient, and diagnostic telemetry platform.',
+  },
+  {
+    src: '/background/background-02.png',
+    title: 'Advanced Surgical & Critical Care',
+    subtitle: 'Real-time operating theatre coordination and WHO surgical safety verification.',
+  },
+  {
+    src: '/background/background-03.png',
+    title: 'Automated Diagnostic Workflows',
+    subtitle: 'Instant paperless specimen tracking and laboratory result validation.',
+  },
+  {
+    src: '/background/background-04.png',
+    title: 'Secure Clinical Governance',
+    subtitle: 'Role-based data isolation adhering strictly to HIPAA & NABH standards.',
+  },
+  {
+    src: '/background/background-05.png',
+    title: '24/7 Intelligent Ward Management',
+    subtitle: 'Live bed census, automated eMAR schedules, and streamlined patient transfer.',
+  },
+];
 
-const DefaultMedicalLogo = ({ width = 44, height = 44, rx = 10 }) => (
-  <svg width={width} height={height} viewBox="0 0 40 40" fill="none">
-    <rect width="40" height="40" rx={rx} fill="var(--md-sys-color-primary)" />
-    <path d="M20 10v20M10 20h20" stroke="var(--md-sys-color-on-primary)" strokeWidth="3.5" strokeLinecap="round" />
-    <path d="M26 26c1.5-2 2-5 0-7s-5 0-7 2" stroke="var(--md-sys-color-primary-container)" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
+const SLIDE_INTERVAL_MS = 6500;
 
-const LoginPage = () => {
+/**
+ * LoginPage: Material 3 Split-Screen Clinical Workstation (50/50 Half Screen)
+ * 
+ * Architecture:
+ * - Left 50% Pane: Surface-themed authentication surface with prominent hospital branding,
+ *   warm greeting, and clean Material 3 input forms.
+ * - Right 50% Pane: Cinematic cycling visual showcase with minimalist micro-copy.
+ * - Mobile / Tablet (<960px): Centered single-column left-side surface view.
+ */
+export const LoginPage = () => {
   const { isDark } = useTheme();
-  const [form, setForm] = useState({ username: '', password: '' });
-  const [rememberMe, setRememberMe] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [globalError, setGlobalError] = useState('');
-  const [heroLogoFailed, setHeroLogoFailed] = useState(false);
-  const [cardLogoFailed, setCardLogoFailed] = useState(false);
-  const [showHelpNotice, setShowHelpNotice] = useState(false);
-
-  const { login } = useAuth();
   const config = useConfig();
-  const navigate = useNavigate();
+  const [bgIndex, setBgIndex] = useState(0);
+  const timerRef = useRef(null);
 
-  // Load saved username if rememberMe was previously set in this session
+  const {
+    form,
+    rememberMe,
+    setRememberMe,
+    showPassword,
+    setShowPassword,
+    isSubmitting,
+    fieldErrors,
+    lockoutSeconds,
+    handleFieldChange,
+    handleFieldFocus,
+    handleFieldBlur,
+    handleNeedAssistance,
+    submitLogin,
+  } = useWorkstationAuth();
+
+  // Background slideshow cycle
   useEffect(() => {
-    const savedUser = sessionStorage.getItem('hms_saved_username');
-    if (savedUser) {
-      setForm((prev) => ({ ...prev, username: savedUser }));
-      setRememberMe(true);
-    }
+    BACKGROUND_IMAGES.forEach((item) => {
+      const img = new Image();
+      img.src = item.src;
+    });
+
+    timerRef.current = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % BACKGROUND_IMAGES.length);
+    }, SLIDE_INTERVAL_MS);
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
-  const validateField = (name, value) => {
-    let error = '';
-    if (name === 'username') {
-      if (!value.trim()) {
-        error = 'Username is required';
-      }
-    } else if (name === 'password') {
-      if (!value) {
-        error = 'Password is required';
-      } else if (value.length < 4) {
-        error = 'Password must be at least 4 characters';
-      }
+  const hospitalName = config?.HOSPITAL_NAME || 'Quantum CareOne';
+  const currentSlide = BACKGROUND_IMAGES[bgIndex] || BACKGROUND_IMAGES[0];
+
+  const getPasswordHelperText = () => {
+    if (!form.password || fieldErrors.password) return undefined;
+    if (form.password.length < 4) {
+      return 'Minimum 4 characters';
     }
-    return error;
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-    setGlobalError('');
-    setShowHelpNotice(false);
-    
-    // Inline real-time validation
-    const err = validateField(name, value);
-    setFieldErrors((prev) => ({ ...prev, [name]: err }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    // Full form validation check
-    const usernameErr = validateField('username', form.username);
-    const passwordErr = validateField('password', form.password);
-
-    if (usernameErr || passwordErr) {
-      setFieldErrors({ username: usernameErr, password: passwordErr });
-      setGlobalError('Please fix the validation errors below.');
-      return;
-    }
-
-    setLoading(true);
-    setGlobalError('');
-
-    try {
-      const user = await login(form.username.trim(), form.password);
-      
-      // Handle Remember Me persistence (scoped to browser session)
-      if (rememberMe) {
-        sessionStorage.setItem('hms_saved_username', form.username.trim());
-      } else {
-        sessionStorage.removeItem('hms_saved_username');
-      }
-
-      const targetRoute = ROLE_ROUTES[user.role] || '/dashboard';
-      navigate(targetRoute, { replace: true });
-    } catch (err) {
-      const code = err.response?.data?.errorCode;
-      const serverMsg = err.response?.data?.message;
-
-      const ERROR_MAP = {
-        AUTH_001: 'Invalid username or password credentials.',
-        AUTH_004: 'Your account has been locked due to failed attempts. Contact IT Administrator.',
-        AUTH_005: 'Your account has been deactivated.',
-        AUTH_006: 'Account pending activation. Please verify your credentials.',
-        ERR_NETWORK: 'Unable to connect to HMS API Server. Check backend server connection.',
-      };
-
-      const fallbackMsg = serverMsg || 'Authentication failed. Please verify your credentials.';
-      setGlobalError(ERROR_MAP[code] || ERROR_MAP[err.code] || fallbackMsg);
-    } finally {
-      setLoading(false);
-    }
+    return undefined;
   };
 
   return (
-    <div className="login-container">
-      {/* Left Column — Medical Product Hero Showcase Panel */}
-      <div className="login-hero-panel">
-        <div className="hero-brand">
-          <BrandLogo variant="hero" maxHeight={48} />
-          <div className="hero-brand-text">
-            <h2>{config.HOSPITAL_NAME || 'Quantum CareOne'}</h2>
-            <p>OPD CLINICAL PORTAL</p>
-          </div>
-        </div>
-
-        <div className="hero-content">
-          <h1 className="hero-title">Better Care,<br />Smarter Management</h1>
-          <p className="hero-subtitle">
-            Streamlining hospital operations. Enhancing patient care with integrated clinical workflows.
-          </p>
-        </div>
-
-        <div className="hero-features">
-          <div className="feature-item">
-            <div className="feature-icon-wrapper">
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </div>
-            <h4>Secure & Reliable</h4>
-            <p>Enterprise grade security & data privacy</p>
-          </div>
-
-          <div className="feature-item">
-            <div className="feature-icon-wrapper">
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-              </svg>
-            </div>
-            <h4>Role Based Access</h4>
-            <p>Right access for the right clinical role</p>
-          </div>
-
-          <div className="feature-item">
-            <div className="feature-icon-wrapper">
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="20" x2="18" y2="10"/>
-                <line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-              </svg>
-            </div>
-            <h4>Real-time Insights</h4>
-            <p>Data-driven decisions for faster care</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Column — MD3 Form Card Section */}
-      <div className="login-form-panel">
-        <div className="login-card-wrapper">
-          <div className="card-header">
-            <div className="brand-logo-container">
-              <BrandLogo variant="card" maxHeight={52} maxWidth={260} />
-            </div>
-            <h2 className="card-title">Welcome Back</h2>
-            <p className="card-subtitle">Sign in to continue to {config.SHORT_NAME || 'Quantum CareOne'} Portal</p>
-          </div>
-
-          {globalError && (
-            <div className="alert-banner-error" role="alert" aria-live="assertive" style={{ marginBottom: '20px' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-              <span>{globalError}</span>
-            </div>
-          )}
-
-          {showHelpNotice && (
-            <div className="help-notice-banner" role="status">
-              <strong>Need a password reset?</strong><br />
-              Self-serve password resets are disabled for clinical security. Please contact your Hospital IT Helpdesk or Administrator.
-            </div>
-          )}
-
-          <form id="login-form" onSubmit={handleSubmit} className="login-form-md3" noValidate>
-            <Md3TextField
-              id="username"
-              name="username"
-              label="Username"
-              value={form.username}
-              onChange={handleChange}
-              placeholder="Enter your username"
-              autoComplete="username"
-              autoFocus
-              disabled={loading}
-              error={fieldErrors.username}
-              leadingIcon={
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              }
-            />
-
-            <div className="md3-password-field-container">
-              <Md3TextField
-                id="password"
-                name="password"
-                type={showPassword ? 'text' : 'password'}
-                label="Password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                disabled={loading}
-                error={fieldErrors.password}
-                leadingIcon={
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                }
-                trailingIcon={
-                  showPassword ? (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/>
-                    </svg>
-                  ) : (
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
-                    </svg>
-                  )
-                }
-                onTrailingIconClick={() => setShowPassword(!showPassword)}
-                trailingIconAriaLabel={showPassword ? 'Hide password' : 'Show password'}
-              />
-              <div className="password-options-row">
-                <a
-                  href="#"
-                  className="forgot-link"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setShowHelpNotice(!showHelpNotice);
-                  }}
-                >
-                  Forgot password?
-                </a>
+    <div className="qc-split-viewport">
+      {/* ─── LEFT COLUMN (50% SCREEN): THEMED AUTHENTICATION SURFACE ─── */}
+      <section className="qc-split-form-col" aria-labelledby="qc-welcome-heading">
+        <div className="qc-form-container">
+          {/* Top Branding Header */}
+          <header className="qc-form-header">
+            <div className="qc-brand-group">
+              <div className="qc-brand-logo-wrap">
+                <img
+                  src={isDark ? '/dark.svg' : '/light.svg'}
+                  alt={hospitalName}
+                  className="qc-brand-logo"
+                  onError={(e) => { e.target.src = '/logo.svg'; }}
+                />
+              </div>
+              <div className="qc-brand-text">
+                <span className="qc-brand-name">{hospitalName}</span>
+                <span className="qc-brand-tagline">Clinical Hospital Portal</span>
               </div>
             </div>
+          </header>
 
-            <Md3Checkbox
-              checked={rememberMe}
-              onChange={setRememberMe}
-              label="Remember me"
+          {/* Form Content Body */}
+          <main className="qc-form-body">
+            {/* Welcome Greeting */}
+            <div className="qc-welcome-block">
+              <h1 id="qc-welcome-heading" className="qc-welcome-title">Welcome back</h1>
+              <p className="qc-welcome-subtitle">
+                Sign in with your authorized staff credentials to access your designated clinical portal.
+              </p>
+            </div>
+
+            {/* Input Form */}
+            <form id="auth-form" onSubmit={submitLogin} className="qc-auth-form" noValidate>
+              {/* Username Input */}
+              <div className="qc-input-group">
+                <Md3TextField
+                  id="username"
+                  name="username"
+                  type="text"
+                  label="Staff Username or ID"
+                  value={form.username}
+                  onChange={handleFieldChange}
+                  onFocus={() => handleFieldFocus('username')}
+                  onBlur={handleFieldBlur}
+                  error={fieldErrors.username}
+                  disabled={isSubmitting || lockoutSeconds > 0}
+                  autoComplete="username"
+                  autoFocus
+                  maxLength={64}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                  leadingIcon={(
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  )}
+                />
+              </div>
+
+              {/* Password Input */}
+              <div className="qc-input-group">
+                <Md3TextField
+                  id="password"
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  label="Workstation Password"
+                  value={form.password}
+                  onChange={handleFieldChange}
+                  onFocus={() => handleFieldFocus('password')}
+                  onBlur={handleFieldBlur}
+                  error={fieldErrors.password}
+                  helperText={getPasswordHelperText()}
+                  disabled={isSubmitting || lockoutSeconds > 0}
+                  autoComplete="current-password"
+                  maxLength={128}
+                  spellCheck={false}
+                  leadingIcon={(
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  )}
+                  trailingIcon={
+                    showPassword ? (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zm0 12.5c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
+                      </svg>
+                    ) : (
+                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    )
+                  }
+                  onTrailingIconClick={() => setShowPassword(!showPassword)}
+                  trailingIconAriaLabel={showPassword ? 'Hide password' : 'Show password'}
+                />
+              </div>
+
+              {/* Options Row */}
+              <div className="qc-options-bar">
+                <label className="qc-remember-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="qc-native-checkbox"
+                  />
+                  <span className="qc-custom-checkbox" aria-hidden="true">
+                    {rememberMe && (
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    )}
+                  </span>
+                  <span className="qc-remember-text">Remember workstation</span>
+                </label>
+
+                <button
+                  type="button"
+                  className="qc-assist-btn"
+                  onClick={handleNeedAssistance}
+                >
+                  Need assistance?
+                </button>
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                className="qc-signin-btn"
+                disabled={isSubmitting || lockoutSeconds > 0}
+                aria-busy={isSubmitting}
+              >
+                {lockoutSeconds > 0 ? (
+                  <span>Locked ({lockoutSeconds}s)</span>
+                ) : isSubmitting ? (
+                  <>
+                    <span className="qc-btn-spinner" aria-hidden="true" />
+                    <span>Authorizing Session...</span>
+                  </>
+                ) : (
+                  <>
+                    <span>Sign In to Workstation</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </form>
+          </main>
+        </div>
+      </section>
+
+      {/* ─── RIGHT COLUMN (50% SCREEN): CYCLING VISUAL SHOWCASE ─── */}
+      <section className="qc-split-visual-col" aria-label="Hospital Environment Showcase">
+        {/* Animated Background Slides */}
+        <div className="qc-slides-viewport" aria-hidden="true">
+          {BACKGROUND_IMAGES.map((item, idx) => (
+            <div
+              key={item.src}
+              className={`qc-slide-img ${idx === bgIndex ? 'is-active' : ''}`}
+              style={{ backgroundImage: `url(${item.src})` }}
             />
+          ))}
+          {/* Subtle Ambient Scrim */}
+          <div className="qc-visual-scrim" />
+        </div>
 
-            <Md3Button
-              type="submit"
-              variant="secondary"
-              disabled={loading}
-              loading={loading}
-              loadingText="Signing In..."
-              className="login-submit-btn"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <polyline points="10 17 15 12 10 7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-              </svg>
-              <span>Sign In</span>
-            </Md3Button>
-          </form>
+        {/* Minimalist Floating Overlay Card */}
+        <div className="qc-visual-content-overlay">
+          <div className="qc-visual-glass-card">
+            <h2 className="qc-visual-quote-title">{currentSlide.title}</h2>
+            <p className="qc-visual-quote-desc">{currentSlide.subtitle}</p>
 
-          {/* Card Footer Info */}
-          <div className="card-footer-info">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-            <span>Secure Login • Protected by HMS Security</span>
+            {/* Interactive Carousel Dots */}
+            <div className="qc-dots-bar" role="tablist" aria-label="Slideshow Controls">
+              {BACKGROUND_IMAGES.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  role="tab"
+                  className={`qc-dot-btn ${idx === bgIndex ? 'is-active' : ''}`}
+                  onClick={() => setBgIndex(idx)}
+                  aria-selected={idx === bgIndex}
+                  aria-label={`Show slide ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

@@ -1,0 +1,2237 @@
+/* ==========================================================================
+   UnifiedBillingTerminal.css
+   Material Design 3 Master-Detail Clinical Billing & Cashier Terminal
+   Compliant with UI/UX Laws (Hick's, Fitts's, Jakob's, Miller's, Tesler's)
+   100% Token-driven (Light & Dark Theme Safe), Zero Hardcoded Colors
+   ========================================================================== */
+
+.unified-terminal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ─── GLOBAL TERMINAL BUTTON UNIFICATION (UNIFORM 30px COMPACT SIZING) ─── */
+.unified-terminal .md3-btn {
+  height: 30px !important;
+  min-height: 30px !important;
+  padding: 0 10px !important;
+  font-size: 0.75rem !important;
+  border-radius: 6px !important;
+  gap: 4px !important;
+  box-sizing: border-box !important;
+  white-space: nowrap !important;
+}
+
+.unified-terminal .md3-btn .material-symbols-rounded {
+  font-size: 16px !important;
+}
+
+/* ─── TERMINAL HEADER APP BAR ─── */
+.unified-terminal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  background: var(--md-sys-color-surface-container-low);
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--md-sys-shape-corner-medium, 0.75rem);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-sys-elevation-level1, 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 4%, transparent));
+}
+
+.unified-terminal__header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.unified-terminal__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.unified-terminal__subtitle {
+  margin: 0;
+  font-size: 0.725rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+/* ─── MASTER-DETAIL 2-PANE LAYOUT ─── */
+.unified-terminal__layout {
+  display: flex;
+  gap: 0.65rem;
+  width: 100%;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── LEFT MASTER PANEL: ATTACHED FULL-HEIGHT PATIENT QUEUE SIDEBAR ─── */
+.unified-terminal__sidebar {
+  width: 280px;
+  min-width: 280px;
+  max-width: 280px;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 0.75rem);
+  padding: 0.65rem;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: static;
+  flex-shrink: 0;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.unified-terminal__collapse-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.unified-terminal__collapse-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__collapse-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+/* ─── COMPACT SIDEBAR RAIL (56px) ─── */
+.unified-terminal__rail {
+  width: 56px;
+  min-width: 56px;
+  max-width: 56px;
+  height: 100%;
+  max-height: 100%;
+  position: static;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 0.75rem);
+  box-sizing: border-box;
+  overflow: hidden;
+  flex-shrink: 0;
+  transition: all 200ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.unified-terminal__rail-header {
+  width: 100%;
+  padding: 6px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container-low);
+  box-sizing: border-box;
+}
+
+.unified-terminal__rail-toggle-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-primary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.unified-terminal__rail-toggle-btn:hover {
+  background-color: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__rail-toggle-btn .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.unified-terminal__rail-count-badge {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 9999px;
+}
+
+.unified-terminal__rail-body {
+  flex: 1;
+  width: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 2px;
+  box-sizing: border-box;
+}
+
+.unified-terminal__rail-item {
+  width: 46px;
+  padding: 4px 2px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: var(--md-sys-color-surface-container-low);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.unified-terminal__rail-item:hover {
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__rail-item--selected {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  box-shadow: var(--md-sys-elevation-level1, 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent));
+}
+
+.unified-terminal__rail-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.unified-terminal__rail-token {
+  font-family: monospace;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+  max-width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.unified-terminal__rail-name {
+  font-size: 0.625rem;
+  color: var(--md-sys-color-on-surface-variant);
+  max-width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.unified-terminal__rail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant);
+  padding: 20px 0;
+}
+
+.unified-terminal__sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  gap: 0.5rem;
+}
+
+.unified-terminal__sidebar-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.unified-terminal__sidebar-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.unified-terminal__icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--md-sys-shape-corner-small, 0.5rem);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  padding: 0;
+}
+
+.unified-terminal__icon-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
+  border-color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__icon-btn .material-symbols-rounded {
+  font-size: 1.1rem;
+}
+
+.unified-terminal__mobile-close-btn {
+  display: none;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--md-sys-shape-corner-small, 0.5rem);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  padding: 0;
+}
+
+.unified-terminal__mobile-close-btn:hover {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.unified-terminal__mobile-close-btn .material-symbols-rounded {
+  font-size: 1.1rem;
+}
+
+.unified-terminal__sidebar-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.unified-terminal__sidebar-count {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+}
+
+.unified-terminal__sidebar-search {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* ─── 2x3 STRUCTURED CATEGORY FILTER MATRIX ─── */
+.billing-filter-matrix {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.25rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.billing-matrix-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  padding: 0.25rem 0.2rem;
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.billing-matrix-tile:hover {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border-color: var(--md-sys-color-primary);
+}
+
+.billing-matrix-tile--active {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
+  font-weight: 700;
+}
+
+.billing-matrix-tile__top {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.billing-matrix-tile__icon {
+  font-size: 0.85rem;
+}
+
+.billing-matrix-tile__count {
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.billing-matrix-tile__label {
+  font-size: 0.62rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── QUEUE CARD LIST IN SIDEBAR ─── */
+.unified-terminal__card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.unified-terminal__queue-card {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  padding: 0.45rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.unified-terminal__queue-card:hover {
+  background: var(--md-sys-color-surface-container);
+  border-color: var(--md-sys-color-primary);
+  box-shadow: var(--md-sys-elevation-level1, 0 1px 4px color-mix(in srgb, var(--md-sys-color-shadow) 5%, transparent));
+}
+
+.unified-terminal__queue-card--active {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  border-left: 3px solid var(--md-sys-color-primary);
+  box-shadow: var(--md-sys-elevation-level1, 0 2px 6px color-mix(in srgb, var(--md-sys-color-shadow) 8%, transparent));
+}
+
+.unified-terminal__card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unified-terminal__card-token {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary);
+  background: var(--md-sys-color-surface);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--md-sys-shape-corner-small, 4px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.unified-terminal__card-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--md-sys-shape-corner-small, 4px);
+  text-transform: uppercase;
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.unified-terminal__patient-name {
+  margin: 0;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.2;
+}
+
+.unified-terminal__patient-meta {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  line-height: 1.2;
+}
+
+.unified-terminal__card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px dashed var(--md-sys-color-outline-variant);
+  padding-top: 0.25rem;
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.unified-terminal__queue-empty {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.85rem;
+}
+
+.unified-terminal__queue-empty-icon {
+  font-size: 2rem;
+  opacity: 0.5;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__queue-empty-text {
+  margin: 0.5rem 0 0 0;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__card-tag-icon {
+  font-size: 0.8rem;
+}
+
+.unified-terminal__card-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.725rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__card-time-icon {
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.unified-terminal__queue-due {
+  font-weight: 800;
+  color: var(--md-sys-color-error);
+  font-variant-numeric: tabular-nums;
+}
+
+.unified-terminal__queue-action {
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__rail-empty-icon {
+  font-size: 1.2rem;
+  opacity: 0.5;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__idle-btn-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.unified-terminal__fin-val--advance {
+  color: var(--md-sys-color-tertiary);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── RIGHT MAIN PANEL: SPACIOUS SETTLEMENT DESK ─── */
+.unified-terminal__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+/* ─── IDLE CLINICAL STATION DECK WRAPPER ─── */
+.unified-terminal__idle-wrap {
+  width: 100%;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.75rem 0;
+  box-sizing: border-box;
+}
+
+.unified-terminal__idle-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 620px;
+  margin: 0.5rem auto 0.2rem;
+}
+
+.unified-terminal__idle-stat-card {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 8px);
+  padding: 0.45rem 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  transition: transform 140ms ease;
+}
+
+.unified-terminal__idle-stat-card:hover {
+  transform: translateY(-2px);
+  background: var(--md-sys-color-surface-container-high);
+}
+
+.unified-terminal__idle-stat-count {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--md-sys-color-primary);
+  line-height: 1.1;
+}
+
+.unified-terminal__idle-stat-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
+
+/* ─── ACTIVE PATIENT BANNER ─── */
+.unified-terminal__banner {
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--md-sys-shape-corner-medium, 0.75rem);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-sys-elevation-level1, 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 4%, transparent));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+.unified-terminal__banner-patient {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.unified-terminal__banner-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  flex-shrink: 0;
+}
+
+.unified-terminal__banner-details {
+  min-width: 0;
+}
+
+.unified-terminal__banner-details h3 {
+  margin: 0;
+  font-size: 0.925rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--md-sys-color-on-surface);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.unified-terminal__banner-sub {
+  margin: 0.15rem 0 0 0;
+  font-size: 0.725rem;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  line-height: 1.2;
+}
+
+.unified-terminal__banner-financials {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.unified-terminal__fin-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: var(--md-sys-color-surface-container);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  min-width: 68px;
+}
+
+.unified-terminal__fin-label {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.unified-terminal__fin-val {
+  font-size: 0.875rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.1rem;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.1;
+}
+
+.unified-terminal__fin-val--due {
+  color: var(--md-sys-color-error);
+}
+
+.unified-terminal__fin-val--paid {
+  color: var(--md-sys-color-tertiary);
+}
+
+.unified-terminal__status-pill {
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  font-weight: 800;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.unified-terminal__status-pill--open {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.unified-terminal__status-pill--finalized {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.unified-terminal__banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+/* ─── 2-COLUMN SETTLEMENT WORKSPACE ─── */
+.unified-terminal__workspace {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 0.5rem;
+  align-items: start;
+  flex: 1;
+  min-height: 0;
+}
+
+.unified-terminal__col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* ─── CARDS & SECTIONS ─── */
+.unified-terminal__card {
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 0.75rem);
+  padding: 0.65rem 0.85rem;
+  box-shadow: var(--md-sys-elevation-level1, 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 3%, transparent));
+  box-sizing: border-box;
+}
+
+.unified-terminal__card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.unified-terminal__card-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.unified-terminal__card-title .material-symbols-rounded {
+  font-size: 17px;
+}
+
+/* ─── ITEMIZATION TABLE ─── */
+.unified-terminal__table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  max-height: calc(100vh - 380px);
+  overflow-y: auto;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  -webkit-overflow-scrolling: touch;
+}
+
+.unified-terminal__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.75rem;
+}
+
+.unified-terminal__table th {
+  text-align: left;
+  padding: 0.35rem 0.5rem;
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: 0.675rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.billing-col--category {
+  width: 16%;
+  text-align: left;
+}
+
+.billing-col--desc {
+  width: 44%;
+  text-align: left;
+}
+
+.billing-col--qty {
+  width: 12%;
+  text-align: right !important;
+}
+
+.billing-col--price {
+  width: 14%;
+  text-align: right !important;
+}
+
+.billing-col--total {
+  width: 14%;
+  text-align: right !important;
+}
+
+.unified-terminal__table td {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.billing-cell--qty {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--md-sys-color-on-surface);
+}
+
+.billing-cell--price {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.billing-cell--total {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-terminal__table tr:hover td {
+  background: var(--md-sys-color-surface-container-lowest);
+}
+
+.unified-terminal__cat-badge {
+  display: inline-block;
+  padding: 0.12rem 0.4rem;
+  border-radius: var(--md-sys-shape-corner-small, 4px);
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.unified-terminal__cat-count {
+  font-size: 0.72rem;
+  opacity: 0.75;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__proof-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.2rem;
+  font-size: 0.65rem;
+  color: var(--md-sys-color-on-tertiary-container);
+  background: var(--md-sys-color-tertiary-container);
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--md-sys-shape-corner-small, 3px);
+  border: 1px dashed var(--md-sys-color-outline-variant);
+}
+
+.unified-terminal__proof-icon {
+  font-size: 13px;
+  color: var(--md-sys-color-tertiary);
+}
+
+.unified-terminal__table-total {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  padding-top: 0.35rem;
+  border-top: 2px solid var(--md-sys-color-outline-variant);
+  font-weight: 800;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── CHARGE CAPTURE FORM ─── */
+.unified-terminal__charge-preset-card {
+  background: var(--md-sys-color-surface-container-low);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--md-sys-shape-corner-medium, 8px);
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.unified-terminal__charge-preset-title {
+  margin: 0 0 0.35rem 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__charge-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.unified-terminal__form-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.unified-terminal__form-row-3 {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.unified-terminal__charge-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+/* ─── PAYMENT SECTION ─── */
+.unified-terminal__due-badge {
+  font-size: 0.775rem;
+  font-weight: 800;
+  color: var(--md-sys-color-error);
+  font-variant-numeric: tabular-nums;
+}
+
+.unified-terminal__payment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.unified-terminal__pay-modes {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.35rem;
+}
+
+.unified-terminal__pay-mode-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 0.35rem 0.25rem;
+  border-radius: var(--md-sys-shape-corner-medium, 6px);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 600;
+  min-height: 30px;
+  transition: all 120ms ease;
+}
+
+.unified-terminal__pay-mode-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__pay-mode-btn--active {
+  background: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary-container);
+  font-weight: 700;
+  box-shadow: var(--md-sys-elevation-level1, 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent));
+}
+
+.unified-terminal__pay-mode-icon {
+  font-size: 16px;
+}
+
+.unified-terminal__payment-submit-btn {
+  width: 100%;
+  margin-top: 0.35rem;
+}
+
+/* ─── PAYMENTS AUDIT LIST ─── */
+.unified-terminal__payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.unified-terminal__payment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.35rem 0.55rem;
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-terminal__payment-meta-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.unified-terminal__payment-meta-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+}
+
+.unified-terminal__payment-meta-method {
+  text-transform: uppercase;
+  color: var(--md-sys-color-primary);
+  font-weight: 800;
+}
+
+.unified-terminal__payment-meta-sub {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__payment-meta-date {
+  text-align: right;
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ─── SETTLEMENT & FINALIZATION CONTAINERS ─── */
+.unified-terminal__settlement-box {
+  background: var(--md-sys-color-secondary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 8px);
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  text-align: center;
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.unified-terminal__settlement-box-icon {
+  font-size: 1.75rem;
+  color: var(--md-sys-color-tertiary);
+}
+
+.unified-terminal__settlement-box-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.unified-terminal__settlement-box-text {
+  margin: 0;
+  font-size: 0.725rem;
+  color: var(--md-sys-color-on-secondary-container);
+  max-width: 420px;
+}
+
+.unified-terminal__settlement-due {
+  background: var(--md-sys-color-error-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 6px);
+  padding: 0.45rem 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--md-sys-color-on-error-container);
+  font-size: 0.75rem;
+}
+
+.unified-terminal__settlement-due-icon {
+  font-size: 1.15rem;
+  color: var(--md-sys-color-on-error-container);
+  flex-shrink: 0;
+}
+
+.unified-terminal__settlement-finalized {
+  background: var(--md-sys-color-surface-container-high);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 8px);
+  padding: 0.65rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: center;
+  text-align: center;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-terminal__settlement-finalized-icon {
+  font-size: 1.75rem;
+  color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__settlement-finalized-title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-terminal__settlement-finalized-text {
+  margin: 0;
+  font-size: 0.725rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__post-final-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  background: var(--md-sys-color-secondary-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 6px);
+  margin-bottom: 0.5rem;
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.unified-terminal__post-final-icon {
+  font-size: 1.25rem;
+  color: var(--md-sys-color-primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.unified-terminal__post-final-title {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-secondary-container);
+  margin-bottom: 2px;
+}
+
+.unified-terminal__post-final-text {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-secondary-container);
+  margin: 0;
+  line-height: 1.35;
+}
+
+.unified-terminal__recon-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-full, 9999px);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.unified-terminal__recon-action-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary);
+  transform: translateY(-1px);
+}
+
+.unified-terminal__recon-action-btn--waiver:hover {
+  border-color: var(--md-sys-color-tertiary);
+  color: var(--md-sys-color-tertiary);
+}
+
+.unified-terminal__recon-action-btn .material-symbols-rounded {
+  font-size: 14px;
+}
+
+/* ─── MOBILE QUEUE DRAWER PORTAL & SURFACE (MD3 ELEVATION LEVEL 4) ─── */
+.billing-queue-drawer-portal {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+}
+
+.billing-queue-drawer-scrim {
+  position: fixed;
+  inset: 0;
+  background-color: color-mix(in srgb, var(--md-sys-color-scrim) 48%, transparent);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  opacity: 0;
+  animation: billingDrawerScrimFadeIn 0.22s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes billingDrawerScrimFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.billing-queue-drawer-surface {
+  position: relative;
+  width: 340px;
+  max-width: 86vw;
+  height: 100%;
+  height: 100dvh;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  border-radius: 0 20px 20px 0;
+  border-right: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: 
+    0 16px 36px color-mix(in srgb, var(--md-sys-color-shadow) 20%, transparent),
+    0 6px 14px color-mix(in srgb, var(--md-sys-color-shadow) 10%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  box-sizing: border-box;
+  z-index: 1;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  animation: billingDrawerSlideIn 0.28s cubic-bezier(0.05, 0.7, 0.1, 1) forwards;
+}
+
+@keyframes billingDrawerSlideIn {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+.billing-mobile-toolbar {
+  display: none;
+}
+
+/* ─── RESPONSIVE BREAKPOINTS (DESKTOP / TABLET / MOBILE) ─── */
+@media (max-width: 1100px) {
+  .unified-terminal__workspace {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ─── MOBILE & TABLET DRAWER MODE (<= 1024px) ─── */
+@media (max-width: 1024px) {
+  /* Hide standard in-page sidebar and rail so only the portaled drawer is active */
+  .unified-terminal__sidebar,
+  .unified-terminal__rail {
+    display: none !important;
+  }
+
+  .unified-terminal__collapse-btn {
+    display: none !important;
+  }
+
+  /* Mobile Top Navigation Toolbar */
+  .billing-mobile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: var(--md-sys-shape-corner-medium, 10px);
+    box-shadow: var(--md-sys-elevation-level1, 0 1px 3px color-mix(in srgb, var(--md-sys-color-shadow) 5%, transparent));
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0.25rem;
+    flex-shrink: 0;
+  }
+
+  .billing-mobile-drawer-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--md-sys-color-primary);
+    color: var(--md-sys-color-on-primary);
+    border: none;
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 5px color-mix(in srgb, var(--md-sys-color-primary) 20%, transparent);
+    transition: all 0.15s ease;
+  }
+
+  .billing-mobile-drawer-btn:active {
+    transform: scale(0.97);
+  }
+
+  .billing-mobile-drawer-btn .material-symbols-rounded {
+    font-size: 16px;
+  }
+
+  .billing-mobile-count-badge {
+    background: color-mix(in srgb, var(--md-sys-color-on-primary) 28%, transparent);
+    color: var(--md-sys-color-on-primary);
+    padding: 1px 6px;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  .billing-mobile-patient-preview {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .billing-mobile-token-pill {
+    font-family: monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    background: var(--md-sys-color-surface-container-high);
+    color: var(--md-sys-color-on-surface);
+    padding: 3px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--md-sys-color-outline-variant);
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .billing-mobile-back-btn {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--md-sys-color-surface-container);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    color: var(--md-sys-color-on-surface-variant);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: background-color 150ms ease;
+  }
+
+  .billing-mobile-back-btn:hover {
+    background: var(--md-sys-color-error-container);
+    color: var(--md-sys-color-on-error-container);
+  }
+
+  .billing-mobile-back-btn .material-symbols-rounded {
+    font-size: 13px;
+  }
+
+  .unified-terminal__mobile-close-btn {
+    display: flex !important;
+  }
+
+  .unified-terminal__layout {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .unified-terminal__main {
+    width: 100% !important;
+    min-width: 100% !important;
+    gap: 0.85rem;
+  }
+
+  .unified-terminal__idle-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .unified-terminal__banner {
+    padding: 0.85rem 1rem;
+    gap: 0.75rem;
+  }
+
+  .unified-terminal__banner-avatar {
+    width: 38px;
+    height: 38px;
+    font-size: 1.35rem;
+  }
+
+  .unified-terminal__card {
+    padding: 1rem;
+    border-radius: var(--md-sys-shape-corner-medium, 1rem);
+  }
+}
+
+/* ─── SMALL MOBILE PHONES (< 768px) ─── */
+@media (max-width: 767px) {
+  .unified-terminal {
+    gap: 0.65rem;
+  }
+
+  .unified-terminal__header {
+    padding: 0.65rem 0.85rem;
+    border-radius: var(--md-sys-shape-corner-medium, 0.85rem);
+  }
+
+  .unified-terminal__title {
+    font-size: 1.05rem;
+  }
+
+  .unified-terminal__header-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .unified-terminal__header-actions > * {
+    flex: 1;
+  }
+
+  /* Compact Patient Demographic & Financial Banner */
+  .unified-terminal__banner {
+    padding: 0.75rem 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+    border-radius: var(--md-sys-shape-corner-medium, 0.85rem);
+    gap: 0.65rem;
+  }
+
+  .unified-terminal__banner-patient {
+    width: 100%;
+    gap: 0.65rem;
+  }
+
+  .unified-terminal__banner-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+  }
+
+  .unified-terminal__banner-details h3 {
+    font-size: 1rem;
+    line-height: 1.25;
+  }
+
+  .unified-terminal__banner-sub {
+    margin-top: 0.15rem;
+    font-size: 0.725rem;
+    gap: 0.35rem 0.6rem;
+  }
+
+  /* Micro-Grid Financial Stat Badges */
+  .unified-terminal__banner-financials {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5px;
+    align-items: stretch;
+  }
+
+  .unified-terminal__fin-pill {
+    flex: unset;
+    padding: 0.3rem 0.4rem;
+    border-radius: 6px;
+    align-items: center;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .unified-terminal__fin-label {
+    font-size: 0.58rem;
+    letter-spacing: 0.02em;
+  }
+
+  .unified-terminal__fin-val {
+    font-size: 0.92rem;
+    margin-top: 1px;
+  }
+
+  .unified-terminal__status-pill {
+    grid-column: 1 / -1;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    text-align: center;
+  }
+
+  .unified-terminal__banner-actions {
+    grid-column: 1 / -1;
+    width: 100%;
+    display: flex;
+    gap: 6px;
+    margin-left: 0;
+  }
+
+  .unified-terminal__banner-actions > * {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Cards & Forms */
+  .unified-terminal__card {
+    padding: 0.75rem 0.85rem;
+    border-radius: var(--md-sys-shape-corner-medium, 0.85rem);
+  }
+
+  .unified-terminal__card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    margin-bottom: 0.65rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .unified-terminal__card-title {
+    font-size: 0.9rem;
+  }
+
+  .unified-terminal__card-header > * {
+    width: 100%;
+  }
+
+  .unified-terminal__form-row-2,
+  .unified-terminal__form-row-3 {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  /* ─── Mobile Table-to-Card Stack (Zero Horizontal Scroll!) ─── */
+  .unified-terminal__table-wrap {
+    overflow: visible;
+    -webkit-overflow-scrolling: auto;
+  }
+
+  .unified-terminal__table {
+    display: block;
+    width: 100%;
+    border-collapse: separate;
+  }
+
+  .unified-terminal__table thead {
+    display: none;
+  }
+
+  .unified-terminal__table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+  }
+
+  .unified-terminal__table-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    background: var(--md-sys-color-surface-container-low);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    transition: background-color 150ms ease;
+  }
+
+  .unified-terminal__table-row:hover {
+    background: var(--md-sys-color-surface-container);
+  }
+
+  .billing-cell--category {
+    display: flex !important;
+    align-items: center;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .unified-terminal__cat-badge {
+    font-size: 0.62rem;
+    padding: 0.15rem 0.4rem;
+  }
+
+  .billing-cell--desc {
+    display: block !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .unified-terminal__item-desc {
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    line-height: 1.3;
+  }
+
+  .unified-terminal__proof-tag {
+    display: inline-flex;
+    margin-top: 2px;
+    font-size: 0.66rem;
+    padding: 1px 5px;
+  }
+
+  .billing-cell--qty {
+    display: inline !important;
+    padding: 0 !important;
+    border: none !important;
+    font-size: 0.74rem;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .billing-cell--qty::before {
+    content: "Qty: ";
+    font-weight: 600;
+  }
+
+  .billing-cell--price {
+    display: inline !important;
+    padding: 0 !important;
+    border: none !important;
+    font-size: 0.74rem;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .billing-cell--price::before {
+    content: " @ ";
+  }
+
+  .billing-cell--total {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0 0 0 !important;
+    border: none !important;
+    border-top: 1px dashed var(--md-sys-color-outline-variant) !important;
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--md-sys-color-primary);
+    margin-top: 2px;
+  }
+
+  .billing-cell--total::before {
+    content: "Line Total";
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  .unified-terminal__empty-cell {
+    display: block;
+    width: 100%;
+    text-align: center;
+    padding: 1rem 0.5rem;
+    box-sizing: border-box;
+  }
+
+  .unified-terminal__table-total {
+    font-size: 0.92rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    justify-content: space-between;
+  }
+
+  /* Payment Section */
+  .unified-terminal__pay-modes {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+  }
+
+  .unified-terminal__pay-mode-btn {
+    padding: 5px 3px;
+    font-size: 0.7rem;
+    gap: 2px;
+    border-radius: 6px;
+  }
+
+  .unified-terminal__pay-mode-btn .material-symbols-rounded {
+    font-size: 1.05rem;
+  }
+
+  .unified-terminal__idle-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.4rem;
+  }
+
+  .unified-terminal__idle-stat-card {
+    padding: 0.5rem 0.35rem;
+  }
+
+  .unified-terminal__idle-stat-count {
+    font-size: 1.15rem;
+  }
+
+  .unified-terminal__settlement-box,
+  .unified-terminal__settlement-finalized {
+    padding: 0.85rem 0.65rem;
+    gap: 0.5rem;
+  }
+
+  .unified-terminal__settlement-due {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.76rem;
+    gap: 0.4rem;
+  }
+}
+
+/* ==========================================================================
+   MATERIAL DESIGN 3 INVOICE PRINT PREVIEW MODAL & PRINT STYLES
+   ========================================================================== */
+
+.billing-print-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: color-mix(in srgb, var(--md-sys-color-scrim) 78%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 1.25rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+  animation: modalFadeIn 180ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.billing-print-modal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 860px;
+  margin: auto;
+  box-sizing: border-box;
+}
+
+.billing-print-modal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background: var(--md-sys-color-surface-container-high);
+  padding: 0.85rem 1.25rem;
+  border-radius: var(--md-sys-shape-corner-medium, 1rem);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  box-shadow: var(--md-sys-elevation-level2, 0 4px 12px color-mix(in srgb, var(--md-sys-color-shadow) 15%, transparent));
+}
+
+.billing-print-modal-bar__info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.billing-print-modal-bar__info .material-symbols-rounded {
+  font-size: 1.75rem;
+  color: var(--md-sys-color-primary);
+}
+
+.billing-print-modal-bar__title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.billing-print-modal-bar__sub {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.billing-print-modal-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.billing-print-modal-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.billing-print-modal-sheet {
+  width: 100%;
+  background: var(--md-sys-color-surface-container-lowest);
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--md-sys-color-shadow) 25%, transparent);
+  overflow: hidden;
+}
+
+/* ─── INPATIENT STAY & ACCOMMODATION INTELLIGENCE CARD ─── */
+.unified-terminal__stay-card {
+  background: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-medium, 0.75rem);
+  padding: 0.45rem 0.75rem;
+  margin-bottom: 0;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--md-sys-color-shadow) 3%, transparent);
+  flex-shrink: 0;
+}
+
+.unified-terminal__stay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.3rem;
+}
+
+.unified-terminal__stay-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.unified-terminal__stay-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+.unified-terminal__stay-title {
+  margin: 0;
+  font-size: 0.825rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  line-height: 1.2;
+}
+
+.unified-terminal__stay-subtitle {
+  font-size: 0.675rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__stay-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-primary);
+  font-size: 0.725rem;
+  font-weight: 700;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  height: 24px;
+}
+
+.unified-terminal__stay-badge .material-symbols-rounded {
+  font-size: 14px;
+}
+
+.unified-terminal__stay-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+  padding: 0.25rem 0 0;
+  border-top: 1px solid var(--md-sys-color-outline-variant);
+}
+
+@media (max-width: 900px) {
+  .unified-terminal__stay-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.unified-terminal__stay-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.unified-terminal__stay-metric-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__stay-metric-val {
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.unified-terminal__stay-metric-val--highlight {
+  color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__stay-metric-val--amount {
+  color: var(--md-sys-color-primary);
+  font-weight: 800;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.unified-terminal__segments-history {
+  margin-top: 0.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px dashed var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.unified-terminal__segments-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.unified-terminal__segment-pill {
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* ─── CATEGORIZED CLINICAL LEDGER ─── */
+.unified-terminal__category-group-header {
+  background: var(--md-sys-color-surface-container);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  position: sticky;
+  top: 26px;
+  z-index: 1;
+}
+
+.unified-terminal__category-group-cell {
+  padding: 0.25rem 0.5rem !important;
+}
+
+.unified-terminal__category-group-wrap {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.unified-terminal__category-group-info {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-terminal__category-group-info .material-symbols-rounded {
+  font-size: 15px;
+  color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__category-subtotal-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── FINANCIAL RECONCILIATION SUMMARY ─── */
+.unified-terminal__financial-reconciliation {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-small, 6px);
+  padding: 0.45rem 0.65rem;
+  margin-top: 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.unified-terminal__recon-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-variant-numeric: tabular-nums;
+}
+
+.unified-terminal__recon-row--discount {
+  color: var(--md-sys-color-tertiary);
+}
+
+.unified-terminal__recon-row--advance {
+  color: var(--md-sys-color-tertiary);
+  font-weight: 700;
+}
+
+.unified-terminal__recon-row--collected {
+  color: var(--md-sys-color-primary);
+}
+
+.unified-terminal__recon-row--net {
+  border-top: 1px dashed var(--md-sys-color-outline-variant);
+  padding-top: 0.3rem;
+  margin-top: 0.15rem;
+  font-size: 0.825rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+}
+
+.unified-terminal__recon-net-amount {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--md-sys-color-error);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── ADVANCE BADGE & AUDIT ITEM ─── */
+.unified-terminal__advance-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 0.35rem;
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.unified-terminal__payment-item--advance {
+  border-left: 3px solid var(--md-sys-color-tertiary) !important;
+}
+
+/* ─── PRINT MEDIA ISOLATION & OPTIMIZATION ─── */
+@media print {
+  /* Hide the rest of the application completely */
+  #root,
+  .unified-terminal,
+  .billing-print-modal-bar,
+  .no-print,
+  nav,
+  header,
+  aside {
+    display: none !important;
+  }
+
+  body, html {
+    background: var(--md-sys-color-surface-container-lowest) !important;
+    color: var(--md-sys-color-on-surface) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .billing-print-modal-overlay {
+    position: static !important;
+    inset: auto !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    animation: none !important;
+  }
+
+  .billing-print-modal-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .billing-print-modal-content {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .billing-print-modal-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 8mm 10mm;
+  }
+}

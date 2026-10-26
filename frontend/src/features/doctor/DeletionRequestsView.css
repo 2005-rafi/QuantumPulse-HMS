@@ -1,0 +1,796 @@
+/* ==========================================================================
+   DeletionRequestsView.css — Material 3 Responsive Deletion Requests
+   ========================================================================== */
+
+.deletion-view {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-sizing: border-box;
+}
+
+/* ─── HEADER CARD ─── */
+.deletion-header-card {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.deletion-header-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.deletion-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deletion-header-icon .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.deletion-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.deletion-header-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.deletion-header-subtitle {
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.deletion-pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* ─── TABLE CONTAINER ─── */
+.deletion-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: 14px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.deletion-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.deletion-table thead {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.deletion-table th {
+  padding: 10px 14px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  white-space: nowrap;
+}
+
+.deletion-table td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, rgba(202, 196, 208, 0.5));
+  transition: background-color 0.12s ease;
+}
+
+.deletion-row {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.deletion-row:last-child td {
+  border-bottom: none;
+}
+
+.deletion-row:hover td {
+  background-color: var(--md-sys-color-surface-container-lowest, #fbf8fd);
+}
+
+/* ─── COLUMN WIDTHS & STYLING ─── */
+.col-del-patient {
+  min-width: 200px;
+}
+.col-del-requestor {
+  min-width: 160px;
+}
+.col-del-reason {
+  min-width: 240px;
+  max-width: 360px;
+}
+.col-del-actions {
+  min-width: 180px;
+  width: 180px;
+}
+.text-right {
+  text-align: right;
+}
+
+/* ─── CELL: PATIENT PROFILE ─── */
+.deletion-patient-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deletion-patient-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deletion-patient-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.deletion-patient-name {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 14px;
+}
+
+.deletion-patient-sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deletion-patient-mrn {
+  font-size: 11.5px;
+  font-family: monospace;
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.deletion-patient-mrn .material-symbols-rounded {
+  font-size: 13px;
+}
+
+.deletion-mobile-extra {
+  display: none;
+}
+
+.deletion-desktop-only {
+  display: inline-flex;
+  align-items: center;
+}
+
+.deletion-mobile-action-chip,
+.deletion-mobile-chevron {
+  display: none !important;
+}
+
+/* ─── CELL: REQUESTOR ─── */
+.deletion-requestor-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.deletion-requestor-name {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-size: 13.5px;
+}
+
+.deletion-requestor-date {
+  font-size: 11.5px;
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deletion-requestor-date .material-symbols-rounded {
+  font-size: 13px;
+}
+
+/* ─── CELL: REASON GLIMPSE ─── */
+.deletion-reason-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.deletion-reason-text {
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+/* ─── CELL: ACTIONS ─── */
+.deletion-actions-cell {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.deletion-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: all 0.14s ease;
+  white-space: nowrap;
+}
+
+.deletion-btn--reject {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.deletion-btn--reject:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.deletion-btn--approve {
+  background: var(--md-sys-color-error, #ba1a1a);
+  border: 1px solid var(--md-sys-color-error, #ba1a1a);
+  color: #ffffff;
+}
+
+.deletion-btn--approve:hover {
+  background: color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 88%, black 12%);
+  border-color: color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 88%, black 12%);
+  box-shadow: 0 2px 4px rgba(186, 26, 26, 0.2);
+}
+
+.deletion-btn:active {
+  transform: scale(0.96);
+}
+
+.deletion-btn .material-symbols-rounded {
+  font-size: 15px;
+}
+
+/* ─── DETAIL OVERLAY MODAL / CENTER DIALOG ─── */
+.deletion-modal-container {
+  max-width: 480px !important;
+  width: 100% !important;
+  border-radius: 20px !important;
+  padding: 0 !important;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0) !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2), 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+  background: var(--md-sys-color-surface, #ffffff) !important;
+  overflow: hidden !important;
+}
+
+.deletion-detail-modal {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.deletion-detail-header {
+  padding: 16px 20px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.deletion-detail-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deletion-detail-header-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deletion-detail-header-icon .material-symbols-rounded {
+  font-size: 20px;
+}
+
+.deletion-detail-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.deletion-detail-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.deletion-detail-subtitle {
+  font-size: 0.76rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 0;
+}
+
+.deletion-detail-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.deletion-detail-close-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.deletion-detail-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 65vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Patient Identity Card */
+.deletion-detail-patient-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.deletion-detail-patient-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.deletion-detail-patient-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.deletion-detail-patient-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.deletion-detail-patient-mrn {
+  font-size: 0.75rem;
+  font-family: monospace;
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Metadata Grid */
+.deletion-detail-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.deletion-detail-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.deletion-detail-meta-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.deletion-detail-meta-val {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.deletion-detail-meta-sub {
+  font-size: 0.7rem;
+  color: var(--md-sys-color-on-surface-variant, #79747e);
+}
+
+/* Deletion Rationale */
+.deletion-detail-reason-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--md-sys-color-error-container, #ffdad6);
+  border-left: 4px solid var(--md-sys-color-error, #ba1a1a);
+}
+
+.deletion-detail-reason-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--md-sys-color-on-error-container, #410002);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.deletion-detail-reason-title .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.deletion-detail-reason-content {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--md-sys-color-on-error-container, #410002);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Action Footer */
+.deletion-detail-actions {
+  padding: 14px 20px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.deletion-detail-btn {
+  height: 38px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.14s ease;
+}
+
+/* ─── RESPONSIVE: TABLET (641px - 1023px) ─── */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .deletion-view {
+    padding: 16px 20px;
+    gap: 14px;
+  }
+
+  .deletion-table {
+    font-size: 12.5px;
+  }
+
+  .deletion-table th,
+  .deletion-table td {
+    padding: 7px 10px;
+  }
+
+  .col-del-patient {
+    min-width: 160px;
+  }
+
+  .col-del-requestor {
+    min-width: 130px;
+  }
+
+  .col-del-reason {
+    min-width: 180px;
+    max-width: 220px;
+  }
+
+  .col-del-actions {
+    min-width: 150px;
+    width: 150px;
+  }
+
+  .deletion-btn {
+    height: 26px;
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 0.72rem;
+  }
+}
+
+/* ─── RESPONSIVE: MOBILE (<= 640px) — Ultra-Compact List Tile ─── */
+@media (max-width: 640px) {
+  .deletion-view {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .deletion-header-card {
+    padding: 12px 14px;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .deletion-header-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .deletion-header-title {
+    font-size: 0.95rem;
+  }
+
+  .deletion-header-subtitle {
+    display: none;
+  }
+
+  .deletion-table-container {
+    background: var(--md-sys-color-surface, #ffffff);
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .deletion-table thead {
+    display: none;
+  }
+
+  .deletion-table,
+  .deletion-table tbody {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .deletion-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--md-sys-color-surface, #ffffff);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    padding: 10px 12px;
+    gap: 8px;
+    min-height: 58px;
+    box-sizing: border-box;
+    transition: background 120ms ease, transform 100ms ease;
+  }
+
+  .deletion-row:last-child {
+    border-bottom: none;
+  }
+
+  .deletion-row:hover {
+    background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  }
+
+  .deletion-row:active {
+    background: var(--md-sys-color-surface-container, #f3edf7);
+    transform: scale(0.99);
+  }
+
+  /* Hide detailed columns on mobile row */
+  .col-del-requestor,
+  .col-del-reason,
+  .deletion-desktop-only {
+    display: none !important;
+  }
+
+  /* Left: Patient Profile */
+  .col-del-patient {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    min-width: 0;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .deletion-patient-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .deletion-patient-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .deletion-patient-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .deletion-patient-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface, #1d1b20);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .deletion-patient-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--md-sys-color-on-surface-variant, #79747e);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .deletion-patient-mrn {
+    font-size: 0.72rem;
+  }
+
+  .deletion-mobile-extra {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    color: var(--md-sys-color-on-surface-variant, #79747e);
+  }
+
+  /* Right: Reason Glimpse Chip & Chevron */
+  .col-del-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 !important;
+    border: none !important;
+    flex-shrink: 0;
+    width: auto;
+    min-width: auto;
+    gap: 6px;
+  }
+
+  .deletion-mobile-action-chip {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--md-sys-color-error-container, #ffdad6);
+    color: var(--md-sys-color-on-error-container, #410002);
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .deletion-mobile-chevron {
+    display: inline-flex !important;
+    color: var(--md-sys-color-outline, #79747e);
+    font-size: 18px !important;
+  }
+
+  .deletion-modal-container {
+    max-width: calc(100vw - 24px) !important;
+    margin: 12px !important;
+    border-radius: 18px !important;
+  }
+
+  .deletion-detail-actions {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon, Md3Avatar } from './Md3Widgets';
-import { useConfig } from '../../contexts/ConfigContext';
+import { useConfig } from '../../context/ConfigContext';
 import { formatTodayLabel } from '../../utils/dateFormatting';
 import './Md3ClinicalDrawer.css';
 
@@ -22,11 +22,15 @@ export const Md3ClinicalDrawer = ({
   isOpen,
   onClose,
   brandTitle = 'Quantum CareOne',
-  brandSubtitle = 'Clinical Reception',
+  brandSubtitle,
   brandIcon,
   navItems = [],
+  sections = [],
   activeTab = '',
+  activeSection = '',
   onNavigate,
+  onSelectSection,
+  pulseTitle,
   activities = [],
   actionSlot,
   user,
@@ -35,6 +39,18 @@ export const Md3ClinicalDrawer = ({
   const config = useConfig();
   const [logoFailed, setLogoFailed] = useState(false);
   const logoUrl = config?.LOGO_URL || '/logo.svg';
+
+  const resolvedNavItems = useMemo(() => {
+    if (Array.isArray(navItems) && navItems.length > 0) return navItems;
+    if (Array.isArray(sections) && sections.length > 0) {
+      return sections.flatMap((sec) => sec.items || []);
+    }
+    return [];
+  }, [navItems, sections]);
+
+  const resolvedActiveTab = activeTab || activeSection || '';
+  const resolvedOnNavigate = onNavigate || onSelectSection;
+  const resolvedSubtitle = brandSubtitle !== undefined ? brandSubtitle : (user?.department || 'Clinical Operations');
 
   const resolvedLogo = useMemo(() => {
     const isDefaultIcon = !brandIcon || (React.isValidElement(brandIcon) && brandIcon.type === Icon.Hospital);
@@ -89,10 +105,10 @@ export const Md3ClinicalDrawer = ({
     : 'AR';
 
   const userDisplayName = user?.fullName || 'Clinical Staff';
-  const userRole = user?.role ? String(user.role).replace(/_/g, ' ') : 'RECEPTIONIST';
+  const userRole = user?.role ? String(user.role).replace(/_/g, ' ') : 'STAFF';
 
   return createPortal(
-    <div className="md3-drawer-portal" role="dialog" aria-modal="true" aria-label="Clinical Navigation Drawer">
+    <div className="md3-drawer-portal" role="dialog" aria-modal="true" aria-label="Navigation Drawer">
       {/* Backdrop Scrim */}
       <div className="md3-drawer-scrim" onClick={onClose} aria-hidden="true" />
 
@@ -106,7 +122,7 @@ export const Md3ClinicalDrawer = ({
             </div>
             <div className="md3-drawer-brand-text">
               <span className="md3-drawer-title">{brandTitle}</span>
-              {brandSubtitle && <span className="md3-drawer-subtitle">{brandSubtitle}</span>}
+              {resolvedSubtitle && <span className="md3-drawer-subtitle">{resolvedSubtitle}</span>}
             </div>
           </div>
           <button
@@ -132,19 +148,25 @@ export const Md3ClinicalDrawer = ({
           <div className="md3-drawer-section">
             <span className="md3-drawer-section-label">Navigation</span>
             <nav className="md3-drawer-nav">
-              {navItems.map((item) => {
-                const isActive = activeTab === item.id;
+              {resolvedNavItems.map((item) => {
+                const isActive = resolvedActiveTab === item.id;
+                const iconContent = typeof item.icon === 'string' ? (
+                  <span className="material-symbols-rounded">{item.icon}</span>
+                ) : (
+                  item.icon
+                );
+
                 return (
                   <button
                     key={item.id}
                     type="button"
                     className={`md3-drawer-nav-item ${isActive ? 'md3-drawer-nav-item--active' : ''}`}
                     onClick={() => {
-                      onNavigate?.(item.id);
+                      resolvedOnNavigate?.(item.id);
                       onClose();
                     }}
                   >
-                    <span className="md3-drawer-nav-icon">{item.icon}</span>
+                    <span className="md3-drawer-nav-icon">{iconContent}</span>
                     <span className="md3-drawer-nav-label">{item.label}</span>
                     {item.badge && <span className="md3-drawer-nav-badge">{item.badge}</span>}
                     {isActive && <span className="material-symbols-rounded md3-drawer-nav-active-check">chevron_right</span>}
@@ -154,28 +176,38 @@ export const Md3ClinicalDrawer = ({
             </nav>
           </div>
 
-          {/* Today's Clinical Pulse / Activities */}
-          <div className="md3-drawer-section">
-            <div className="md3-drawer-section-header">
-              <span className="md3-drawer-section-label">Today's Clinical Pulse</span>
-              <span className="md3-drawer-today-badge">
-                <Icon.Calendar /> {formatTodayLabel()}
-              </span>
-            </div>
-            <div className="md3-drawer-activities-list">
-              {activities.map((act, index) => (
-                <div key={index} className={`md3-drawer-activity-card md3-drawer-activity-card--${act.variant || 'default'}`}>
-                  <div className="md3-drawer-activity-left">
-                    <div className="md3-drawer-activity-icon-wrap">
-                      {act.icon}
+          {/* Operational / Clinical Pulse / Activities */}
+          {activities && activities.length > 0 && (
+            <div className="md3-drawer-section">
+              <div className="md3-drawer-section-header">
+                <span className="md3-drawer-section-label">{pulseTitle || "Today's Operational Pulse"}</span>
+                <span className="md3-drawer-today-badge">
+                  <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>calendar_today</span> {formatTodayLabel()}
+                </span>
+              </div>
+              <div className="md3-drawer-activities-list">
+                {activities.map((act, index) => {
+                  const actIcon = typeof act.icon === 'string' ? (
+                    <span className="material-symbols-rounded">{act.icon}</span>
+                  ) : (
+                    act.icon
+                  );
+
+                  return (
+                    <div key={index} className={`md3-drawer-activity-card md3-drawer-activity-card--${act.variant || 'default'}`}>
+                      <div className="md3-drawer-activity-left">
+                        <div className="md3-drawer-activity-icon-wrap">
+                          {actIcon}
+                        </div>
+                        <span className="md3-drawer-activity-label">{act.label}</span>
+                      </div>
+                      <span className="md3-drawer-activity-val">{act.value}</span>
                     </div>
-                    <span className="md3-drawer-activity-label">{act.label}</span>
-                  </div>
-                  <span className="md3-drawer-activity-val">{act.value}</span>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ── USER FOOTER ── */}

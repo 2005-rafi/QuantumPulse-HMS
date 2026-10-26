@@ -1,0 +1,304 @@
+/**
+ * BillHistoryViewer.css
+ * Reusable Material 3 styles for Bill History & Reprint interface across Pharmacy, Reception, and Billing.
+ */
+
+.bill-history-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding: 4px 0 24px 0;
+  box-sizing: border-box;
+}
+
+.bh-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.bh-header-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bh-header-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+.bh-header-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface);
+  letter-spacing: -0.01em;
+}
+
+.bh-header-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 0.8125rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bh-controls-card {
+  background: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bh-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bh-search-box {
+  flex: 1 1 260px;
+}
+
+.bh-filter-select {
+  flex: 0 1 180px;
+}
+
+.bh-date-input {
+  flex: 0 1 150px;
+}
+
+.bh-kpi-summary-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.bh-kpi-pill {
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bh-kpi-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.bh-kpi-icon--billed {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.bh-kpi-icon--collected {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.bh-kpi-icon--count {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bh-kpi-data {
+  display: flex;
+  flex-direction: column;
+}
+
+.bh-kpi-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.bh-kpi-value {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface);
+}
+
+.bh-table-container {
+  background: var(--md-sys-color-surface-container-lowest);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.bh-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.8125rem;
+}
+
+.bh-table th {
+  background: var(--md-sys-color-surface-container-low);
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  white-space: nowrap;
+}
+
+.bh-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  color: var(--md-sys-color-on-surface);
+  vertical-align: middle;
+}
+
+.bh-table tr:last-child td {
+  border-bottom: none;
+}
+
+.bh-table tr:hover {
+  background: var(--md-sys-color-surface-container-low);
+}
+
+.bh-bill-num {
+  font-weight: 700;
+  font-family: var(--md-sys-typescale-body-medium-font, monospace);
+  color: var(--md-sys-color-primary);
+}
+
+.bh-patient-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bh-patient-name {
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.bh-patient-mrn {
+  font-size: 0.6875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-family: monospace;
+}
+
+.bh-area-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.bh-area-badge--pharmacy {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bh-area-badge--reception {
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+}
+
+.bh-area-badge--billing {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.bh-status-pill {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.bh-status-pill--open {
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+}
+
+.bh-status-pill--finalized {
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+}
+
+.bh-status-pill--cancelled {
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+}
+
+.bh-actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.bh-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface);
+  transition: all 150ms ease;
+}
+
+.bh-action-btn:hover {
+  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-outline);
+}
+
+.bh-action-btn--primary {
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border: none;
+}
+
+.bh-action-btn--primary:hover {
+  filter: brightness(1.08);
+}
+
+.bh-empty-state {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--md-sys-color-on-surface-variant);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.bh-empty-state .material-symbols-rounded {
+  font-size: 40px;
+  opacity: 0.5;
+}

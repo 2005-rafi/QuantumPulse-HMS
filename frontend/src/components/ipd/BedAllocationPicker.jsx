@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import ipdApi from '../../services/ipdApi';
+import { Md3Select } from '../md3/Md3FormComponents';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
 import './BedAllocationPicker.css';
 
@@ -51,6 +52,20 @@ export const BedAllocationPicker = ({
     fetchBeds();
   }, []);
 
+  const floorOptions = useMemo(() => {
+    return floors.map((floor) => {
+      const vacantCount = (floor.rooms || []).reduce(
+        (acc, rm) => acc + (rm.beds || []).filter((b) => b.status === 'VACANT').length,
+        0
+      );
+      const floorName = floor.floorName || `Floor ${floor.floorNumber}`;
+      return {
+        value: floor._id,
+        label: `${floorName} (${vacantCount} vacant)`,
+      };
+    });
+  }, [floors]);
+
   const activeFloor = useMemo(() => {
     if (!floors.length) return null;
     return floors.find((f) => f._id === activeFloorId) || floors[0];
@@ -77,14 +92,63 @@ export const BedAllocationPicker = ({
     return null;
   }, [selectedBedId, floors]);
 
-  // Validate gender compatibility
-  const checkGenderCompatibility = (room) => {
-    const restriction = (room.genderRestriction || 'ANY').toUpperCase();
-    const gender = (patientGender || '').toUpperCase();
+  const [genderNotice, setGenderNotice] = useState(null);
 
-    if (restriction === 'MALE' && gender !== 'MALE') return false;
-    if (restriction === 'FEMALE' && gender !== 'FEMALE') return false;
-    return true;
+  // Validate gender compatibility (room and bed levels)
+  const checkGenderCompatibility = (room, bed = null) => {
+    const rawRestriction = (room?.genderRestriction || 'UNRESTRICTED').toUpperCase();
+    const pGender = (patientGender || '').trim().toUpperCase();
+
+    // Inclusive accommodation for Other / Non-binary / Transgender
+    if (!pGender || pGender === 'OTHER' || pGender === 'NON_BINARY' || pGender === 'TRANSGENDER' || pGender === 'UNKNOWN') {
+      return { isMatch: true, reason: null };
+    }
+
+    const isRoomFemale = rawRestriction === 'FEMALE_ONLY' || rawRestriction === 'FEMALE';
+    const isRoomMale = rawRestriction === 'MALE_ONLY' || rawRestriction === 'MALE';
+
+    if (isRoomFemale && pGender !== 'FEMALE') {
+      return {
+        isMatch: false,
+        reason: `Room ${room.roomNumber} is a designated Female-only ward. Cannot assign Male patient (${patientGender}). Please select a Male or Unisex ward.`,
+      };
+    }
+
+    if (isRoomMale && pGender !== 'MALE') {
+      return {
+        isMatch: false,
+        reason: `Room ${room.roomNumber} is a designated Male-only ward. Cannot assign Female patient (${patientGender}). Please select a Female or Unisex ward.`,
+      };
+    }
+
+    // Bed-level designation check
+    const bedLabel = (bed?.bedLabel || bed?.bedNumber || '').toUpperCase();
+    if (pGender === 'MALE' && (bedLabel.includes('FEMALE') || bedLabel.startsWith('F-') || bedLabel.startsWith('F_'))) {
+      return {
+        isMatch: false,
+        reason: `Bed "${bed?.bedLabel || bed?.bedNumber}" is designated for Female patients.`,
+      };
+    }
+
+    if (pGender === 'FEMALE' && (bedLabel.includes('MALE') && !bedLabel.includes('FEMALE') || bedLabel.startsWith('M-') || bedLabel.startsWith('M_'))) {
+      return {
+        isMatch: false,
+        reason: `Bed "${bed?.bedLabel || bed?.bedNumber}" is designated for Male patients.`,
+      };
+    }
+
+    return { isMatch: true, reason: null };
+  };
+
+  const getGenderBadgeInfo = (room) => {
+    const raw = (room?.genderRestriction || 'UNRESTRICTED').toUpperCase();
+    if (raw === 'FEMALE_ONLY' || raw === 'FEMALE') {
+      return { label: 'Female Ward (Female Only)', classSuffix: 'female', icon: 'female' };
+    }
+    if (raw === 'MALE_ONLY' || raw === 'MALE') {
+      return { label: 'Male Ward (Male Only)', classSuffix: 'male', icon: 'male' };
+    }
+    return { label: 'Unisex / All Genders', classSuffix: 'any', icon: 'wc' };
   };
 
   return (
@@ -104,6 +168,25 @@ export const BedAllocationPicker = ({
           </span>
         )}
       </div>
+
+      {genderNotice && (
+        <div className="md3-bed-picker-interactive-notice" role="alert">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
+            <span className="material-symbols-rounded" style={{ color: '#be185d', fontSize: '18px', flexShrink: 0 }}>
+              lock
+            </span>
+            <span><strong>Privacy &amp; Ward Restriction:</strong> {genderNotice}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setGenderNotice(null)}
+            className="md3-bed-notice-close-btn"
+            aria-label="Dismiss Notice"
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>close</span>
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div style={{ padding: '24px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)', fontSize: '0.80rem' }}>
@@ -131,28 +214,20 @@ export const BedAllocationPicker = ({
         </div>
       ) : (
         <>
-          {/* Floor Tabs */}
-          <div className="md3-bed-picker-nav">
-            {floors.map((floor) => {
-              const isActive = floor._id === activeFloorId;
-              const vacantCount = (floor.rooms || []).reduce(
-                (acc, rm) => acc + (rm.beds || []).filter((b) => b.status === 'VACANT').length,
-                0
-              );
-              return (
-                <button
-                  key={floor._id}
-                  type="button"
-                  className={`md3-bed-picker-floor-btn ${isActive ? 'is-active' : ''}`}
-                  onClick={() => setActiveFloorId(floor._id)}
-                >
-                  <span>{floor.floorName || `Floor ${floor.floorNumber}`}</span>
-                  <span style={{ opacity: 0.8, fontSize: '0.70rem', marginLeft: '4px' }}>
-                    ({vacantCount} vacant)
-                  </span>
-                </button>
-              );
-            })}
+          {/* Floor Selection Dropdown */}
+          <div className="md3-bed-picker-filter-bar">
+            <Md3Select
+              id="bed-picker-floor-select"
+              name="floorId"
+              label="Select Hospital Floor *"
+              value={activeFloorId || (floors[0]?._id ?? '')}
+              onChange={(e) => {
+                setActiveFloorId(e.target.value);
+                setGenderNotice(null);
+              }}
+              options={floorOptions}
+              leadingIcon="apartment"
+            />
           </div>
 
           {/* Rooms and Beds in Active Floor */}
@@ -163,8 +238,9 @@ export const BedAllocationPicker = ({
               </div>
             ) : (
               activeFloor.rooms.map((room) => {
-                const isGenderMatch = checkGenderCompatibility(room);
-                const genderLabel = (room.genderRestriction || 'ANY').toUpperCase();
+                const roomComp = checkGenderCompatibility(room);
+                const isRoomMatch = roomComp.isMatch;
+                const badgeInfo = getGenderBadgeInfo(room);
 
                 // Filter beds if wardClassFilter provided
                 const visibleBeds = (room.beds || []).filter((b) => {
@@ -191,22 +267,27 @@ export const BedAllocationPicker = ({
                         <span className="md3-bed-picker-tier-badge">
                           {room.roomType?.replace(/_/g, ' ') || 'General Ward'}
                         </span>
-                        <span className={`md3-bed-picker-gender-badge md3-bed-picker-gender-badge--${genderLabel.toLowerCase()}`}>
-                          {genderLabel === 'FEMALE' ? 'Female Ward' : genderLabel === 'MALE' ? 'Male Ward' : 'Unisex / Any'}
+                        <span className={`md3-bed-picker-gender-badge md3-bed-picker-gender-badge--${badgeInfo.classSuffix}`}>
+                          <span className="material-symbols-rounded" style={{ fontSize: '11px', marginRight: '3px', verticalAlign: 'middle' }}>
+                            {badgeInfo.icon}
+                          </span>
+                          <span>{badgeInfo.label}</span>
                         </span>
                       </div>
                     </div>
 
-                    {!isGenderMatch && (
+                    {!isRoomMatch && (
                       <div className="md3-bed-gender-warning">
-                        <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>warning</span>
-                        <span>Gender restriction: This room is designated for {genderLabel} patients only.</span>
+                        <span className="material-symbols-rounded" style={{ fontSize: '14px', flexShrink: 0 }}>warning</span>
+                        <span>{roomComp.reason}</span>
                       </div>
                     )}
 
                     {/* Beds Grid */}
                     <div className="md3-bed-picker-beds-row">
                       {visibleBeds.map((bed) => {
+                        const bedComp = checkGenderCompatibility(room, bed);
+                        const isGenderMatch = isRoomMatch && bedComp.isMatch;
                         const isSelected = bed._id === selectedBedId;
                         const isVacant = bed.status === 'VACANT';
                         const isOccupied = bed.status === 'OCCUPIED';
@@ -219,6 +300,7 @@ export const BedAllocationPicker = ({
                             className={`md3-bed-pill ${isVacant ? 'is-vacant' : ''} ${isSelected ? 'is-selected' : ''} ${isOccupied ? 'is-occupied' : ''} ${isMaintenance ? 'is-maintenance' : ''} ${!isGenderMatch ? 'is-gender-mismatch' : ''}`}
                             onClick={() => {
                               if (canSelect) {
+                                setGenderNotice(null);
                                 onSelectBed({
                                   ...bed,
                                   roomNumber: room.roomNumber,
@@ -226,22 +308,30 @@ export const BedAllocationPicker = ({
                                   floorName: activeFloor.floorName,
                                   floorNumber: activeFloor.floorNumber,
                                 });
+                              } else if (!isGenderMatch) {
+                                setGenderNotice(bedComp.reason || roomComp.reason);
                               }
                             }}
                             role="button"
-                            tabIndex={canSelect ? 0 : -1}
-                            title={!isGenderMatch ? 'Gender mismatch' : `Bed ${bed.bedLabel || bed.bedNumber} (${bed.status})`}
+                            tabIndex={canSelect ? 0 : 0}
+                            aria-disabled={!canSelect}
+                            title={!isGenderMatch ? (bedComp.reason || roomComp.reason) : `Bed ${bed.bedLabel || bed.bedNumber} (${bed.status})`}
                           >
                             <div className="md3-bed-pill-top">
                               <span className="md3-bed-pill-label">
+                                {!isGenderMatch && (
+                                  <span className="material-symbols-rounded" style={{ fontSize: '11px', color: '#be185d', marginRight: '3px', verticalAlign: 'middle' }}>
+                                    lock
+                                  </span>
+                                )}
                                 {bed.bedLabel || `Bed ${bed.bedNumber}`}
                               </span>
                               <span className={`md3-bed-pill-status md3-bed-pill-status--${bed.status.toLowerCase()}`}>
-                                {bed.status === 'VACANT' ? 'Vacant' : bed.status === 'OCCUPIED' ? 'Occupied' : 'Maint'}
+                                {!isGenderMatch ? 'Locked' : bed.status === 'VACANT' ? 'Vacant' : bed.status === 'OCCUPIED' ? 'Occupied' : 'Maint'}
                               </span>
                             </div>
                             <span className="md3-bed-pill-rate">
-                              {bed.wardBillingTier?.replace(/_/g, ' ') || 'Standard'}
+                              {!isGenderMatch ? 'Gender Restricted' : (bed.wardBillingTier?.replace(/_/g, ' ') || 'Standard')}
                             </span>
                           </div>
                         );

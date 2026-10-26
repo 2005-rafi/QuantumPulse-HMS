@@ -1,0 +1,534 @@
+/**
+ * components/md3/Md3TestCatalogConfigurator.css
+ * Material Design 3 Slide-over Sheet styles for Diagnostic Test Catalog Configurator.
+ * Features right-side slide-over container, full vertical scrollability, collapsible accordion cards, and sticky footer.
+ */
+
+.catalog-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  animation: catalogBackdropFade 0.2s ease-out;
+}
+
+@keyframes catalogBackdropFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.catalog-sheet-container {
+  width: 100%;
+  max-width: 980px;
+  height: 100%;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #191c1b);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -8px 0 36px rgba(0, 0, 0, 0.22);
+  animation: catalogSlideIn 0.28s cubic-bezier(0.1, 0.9, 0.2, 1);
+  overflow: hidden;
+  border-radius: 28px 0 0 28px;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+@keyframes catalogSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ── 1. Sheet Header ── */
+.catalog-sheet-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  flex-shrink: 0;
+}
+
+.catalog-sheet-header__title-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.catalog-sheet-header__icon {
+  font-size: 26px;
+  color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  padding: 10px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.catalog-sheet-header__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--md-sys-color-primary, #00668b);
+}
+
+.catalog-sheet-header__desc {
+  margin: 3px 0 0 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--md-sys-color-outline, #73777f);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.catalog-sheet-header__close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  transition: all 0.15s ease;
+}
+
+.catalog-sheet-header__close-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #e0e4df);
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+/* ── Error Banner ── */
+.catalog-error-banner {
+  padding: 12px 24px;
+  background: var(--md-sys-color-error-container, #ffdad6);
+  color: var(--md-sys-color-on-error-container, #410002);
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  flex-shrink: 0;
+}
+
+/* ── 2. Scrollable Body ── */
+.catalog-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+/* ── 3. Accordion Test Cards ── */
+.catalog-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.catalog-test-card {
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  border-radius: 18px;
+  background: var(--md-sys-color-surface-container-low, #f7f7fa);
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.catalog-test-card:hover {
+  border-color: var(--md-sys-color-outline, #73777f);
+}
+
+.catalog-test-card--expanded {
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 6px 20px rgba(0, 102, 139, 0.08);
+  background: var(--md-sys-color-surface, #ffffff);
+}
+
+.catalog-test-header {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  background: var(--md-sys-color-surface-container-low, #f7f7fa);
+  user-select: none;
+  transition: background 0.15s ease;
+  border-bottom: 1px solid transparent;
+}
+
+.catalog-test-card--expanded .catalog-test-header {
+  background: var(--md-sys-color-surface-container, #f0f0f4);
+  border-bottom-color: var(--md-sys-color-outline-variant, #e0e4df);
+}
+
+.catalog-test-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.catalog-test-header__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.catalog-code-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2c);
+  font-family: monospace;
+}
+
+.catalog-sample-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.catalog-test-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: var(--md-sys-color-surface, #ffffff);
+  animation: catalogBodyFadeIn 0.2s ease-out;
+}
+
+@keyframes catalogBodyFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.catalog-meta-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.5fr;
+  gap: 14px;
+}
+
+@media (max-width: 720px) {
+  .catalog-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Parameters Table ── */
+.catalog-params-card {
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  border-radius: 14px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  overflow: hidden;
+}
+
+.catalog-params-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  background: var(--md-sys-color-surface-container, #f0f0f4);
+}
+
+.catalog-params-table-wrapper {
+  overflow-x: auto;
+}
+
+.catalog-params-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.catalog-params-table th {
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  background: var(--md-sys-color-surface-container-low, #f7f7fa);
+}
+
+.catalog-params-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  vertical-align: top;
+}
+
+/* ── Centered Add Trigger ── */
+.catalog-add-trigger-row {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.catalog-add-another-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  background: var(--md-sys-color-surface-container, #ececf0);
+  border: 1px dashed var(--md-sys-color-primary, #00668b);
+  border-radius: 100px;
+  color: var(--md-sys-color-primary, #00668b);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.catalog-add-another-btn:hover {
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2c);
+  border-style: solid;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 102, 139, 0.16);
+}
+
+.catalog-add-another-btn .material-symbols-rounded {
+  font-size: 22px;
+}
+
+/* ── Filter Tabs ── */
+.catalog-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px 10px 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.catalog-filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-low, #f4f6fb);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.catalog-filter-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #e6e8ee);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.catalog-filter-btn--active {
+  background: var(--md-sys-color-primary, #00668b);
+  color: #ffffff;
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 2px 6px rgba(0, 102, 139, 0.25);
+}
+
+.catalog-filter-btn--active:hover {
+  background: var(--md-sys-color-primary, #00668b);
+  color: #ffffff;
+}
+
+/* ── Mode Badges ── */
+.catalog-mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+.catalog-mode-badge--structured {
+  background: #e0f2fe;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+}
+
+.catalog-mode-badge--upload {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.catalog-mode-badge--hybrid {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+/* ── Reporting Mode Selector Section ── */
+.catalog-mode-selection-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  border-radius: 14px;
+}
+
+.catalog-mode-selection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.catalog-mode-selection-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #00668b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.catalog-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 768px) {
+  .catalog-mode-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.catalog-mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #d0d7de);
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  text-align: left;
+}
+
+.catalog-mode-card:hover {
+  border-color: var(--md-sys-color-primary, #00668b);
+  background: #f0f7fa;
+}
+
+.catalog-mode-card--active {
+  border-color: var(--md-sys-color-primary, #00668b);
+  background: #f0f9ff;
+  box-shadow: 0 0 0 1px var(--md-sys-color-primary, #00668b);
+}
+
+.catalog-mode-card__top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1e293b);
+}
+
+.catalog-mode-card--active .catalog-mode-card__top {
+  color: var(--md-sys-color-primary, #00668b);
+}
+
+.catalog-mode-card__desc {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  line-height: 1.35;
+}
+
+/* ── Scan Upload Only Banner ── */
+.catalog-upload-mode-banner {
+  padding: 14px 18px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fef3c7;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.catalog-upload-mode-banner__icon {
+  font-size: 24px;
+  color: #b45309;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.catalog-upload-mode-banner__title {
+  margin: 0 0 4px 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.catalog-upload-mode-banner__desc {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #78350f;
+  line-height: 1.4;
+}
+
+/* ── 4. Sheet Footer ── */
+.catalog-sheet-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.catalog-sheet-footer__actions {
+  display: flex;
+  gap: 12px;
+}
+

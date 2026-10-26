@@ -1,0 +1,521 @@
+/* ── Inpatient Nursing Utilities Suite MD3 Styles ── */
+
+.ipd-ward-ops-workspace {
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cedbd5);
+  border-radius: 16px;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Top Header (Desktop) ── */
+.ipd-util-header {
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e8e4);
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+}
+
+.ipd-util-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ipd-util-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-primary, #006a6a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ipd-util-avatar .material-symbols-rounded {
+  font-size: 22px;
+}
+
+.ipd-util-title {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #14201c);
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.ipd-util-sub {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-outline, #556660);
+  margin: 2px 0 0;
+}
+
+.ipd-util-return-btn {
+  background: var(--md-sys-color-surface-container, #edf5f1);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.ipd-util-return-btn:hover {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+  border-color: var(--md-sys-color-primary, #006a6a);
+}
+
+/* ── Mobile/Tablet Sticky Toolbar (Hidden on Desktop) ── */
+.ipd-util-mobile-toolbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ipd-util-mobile-drawer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--md-sys-color-primary-container, #cce8e3);
+  color: var(--md-sys-color-primary, #006a6a);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 9999px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ipd-util-mobile-drawer-btn:active {
+  transform: scale(0.97);
+}
+
+.ipd-util-mobile-count-badge {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  border-radius: 9999px;
+  padding: 1px 7px;
+}
+
+.ipd-util-mobile-active-preview {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.ipd-util-mobile-active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--md-sys-color-surface-container, #edf5f1);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ipd-util-mobile-active-pill .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ipd-util-mobile-return-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  background: var(--md-sys-color-surface-container, #edf5f1);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ipd-util-mobile-return-icon-btn:hover {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+}
+
+/* ── Horizontal Navigation Strip with Reusable Md3Tabs (Desktop) ── */
+.ipd-util-nav-strip {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.ipd-util-md3-tabs {
+  width: 100%;
+  min-width: max-content;
+  background: var(--md-sys-color-surface-container, #edf5f1);
+  border-color: var(--md-sys-color-outline-variant, #d8e5df);
+  height: 42px;
+  padding: 3px;
+}
+
+.ipd-util-md3-tabs .md3-tab {
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  gap: 6px;
+  color: var(--md-sys-color-on-surface-variant, #394a44);
+}
+
+.ipd-util-md3-tabs .md3-tab--active {
+  color: var(--md-sys-color-primary, #006a6a);
+  background-color: var(--md-sys-color-primary-container, #cce8e3);
+  box-shadow: 0 1px 4px rgba(0, 50, 40, 0.08);
+}
+
+/* ── Workspace Body & Panes ── */
+.ipd-util-body {
+  flex: 1;
+  padding: 24px;
+  background: var(--md-sys-color-surface, #ffffff);
+  position: relative;
+}
+
+.ipd-util-body-content {
+  animation: ipdTabFadeIn 0.22s cubic-bezier(0.1, 0.9, 0.2, 1) both;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+}
+
+@keyframes ipdTabFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ipd-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ipd-pane-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+.ipd-pane-action-hint {
+  font-size: 0.84rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+/* ── IV Doser Layout ── */
+.ipd-calc-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+}
+
+.ipd-calc-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ipd-calc-results-card {
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ipd-results-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.ipd-calc-metric-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #dce7e2);
+  border-radius: 10px;
+}
+
+.ipd-metric-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #556761;
+}
+
+.ipd-metric-value {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.ipd-metric-value--teal {
+  color: #006a6a;
+}
+
+.ipd-metric-value--indigo {
+  color: #4f46e5;
+}
+
+/* ── Tables & Common Data Strips ── */
+.ipd-transfers-table-wrap {
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.ipd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.ipd-table th {
+  background: var(--md-sys-color-surface-container, #edf5f1);
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #2d3e38);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+}
+
+.ipd-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--md-sys-color-surface-container, #f0f6f3);
+  color: var(--md-sys-color-on-surface-variant, #394a44);
+}
+
+.ipd-status-pill {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.ipd-status-pill--completed {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.ipd-status-pill--in_transit {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.ipd-status-pill--neutral {
+  background: #edf2f7;
+  color: #4a5568;
+}
+
+/* ── Crash Cart & Code Blue ── */
+.ipd-crash-cart-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+}
+
+.ipd-crash-cart-checklist {
+  background: var(--md-sys-color-surface-container-low, #f7faf8);
+  border: 1px solid var(--md-sys-color-outline-variant, #d8e5df);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ipd-checklist-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.ipd-check-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 8px 10px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #dce7e2);
+  border-radius: 8px;
+}
+
+.ipd-code-blue-card {
+  background: #ffebee;
+  border: 2px solid #ef5350;
+  border-radius: 18px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: space-between;
+}
+
+.ipd-code-blue-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #d32f2f;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+  animation: codeBluePulse 1.5s infinite;
+}
+
+.ipd-code-blue-icon .material-symbols-rounded {
+  font-size: 32px;
+}
+
+@keyframes codeBluePulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); box-shadow: 0 0 16px rgba(211, 47, 47, 0.6); }
+}
+
+.ipd-code-blue-title {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #b71c1c;
+  margin: 0 0 8px;
+  letter-spacing: 0.5px;
+}
+
+.ipd-code-blue-desc {
+  font-size: 0.85rem;
+  color: #5d1010;
+  margin: 0 0 20px;
+  line-height: 1.45;
+}
+
+.ipd-code-blue-btn {
+  background: #c62828;
+  color: #ffffff;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(198, 40, 40, 0.35);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.ipd-code-blue-btn:hover {
+  background: #b71c1c;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(198, 40, 40, 0.45);
+}
+
+/* ── Toast ── */
+.ipd-util-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1e2925;
+  color: #ffffff;
+  padding: 10px 20px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 1400;
+}
+
+.ipd-util-toast .material-symbols-rounded {
+  color: #4ade80;
+  font-size: 18px;
+}
+
+/* ── Responsive Breakpoints ── */
+@media (max-width: 768px) {
+  .ipd-util-header {
+    display: none;
+  }
+
+  .ipd-util-nav-strip {
+    display: none;
+  }
+
+  .ipd-util-mobile-toolbar {
+    display: flex;
+  }
+
+  .ipd-util-body {
+    padding: 12px;
+  }
+
+  .ipd-calc-layout,
+  .ipd-crash-cart-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 840px) and (min-width: 769px) {
+  .ipd-calc-layout,
+  .ipd-crash-cart-layout {
+    grid-template-columns: 1fr;
+  }
+}
+

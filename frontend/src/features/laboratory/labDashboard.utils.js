@@ -10,12 +10,15 @@ export const formatElapsedTime = (dateString) => {
 };
 
 export const formatPatientName = (patient = {}) => {
+  if (patient.fullName) return patient.fullName;
   return [patient.firstName, patient.lastName].filter(Boolean).join(' ') || 'Unknown patient';
 };
 
 export const getPatientInitials = (patient = {}) => {
+  if (patient.isDeleted || patient.isOrphaned) return 'DP';
   const fullName = formatPatientName(patient);
-  return fullName
+  const clean = fullName.replace(/[[\]()]/g, '').trim();
+  return clean
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
@@ -24,14 +27,22 @@ export const getPatientInitials = (patient = {}) => {
 };
 
 export const getPatientAge = (patient = {}) => {
-  if (patient.age != null) return patient.age;
-  if (!patient.dob) return '—';
+  if (patient.age != null && patient.age !== '—' && !isNaN(Number(patient.age))) {
+    return Number(patient.age);
+  }
+  if (!patient.dob) return null;
 
   const dob = new Date(patient.dob);
-  if (Number.isNaN(dob.getTime())) return '—';
+  if (Number.isNaN(dob.getTime())) return null;
 
   const diff = Date.now() - dob.getTime();
   return Math.max(0, Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000)));
+};
+
+export const formatPatientAgeDisplay = (patient = {}) => {
+  const age = getPatientAge(patient);
+  if (age != null) return `${age} yrs`;
+  return patient.displayAge || (patient.isDeleted ? '—' : 'Age unknown');
 };
 
 export const formatDate = (value) => {
@@ -65,10 +76,12 @@ export const getLongestWait = (visits = []) => {
   return formatElapsedTime(longest?.updatedAt);
 };
 
+import { formatDoctorName } from '../../utils/patientFormatters';
+
 export const getClinicalContext = (visit = {}) => {
   return {
     chiefComplaint: visit.consultation?.chiefComplaint || visit.vitals?.chiefComplaint || 'No complaint documented',
     diagnosis: visit.consultation?.diagnosis || 'Pending diagnosis',
-    requestedBy: visit.consultation?.doctorId?.fullName || 'Unknown clinician',
+    requestedBy: formatDoctorName(visit.consultation?.doctorId || visit.doctor || visit.assignedDoctor || visit.referredBy || 'Unknown clinician'),
   };
 };

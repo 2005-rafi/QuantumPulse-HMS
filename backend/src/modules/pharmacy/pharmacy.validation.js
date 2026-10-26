@@ -6,6 +6,7 @@ const dispenseSchema = Joi.object({
       recommended: Joi.string().required(),
       alternativeGiven: Joi.string().allow('', null),
       quantity: Joi.string().required(),
+      unitPrice: Joi.number().min(0).optional(),
       amount: Joi.number().min(0).required(),
       dosageSchedule: Joi.object({
         morning: Joi.object({ count: Joi.number().min(0).optional(), timing: Joi.string().allow('').optional() }).optional(),

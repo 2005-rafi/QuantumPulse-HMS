@@ -430,7 +430,7 @@ const MOCK_DATASETS = {
     },
     lineItems: [
       {
-        description: 'Emergency Room Triage & Trauma Resuscitation Protocol',
+        description: 'Emergency Room Nursing & Trauma Resuscitation Protocol',
         category: 'PROCEDURE',
         dateRange: '28/08/2026 21:15',
         quantity: '1 Protocol',
@@ -493,7 +493,7 @@ const MOCK_DATASETS = {
     },
     lineItems: [
       {
-        description: 'Initial Emergency Triage & Cardiac Evaluation (OPD/ER)',
+        description: 'Initial Emergency Nursing Assessment & Cardiac Evaluation (OPD/ER)',
         category: 'CONSULTATION',
         dateRange: '25/08/2026 09:30',
         quantity: '1 Visit',
@@ -763,9 +763,6 @@ export const BillingTemplateEditor = ({ initialSettings, onSave, loading }) => {
               <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface)' }}>
                 Billing Template Designer &amp; Workflow Layouts
               </h3>
-              <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--md-sys-color-on-surface-variant)' }}>
-                Configure segregated templates for OPD, IPD, Surgical, Emergency, and Insurance Claims
-              </p>
             </div>
 
             <div style={{ display: 'flex', gap: '8px' }}>

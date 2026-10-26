@@ -27,6 +27,7 @@ export const StaffCard = ({
   onProgress,
   onDisable,
   onEnable,
+  onUnlock,
   isSelected = false,
 }) => {
   if (!staff) return null;
@@ -36,7 +37,8 @@ export const StaffCard = ({
   const deptName = staff.departmentId?.name || staff.department || 'General';
   const position = staff.position || '';
   const empId = staff.employeeId || staff.username || (staff._id ? `EMP-${staff._id.slice(-4).toUpperCase()}` : 'EMP');
-  const isActive = staff.status === 'Active';
+  const isLocked = Boolean(staff.isLocked || staff.accountStatus === 'Locked');
+  const isActive = staff.status === 'Active' && !isLocked;
 
   // Specific clinical license
   const licenseText = staff.medicalLicenseNumber
@@ -63,7 +65,7 @@ export const StaffCard = ({
           <Md3Avatar
             initials={getStaffInitials(fullName)}
             size="small"
-            variant={isActive ? 'primary' : 'neutral'}
+            variant={isLocked ? 'neutral' : isActive ? 'primary' : 'neutral'}
           />
         </div>
 
@@ -77,9 +79,16 @@ export const StaffCard = ({
         </div>
 
         <div className="md3-staff-card-badges">
-          <span className={`md3-staff-status-pill ${isActive ? 'md3-staff-status-pill--active' : 'md3-staff-status-pill--disabled'}`}>
-            {isActive ? 'Active' : 'Disabled'}
-          </span>
+          {isLocked ? (
+            <span className="md3-staff-status-pill md3-staff-status-pill--locked" title="Account locked due to consecutive failed logins" style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+              <span className="material-symbols-rounded" style={{ fontSize: 13 }}>lock</span>
+              <span>Locked</span>
+            </span>
+          ) : (
+            <span className={`md3-staff-status-pill ${isActive ? 'md3-staff-status-pill--active' : 'md3-staff-status-pill--disabled'}`}>
+              {isActive ? 'Active' : 'Disabled'}
+            </span>
+          )}
         </div>
       </div>
 
@@ -96,6 +105,17 @@ export const StaffCard = ({
 
       {/* ── CARD BODY METADATA ── */}
       <div className="md3-staff-card-details">
+        {staff.tariffGrade && (
+          <div className="md3-staff-meta-row" title={`Tariff Grade: ${staff.tariffGrade}${staff.positionRank ? ` (Rank ${staff.positionRank})` : ''}`}>
+            <span className="material-symbols-rounded" style={{ fontSize: '14px', color: 'var(--md-sys-color-primary)' }}>
+              price_change
+            </span>
+            <span className="md3-staff-meta-text">
+              Tariff: <strong>{staff.tariffGrade}</strong>{staff.positionRank ? ` • Rank ${staff.positionRank}` : ''}
+            </span>
+          </div>
+        )}
+
         {licenseText && (
           <div className="md3-staff-meta-row" title={licenseText}>
             <span className="material-symbols-rounded" style={{ fontSize: '14px', color: 'var(--md-sys-color-primary)' }}>
@@ -144,7 +164,16 @@ export const StaffCard = ({
         >
           Progression
         </button>
-        {isActive ? (
+        {isLocked ? (
+          <button
+            type="button"
+            onClick={() => onUnlock?.(staff._id, fullName)}
+            className="md3-staff-btn md3-staff-btn--warning"
+            title="Unlock locked staff account"
+          >
+            Unlock
+          </button>
+        ) : isActive ? (
           <button
             type="button"
             onClick={() => onDisable?.(staff._id, fullName)}

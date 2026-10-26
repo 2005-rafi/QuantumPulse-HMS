@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams } from 'react-router-dom';
 import { patientAPI } from '../../services/patientAPI';
 import { visitAPI } from '../../services/visitAPI';
 import { staffAPI } from '../../services/staffAPI';
@@ -8,8 +9,9 @@ import ipdApi from '../../services/ipdApi';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import PrintablePatientIdCard from '../../components/patients/PrintablePatientIdCard';
-import { formatDoctorName } from '../../utils/patientFormatters';
+import { formatDoctorName, formatVisitStatus } from '../../utils/patientFormatters';
 import { Md3Button, Md3TextField, Md3Select, Md3BottomSheet } from '../../components/md3/Md3FormComponents';
+import Md3ClinicalDrawer from '../../components/md3/Md3ClinicalDrawer';
 import { AppointmentForm } from '../appointments/AppointmentForm';
 import { AppointmentStatusBadge } from '../appointments/AppointmentStatusBadge';
 import CheckInDialog from '../appointments/CheckInDialog';
@@ -166,24 +168,30 @@ const PatientHero = ({
         <div className="pp-hero__actions">
           {userRole === 'Reception' && (
             <>
-              <Md3Button variant="secondary" onClick={onPrintId} style={{ width: 'auto' }}>
-                <Icon.Print />
-                <span>Print ID Card</span>
-              </Md3Button>
-              <Md3Button variant="tonal" onClick={onSchedule} style={{ width: 'auto' }}>
-                <Icon.Calendar />
-                <span>Schedule Appt</span>
-              </Md3Button>
-              <Md3Button variant="filled" onClick={onNewVisit} style={{ width: 'auto' }}>
-                <Icon.Plus />
-                <span>New Visit / Admission</span>
-              </Md3Button>
+              <div className="pp-hero__actions-primary">
+                <Md3Button variant="filled" onClick={onNewVisit} className="pp-hero__btn-primary">
+                  <Icon.Plus />
+                  <span>New Visit / Admission</span>
+                </Md3Button>
+              </div>
+              <div className="pp-hero__actions-secondary">
+                <Md3Button variant="secondary" onClick={onPrintId} className="pp-hero__btn-secondary">
+                  <Icon.Print />
+                  <span>Print ID Card</span>
+                </Md3Button>
+                <Md3Button variant="tonal" onClick={onSchedule} className="pp-hero__btn-secondary">
+                  <Icon.Calendar />
+                  <span>Schedule Appt</span>
+                </Md3Button>
+              </div>
             </>
           )}
           {userRole === 'Pharmacy' && (
-            <Md3Button variant="filled" onClick={onDirectPharmacy} style={{ width: 'auto' }}>
-              Create Direct Bill
-            </Md3Button>
+            <div className="pp-hero__actions-primary">
+              <Md3Button variant="filled" onClick={onDirectPharmacy} className="pp-hero__btn-primary">
+                Create Direct Bill
+              </Md3Button>
+            </div>
           )}
         </div>
       </div>
@@ -192,7 +200,7 @@ const PatientHero = ({
 };
 
 /* ─── Sub-Component: High-Density Patient Snapshot Sidebar ─── */
-const PatientSidebar = ({ patient, latestVitals }) => {
+const PatientSidebar = ({ patient, latestVitals, isCollapsedMobile = false, onToggleMobileCollapse }) => {
   const addr = patient.address || {};
   const addressText = typeof addr === 'string'
     ? addr
@@ -203,13 +211,40 @@ const PatientSidebar = ({ patient, latestVitals }) => {
   const bmi = h > 0 && w > 0 ? (w / (h * h)).toFixed(1) : null;
 
   return (
-    <div className="pp-sidebar-card">
-      {/* Contact Section */}
-      <h3 className="pp-sidebar-section-title">
-        <Icon.Phone />
-        <span>Contact & Address</span>
-      </h3>
-      <div className="pp-sidebar-contact-list">
+    <div className={`pp-sidebar-card ${isCollapsedMobile ? 'pp-sidebar-card--mobile-collapsed' : ''}`}>
+      {/* Mobile-only toggle header to reduce vertical scrolling hassle */}
+      <div
+        className="pp-sidebar-mobile-toggle-strip"
+        onClick={onToggleMobileCollapse}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && onToggleMobileCollapse?.()}
+        aria-expanded={!isCollapsedMobile}
+        aria-label="Toggle Patient Contact and Vitals"
+      >
+        <div className="pp-sidebar-mobile-toggle-left">
+          <span className="material-symbols-rounded">vital_signs</span>
+          <span className="pp-sidebar-mobile-toggle-title">Contact &amp; Vitals</span>
+        </div>
+        <div className="pp-sidebar-mobile-toggle-right">
+          {latestVitals?.bloodPressure && (
+            <span className="pp-sidebar-mobile-quick-chip">
+              BP: {latestVitals.bloodPressure}
+            </span>
+          )}
+          <span className="material-symbols-rounded pp-sidebar-mobile-toggle-icon">
+            {isCollapsedMobile ? 'expand_more' : 'expand_less'}
+          </span>
+        </div>
+      </div>
+
+      <div className="pp-sidebar-content-collapse-wrapper">
+        {/* Contact Section */}
+        <h3 className="pp-sidebar-section-title">
+          <Icon.Phone />
+          <span>Contact & Address</span>
+        </h3>
+        <div className="pp-sidebar-contact-list">
         <div className="pp-sidebar-contact-item">
           <Icon.Phone />
           <div>
@@ -330,6 +365,7 @@ const PatientSidebar = ({ patient, latestVitals }) => {
           No vitals on record yet.
         </div>
       )}
+      </div>
     </div>
   );
 };
@@ -393,7 +429,7 @@ const OverviewTabContent = ({ visits, userRole, onCancelVisit }) => {
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <Md3Chip variant={v.status === 'WAITING_TRIAGE' ? 'primary' : 'secondary'} size="small">
-                      {v.status.replace(/_/g, ' ')}
+                      {formatVisitStatus(v.status)}
                     </Md3Chip>
 
                     {userRole === 'Reception' && (
@@ -414,14 +450,14 @@ const OverviewTabContent = ({ visits, userRole, onCancelVisit }) => {
                             cursor: 'pointer',
                             transition: 'all 150ms ease'
                           }}
-                          title="Cancel this visit before nursing triage and revoke queue token"
+                          title="Cancel this visit before nursing intake and revoke queue token"
                         >
                           <span className="material-symbols-rounded" style={{ fontSize: '14px' }}>cancel</span>
                           Cancel Visit
                         </button>
                       ) : (
-                        <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', fontStyle: 'italic' }} title="Triage has been recorded. Cancellation is restricted.">
-                          Locked after Triage
+                        <span style={{ fontSize: '11px', color: 'var(--md-sys-color-on-surface-variant)', fontStyle: 'italic' }} title="Nurse intake has been recorded. Cancellation is restricted.">
+                          Locked after Nurse Intake
                         </span>
                       )
                     )}
@@ -606,6 +642,135 @@ const LabOrdersSection = ({ visits }) => {
   );
 };
 
+/* ─── Sub-Component: Surgical History Tab ─── */
+const SurgicalHistorySection = ({ patient }) => {
+  const structuredSurgeries = patient?.surgicalHistory || [];
+  const legacyOperations = patient?.operations || [];
+
+  if (structuredSurgeries.length === 0 && legacyOperations.length === 0) {
+    return (
+      <Md3Card variant="outlined" padding="large">
+        <Md3EmptyState
+          icon={<span className="material-symbols-rounded" style={{ fontSize: '48px', opacity: 0.6 }}>surgical</span>}
+          title="No Surgical Procedures Recorded"
+          subtitle="There is no recorded surgical or operating theatre history associated with this patient."
+        />
+      </Md3Card>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      {structuredSurgeries.length > 0 && (
+        <Md3Card variant="outlined" padding="medium">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+            <span className="material-symbols-rounded" style={{ fontSize: '22px', color: 'var(--md-sys-color-primary, #006a6a)' }}>
+              surgical
+            </span>
+            <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 800 }}>Operating Theatre &amp; Surgical Records</h3>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {structuredSurgeries.map((s, idx) => {
+              const surgeonName = formatDoctorName(
+                s.leadSurgeonId?.fullName ||
+                `${s.leadSurgeonId?.firstName || ''} ${s.leadSurgeonId?.lastName || ''}`.trim() ||
+                'Lead Surgeon'
+              );
+              const surgeryDate = s.surgeryDate
+                ? new Date(s.surgeryDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                : '—';
+              const outcome = s.outcome || 'SUCCESSFUL';
+
+              return (
+                <div
+                  key={s._id || idx}
+                  style={{
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
+                    border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <div style={{ fontSize: '1.02rem', fontWeight: 800, color: 'var(--md-sys-color-on-surface, #191c1d)' }}>
+                        {s.procedureName}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-on-surface-variant, #49454f)', marginTop: '2px' }}>
+                        Performed on <strong>{surgeryDate}</strong> • Lead Surgeon: <strong>{surgeonName}</strong>
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        background: outcome === 'SUCCESSFUL' ? '#e6f4ea' : outcome === 'COMPLICATIONS' ? '#ffdad6' : '#fff3cd',
+                        color: outcome === 'SUCCESSFUL' ? '#137333' : outcome === 'COMPLICATIONS' ? '#ba1a1a' : '#856404',
+                        fontSize: '0.72rem',
+                        fontWeight: 800,
+                      }}
+                    >
+                      {outcome}
+                    </span>
+                  </div>
+
+                  {s.notes && (
+                    <div
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        background: 'var(--md-sys-color-surface-container, #f3edf7)',
+                        fontSize: '0.80rem',
+                        color: 'var(--md-sys-color-on-surface-variant, #334155)',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      <strong>Operative Notes:</strong> {s.notes}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </Md3Card>
+      )}
+
+      {/* Legacy Operations List (if any exist) */}
+      {legacyOperations.length > 0 && (
+        <Md3Card variant="outlined" padding="medium">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+            <span className="material-symbols-rounded" style={{ fontSize: '20px', color: 'var(--md-sys-color-outline, #79747e)' }}>
+              history
+            </span>
+            <h4 style={{ margin: 0, fontSize: '0.94rem', fontWeight: 700 }}>Past Medical &amp; Historical Operations</h4>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {legacyOperations.map((op, i) => (
+              <span
+                key={i}
+                style={{
+                  padding: '4px 12px',
+                  borderRadius: '16px',
+                  background: 'var(--md-sys-color-surface-container, #f3edf7)',
+                  border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
+                  fontSize: '0.80rem',
+                  fontWeight: 600,
+                }}
+              >
+                {typeof op === 'string' ? op : op.name || op.procedure || 'Prior Surgery'}
+              </span>
+            ))}
+          </div>
+        </Md3Card>
+      )}
+    </div>
+  );
+};
+
 /* ─── Sub-Component: Patient Care & Consultation History Timeline ─── */
 const VisitHistorySection = ({ visits, userRole, onCancelVisit }) => {
   const sorted = [...visits].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -749,11 +914,16 @@ const VisitHistorySection = ({ visits, userRole, onCancelVisit }) => {
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '6px', borderTop: '1px solid var(--md-sys-color-outline-variant, #f1eee1)', fontSize: '0.75rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontWeight: 700, color: v.status === 'COMPLETED' ? '#166534' : v.status === 'CANCELLED' ? '#ba1a1a' : 'var(--md-sys-color-primary)' }}>
-                    Status: {v.status.replace(/_/g, ' ')}
+                    Status: {formatVisitStatus(v.status)}
                   </span>
-                  {totalFee > 0 && (
+                  {reg > 0 && (
                     <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
-                      Consultation Fee: <strong>{CURRENCY_SYMBOL}{totalFee.toFixed(2)}</strong>
+                      Registration Fee Paid: <strong>{CURRENCY_SYMBOL}{reg.toFixed(2)}</strong>
+                    </span>
+                  )}
+                  {cons > 0 && (
+                    <span style={{ color: 'var(--md-sys-color-on-surface-variant)' }}>
+                      Consultation: <strong>{CURRENCY_SYMBOL}{cons.toFixed(2)}</strong>
                     </span>
                   )}
                 </div>
@@ -793,6 +963,7 @@ const VisitHistorySection = ({ visits, userRole, onCancelVisit }) => {
 const PatientAppointmentsSection = ({
   appointments = [],
   loading = false,
+  error = null,
   onBookNew,
   onCheckIn,
   onReschedule,
@@ -903,6 +1074,27 @@ const PatientAppointmentsSection = ({
         </Md3Button>
       }
     >
+      {error && (
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '12px 16px',
+            marginBottom: '16px',
+            borderRadius: '10px',
+            background: 'var(--md-sys-color-error-container, #ffdad6)',
+            color: 'var(--md-sys-color-on-error-container, #410002)',
+            border: '1px solid var(--md-sys-color-error, #ba1a1a)',
+            fontSize: '0.85rem',
+            fontWeight: '600',
+          }}
+          role="alert"
+        >
+          <span className="material-symbols-rounded" style={{ fontSize: '20px' }}>error</span>
+          <span>{error}</span>
+        </div>
+      )}
       {loading ? (
         <div style={{ padding: '24px', textAlign: 'center', color: 'var(--md-sys-color-on-surface-variant)' }}>
           Loading scheduled appointments...
@@ -982,7 +1174,7 @@ const CancelVisitDialog = ({ visit, isOpen, onClose, onConfirm, loading, error }
 
           <p className="appt-cancel-warning" style={{ fontSize: '0.875rem', lineHeight: '1.5' }}>
             Are you sure you want to cancel this visit and revoke queue token <strong>{visit.tokenString || visit.visitNumber}</strong>?
-            This will permanently remove the patient from the active nursing triage queue.
+            This will permanently remove the patient from the active nurse queue.
           </p>
 
           <div className="appt-form-field" style={{ marginTop: '12px' }}>
@@ -993,7 +1185,7 @@ const CancelVisitDialog = ({ visit, isOpen, onClose, onConfirm, loading, error }
               id="cancel-visit-reason"
               rows={3}
               className="appt-textarea"
-              placeholder="e.g., Patient requested cancellation, wrong department chosen, unable to wait for triage..."
+              placeholder="e.g., Patient requested cancellation, wrong department chosen, unable to wait for nurse..."
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               disabled={loading}
@@ -1025,6 +1217,18 @@ const CancelVisitDialog = ({ visit, isOpen, onClose, onConfirm, loading, error }
 };
 
 /* ============================================================
+   Patient Profile Sections Definition
+   ============================================================ */
+export const PATIENT_SECTIONS = [
+  { id: 'overview', label: 'Clinical Overview', icon: <Icon.Person />, desc: 'Vitals, Encounters & Diagnosis' },
+  { id: 'history', label: 'Care & Consultation History', icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>medical_information</span>, desc: 'Past visits and treatment plans' },
+  { id: 'surgeries', label: 'Surgical History', icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>surgical</span>, desc: 'Prior procedures & operations' },
+  { id: 'appointments', label: 'Appointments', icon: <Icon.Calendar />, desc: 'Scheduled & upcoming visits' },
+  { id: 'labs', label: 'Lab Reports', icon: <Icon.Beaker />, desc: 'Diagnostic investigations' },
+  { id: 'idcard', label: 'Print ID Card', icon: <Icon.Print />, desc: 'Physical medical identification' },
+];
+
+/* ============================================================
    Main PatientProfile Component
    ============================================================ */
 const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, headerActions }) => {
@@ -1033,7 +1237,22 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
   const [visits, setVisits] = useState([]);
   const [activeAdmission, setActiveAdmission] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+
+  // Tab Deep Linking via useSearchParams (?tab=...)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const rawTab = searchParams.get('tab');
+  const validTabs = ['overview', 'history', 'surgeries', 'appointments', 'labs', 'idcard'];
+  const activeTab = validTabs.includes(rawTab) ? rawTab : 'overview';
+
+  const handleTabChange = useCallback((newTabId) => {
+    if (validTabs.includes(newTabId)) {
+      setSearchParams({ tab: newTabId }, { replace: true });
+    }
+  }, [setSearchParams]);
+
+  // Mobile / Tablet Drawer & Collapsible Vitals State
+  const [isTabDrawerOpen, setIsTabDrawerOpen] = useState(false);
+  const [isVitalsCollapsedMobile, setIsVitalsCollapsedMobile] = useState(true);
 
   // Appointments state
   const [appointments, setAppointments] = useState([]);
@@ -1046,13 +1265,22 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState(null);
   const [isNewVisitModalOpen, setIsNewVisitModalOpen] = useState(false);
+  const [appointmentsError, setAppointmentsError] = useState(null);
 
-  /* ─── Data Fetching ─── */
-  const fetchAppointments = useCallback(async () => {
-    if (!patientId) return;
+  /* ─── Data Fetching with Universal Identifier Support (ObjectId or MRN) ─── */
+  const fetchAppointments = useCallback(async (targetId) => {
+    let idToUse = targetId;
+    if (!idToUse && patient?._id) {
+      idToUse = patient._id;
+    } else if (!idToUse && patientId && typeof patientId === 'string' && patientId.length === 24) {
+      idToUse = patientId;
+    }
+    if (!idToUse) return;
+
     setLoadingAppointments(true);
+    setAppointmentsError(null);
     try {
-      const res = await appointmentAPI.list({ patientId });
+      const res = await appointmentAPI.list({ patientId: idToUse });
       const raw = res.data?.data;
       const items = Array.isArray(raw?.items)
         ? raw.items
@@ -1064,41 +1292,51 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
       setAppointments(items);
     } catch (err) {
       console.error('[PatientProfile] appointments fetch error', err);
+      const errMsg = err.response?.data?.message || err.message || 'Unable to load scheduled appointments';
+      setAppointmentsError(errMsg);
       setAppointments([]);
     } finally {
       setLoadingAppointments(false);
     }
-  }, [patientId]);
+  }, [patient?._id, patientId]);
 
   const fetchProfile = useCallback(async () => {
+    if (!patientId) return;
+    setLoading(true);
     try {
-      const [patientRes, visitsRes, admRes] = await Promise.allSettled([
-        patientAPI.getById(patientId),
-        visitAPI.getPatientVisits(patientId),
-        ipdApi.getAdmissions({ patientId, status: 'ADMITTED' }),
+      const patientRes = await patientAPI.getById(patientId);
+      const patientData = patientRes?.data?.data || patientRes?.data || patientRes;
+      setPatient(patientData);
+
+      const resolvedDbId = patientData?._id || patientId;
+
+      const [visitsRes, admRes] = await Promise.allSettled([
+        visitAPI.getPatientVisits(resolvedDbId),
+        ipdApi.getAdmissions({ patientId: resolvedDbId, status: 'ADMITTED' }),
       ]);
-      if (patientRes.status === 'fulfilled') setPatient(patientRes.value.data);
-      if (visitsRes.status === 'fulfilled') setVisits(visitsRes.value.data?.data || []);
+      if (visitsRes.status === 'fulfilled') {
+        setVisits(visitsRes.value?.data?.data || visitsRes.value?.data || visitsRes.value || []);
+      }
       if (admRes.status === 'fulfilled') {
         const admissions = admRes.value.data?.data || [];
         setActiveAdmission(Array.isArray(admissions) ? admissions[0] : null);
       }
+      fetchAppointments(resolvedDbId);
     } catch (err) {
       console.error('[PatientProfile] fetch error', err);
     } finally {
       setLoading(false);
     }
-  }, [patientId]);
+  }, [patientId, fetchAppointments]);
 
   useEffect(() => {
     let cancelled = false;
     const loadAll = async () => {
       await fetchProfile();
-      await fetchAppointments();
     };
     loadAll();
     return () => { cancelled = true; };
-  }, [fetchProfile, fetchAppointments]);
+  }, [fetchProfile]);
 
   /* ─── Handlers ─── */
   const handleDirectPharmacy = async () => {
@@ -1117,7 +1355,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
     try {
       const res = await appointmentAPI.checkIn(apptId);
       setAppointmentForCheckIn(null);
-      fetchAppointments();
+      fetchAppointments(patient?._id);
       if (onVisitCreated && res.data?.data?.visit) {
         onVisitCreated({ patient, visit: res.data.data.visit });
       }
@@ -1134,7 +1372,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
     try {
       await appointmentAPI.reschedule(apptId, payload);
       setAppointmentForReschedule(null);
-      fetchAppointments();
+      fetchAppointments(patient?._id);
     } catch (err) {
       setActionError(err.response?.data?.message || err.message || 'Reschedule failed');
     } finally {
@@ -1148,7 +1386,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
     try {
       await appointmentAPI.cancel(apptId, { cancellationReason: reason });
       setAppointmentForCancel(null);
-      fetchAppointments();
+      fetchAppointments(patient?._id);
     } catch (err) {
       setActionError(err.response?.data?.message || err.message || 'Cancellation failed');
     } finally {
@@ -1171,7 +1409,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
   };
 
   /* ─── Loading state ─── */
-  if (loading || !patient) {
+  if (loading) {
     return (
       <Md3Card padding="spacious">
         <Md3EmptyState
@@ -1182,7 +1420,32 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
     );
   }
 
+  /* ─── Not Found / Inaccessible state ─── */
+  if (!patient) {
+    return (
+      <Md3Card padding="spacious">
+        <Md3EmptyState
+          icon={<Icon.Alert />}
+          title="Patient Record Not Found"
+          subtitle={`No active patient record was found matching identifier "${patientId}".`}
+          action={
+            onBack ? (
+              <Md3Button variant="primary" onClick={onBack} style={{ marginTop: '12px' }}>
+                <span className="material-symbols-rounded">arrow_back</span>
+                <span>Return to Patient Directory</span>
+              </Md3Button>
+            ) : null
+          }
+        />
+      </Md3Card>
+    );
+  }
+
   const latestVitals = getLatestVitals(visits);
+  const activeVisits = visits.filter((v) => !['COMPLETED', 'CANCELLED'].includes(v.status));
+  const totalBill = visits.reduce((sum, v) => sum + (v.billing?.totalAmount || 0), 0);
+  const fullName = `${patient?.firstName || ''} ${patient?.lastName || ''}`.trim();
+  const currentSection = PATIENT_SECTIONS.find((s) => s.id === activeTab) || PATIENT_SECTIONS[0];
 
   return (
     <div className="pp-page">
@@ -1198,7 +1461,8 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
                 aria-label="Back to Patient Directory"
               >
                 <span className="material-symbols-rounded">arrow_back</span>
-                <span>Back to Patients</span>
+                <span className="pp-back-btn__label">Back to Patients</span>
+                <span className="pp-back-btn__label-short">Back</span>
               </button>
             )}
             <div className="pp-breadcrumb-trail">
@@ -1210,7 +1474,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
           </div>
           {headerActions && (
             <div className="pp-top-nav-right">
-              {headerActions}
+              {typeof headerActions === 'function' ? headerActions(patient) : headerActions}
             </div>
           )}
         </div>
@@ -1224,7 +1488,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
         userRole={user?.role}
         onNewVisit={() => setIsNewVisitModalOpen(true)}
         onSchedule={() => setIsScheduleModalOpen(true)}
-        onPrintId={() => setActiveTab('idcard')}
+        onPrintId={() => handleTabChange('idcard')}
         onDirectPharmacy={handleDirectPharmacy}
         userId={user?._id}
       />
@@ -1255,23 +1519,46 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
       <div className="pp-layout">
         {/* Sidebar: Demographics & Vitals */}
         <div className="pp-layout__sidebar">
-          <PatientSidebar patient={patient} latestVitals={latestVitals} />
+          <PatientSidebar
+            patient={patient}
+            latestVitals={latestVitals}
+            isCollapsedMobile={isVitalsCollapsedMobile}
+            onToggleMobileCollapse={() => setIsVitalsCollapsedMobile((prev) => !prev)}
+          />
         </div>
 
         {/* Content Pane */}
         <div className="pp-layout__content">
-          {/* Dynamic Tabs */}
-          <Md3Tabs
-            activeTab={activeTab}
-            onChange={setActiveTab}
-            tabs={[
-              { id: 'overview', label: 'Clinical Overview', icon: <Icon.Person /> },
-              { id: 'history', label: 'Care & Consultation History', icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>medical_information</span> },
-              { id: 'appointments', label: 'Appointments', icon: <Icon.Calendar /> },
-              { id: 'labs', label: 'Lab Reports', icon: <Icon.Beaker /> },
-              { id: 'idcard', label: 'Print ID Card', icon: <Icon.Print /> },
-            ]}
-          />
+          {/* Desktop Navigation Tabs (Hidden on Mobile/Tablet via CSS) */}
+          <div className="pp-desktop-tabs">
+            <Md3Tabs
+              activeTab={activeTab}
+              onChange={handleTabChange}
+              tabs={PATIENT_SECTIONS}
+            />
+          </div>
+
+          {/* Mobile & Tablet Section Switcher Drawer Trigger (Hidden on Desktop via CSS) */}
+          <div className="pp-mobile-section-bar">
+            <button
+              type="button"
+              className="pp-section-drawer-trigger"
+              onClick={() => setIsTabDrawerOpen(true)}
+              aria-label="Open clinical sections navigation drawer"
+            >
+              <div className="pp-section-trigger-left">
+                <span className="pp-section-trigger-icon">{currentSection?.icon}</span>
+                <div className="pp-section-trigger-info">
+                  <span className="pp-section-trigger-sub">Current Section</span>
+                  <span className="pp-section-trigger-title">{currentSection?.label}</span>
+                </div>
+              </div>
+              <div className="pp-section-trigger-right">
+                <span className="pp-section-count-chip">6 Tabs</span>
+                <span className="material-symbols-rounded pp-section-chevron">menu_open</span>
+              </div>
+            </button>
+          </div>
 
           {/* Tab Views */}
           <div className="pp-tab-views">
@@ -1282,10 +1569,14 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
                 onCancelVisit={(v) => { setActionError(null); setVisitForCancel(v); }}
               />
             )}
+            {activeTab === 'surgeries' && (
+              <SurgicalHistorySection patient={patient} />
+            )}
             {activeTab === 'appointments' && (
               <PatientAppointmentsSection
                 appointments={appointments}
                 loading={loadingAppointments}
+                error={appointmentsError}
                 onBookNew={() => setIsScheduleModalOpen(true)}
                 onCheckIn={(appt) => { setActionError(null); setAppointmentForCheckIn(appt); }}
                 onReschedule={(appt) => { setActionError(null); setAppointmentForReschedule(appt); }}
@@ -1307,6 +1598,69 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
         </div>
       </div>
 
+      {/* ─── CLINICAL SECTIONS NAVIGATION DRAWER (MOBILE & TABLET) ─── */}
+      <Md3ClinicalDrawer
+        isOpen={isTabDrawerOpen}
+        onClose={() => setIsTabDrawerOpen(false)}
+        brandTitle={fullName || 'Patient Profile'}
+        brandSubtitle={patient.mrn ? `MRN: ${patient.mrn}` : 'Clinical Reception'}
+        navItems={PATIENT_SECTIONS.map((sec) => {
+          let badgeText = undefined;
+          if (sec.id === 'overview' && activeVisits.length > 0) {
+            badgeText = `${activeVisits.length} active`;
+          } else if (sec.id === 'appointments' && appointments.length > 0) {
+            badgeText = String(appointments.length);
+          } else if (sec.id === 'history' && visits.length > 0) {
+            badgeText = String(visits.length);
+          }
+          return {
+            id: sec.id,
+            label: sec.label,
+            icon: sec.icon,
+            badge: badgeText,
+          };
+        })}
+        activeTab={activeTab}
+        onNavigate={(tabId) => {
+          handleTabChange(tabId);
+          setIsTabDrawerOpen(false);
+        }}
+        pulseTitle="Patient Vitality Pulse"
+        activities={[
+          {
+            label: 'Total Visits',
+            value: String(visits.length),
+            icon: <Icon.History />,
+            variant: 'secondary',
+          },
+          {
+            label: 'Active IPD Stay',
+            value: activeAdmission ? `Bed ${activeAdmission.bedNumber || activeAdmission.currentBedId?.bedLabel || 'Assigned'}` : 'None',
+            icon: <span className="material-symbols-rounded">hotel</span>,
+            variant: 'tertiary',
+          },
+          {
+            label: 'Total Billed',
+            value: `${CURRENCY_SYMBOL}${totalBill.toLocaleString()}`,
+            icon: <span className="material-symbols-rounded">receipt_long</span>,
+            variant: 'primary',
+          },
+        ]}
+        actionSlot={
+          user?.role === 'Reception' ? (
+            <Md3Button
+              variant="primary"
+              onClick={() => {
+                setIsTabDrawerOpen(false);
+                setIsNewVisitModalOpen(true);
+              }}
+            >
+              <Icon.Plus /> New Visit / Admission
+            </Md3Button>
+          ) : null
+        }
+      />
+
       {/* ─── SCHEDULE APPOINTMENT BOTTOM SHEET ─── */}
       <Md3BottomSheet
         isOpen={isScheduleModalOpen}
@@ -1318,8 +1672,8 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
           preselectedPatient={patient}
           onSuccess={(created) => {
             setIsScheduleModalOpen(false);
-            fetchAppointments();
-            setActiveTab('appointments');
+            fetchAppointments(patient?._id);
+            handleTabChange('appointments');
           }}
           onCancel={() => setIsScheduleModalOpen(false)}
         />
@@ -1374,7 +1728,7 @@ const PatientProfile = ({ patientId, onBack, onDirectPharmacy, onVisitCreated, h
         onSuccess={(created) => {
           setIsNewVisitModalOpen(false);
           fetchProfile();
-          fetchAppointments();
+          fetchAppointments(patient?._id);
           if (onVisitCreated) {
             onVisitCreated(created);
           }

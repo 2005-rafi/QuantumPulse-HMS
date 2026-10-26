@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./tariff.controller');
-const authenticate = require('../../core/middleware/authenticate');
-const { requirePermission } = require('../../core/middleware/authorize');
+const authenticate = require('../../core/middleware/authenticate.middleware');
+const { requirePermission } = require('../../core/middleware/authorize.middleware');
 const { PERMISSIONS } = require('../../core/constants');
 
 router.use(authenticate);

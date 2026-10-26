@@ -1,4 +1,6 @@
-/* 🧪 Specimen Tracker Stylesheet (Material 3) — Clinical Density 🧪 */
+@import './laboratory.tokens.css';
+
+/* Specimen Tracker Stylesheet (Material 3) — Clinical Density */
 
 .specimen-tracker {
   width: 100%;
@@ -10,17 +12,17 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--md-spacing-m, 16px) var(--md-spacing-s, 12px);
-  background: var(--md-sys-color-surface-container-low);
-  border: 1px dashed var(--md-sys-color-outline-variant);
-  border-radius: var(--md-sys-shape-corner-small, 8px);
+  padding: var(--md-sys-spacing-md, 16px) var(--md-sys-spacing-sm, 12px);
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+  border: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-sm, 8px);
   text-align: center;
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
 }
 
 .specimen-tracker__empty-icon {
   font-size: 20px;
-  color: var(--md-sys-color-primary);
+  color: var(--md-sys-color-primary, #00668b);
   margin-bottom: 4px;
 }
 
@@ -36,14 +38,14 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--md-lab-workbench-gap, 14px);
+  gap: var(--md-sys-spacing-md, 14px);
   width: 100%;
 }
 
 .specimen-tracker__item {
   display: flex;
   position: relative;
-  gap: var(--md-spacing-s, 12px);
+  gap: var(--md-sys-spacing-md, 12px);
   align-items: stretch;
 }
 
@@ -58,55 +60,55 @@
 }
 
 .specimen-tracker__dot {
-  width: var(--md-lab-specimen-dot-size, 12px);
-  height: var(--md-lab-specimen-dot-size, 12px);
-  border-radius: 50%;
-  border: 2px solid var(--md-sys-color-outline-variant);
-  background: var(--md-sys-color-surface);
+  width: 12px;
+  height: 12px;
+  border-radius: var(--md-sys-shape-corner-full, 50%);
+  border: 2px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface, #ffffff);
   z-index: 2;
-  margin-top: 14px; /* Aligned with top header of the card */
+  margin-top: 14px;
   position: relative;
   transition: all var(--md-sys-motion-duration-short, 150ms) ease;
 }
 
-/* Timeline Dot Stages matching states */
+/* Timeline Dot Stages */
 .specimen-tracker__dot--pending {
-  border-color: var(--md-sys-color-outline);
-  background: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-outline, #79747e);
+  background: var(--md-sys-color-surface-container-high, #e8edf4);
 }
 
 .specimen-tracker__dot--processing {
-  border-color: var(--md-sys-color-primary);
-  background: var(--md-sys-color-primary-container);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary) 15%, transparent);
+  border-color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #dbeafe);
+  box-shadow: 0 0 0 2px var(--md-sys-color-primary-container);
 }
 
 .specimen-tracker__dot--completed {
-  border-color: var(--md-sys-color-outline-variant);
-  background: var(--md-sys-color-outline-variant);
+  border-color: var(--md-lab-status-authorized-text, #047857);
+  background: var(--md-lab-status-authorized-bg, #dcfce7);
 }
 
 .specimen-tracker__dot--rejected {
-  border-color: var(--md-sys-color-error);
-  background: var(--md-sys-color-error-container);
+  border-color: var(--md-sys-color-error, #ba1a1a);
+  background: var(--md-sys-color-error-container, #ffdad6);
 }
 
 /* Connector Line */
 .specimen-tracker__connector {
-  width: var(--md-lab-specimen-connector-width, 2px);
+  width: 2px;
   position: absolute;
-  top: 26px; /* Below the dot */
-  bottom: -14px; /* Extends to overlap gap to next item */
-  background: var(--md-sys-color-outline-variant);
+  top: 26px;
+  bottom: -14px;
+  background: var(--md-sys-color-outline-variant, #cac4d0);
   z-index: 1;
 }
 
 .specimen-tracker__connector--processing {
-  background: var(--md-sys-color-primary-container);
+  background: var(--md-sys-color-primary-container, #dbeafe);
 }
 
 .specimen-tracker__connector--completed {
-  background: var(--md-sys-color-outline-variant);
+  background: var(--md-lab-status-authorized-border, #a7f3d0);
 }
 
 /* Specimen Item Card */
@@ -114,18 +116,18 @@
   flex: 1;
   background: var(--md-sys-color-surface-container-lowest, #ffffff);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  border-radius: var(--md-sys-shape-corner-medium, 12px);
-  padding: var(--md-lab-specimen-card-padding, 14px 16px);
+  border-radius: var(--md-sys-shape-corner-md, 12px);
+  padding: var(--md-sys-spacing-md, 14px) var(--md-sys-spacing-md, 16px);
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--md-spacing-s, 10px);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  gap: var(--md-sys-spacing-sm, 10px);
+  box-shadow: var(--md-sys-elevation-1);
   transition: border-color var(--md-sys-motion-duration-short, 150ms) ease;
 }
 
 .specimen-tracker__card:hover {
-  border-color: color-mix(in srgb, var(--md-sys-color-primary) 30%, var(--md-sys-color-outline-variant));
+  border-color: var(--md-sys-color-primary, #00668b);
 }
 
 /* Header Row (Lab info + status badges) */
@@ -133,14 +135,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--md-spacing-s, 8px);
+  gap: var(--md-sys-spacing-sm, 8px);
   flex-wrap: wrap;
 }
 
 .specimen-tracker__col-info {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-s, 10px);
+  gap: var(--md-sys-spacing-sm, 10px);
   min-width: 0;
 }
 
@@ -154,13 +156,13 @@
 .specimen-tracker__title-line {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--md-sys-spacing-sm, 8px);
   flex-wrap: wrap;
 }
 
 .specimen-tracker__title {
   font: 700 0.88rem/1.2 var(--md-sys-typescale-title-medium-font, 'Inter', sans-serif);
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface, #1d1b20);
   margin: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,48 +170,69 @@
 }
 
 .specimen-tracker__test-panel-tag {
-  font: 600 0.72rem/1 'Inter', sans-serif;
-  color: var(--md-sys-color-primary, #6750a4);
-  background: var(--md-sys-color-primary-container, #eaddff);
-  padding: 2px 8px;
-  border-radius: 6px;
+  font: 600 0.72rem/1 var(--md-sys-typescale-label-small-font, 'Inter', sans-serif);
+  color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #e0f2fe);
+  padding: 2px var(--md-sys-spacing-sm, 8px);
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
 }
 
 .specimen-tracker__token-tag {
-  font: 700 0.68rem/1 'Roboto Mono', monospace;
+  font: 700 0.68rem/1 var(--md-sys-typescale-label-small-font, 'Roboto Mono', monospace);
   color: var(--md-sys-color-on-tertiary-container, #31111d);
   background: var(--md-sys-color-tertiary-container, #ffd8e4);
   padding: 2px 7px;
-  border-radius: 6px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
   letter-spacing: 0.02em;
 }
 
 .specimen-tracker__mrn-tag {
-  font: 600 0.68rem/1 'Roboto Mono', monospace;
+  font: 600 0.68rem/1 var(--md-sys-typescale-label-small-font, 'Roboto Mono', monospace);
   color: var(--md-sys-color-on-surface-variant, #49454f);
   background: var(--md-sys-color-surface-container-high, #ece6f0);
   padding: 2px 7px;
-  border-radius: 6px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
+}
+
+.specimen-tracker__gender-tag {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.specimen-tracker__gender-tag--female {
+  background: var(--md-sys-color-tertiary-container, #ffd8e4);
+  color: var(--md-sys-color-on-tertiary-container, #31111d);
+}
+
+.specimen-tracker__gender-tag--male {
+  background: var(--md-lab-status-at-doctor-bg, #e0f2fe);
+  color: var(--md-lab-status-at-doctor-text, #0369a1);
 }
 
 .specimen-tracker__blood-tag {
-  font: 700 0.68rem/1 'Inter', sans-serif;
-  color: #b3261e;
-  background: #f9dedc;
+  font: 700 0.68rem/1 var(--md-sys-typescale-label-small-font, 'Inter', sans-serif);
+  color: var(--md-sys-color-error, #b91c1c);
+  background: var(--md-sys-color-error-container, #fee2e2);
+  border: 1px solid var(--md-sys-color-outline-variant, #fecaca);
   padding: 2px 7px;
-  border-radius: 6px;
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
 }
 
 .specimen-tracker__meta {
   font: 400 0.76rem/1.3 var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
-  color: var(--md-sys-color-on-surface-variant);
+  color: var(--md-sys-color-on-surface-variant, #64748b);
   margin: 0;
 }
 
 .specimen-tracker__badges {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-xs, 6px);
+  gap: var(--md-sys-spacing-xs, 6px);
   flex-wrap: wrap;
 }
 
@@ -218,16 +241,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--md-spacing-s, 10px);
-  padding-top: 8px;
-  border-top: 1px dashed var(--md-sys-color-surface-container-high, #ece6f0);
+  gap: var(--md-sys-spacing-sm, 10px);
+  padding-top: var(--md-sys-spacing-sm, 8px);
+  border-top: 1px dashed var(--md-sys-color-outline-variant, #ece6f0);
   flex-wrap: wrap;
 }
 
 .specimen-tracker__details {
   display: flex;
   align-items: center;
-  gap: var(--md-spacing-s, 10px);
+  gap: var(--md-sys-spacing-sm, 10px);
   flex-wrap: wrap;
   min-width: 0;
 }
@@ -245,12 +268,12 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 2px var(--md-sys-spacing-sm, 8px);
+  border-radius: var(--md-sys-shape-corner-xs, 6px);
   background: var(--md-sys-color-surface-container-low, #f7f2fa);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
   font: 500 0.72rem/1 var(--md-sys-typescale-label-medium-font, 'Inter', sans-serif);
-  color: var(--md-sys-color-on-surface);
+  color: var(--md-sys-color-on-surface, #1d1b20);
 }
 
 .specimen-tracker__test-name {
@@ -261,8 +284,8 @@
 }
 
 .specimen-tracker__ordered-by {
-  font: 400 0.76rem/1.3 'Inter', sans-serif;
-  color: var(--md-sys-color-on-surface-variant);
+  font: 400 0.76rem/1.3 var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
+  color: var(--md-sys-color-on-surface-variant, #64748b);
 }
 
 .specimen-tracker__timestamp {
@@ -273,20 +296,17 @@
   color: var(--md-sys-color-secondary, #625b71);
 }
 
+.specimen-tracker__timestamp .material-symbols-rounded,
 .specimen-tracker__timestamp svg {
+  font-size: 14px;
   width: 14px;
   height: 14px;
+  line-height: 1;
   color: var(--md-sys-color-secondary, #625b71);
 }
 
 .specimen-tracker__action-box {
   margin-left: auto;
-}
-
-.specimen-tracker__action-box .md3-btn {
-  height: var(--md-comp-btn-height-sm, 28px);
-  padding: var(--md-comp-btn-padding-sm, 2px 10px);
-  font-size: var(--md-comp-btn-font-size-sm, 0.76rem);
 }
 
 /* ─── Responsive Media Queries ─── */
@@ -302,9 +322,5 @@
   .specimen-tracker__action-box {
     width: 100%;
     margin-top: 4px;
-  }
-  .specimen-tracker__action-box .md3-btn {
-    width: 100%;
-    justify-content: center;
   }
 }

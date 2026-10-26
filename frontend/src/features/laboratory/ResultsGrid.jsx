@@ -11,6 +11,7 @@ import { Md3Button } from '../../components/md3/Md3FormComponents';
 import Md3ScanViewerDialog from '../../components/md3/Md3ScanViewerDialog';
 import { useToast } from '../../context/ToastContext';
 import api from '../../services/api';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './ResultsGrid.css';
 
 const priorityVariant = (p) => ({
@@ -34,6 +35,51 @@ const checkAbnormal = (val, flag) => {
     return false;
   }
   return ['abnormal', 'critical', 'high', 'low', 'positive', 'reactive', 'incompatible'].includes(trimmed);
+};
+
+/**
+ * Dynamically resolves reference string and evaluates abnormal status against patient gender
+ */
+const resolveGridReferenceAndAbnormal = (val, fieldMeta, patientGender, orderFlag) => {
+  const genderLower = String(patientGender || '').toLowerCase().trim();
+  const isFemale = genderLower.startsWith('f');
+  const isMale = genderLower.startsWith('m');
+
+  let displayRef = fieldMeta?.reference || '—';
+  let isAbnormal = checkAbnormal(String(val), orderFlag);
+
+  if (fieldMeta && val !== null && val !== undefined && val !== '' && !isNaN(Number(val))) {
+    const num = Number(val);
+    let min = null;
+    let max = null;
+
+    if (fieldMeta.isGenderSpecific || fieldMeta.maleMin != null || fieldMeta.femaleMin != null) {
+      if (isFemale && (fieldMeta.femaleMin != null || fieldMeta.femaleMax != null)) {
+        min = fieldMeta.femaleMin;
+        max = fieldMeta.femaleMax;
+        if (min != null && max != null) displayRef = `${min} – ${max} (F)`;
+        else if (min != null) displayRef = `>= ${min} (F)`;
+        else if (max != null) displayRef = `<= ${max} (F)`;
+      } else if (isMale && (fieldMeta.maleMin != null || fieldMeta.maleMax != null)) {
+        min = fieldMeta.maleMin;
+        max = fieldMeta.maleMax;
+        if (min != null && max != null) displayRef = `${min} – ${max} (M)`;
+        else if (min != null) displayRef = `>= ${min} (M)`;
+        else if (max != null) displayRef = `<= ${max} (M)`;
+      }
+    } else if (fieldMeta.min != null || fieldMeta.max != null) {
+      min = fieldMeta.min;
+      max = fieldMeta.max;
+      if (min != null && max != null) displayRef = `${min} – ${max}`;
+      else if (min != null) displayRef = `>= ${min}`;
+      else if (max != null) displayRef = `<= ${max}`;
+    }
+
+    if (min != null && num < Number(min)) isAbnormal = true;
+    if (max != null && num > Number(max)) isAbnormal = true;
+  }
+
+  return { displayRef, isAbnormal };
 };
 
 const formatTime = (d) => {
@@ -118,13 +164,11 @@ const ResultsGrid = ({
         ? order._mrn
         : (resolvedMRN || '—');
 
-      const pAge = order._age || (patient?.age ? `${patient.age} yrs` : '');
+      const pAge = order._age || (patient?.age && patient.age !== '—' && !isNaN(Number(patient.age)) ? `${patient.age} yrs` : '');
       const pGender = order._gender || patient?.gender || '';
       const pBlood = order._bloodGroup || patient?.bloodGroup || '';
 
-      const doctorName = order._orderedBy
-        ? (order._orderedBy.startsWith('Dr.') ? order._orderedBy : `Dr. ${order._orderedBy}`)
-        : (visit?.consultation?.doctorId ? `Dr. ${visit.consultation.doctorId.firstName || ''} ${visit.consultation.doctorId.lastName || ''}`.trim() : 'Attending Physician');
+      const doctorName = formatDoctorName(order._orderedBy || visit?.consultation?.doctorId || 'Attending Physician');
 
       const doctorDept = order._departmentName || visit?.departmentId?.name || '';
       const doctorSpecialty = order._doctorSpecialty || '';
@@ -173,9 +217,8 @@ const ResultsGrid = ({
       entries.forEach(([key, val], i) => {
         const fieldMeta = catalogFields.find((f) => (f.key || f.label || f.name) === key);
         const label = fieldMeta?.label || (key === 'test_key' ? 'Clinical Findings' : key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()));
-        const ref = fieldMeta?.reference || '—';
         const unit = fieldMeta?.unit || '';
-        const isAbnormal = checkAbnormal(String(val), order.flag);
+        const { displayRef, isAbnormal } = resolveGridReferenceAndAbnormal(val, fieldMeta, pGender, order.flag);
 
         flat.push({
           _id: `${order._id || Math.random()}-${key}-${i}`,
@@ -184,7 +227,7 @@ const ResultsGrid = ({
           testName: testDisplayName,
           parameter: label,
           value: val == null ? '—' : String(val),
-          reference: ref,
+          reference: displayRef,
           unit,
           isAbnormal,
           priority: (order.priority || 'ROUTINE').toUpperCase(),
@@ -331,6 +374,17 @@ const ResultsGrid = ({
                     </div>
 
                     <div className="results-panel-card__badges">
+                      {(firstRow.scanReportId || order.scanReportId || order.results?.scanReportId) && (
+                        <button
+                          type="button"
+                          className="results-panel-card__scan-btn"
+                          onClick={() => handleOpenScanViewer(firstRow)}
+                          title="Preview Verified Diagnostic Scan / Imaging Report"
+                        >
+                          <span className="material-symbols-rounded" style={{ fontSize: 15 }}>visibility</span>
+                          <span>View Scan / Report</span>
+                        </button>
+                      )}
                       <span className="results-panel-card__time" title="Reported Timestamp">
                         <Icon.Clock />
                         <span>{formatTime(order.processedAt || order.updatedAt)}</span>

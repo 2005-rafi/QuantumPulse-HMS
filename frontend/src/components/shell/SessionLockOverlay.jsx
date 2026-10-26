@@ -27,15 +27,24 @@ export const SessionLockOverlay = ({
 
   if (!isLocked && !isWarning) return null;
 
+  const formatTimeRemaining = (seconds) => {
+    if (seconds >= 60) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}m ${secs.toString().padStart(2, '0')}s`;
+    }
+    return `${seconds}s`;
+  };
+
   // Warning Toast/Banner
   if (isWarning && !isLocked) {
     return createPortal(
       <div className="hms-warn-banner" role="alert">
-        <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+        <span className="material-symbols-rounded" style={{ fontSize: '1.4rem', color: '#f59e0b' }}>warning</span>
         <div>
           <strong>Session Expiring Soon</strong>
           <div style={{ fontSize: '0.78rem', opacity: 0.9 }}>
-            Inactivity detected. Securing workstation in {remainingSeconds}s
+            Inactivity detected. Securing workstation in {formatTimeRemaining(remainingSeconds)}
           </div>
         </div>
         <button type="button" className="hms-warn-btn" onClick={onExtend}>

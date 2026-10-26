@@ -79,6 +79,11 @@ const cpoeOrderSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    // CDSS Clinical Safety & Allergy Override Audit Fields
+    allergyWarning: { type: String, trim: true, default: null },
+    clinicalOverrideReason: { type: String, trim: true, default: null },
+    overriddenBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', default: null },
+    overriddenAt: { type: Date, default: null },
   },
   {
     timestamps: true,

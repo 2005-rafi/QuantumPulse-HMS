@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const visitController = require('./visit.controller');
-const authenticate = require('../../core/middleware/authenticate');
-const { requirePermission } = require('../../core/middleware/authorize');
-const { validate } = require('../../core/validation/validate');
+const authenticate = require('../../core/middleware/authenticate.middleware');
+const { requirePermission } = require('../../core/middleware/authorize.middleware');
+const { validate } = require('../../core/validation/validate.middleware');
 const {
   createVisitSchema,
   recordVitalsSchema,
@@ -20,8 +20,9 @@ router.post('/', requirePermission('VISIT_CREATE'), validate(createVisitSchema),
 // ── Cancel visit & revoke queue token (Reception / Admin - before triage only) ─
 router.patch('/:id/cancel', requirePermission(['VISIT_CLOSE', 'VISIT_CREATE', 'MANAGE_USERS']), validate(cancelVisitSchema), visitController.cancelVisit);
 
-// ── Doctor consultation history (Isolated to logged-in doctor) ───────────────
+// ── Doctor & Nurse clinical history (Isolated to actor scope) ───────────────
 router.get('/doctor/history', requirePermission(['NOTE_UPDATE', 'VISIT_VIEW']), visitController.getDoctorConsultationHistory);
+router.get('/nurse/history',  requirePermission(['VITALS_RECORD', 'VISIT_VIEW']), visitController.getNurseTriageHistory);
 
 // ── Patient visit history ────────────────────────────────────────────────────
 router.get('/patient/:patientId', requirePermission('VISIT_VIEW'), visitController.getVisitsByPatientId);
@@ -41,8 +42,10 @@ router.patch('/:id/consultation/finalize',   requirePermission('NOTE_FINALIZE'),
 
 // ── Token queue state transitions (Nurse + Doctor) ───────────────────────────
 // VITALS_RECORD permission covers nurses; NOTE_UPDATE covers doctors for both call/skip
-router.patch('/:id/call',    requirePermission(['VITALS_RECORD', 'NOTE_UPDATE']), visitController.callPatient);
-router.patch('/:id/skip',    requirePermission(['VITALS_RECORD', 'NOTE_UPDATE']), visitController.skipVisit);
-router.patch('/:id/requeue', requirePermission(['VITALS_RECORD', 'NOTE_UPDATE']), visitController.requeueVisit);
+router.patch('/:id/call',               requirePermission(['VITALS_RECORD', 'NOTE_UPDATE']), visitController.callPatient);
+router.patch('/:id/skip',               requirePermission(['VITALS_RECORD', 'NOTE_UPDATE']), visitController.skipVisit);
+router.patch('/:id/requeue',            requirePermission(['VITALS_RECORD', 'NOTE_UPDATE']), visitController.requeueVisit);
+router.patch('/:id/skip-triage',        requirePermission('VITALS_RECORD'),                  visitController.skipTriage);
+router.patch('/:id/revoke-triage-skip', requirePermission('VITALS_RECORD'),                  visitController.revokeTriageSkip);
 
 module.exports = router;

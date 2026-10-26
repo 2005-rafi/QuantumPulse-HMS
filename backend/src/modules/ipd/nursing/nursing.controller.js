@@ -35,6 +35,26 @@ class NursingController {
     }
   }
 
+  async getVitalsTrends(req, res, next) {
+    try {
+      const { window } = req.query;
+      const trends = await nursingService.getVitalsTrends(req.params.admissionId, window || '24H');
+      return success(res, trends, 'Longitudinal vitals trends retrieved successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async updateVitalsFrequency(req, res, next) {
+    try {
+      const staffId = req.user.staffId || req.user.id;
+      const result = await nursingService.updateVitalsFrequency(req.params.admissionId, req.body, staffId);
+      return success(res, result, 'Vitals frequency monitoring directive updated successfully');
+    } catch (err) {
+      next(err);
+    }
+  }
+
   // ── e-MAR Medication Records ────────────────────────────────
   async getEmarGrid(req, res, next) {
     try {

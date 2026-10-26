@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import ReactDOM from 'react-dom';
 import './Md3Toast.css';
 
@@ -16,8 +16,12 @@ export class Toast {
 
 export const ToastContext = createContext(null);
 
+const MAX_VISIBLE_TOASTS = 3;
+const THROTTLE_WINDOW_MS = 1500;
+
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const recentDispatches = useRef(new Map());
 
   // Dismiss a specific toast by triggering its exit animation first
   const dismissToast = useCallback((id) => {
@@ -31,7 +35,7 @@ export const ToastProvider = ({ children }) => {
     }, 300);
   }, []);
 
-  // Dispatch a new toast with explanatory title and subtitle
+  // Dispatch a new toast with explanatory title and subtitle + intelligent deduplication
   const addToast = useCallback((message, reason, type = 'success', duration = 5000) => {
     let formattedMessage = message || (type === 'error' ? 'Error' : 'Notification');
     let formattedReason = reason;
@@ -49,14 +53,51 @@ export const ToastProvider = ({ children }) => {
       }
     }
 
+    // 1. Generate unique signature for duplicate suppression
+    const signature = `${type}::${String(formattedMessage).trim().toLowerCase()}::${String(formattedReason || '').trim().toLowerCase()}`;
+    const reasonSig = (type === 'error' && formattedReason) ? `error-reason::${String(formattedReason).trim().toLowerCase()}` : null;
+    const now = Date.now();
+
+    // 2. Throttle check (suppress identical toasts or duplicate error reasons within THROTTLE_WINDOW_MS)
+    const lastDispatched = recentDispatches.current.get(signature) || 0;
+    const lastReasonDispatched = reasonSig ? (recentDispatches.current.get(reasonSig) || 0) : 0;
+    if (now - lastDispatched < THROTTLE_WINDOW_MS || (reasonSig && now - lastReasonDispatched < THROTTLE_WINDOW_MS)) {
+      return;
+    }
+    recentDispatches.current.set(signature, now);
+    if (reasonSig) recentDispatches.current.set(reasonSig, now);
+
+    // Prune stale cache entries
+    if (recentDispatches.current.size > 50) {
+      for (const [key, timestamp] of recentDispatches.current.entries()) {
+        if (now - timestamp > 10000) {
+          recentDispatches.current.delete(key);
+        }
+      }
+    }
+
     const newToast = new Toast(formattedMessage, formattedReason, type, duration);
-    setToasts((prev) => [...prev, newToast]);
+
+    setToasts((prev) => {
+      // 3. Active Toast Deduplication: Don't add if already in active stack
+      const isAlreadyActive = prev.some(
+        (t) => !t.isExiting && `${t.type}::${String(t.message).trim().toLowerCase()}::${String(t.reason || '').trim().toLowerCase()}` === signature
+      );
+      if (isAlreadyActive) {
+        return prev;
+      }
+
+      // 4. Max-Stack Cap: Keep at most MAX_VISIBLE_TOASTS - 1 and append new toast
+      const capped = prev.length >= MAX_VISIBLE_TOASTS ? prev.slice(prev.length - (MAX_VISIBLE_TOASTS - 1)) : prev;
+      return [...capped, newToast];
+    });
 
     // Auto dismiss after duration
     setTimeout(() => {
       dismissToast(newToast.id);
     }, duration);
   }, [dismissToast]);
+
 
   const showSuccess = useCallback((message, reason) => {
     addToast(message, reason, 'success');

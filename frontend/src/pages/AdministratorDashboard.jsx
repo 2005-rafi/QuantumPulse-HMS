@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useConfig } from '../contexts/ConfigContext';
+import { useConfig } from '../context/ConfigContext';
 import { useToast } from '../context/ToastContext';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import api from '../services/api';
 import { adminAPI } from '../services/adminAPI';
 import { auditAPI } from '../services/auditAPI';
 import Md3NavigationRail from '../components/md3/Md3NavigationRail';
+import Md3ClinicalDrawer from '../components/md3/Md3ClinicalDrawer';
 import CommonHeader from '../components/shell/CommonHeader';
 import Md3ConfirmDialog from '../components/md3/Md3ConfirmDialog';
 import './Dashboard.css';
@@ -18,6 +19,7 @@ const AdministratorDashboard = () => {
   const location = useLocation();
   const { showSuccess, showError } = useToast();
 
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [stats, setStats] = useState({ patientIn: 0, patientOut: 0, pendingLab: 0, pendingPharmacy: 0 });
   const [departments, setDepartments] = useState([]);
   const [laboratories, setLaboratories] = useState([]);
@@ -45,25 +47,23 @@ const AdministratorDashboard = () => {
     onConfirm: null,
   });
 
-  const openConfirm = (opts) => setConfirmDialog({ ...confirmDialog, isOpen: true, loading: false, ...opts });
-  const closeConfirm = () => setConfirmDialog((d) => ({ ...d, isOpen: false, loading: false, onConfirm: null }));
-  const setConfirmLoading = (v) => setConfirmDialog((d) => ({ ...d, loading: v }));
+  const openConfirm = useCallback((opts) => setConfirmDialog((d) => ({ ...d, isOpen: true, loading: false, ...opts })), []);
+  const closeConfirm = useCallback(() => setConfirmDialog((d) => ({ ...d, isOpen: false, loading: false, onConfirm: null })), []);
+  const setConfirmLoading = useCallback((v) => setConfirmDialog((d) => ({ ...d, loading: v })), []);
 
   const [lastUpdated, setLastUpdated] = useState(new Date());
   const [isRefreshingStats, setIsRefreshingStats] = useState(false);
+  const inFlightStatsRef = useRef(false);
+  const inFlightStaffRef = useRef(false);
+  const inFlightDeptsRef = useRef(false);
+  const inFlightLabsRef = useRef(false);
+  const inFlightRolesRef = useRef(false);
+  const inFlightAuditsRef = useRef(false);
+  const inFlightBillingRef = useRef(false);
 
-  useEffect(() => {
-    fetchData();
-
-    // Live background polling for command center queue stats every 15s
-    const interval = setInterval(() => {
-      fetchStats(true);
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchStats = async (isBackground = false) => {
+  const fetchStats = useCallback(async (isBackground = false) => {
+    if (inFlightStatsRef.current) return;
+    inFlightStatsRef.current = true;
     if (!isBackground) setIsRefreshingStats(true);
     try {
       const res = await api.get('/visits/stats');
@@ -72,47 +72,66 @@ const AdministratorDashboard = () => {
     } catch (err) {
       console.error('Failed to fetch stats:', err);
     } finally {
+      inFlightStatsRef.current = false;
       if (!isBackground) setIsRefreshingStats(false);
     }
-  };
+  }, []);
 
-  const fetchDepts = async () => {
+  const fetchDepts = useCallback(async () => {
+    if (inFlightDeptsRef.current) return;
+    inFlightDeptsRef.current = true;
     try {
       const res = await api.get('/departments');
       setDepartments(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch departments:', err);
+    } finally {
+      inFlightDeptsRef.current = false;
     }
-  };
+  }, []);
 
-  const fetchLabs = async () => {
+  const fetchLabs = useCallback(async () => {
+    if (inFlightLabsRef.current) return;
+    inFlightLabsRef.current = true;
     try {
       const res = await api.get('/laboratory/config?includeInactive=true');
       setLaboratories(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch laboratories:', err);
+    } finally {
+      inFlightLabsRef.current = false;
     }
-  };
+  }, []);
 
-  const fetchRoles = async () => {
+  const fetchRoles = useCallback(async () => {
+    if (inFlightRolesRef.current) return;
+    inFlightRolesRef.current = true;
     try {
       const res = await api.get('/roles');
       setRoles(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch roles:', err);
+    } finally {
+      inFlightRolesRef.current = false;
     }
-  };
+  }, []);
 
-  const fetchStaff = async () => {
+  const fetchStaff = useCallback(async () => {
+    if (inFlightStaffRef.current) return;
+    inFlightStaffRef.current = true;
     try {
       const res = await api.get('/staff?limit=1000');
       setStaffList(res.data.data?.items || []);
     } catch (err) {
       console.error('Failed to fetch staff:', err);
+    } finally {
+      inFlightStaffRef.current = false;
     }
-  };
+  }, []);
 
-  const fetchBilling = async () => {
+  const fetchBilling = useCallback(async () => {
+    if (inFlightBillingRef.current) return;
+    inFlightBillingRef.current = true;
     try {
       const res = await adminAPI.getSetting('billing_template');
       if (res.data.data) {
@@ -134,19 +153,25 @@ const AdministratorDashboard = () => {
       }
     } catch (err) {
       console.error('Failed to fetch billing template:', err);
+    } finally {
+      inFlightBillingRef.current = false;
     }
-  };
+  }, []);
 
-  const fetchRecentAudits = async () => {
+  const fetchRecentAudits = useCallback(async () => {
+    if (inFlightAuditsRef.current) return;
+    inFlightAuditsRef.current = true;
     try {
       const res = await auditAPI.getLogs({ page: 1, limit: 5 });
       setRecentAuditLogs(res.data.data?.items || []);
     } catch (err) {
       console.error('Failed to fetch recent audit logs:', err);
+    } finally {
+      inFlightAuditsRef.current = false;
     }
-  };
+  }, []);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     await Promise.allSettled([
       fetchStats(),
@@ -158,7 +183,46 @@ const AdministratorDashboard = () => {
       fetchRecentAudits()
     ]);
     setLoading(false);
-  };
+  }, [fetchStats, fetchDepts, fetchLabs, fetchRoles, fetchStaff, fetchBilling, fetchRecentAudits]);
+
+  useEffect(() => {
+    fetchData();
+
+    let interval = null;
+    const startPolling = () => {
+      if (!interval) {
+        interval = setInterval(() => {
+          fetchStats(true);
+        }, 30000);
+      }
+    };
+
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    };
+
+    const handleVisibility = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        fetchStats(true);
+        startPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    if (!document.hidden) {
+      startPolling();
+    }
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchData, fetchStats]);
 
   const handleLogout = async () => {
     await logout();
@@ -173,25 +237,108 @@ const AdministratorDashboard = () => {
   const pathParts = location.pathname.split('/');
   const activeTab = pathParts[pathParts.length - 1] || 'analytics';
 
-  const NAV_ITEMS = [
+  const isDevMode = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEV_TOOLS === 'true';
+
+  const NAV_ITEMS = useMemo(() => [
     { id: 'analytics', icon: 'analytics', label: 'Analytics' },
-    { id: 'storage', icon: 'cloud_sync', label: 'Storage & Files' },
+    { id: 'surgeries', icon: 'medical_services', label: 'Surgeries & OT' },
+    { id: 'billing', icon: 'payments', label: 'Billing & Finance' },
+    { id: 'bed-map', icon: 'single_bed', label: 'Bed Map & Facility' },
+    { id: 'census', icon: 'inventory', label: 'Inpatient Census & Records' },
     { id: 'patients', icon: 'groups', label: 'Patients' },
     { id: 'appointments', icon: 'calendar_month', label: 'Appointments' },
     { id: 'staff', icon: 'badge', label: 'Manage Staff' },
-    { id: 'facility-builder', icon: 'domain_add', label: 'Facility & Beds' },
-    { id: 'departments', icon: 'corporate_fare', label: 'Manage Departments' },
-    { id: 'laboratories', icon: 'science', label: 'Manage Laboratories' },
-    { id: 'billing', icon: 'payments', label: 'Billing & Tariff' },
-    { id: 'audit', icon: 'history', label: 'Audit Logs' }
-  ];
+    { id: 'departments', icon: 'corporate_fare', label: 'Departments' },
+    { id: 'laboratories', icon: 'science', label: 'Laboratories' },
+    { id: 'storage', icon: 'cloud_sync', label: 'Storage & Files' },
+    { id: 'audit', icon: 'history', label: 'Audit Logs' },
+    ...(isDevMode ? [{ id: 'development', icon: 'developer_mode_tv', label: 'DEVELOPMENT' }] : [])
+  ], [isDevMode]);
+
+  const outletContextValue = useMemo(() => ({
+    stats,
+    lastUpdated,
+    isRefreshingStats,
+    departments,
+    laboratories,
+    roles,
+    staffList,
+    recentAuditLogs,
+    billingSettings,
+    setBillingSettings,
+    fetchData,
+    fetchStats,
+    fetchDepts,
+    fetchLabs,
+    fetchRoles,
+    fetchStaff,
+    fetchBilling,
+    fetchRecentAudits,
+    openConfirm,
+    closeConfirm,
+    setConfirmLoading,
+    showSuccess,
+    showError,
+  }), [
+    stats,
+    lastUpdated,
+    isRefreshingStats,
+    departments,
+    laboratories,
+    roles,
+    staffList,
+    recentAuditLogs,
+    billingSettings,
+    fetchData,
+    fetchStats,
+    fetchDepts,
+    fetchLabs,
+    fetchRoles,
+    fetchStaff,
+    fetchBilling,
+    fetchRecentAudits,
+    openConfirm,
+    closeConfirm,
+    setConfirmLoading,
+    showSuccess,
+    showError,
+  ]);
+
+  const drawerActivities = useMemo(() => [
+    {
+      icon: 'groups',
+      label: "Today's Patient Visits",
+      value: (stats.patientIn || 0) + (stats.patientOut || 0),
+      variant: 'primary'
+    },
+    {
+      icon: 'badge',
+      label: 'Active Staff On-Duty',
+      value: staffList.filter(s => s.status === 'ACTIVE').length || staffList.length || 0,
+      variant: 'success'
+    },
+    {
+      icon: 'biotech',
+      label: 'Pending Lab Orders',
+      value: stats.pendingLab || 0,
+      variant: 'warning'
+    },
+    {
+      icon: 'prescriptions',
+      label: 'Pending Rx Fulfillments',
+      value: stats.pendingPharmacy || 0,
+      variant: 'info'
+    }
+  ], [stats, staffList]);
 
   return (
     <div className="dashboard-page admin-dashboard-page">
       <CommonHeader 
-        brandTitle={`${config.SHORT_NAME} Portal`}
+        brandTitle={`${config.SHORT_NAME || 'Quantum CareOne'} Portal`}
+        brandSubtitle="Hospital Administration"
         user={user}
         onLogout={handleLogout}
+        onMenuClick={() => setIsDrawerOpen(true)}
       />
 
       <div className="admin-body-container">
@@ -207,34 +354,27 @@ const AdministratorDashboard = () => {
 
         <main className="dashboard-main admin-dashboard-main">
           <div key={activeTab} className="admin-tab-content-fade">
-            <Outlet context={{
-              stats,
-              lastUpdated,
-              isRefreshingStats,
-              departments,
-              laboratories,
-              roles,
-              staffList,
-              recentAuditLogs,
-              billingSettings,
-              setBillingSettings,
-              fetchData,
-              fetchStats,
-              fetchDepts,
-              fetchLabs,
-              fetchRoles,
-              fetchStaff,
-              fetchBilling,
-              fetchRecentAudits,
-              openConfirm,
-              closeConfirm,
-              setConfirmLoading,
-              showSuccess,
-              showError
-            }} />
+            <Outlet context={outletContextValue} />
           </div>
         </main>
       </div>
+
+      <Md3ClinicalDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        brandTitle={`${config.SHORT_NAME || 'Quantum CareOne'} Portal`}
+        brandSubtitle="Hospital Administration"
+        navItems={NAV_ITEMS}
+        activeTab={activeTab === 'administrator' ? 'analytics' : activeTab}
+        onNavigate={(id) => {
+          React.startTransition(() => {
+            navigate(`/dashboard/administrator/${id}`);
+          });
+          setIsDrawerOpen(false);
+        }}
+        user={user}
+        onLogout={handleLogout}
+      />
 
       <Md3ConfirmDialog
         {...confirmDialog}
@@ -245,3 +385,4 @@ const AdministratorDashboard = () => {
 };
 
 export default AdministratorDashboard;
+

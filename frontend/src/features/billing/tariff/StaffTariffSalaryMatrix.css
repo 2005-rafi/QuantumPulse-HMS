@@ -1,0 +1,245 @@
+/* ── StaffTariffSalaryMatrix.css — High-Density Matrix & Alignment Styling ── */
+
+.staff-tariff-salary-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* ── KPI Grid ── */
+.matrix-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.matrix-kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.matrix-kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.matrix-kpi-icon .material-symbols-rounded {
+  font-size: 24px;
+}
+
+.matrix-kpi-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.matrix-kpi-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.matrix-kpi-value {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin-top: 2px;
+}
+
+.matrix-kpi-sub {
+  font-size: 0.70rem;
+  color: var(--md-sys-color-outline, #79747e);
+}
+
+/* ── Section Cards ── */
+.matrix-section-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+}
+
+.matrix-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.matrix-section-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.matrix-section-icon {
+  font-size: 24px !important;
+  color: var(--md-sys-color-primary, #6750a4);
+}
+
+.matrix-section-title {
+  font-size: 0.9375rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  margin: 0;
+}
+
+.matrix-section-subtitle {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin: 2px 0 0 0;
+}
+
+/* ── Matrix Table ── */
+.matrix-table-container {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.matrix-table thead tr {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  text-align: left;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.matrix-table th {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  white-space: nowrap;
+}
+
+.matrix-table td {
+  padding: 10px 14px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, rgba(202, 196, 208, 0.5));
+  transition: background 0.12s ease;
+}
+
+.matrix-row:hover td, .matrix-staff-row:hover td {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+}
+
+.matrix-row--selected td {
+  background: var(--md-sys-color-primary-container, #eaddff) !important;
+}
+
+/* ── Badges & Tags ── */
+.matrix-grade-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+
+.matrix-rank-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  white-space: nowrap;
+}
+
+.matrix-pay-range {
+  font-weight: 700;
+  font-size: 0.8125rem;
+  color: #15803d;
+  white-space: nowrap;
+}
+
+.matrix-desc-text {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  line-height: 1.35;
+  display: block;
+}
+
+.matrix-impact-text {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  font-weight: 500;
+  line-height: 1.35;
+  display: block;
+}
+
+.matrix-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 26px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-primary-container, #21005d);
+}
+
+/* ── Filter Chips ── */
+.matrix-filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.matrix-filter-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.matrix-filter-chip.active {
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-primary, #6750a4);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 700;
+}

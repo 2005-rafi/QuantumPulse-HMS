@@ -4,7 +4,7 @@ import MedicalHistoryPanel from './MedicalHistoryPanel';
 import LabResultsPanel from './LabResultsPanel';
 import { Md3Section, Icon, Md3Chip } from '../../components/md3/Md3Widgets';
 
-const SummaryTab = ({ visit, patient, form }) => {
+const SummaryTab = ({ visit, patient, form, laboratories = [] }) => {
   const hasDiagnosis = Boolean(form?.clinicalDiagnosis || visit?.consultation?.diagnosis);
   const hasMedications = Boolean(form?.prescribedMedications?.length || visit?.prescriptions?.length);
 
@@ -76,7 +76,12 @@ const SummaryTab = ({ visit, patient, form }) => {
         <MedicalHistoryPanel patient={patient} />
 
         {/* Diagnostics & Laboratory Status Card */}
-        <LabResultsPanel labOrders={visit?.labOrders || []} patient={patient} />
+        <LabResultsPanel
+          labOrders={visit?.labOrders || []}
+          patient={patient}
+          visit={visit}
+          laboratories={laboratories}
+        />
       </div>
     </div>
   );

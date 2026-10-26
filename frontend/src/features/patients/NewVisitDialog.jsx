@@ -9,6 +9,7 @@ import api from '../../services/api';
 import BedAllocationPicker from '../../components/ipd/BedAllocationPicker';
 import IpdAdmissionSlip from '../../components/ipd/IpdAdmissionSlip';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import { formatVisitStatus, formatDoctorName } from '../../utils/patientFormatters';
 import '../appointments/AppointmentDashboard.css';
 
 const QUICK_COMPLAINTS = [
@@ -20,14 +21,6 @@ const QUICK_COMPLAINTS = [
   'General Medical Checkup',
 ];
 
-/**
- * Format doctor name ensuring no duplicate "Dr. Dr." prefix.
- */
-const formatDoctorName = (name) => {
-  if (!name) return 'Doctor';
-  const cleaned = name.trim();
-  return cleaned.startsWith('Dr.') ? cleaned : `Dr. ${cleaned}`;
-};
 
 /**
  * NewVisitDialog — Bottom Sheet for checking in existing patients
@@ -67,6 +60,8 @@ export const NewVisitDialog = ({
   });
 
   const [resolvedBedTariff, setResolvedBedTariff] = useState(null);
+  const [resolvedRegistrationTariff, setResolvedRegistrationTariff] = useState(null);
+  const [resolvedConsultationTariff, setResolvedConsultationTariff] = useState(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
   const [generatedAdmission, setGeneratedAdmission] = useState(null);
@@ -98,6 +93,7 @@ export const NewVisitDialog = ({
         depositPaymentMethod: 'Cash',
       });
       setResolvedBedTariff(null);
+      setResolvedConsultationTariff(null);
       setFormError(null);
     }
   }, [isOpen, initialDepartmentId, initialDoctorId]);
@@ -123,8 +119,19 @@ export const NewVisitDialog = ({
         }
 
         if (staffRes.status === 'fulfilled') {
-          const staffItems = staffRes.value.data?.items || staffRes.value.data?.data?.items || [];
-          setDoctors(staffItems.filter((s) => s.roleId?.name === 'Doctor'));
+          const rawStaff = staffRes.value?.data || staffRes.value;
+          const staffItems =
+            rawStaff?.items ||
+            rawStaff?.data?.items ||
+            rawStaff?.staff ||
+            (Array.isArray(rawStaff) ? rawStaff : []);
+          setDoctors(
+            staffItems.filter(
+              (s) =>
+                /Doctor|Surgeon/i.test(s.roleId?.name || s.role || '') ||
+                /Doctor|Surgeon|Physician/i.test(s.position || '')
+            )
+          );
         }
       } catch (err) {
         console.error('[NewVisitDialog] Failed to load metadata', err);
@@ -165,19 +172,32 @@ export const NewVisitDialog = ({
     let isMounted = true;
     const resolveTariffs = async () => {
       try {
-        const consRes = await tariffAPI.resolvePrice({
-          category: 'CONSULTATION',
-          departmentId: visitForm.departmentId || undefined,
-          staffId: visitForm.doctorId || undefined,
-          visitType: 'OPD',
-        });
-        const resolvedConsFee = consRes.data?.data?.amount ?? consRes.data?.amount ?? 500;
+        const [regRes, consRes] = await Promise.allSettled([
+          tariffAPI.resolvePrice({
+            category: 'REGISTRATION',
+            visitType: 'OPD',
+            departmentId: visitForm.departmentId || undefined,
+          }),
+          tariffAPI.resolvePrice({
+            category: 'CONSULTATION',
+            departmentId: visitForm.departmentId || undefined,
+            staffId: visitForm.doctorId || undefined,
+            visitType: 'OPD',
+          })
+        ]);
 
         if (isMounted) {
-          setVisitForm((prev) => ({
-            ...prev,
-            consultationFee: resolvedConsFee,
-          }));
+          if (regRes.status === 'fulfilled') {
+            const regTariff = regRes.value.data?.data || regRes.value.data;
+            if (regTariff && typeof regTariff.amount === 'number') {
+              setResolvedRegistrationTariff(regTariff);
+              setVisitForm((prev) => ({ ...prev, registrationFee: regTariff.amount }));
+            }
+          }
+          if (consRes.status === 'fulfilled') {
+            const consTariff = consRes.value.data?.data || consRes.value.data;
+            if (consTariff) setResolvedConsultationTariff(consTariff);
+          }
         }
       } catch (err) {
         console.warn('[NewVisitDialog] Tariff resolution fallback', err);
@@ -295,7 +315,6 @@ export const NewVisitDialog = ({
       // Case B: Standard OPD Visit
       else {
         const regFee = Number(visitForm.registrationFee) || 0;
-        const consFee = Number(visitForm.consultationFee) || 0;
 
         const payload = {
           patientId: String(pId),
@@ -305,7 +324,7 @@ export const NewVisitDialog = ({
           ...(visitForm.reasonForVisit ? { reasonForVisit: visitForm.reasonForVisit.trim() } : {}),
           receptionPayment: {
             registrationFee: regFee,
-            consultationFee: consFee,
+            consultationFee: visitForm.consultationFee != null && !isNaN(Number(visitForm.consultationFee)) ? Number(visitForm.consultationFee) : 0,
             paymentMethod: visitForm.paymentMethod || 'Cash',
           },
         };
@@ -389,7 +408,7 @@ export const NewVisitDialog = ({
                   Patient has {activeVisits.length} Active Clinical Encounter{activeVisits.length > 1 ? 's' : ''}
                 </div>
                 <div style={{ marginTop: '3px', opacity: 0.9 }}>
-                  {activeVisits.map(v => `${v.tokenString || v.visitNumber} (${v.departmentId?.name || 'General OPD'} · ${v.status.replace(/_/g, ' ')})`).join(', ')}
+                  {activeVisits.map(v => `${v.tokenString || v.visitNumber} (${v.departmentId?.name || 'General OPD'} · ${formatVisitStatus(v.status)})`).join(', ')}
                 </div>
               </div>
             </div>
@@ -470,7 +489,7 @@ export const NewVisitDialog = ({
                     <option value="">-- Any Available Doctor --</option>
                     {availableDoctors.map((d) => (
                       <option key={d._id} value={d._id}>
-                        {formatDoctorName(d.fullName)}
+                        {formatDoctorName(d)}
                       </option>
                     ))}
                   </Md3Select>
@@ -502,13 +521,14 @@ export const NewVisitDialog = ({
 
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                   <Md3TextField
-                    id="nv-consultationFee"
-                    name="consultationFee"
+                    id="nv-registrationFee"
+                    name="registrationFee"
                     type="number"
-                    label={`Consultation Fee (${CURRENCY_SYMBOL})`}
-                    value={visitForm.consultationFee}
-                    onChange={handleField}
+                    label={`Registration Fee (${CURRENCY_SYMBOL})`}
+                    value={visitForm.registrationFee}
+                    readOnly={true}
                     disabled={formLoading}
+                    helperText="🔒 Hospital Standard Tariff (Read Only)"
                   />
                   <Md3Select
                     id="nv-paymentMethod"
@@ -563,7 +583,7 @@ export const NewVisitDialog = ({
                     <option value="">-- Select Attending Consultant --</option>
                     {availableDoctors.map((d) => (
                       <option key={d._id} value={d._id}>
-                        {formatDoctorName(d.fullName)}
+                        {formatDoctorName(d)}
                       </option>
                     ))}
                   </Md3Select>
@@ -589,35 +609,40 @@ export const NewVisitDialog = ({
                       background: 'var(--md-sys-color-surface-container-low, #f7fbf8)',
                       border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
                       borderRadius: '12px',
-                      padding: '12px 16px',
+                      padding: '14px 16px',
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '12px',
+                      flexDirection: 'column',
+                      gap: '8px',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary, #006a57)', fontSize: '20px' }}>
-                        price_check
-                      </span>
-                      <div>
-                        <strong style={{ fontSize: '0.88rem', color: 'var(--md-sys-color-on-surface)' }}>
-                          Authoritative Bed Tariff: {CURRENCY_SYMBOL}{resolvedBedTariff.dailyRate}/day
-                        </strong>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
-                          Hourly: {CURRENCY_SYMBOL}{resolvedBedTariff.hourlyRate}/hr • Grace: {resolvedBedTariff.gracePeriodMinutes || 60}m
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className="material-symbols-rounded" style={{ color: 'var(--md-sys-color-primary, #006a57)', fontSize: '20px' }}>
+                          hotel
                         </span>
+                        <div>
+                          <strong style={{ fontSize: '0.9rem', color: 'var(--md-sys-color-on-surface)' }}>
+                            {resolvedBedTariff.explanation || `Inpatient Bed Tariff: ${CURRENCY_SYMBOL}${resolvedBedTariff.dailyRate}/day`}
+                          </strong>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                            Standard Rate: {CURRENCY_SYMBOL}{resolvedBedTariff.dailyRate}/24hr • Hourly: {CURRENCY_SYMBOL}{resolvedBedTariff.hourlyRate}/hr • Grace: {resolvedBedTariff.gracePeriodMinutes || 60}m
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
+                          Required Min Advance Deposit
+                        </span>
+                        <strong style={{ fontSize: '0.95rem', color: resolvedBedTariff.minAdvanceDeposit > 0 ? '#b45309' : 'inherit' }}>
+                          {CURRENCY_SYMBOL}{resolvedBedTariff.minAdvanceDeposit ?? 0}
+                        </strong>
                       </div>
                     </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>
-                        Required Min Advance Deposit
-                      </span>
-                      <strong style={{ fontSize: '0.92rem', color: resolvedBedTariff.minAdvanceDeposit > 0 ? '#b45309' : 'inherit' }}>
-                        {CURRENCY_SYMBOL}{resolvedBedTariff.minAdvanceDeposit ?? 0}
-                      </strong>
-                    </div>
+                    {resolvedBedTariff.instructionNote && (
+                      <div style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', borderTop: '1px dashed var(--md-sys-color-outline-variant)', paddingTop: '6px', opacity: 0.9 }}>
+                        {resolvedBedTariff.instructionNote}
+                      </div>
+                    )}
                   </div>
                 )}
 

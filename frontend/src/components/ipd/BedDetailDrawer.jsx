@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import PhiField from '../patients/PhiField';
 import { Md3Button } from '../md3/Md3FormComponents';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './BedDetailDrawer.css';
 
 export const BedDetailDrawer = ({
@@ -15,6 +16,8 @@ export const BedDetailDrawer = ({
   onOpenAdmit,
   onOpenTransfer,
   onUpdateStatus,
+  onEditBed,
+  onDeleteBed,
 }) => {
   const navigate = useNavigate();
 
@@ -47,7 +50,7 @@ export const BedDetailDrawer = ({
             </span>
           </div>
           <button type="button" className="ipd-drawer-close-btn" onClick={onClose} aria-label="Close">
-            ✕
+            <span className="material-symbols-rounded">close</span>
           </button>
         </div>
 
@@ -89,7 +92,7 @@ export const BedDetailDrawer = ({
                     color: 'var(--md-sys-color-on-surface)',
                   }}
                 >
-                  {feat.replace('_', ' ')}
+                  {feat.replace(/_/g, ' ')}
                 </span>
               ))}
             </div>
@@ -122,7 +125,7 @@ export const BedDetailDrawer = ({
                 </div>
 
                 <div style={{ fontSize: '0.82rem' }}>
-                  <strong>Attending Doctor:</strong> Dr. {doctor?.firstName || 'Assigned Consultant'} {doctor?.lastName || ''}
+                  <strong>Attending Doctor:</strong> {formatDoctorName(doctor || 'Assigned Consultant')}
                 </div>
 
                 <div style={{ fontSize: '0.82rem', color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
@@ -132,9 +135,9 @@ export const BedDetailDrawer = ({
             </div>
           )}
 
-          {/* Actions Matrix */}
+          {/* Clinical Actions */}
           <div className="ipd-drawer-section">
-            <span className="ipd-drawer-section-title">Actions</span>
+            <span className="ipd-drawer-section-title">Clinical Actions</span>
             <div className="ipd-drawer-actions">
               {isVacant && (
                 <>
@@ -210,6 +213,50 @@ export const BedDetailDrawer = ({
               )}
             </div>
           </div>
+
+          {/* Administrative Infrastructure Controls */}
+          {(onEditBed || onDeleteBed) && (
+            <div className="ipd-drawer-section" style={{ borderTop: '1px dashed var(--md-sys-color-outline-variant)' }}>
+              <span className="ipd-drawer-section-title">Infrastructure Management</span>
+              <div className="ipd-drawer-actions">
+                {onEditBed && (
+                  <Md3Button
+                    variant="tonal"
+                    onClick={() => {
+                      onClose();
+                      onEditBed(bed);
+                    }}
+                  >
+                    <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '6px' }}>
+                      edit
+                    </span>
+                    Edit Bed Configuration
+                  </Md3Button>
+                )}
+
+                {onDeleteBed && (
+                  <Md3Button
+                    variant="outlined"
+                    onClick={() => {
+                      onClose();
+                      onDeleteBed(bed);
+                    }}
+                    disabled={isOccupied}
+                    title={isOccupied ? 'Cannot delete bed while occupied by patient' : 'Delete Bed'}
+                    style={{
+                      borderColor: isOccupied ? undefined : 'var(--md-sys-color-error)',
+                      color: isOccupied ? undefined : 'var(--md-sys-color-error)',
+                    }}
+                  >
+                    <span className="material-symbols-rounded" style={{ fontSize: '18px', marginRight: '6px' }}>
+                      delete
+                    </span>
+                    Delete Bed
+                  </Md3Button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>,

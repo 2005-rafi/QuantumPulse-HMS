@@ -1,0 +1,988 @@
+/**
+ * frontend/src/components/shell/OmnisearchModal.css
+ * Material 3 Expressive Advanced Omnisearch Dialog
+ * - Dual-Axis Expansion: 1040px desktop width, 90vh vertical bounds
+ * - Collapsible & Expandable Form Filters Card
+ * - 100% Theme Token Governance (--md-sys-color-*) | Zero Hardcoded Hex
+ * - Minimalist Aesthetic with Proper Iconography & Typography
+ */
+
+/* ── 1. Backdrop Scrim & Expanded Dialog Surface ── */
+.md3-omnisearch-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10050;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: clamp(20px, 4vh, 48px);
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 24px;
+  overflow-y: auto;
+  animation: md3OmniFadeIn 0.2s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+
+@keyframes md3OmniFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.md3-omnisearch-surface {
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface, #0f172a);
+  border-radius: 20px;
+  width: 100%;
+  max-width: min(1040px, 94vw);
+  min-height: 580px;
+  max-height: 90vh;
+  box-shadow: 0 24px 64px -12px rgba(15, 23, 42, 0.2), 0 0 1px rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: md3OmniSpringDrop 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes md3OmniSpringDrop {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ── 2. Modal Title Bar ── */
+.md3-omnisearch-title-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px 12px 28px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+}
+
+.md3-omnisearch-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.md3-omnisearch-title-icon {
+  font-size: 22px;
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.md3-omnisearch-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  letter-spacing: -0.2px;
+}
+
+.md3-omnisearch-dialog-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md3-omnisearch-dialog-close:hover {
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  color: var(--md-sys-color-on-surface, #0f172a);
+  transform: scale(1.05);
+}
+
+/* ── 3. Main Search Bar ── */
+.md3-omnisearch-searchbar-wrap {
+  padding: 0 28px 14px 28px;
+  position: relative;
+}
+
+.md3-omnisearch-main-input-box {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 20px;
+  height: 52px;
+  border-radius: 26px;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #cbd5e1);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-omnisearch-main-input-box:focus-within {
+  border-color: var(--md-sys-color-primary, #006874);
+  box-shadow: 0 0 0 3px rgba(0, 104, 116, 0.15), 0 4px 14px rgba(0, 104, 116, 0.08);
+}
+
+.md3-omnisearch-main-input-icon {
+  font-size: 24px;
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.md3-omnisearch-main-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 1.05rem;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  outline: none;
+  font-weight: 500;
+}
+
+.md3-omnisearch-main-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+  font-weight: 400;
+}
+
+.md3-omnisearch-clear-input-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--md-sys-color-surface-container-high, #e2e8f0);
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.md3-omnisearch-clear-input-btn:hover {
+  transform: scale(1.12);
+  background: var(--md-sys-color-surface-container-highest, #cbd5e1);
+  color: var(--md-sys-color-on-surface, #0f172a);
+}
+
+/* Linear Indeterminate Progress Track */
+.md3-omnisearch-progress-track {
+  height: 3px;
+  width: calc(100% - 56px);
+  margin: 4px 28px 0 28px;
+  background: var(--md-sys-color-surface-container-highest, #e2e8f0);
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.md3-omnisearch-progress-bar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 35%;
+  background: var(--md-sys-color-primary, #006874);
+  border-radius: 2px;
+  animation: md3LinearIndeterminate 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes md3LinearIndeterminate {
+  0% {
+    left: -40%;
+    width: 35%;
+  }
+  50% {
+    left: 30%;
+    width: 60%;
+  }
+  100% {
+    left: 100%;
+    width: 25%;
+  }
+}
+
+/* ── 4. Categories & Controls Bar ── */
+.md3-omnisearch-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 28px 12px 28px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.md3-omnisearch-categories-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.md3-omnisearch-cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  height: 32px;
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+  color: var(--md-sys-color-on-surface-variant, #475569);
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+  user-select: none;
+}
+
+.md3-omnisearch-cat-pill .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.md3-omnisearch-cat-pill:hover {
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  border-color: var(--md-sys-color-outline, #cbd5e1);
+  color: var(--md-sys-color-on-surface, #0f172a);
+  transform: translateY(-1px);
+}
+
+.md3-omnisearch-cat-pill.active {
+  background: rgba(0, 104, 116, 0.1);
+  border-color: var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-primary, #006874);
+  font-weight: 600;
+}
+
+.cat-pill-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-sys-color-primary, #006874);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  margin-left: 2px;
+}
+
+/* Collapsible Form Filters Trigger Button */
+.md3-omnisearch-filter-expand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 16px;
+  border: 1px dashed var(--md-sys-color-outline, #cbd5e1);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #475569);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.md3-omnisearch-filter-expand-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  border-color: var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.md3-omnisearch-filter-expand-btn.active {
+  background: rgba(0, 104, 116, 0.08);
+  border: 1px solid var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.filter-active-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--md-sys-color-primary, #006874);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.expand-chevron {
+  font-size: 18px;
+  transition: transform 0.2s ease;
+}
+
+/* ── 5. Collapsible Form Filters Card (Smooth Height Animation) ── */
+.md3-omnisearch-filter-collapsible-wrapper {
+  overflow: hidden;
+  transition: max-height 0.28s cubic-bezier(0.2, 0, 0, 1), opacity 0.24s ease, margin 0.2s ease;
+}
+
+.md3-omnisearch-filter-collapsible-wrapper.collapsed {
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.md3-omnisearch-filter-collapsible-wrapper.expanded {
+  max-height: 400px;
+  opacity: 1;
+  margin: 0 28px 16px 28px;
+}
+
+.md3-omnisearch-form-card {
+  padding: 16px 20px;
+  background: rgba(0, 104, 116, 0.035);
+  border: 1px solid rgba(0, 104, 116, 0.12);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.md3-omnisearch-form-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.md3-omnisearch-field-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md3-omnisearch-field-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #1e293b);
+  letter-spacing: 0.1px;
+}
+
+.md3-omnisearch-field-input-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cbd5e1);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.md3-omnisearch-field-input-box:focus-within {
+  border-color: var(--md-sys-color-primary, #006874);
+  box-shadow: 0 0 0 2px rgba(0, 104, 116, 0.12);
+}
+
+.md3-omnisearch-field-input-box .field-icon {
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+}
+
+.md3-omnisearch-field-input-box .field-icon-trailing {
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+  margin-left: auto;
+}
+
+.md3-omnisearch-field-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  outline: none;
+}
+
+.md3-omnisearch-field-input::placeholder {
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+  font-size: 0.8rem;
+}
+
+.md3-omnisearch-field-select {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  outline: none;
+  cursor: pointer;
+}
+
+/* Assigned Physician Chip */
+.md3-omnisearch-physician-box {
+  padding: 0 8px;
+}
+
+.md3-omnisearch-physician-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  padding: 2px 8px 2px 4px;
+  border-radius: 14px;
+  max-width: 100%;
+}
+
+.physician-avatar-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #f87171;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.physician-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #991b1b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.physician-chip-remove {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #b91c1c;
+}
+
+.physician-chip-remove .material-symbols-rounded {
+  font-size: 15px;
+}
+
+/* ── 6. Scrollable Body Viewport (Generous Vertical Expansion) ── */
+.md3-omnisearch-body-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 28px 20px 28px;
+  min-height: 340px;
+}
+
+/* ── 7. Clean Material 3 IDLE State (When No Recent History Exists) ── */
+.md3-omnisearch-idle-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.md3-omnisearch-idle-icon-badge {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(0, 104, 116, 0.08);
+  color: var(--md-sys-color-primary, #006874);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.md3-omnisearch-idle-icon-badge .material-symbols-rounded {
+  font-size: 32px;
+}
+
+.md3-omnisearch-idle-title {
+  font-size: 1.12rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  margin-bottom: 6px;
+}
+
+.md3-omnisearch-idle-desc {
+  font-size: 0.85rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  max-width: 520px;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.md3-omnisearch-idle-hints-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.md3-omnisearch-idle-hint-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+  color: var(--md-sys-color-on-surface-variant, #475569);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md3-omnisearch-idle-hint-chip:hover {
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  border-color: var(--md-sys-color-primary, #006874);
+  color: var(--md-sys-color-primary, #006874);
+  transform: translateY(-1px);
+}
+
+.md3-omnisearch-idle-hint-chip .material-symbols-rounded {
+  font-size: 16px;
+  color: var(--md-sys-color-primary, #006874);
+}
+
+/* ── 8. Recently Accessed Patients Section (Shown ONLY when actual history exists) ── */
+.md3-omnisearch-recent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-top: 4px;
+}
+
+.md3-omnisearch-recent-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  padding-bottom: 8px;
+}
+
+.md3-omnisearch-recent-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #1e293b);
+}
+
+.md3-omnisearch-recent-title .recent-icon {
+  font-size: 18px;
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.recent-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+}
+
+.md3-omnisearch-clear-history-btn {
+  border: none;
+  background: transparent;
+  color: var(--md-sys-color-primary, #006874);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.md3-omnisearch-clear-history-btn:hover {
+  background: rgba(0, 104, 116, 0.08);
+}
+
+/* Actual Recent Patient Cards Grid */
+.md3-omnisearch-recent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.md3-omnisearch-recent-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-omnisearch-recent-card:hover {
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+  border-color: var(--md-sys-color-primary, #006874);
+  box-shadow: 0 4px 12px rgba(0, 104, 116, 0.08);
+  transform: translateY(-2px);
+}
+
+.recent-card-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(0, 104, 116, 0.1);
+  color: var(--md-sys-color-primary, #006874);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.recent-card-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recent-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-card-sub {
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 9. Live Search Results Feed ── */
+.md3-omnisearch-results-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.md3-omnisearch-result-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.md3-omnisearch-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  margin-bottom: 4px;
+}
+
+.md3-omnisearch-group-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #006874);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.md3-omnisearch-group-title .material-symbols-rounded {
+  font-size: 18px;
+}
+
+.md3-omnisearch-group-badge {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.md3-omnisearch-result-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.md3-omnisearch-result-item:hover,
+.md3-omnisearch-result-item.selected {
+  background: rgba(0, 104, 116, 0.05);
+  border-color: rgba(0, 104, 116, 0.2);
+  transform: translateX(3px);
+}
+
+.md3-omnisearch-item-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(0, 104, 116, 0.1);
+  color: var(--md-sys-color-primary, #006874);
+  font-size: 0.9rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.md3-omnisearch-item-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.md3-omnisearch-item-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.md3-omnisearch-item-title {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #0f172a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-omnisearch-item-tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--md-sys-color-surface-container-high, #e2e8f0);
+  color: var(--md-sys-color-on-surface-variant, #475569);
+}
+
+.md3-omnisearch-item-tag--active {
+  background: rgba(0, 104, 116, 0.12);
+  color: var(--md-sys-color-primary, #006874);
+}
+
+.md3-omnisearch-item-tag--paid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.md3-omnisearch-item-meta {
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.md3-omnisearch-item-end {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.md3-omnisearch-item-action-icon {
+  font-size: 20px;
+  color: var(--md-sys-color-on-surface-variant, #94a3b8);
+}
+
+/* ── 10. Shimmer Loading Placeholders ── */
+.md3-omnisearch-skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.md3-omnisearch-skeleton-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-low, #f8fafc);
+}
+
+.skeleton-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #e2e8f0;
+  animation: md3ShimmerPulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-text-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-bar-title {
+  width: 40%;
+  height: 14px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  animation: md3ShimmerPulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-bar-sub {
+  width: 25%;
+  height: 10px;
+  border-radius: 3px;
+  background: #f1f5f9;
+  animation: md3ShimmerPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes md3ShimmerPulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* ── 11. Action Footer Bar ── */
+.md3-omnisearch-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+}
+
+.md3-omnisearch-footer-hints {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.78rem;
+  color: var(--md-sys-color-on-surface-variant, #64748b);
+}
+
+.md3-omnisearch-hint-kbd {
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
+  color: var(--md-sys-color-on-surface, #1e293b);
+}
+
+.md3-omnisearch-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.md3-omnisearch-btn-clear {
+  height: 38px;
+  padding: 0 22px;
+  border-radius: 19px;
+  border: 1px solid var(--md-sys-color-outline, #cbd5e1);
+  background: transparent;
+  color: var(--md-sys-color-primary, #006874);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.md3-omnisearch-btn-clear:hover {
+  background: var(--md-sys-color-surface-container-high, #f1f5f9);
+  border-color: var(--md-sys-color-primary, #006874);
+}
+
+.md3-omnisearch-btn-filter {
+  height: 38px;
+  padding: 0 28px;
+  border-radius: 19px;
+  border: none;
+  background: var(--md-sys-color-primary, #006874);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 104, 116, 0.25);
+  transition: all 0.15s ease;
+}
+
+.md3-omnisearch-btn-filter:hover {
+  background: rgb(0, 85, 95);
+  box-shadow: 0 4px 10px rgba(0, 104, 116, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── 12. Responsive Viewport Adaptations ── */
+@media (max-width: 900px) {
+  .md3-omnisearch-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .md3-omnisearch-scrim {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .md3-omnisearch-surface {
+    max-width: 100vw;
+    width: 100vw;
+    height: 96vh;
+    max-height: 96vh;
+    min-height: 96vh;
+    border-radius: 20px 20px 0 0;
+    border-bottom: none;
+  }
+  .md3-omnisearch-footer-hints {
+    display: none;
+  }
+  .md3-omnisearch-footer-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

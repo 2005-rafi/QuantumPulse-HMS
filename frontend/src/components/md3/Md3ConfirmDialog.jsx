@@ -31,6 +31,7 @@ export const Md3ConfirmDialog = ({
   message,
   confirmLabel = 'Confirm',
   cancelLabel = 'Cancel',
+  showCancel = true,
   variant = 'danger',
   icon,
   loading = false,
@@ -126,18 +127,20 @@ export const Md3ConfirmDialog = ({
 
         {/* Action Button Row */}
         <div className="md3-confirm-actions">
-          <button
-            type="button"
-            className="md3-confirm-btn md3-confirm-btn--cancel"
-            onClick={handleClose}
-            disabled={loading}
-          >
-            {cancelLabel}
-          </button>
+          {showCancel && cancelLabel && (
+            <button
+              type="button"
+              className="md3-confirm-btn md3-confirm-btn--cancel"
+              onClick={handleClose}
+              disabled={loading}
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             type="button"
             className={`md3-confirm-btn md3-confirm-btn--confirm md3-confirm-btn--confirm-${variant}`}
-            onClick={onConfirm}
+            onClick={onConfirm || handleClose}
             disabled={loading}
             autoFocus
           >

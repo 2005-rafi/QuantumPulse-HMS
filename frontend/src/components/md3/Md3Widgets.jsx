@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './Md3Widgets.css';
 
 /* ============================================================
@@ -726,30 +727,34 @@ export const Md3Tabs = ({
     });
   };
 
-  const activeIndex = Math.max(0, tabs.findIndex((t) => t.id === activeTab));
-
   return (
     <div className={`md3-tabs ${className}`} role="tablist">
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          type="button"
-          role="tab"
-          aria-selected={activeTab === tab.id}
-          className={`md3-tab ${activeTab === tab.id ? 'md3-tab--active' : ''}`}
-          onClick={() => handleTabClick(tab.id)}
-        >
-          {tab.icon && <span className="md3-tab__icon">{tab.icon}</span>}
-          <span className="md3-tab__label">{tab.label}</span>
-        </button>
-      ))}
-      <span
-        className="md3-tabs__indicator"
-        style={{
-          width: `${100 / Math.max(1, tabs.length)}%`,
-          transform: `translateX(${activeIndex * 100}%)`,
-        }}
-      />
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id;
+        const iconElement = typeof tab.icon === 'string' ? (
+          <span className="material-symbols-rounded">{tab.icon}</span>
+        ) : (
+          tab.icon
+        );
+
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            className={`md3-tab ${isActive ? 'md3-tab--active' : ''}`}
+            onClick={() => handleTabClick(tab.id)}
+            title={typeof tab.label === 'string' ? tab.label : undefined}
+          >
+            {iconElement && <span className="md3-tab__icon">{iconElement}</span>}
+            <span className="md3-tab__label">{tab.label}</span>
+            {tab.badge !== undefined && tab.badge !== null && (
+              <span className="md3-tab__badge">{tab.badge}</span>
+            )}
+          </button>
+        );
+      })}
     </div>
   );
 };
@@ -892,7 +897,8 @@ export const Md3TextArea = ({
   className = '',
   style = {},
 }) => {
-  const isFilled = value !== '' && value !== null && value !== undefined;
+  const safeValue = value ?? '';
+  const isFilled = safeValue !== '';
   const isError = !!error;
   const textareaRef = React.useRef(null);
 
@@ -905,7 +911,7 @@ export const Md3TextArea = ({
         el.style.height = `${scrollHeight}px`;
       }
     }
-  }, [value, autoGrow]);
+  }, [safeValue, autoGrow]);
 
   const handleInput = (e) => {
     if (autoGrow && textareaRef.current) {
@@ -928,7 +934,7 @@ export const Md3TextArea = ({
           id={id}
           name={name}
           className={`md3-field-input md3-textarea ${isFilled ? 'is-filled' : ''} ${autoGrow ? 'is-auto-grow' : ''}`}
-          value={value}
+          value={safeValue}
           onChange={onChange}
           onInput={handleInput}
           placeholder=" "
@@ -1052,7 +1058,7 @@ export const Md3WorkspaceIdleState = ({
           <Icon.Stethoscope />
         </div>
         <h2 className="md3-workspace-idle__title">
-          {userName ? `Welcome, Dr. ${userName.replace(/^Dr\.\s*/i, '')}` : 'Clinical Workspace Ready'}
+          {userName ? `Welcome, ${formatDoctorName(userName)}` : 'Clinical Workspace Ready'}
         </h2>
         <p className="md3-workspace-idle__subtitle">
           {department ? `${department} Department • ` : ''}Select a patient from the queue to start consultation

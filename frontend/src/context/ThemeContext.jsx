@@ -2,9 +2,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 
 /**
  * ThemeMode Constants (Enum)
+ * Default: LIGHT mode
  */
 export const THEME_MODES = Object.freeze({
-  SYSTEM: 'system',
   LIGHT: 'light',
   DARK: 'dark',
 });
@@ -12,58 +12,40 @@ export const THEME_MODES = Object.freeze({
 const THEME_STORAGE_KEY = 'hms_theme_mode';
 
 const ThemeContext = createContext({
-  themeMode: THEME_MODES.SYSTEM,
+  themeMode: THEME_MODES.LIGHT,
   effectiveTheme: THEME_MODES.LIGHT,
   setThemeMode: () => {},
   toggleTheme: () => {},
+  isDark: false,
 });
 
 /**
- * Helper: Detect system dark mode preference
- */
-const getSystemTheme = () => {
-  if (typeof window === 'undefined' || !window.matchMedia) {
-    return THEME_MODES.LIGHT;
-  }
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? THEME_MODES.DARK
-    : THEME_MODES.LIGHT;
-};
-
-/**
- * Helper: Get initial theme mode from localStorage or fallback to system
+ * Helper: Get initial theme mode from localStorage or fallback strictly to LIGHT
  */
 const getSavedThemeMode = () => {
   try {
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    if (saved && Object.values(THEME_MODES).includes(saved)) {
+    if (saved === THEME_MODES.DARK || saved === THEME_MODES.LIGHT) {
       return saved;
     }
   } catch (err) {
     console.warn('[ThemeContext] Failed to read from localStorage:', err);
   }
-  return THEME_MODES.SYSTEM;
+  // Default system theme is LIGHT mode
+  return THEME_MODES.LIGHT;
 };
 
 /**
- * ThemeProvider — Centralized, SOLID Material 3 Theme State Provider.
- * Supports:
- * 1. Three Modes: 'system', 'light', 'dark'
- * 2. Persistent storage across sessions and visits
- * 3. Dynamic system-preference listener for live OS theme adaptation
- * 4. Smooth CSS color-scheme transition without flickering
+ * ThemeProvider — Centralized Material 3 Theme State Provider.
+ * Defaults strictly to Light Mode. Users can toggle between Light & Dark in settings/profile.
  */
 export const ThemeProvider = ({ children }) => {
   const [themeMode, setThemeModeState] = useState(getSavedThemeMode);
-  const [systemTheme, setSystemTheme] = useState(getSystemTheme);
 
-  // Compute effective theme ('light' or 'dark') based on active mode
+  // Effective theme is strictly LIGHT or DARK
   const effectiveTheme = useMemo(() => {
-    if (themeMode === THEME_MODES.SYSTEM) {
-      return systemTheme;
-    }
     return themeMode === THEME_MODES.DARK ? THEME_MODES.DARK : THEME_MODES.LIGHT;
-  }, [themeMode, systemTheme]);
+  }, [themeMode]);
 
   // Apply theme class to document element
   const applyThemeToDOM = useCallback((theme) => {
@@ -93,51 +75,34 @@ export const ThemeProvider = ({ children }) => {
     return cleanup;
   }, [effectiveTheme, applyThemeToDOM]);
 
-  // Listen to OS system color scheme changes in real time
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleSystemThemeChange = (e) => {
-      setSystemTheme(e.matches ? THEME_MODES.DARK : THEME_MODES.LIGHT);
-    };
-
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
-    };
-  }, []);
-
   // Update theme mode with persistence
   const setThemeMode = useCallback((mode) => {
-    if (!Object.values(THEME_MODES).includes(mode)) return;
-    setThemeModeState(mode);
-    try {
-      localStorage.setItem(THEME_STORAGE_KEY, mode);
-    } catch (err) {
-      console.warn('[ThemeContext] Failed to persist theme:', err);
-    }
+    setThemeModeState((prevMode) => {
+      const nextMode = typeof mode === 'function' ? mode(prevMode) : mode;
+      const validMode = nextMode === THEME_MODES.DARK ? THEME_MODES.DARK : THEME_MODES.LIGHT;
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, validMode);
+      } catch (err) {
+        console.warn('[ThemeContext] Failed to persist theme:', err);
+      }
+      return validMode;
+    });
   }, []);
 
   // Quick toggle between light & dark
   const toggleTheme = useCallback(() => {
-    setThemeMode((currentMode) => {
-      if (currentMode === THEME_MODES.LIGHT) return THEME_MODES.DARK;
-      if (currentMode === THEME_MODES.DARK) return THEME_MODES.LIGHT;
-      // If currently system, flip away from current effective theme
-      return effectiveTheme === THEME_MODES.DARK ? THEME_MODES.LIGHT : THEME_MODES.DARK;
-    });
-  }, [effectiveTheme, setThemeMode]);
+    setThemeMode((prev) => (prev === THEME_MODES.DARK ? THEME_MODES.LIGHT : THEME_MODES.DARK));
+  }, [setThemeMode]);
 
   const contextValue = useMemo(
     () => ({
-      themeMode,
+      themeMode: effectiveTheme,
       effectiveTheme,
       setThemeMode,
       toggleTheme,
       isDark: effectiveTheme === THEME_MODES.DARK,
     }),
-    [themeMode, effectiveTheme, setThemeMode, toggleTheme]
+    [effectiveTheme, setThemeMode, toggleTheme]
   );
 
   return (
@@ -159,3 +124,4 @@ export const useTheme = () => {
 };
 
 export default ThemeContext;
+

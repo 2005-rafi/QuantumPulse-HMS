@@ -1,7 +1,7 @@
 const path = require('path');
 const laboratoryService = require('./laboratory.service');
 const { success } = require('../../core/responses');
-const catchAsync = require('../../core/utils/catchAsync');
+const catchAsync = require('../../core/utils/catch-async');
 const auditService = require('../audit/audit.service');
 
 class LaboratoryController {
@@ -55,19 +55,46 @@ class LaboratoryController {
   // ── Workflow (Technician — LAB_PROCESS) ─────────────────────────────────────────
 
   getPendingVisits = catchAsync(async (req, res) => {
-    // Pass the authenticated technician's departmentId for department-filtered queue
-    const visits = await laboratoryService.getPendingVisits(req.user.departmentId);
+    const targetDeptId = req.query.departmentId && req.query.departmentId !== 'ALL'
+      ? req.query.departmentId
+      : null;
+    const isNurseQueue = req.user?.role === 'Lab Nurse' || req.query.isNurseQueue === 'true';
+    const visits = await laboratoryService.getPendingVisits(targetDeptId, { isNurseQueue });
     return success(res, visits, 'Pending lab visits retrieved successfully');
   });
 
   getReportedVisits = catchAsync(async (req, res) => {
-    const visits = await laboratoryService.getReportedVisits(req.user.departmentId, req.query);
+    const targetDeptId = req.query.departmentId && req.query.departmentId !== 'ALL'
+      ? req.query.departmentId
+      : null;
+    const visits = await laboratoryService.getReportedVisits(targetDeptId, req.query);
     return success(res, visits, 'Reported lab visits retrieved successfully');
   });
 
+  getLabHistory = catchAsync(async (req, res) => {
+    const targetDeptId = req.query.departmentId && req.query.departmentId !== 'ALL'
+      ? req.query.departmentId
+      : null;
+    const filters = {
+      departmentId: targetDeptId,
+      status: req.query.status,
+      date: req.query.date,
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      sort: req.query.sort || 'latest',
+      search: req.query.search || req.query.q,
+      limit: parseInt(req.query.limit, 10) || 100,
+      page: parseInt(req.query.page, 10) || 1,
+    };
+    const history = await laboratoryService.getLabHistory(filters, req.user);
+    return success(res, history, 'Laboratory patient history retrieved successfully');
+  });
+
+
   collectSample = catchAsync(async (req, res) => {
     const { visitId, orderId } = req.params;
-    const visit = await laboratoryService.collectSample(visitId, orderId, req.user.departmentId);
+    const staffId = req.user?.staffId || req.user?._id || req.user?.id || null;
+    const visit = await laboratoryService.collectSample(visitId, orderId, req.user?.departmentId, staffId);
     return success(res, visit, 'Sample collected successfully');
   });
 
@@ -81,6 +108,56 @@ class LaboratoryController {
     return success(res, visit, 'Results uploaded successfully');
   });
 
+  recordLabVitals = catchAsync(async (req, res) => {
+    const { visitId, orderId } = req.params;
+    const visit = await laboratoryService.recordLabVitals(visitId, orderId, req.body, req.user.staffId);
+    return success(res, visit, 'Lab pre-vitals recorded successfully');
+  });
+
+  recordPhlebotomyRisks = catchAsync(async (req, res) => {
+    const { visitId, orderId } = req.params;
+    const visit = await laboratoryService.recordPhlebotomyRisks(visitId, orderId, req.body, req.user.staffId);
+    return success(res, visit, 'Phlebotomy safety screening flags and barcode registered');
+  });
+
+  broadcastPanicAlert = catchAsync(async (req, res) => {
+    const { visitId, orderId } = req.params;
+    const visit = await laboratoryService.broadcastPanicAlert(visitId, orderId, req.body, req.user.staffId);
+    return success(res, visit, 'Emergency critical / panic value alert broadcasted to care team');
+  });
+
+  getPatientLabHistory = catchAsync(async (req, res) => {
+    const { patientId } = req.params;
+    const { testCode } = req.query;
+    const history = await laboratoryService.getPatientLabHistory(patientId, testCode);
+    return success(res, history, 'Patient historical diagnostic trend retrieved');
+  });
+
+
+  verifyResults = catchAsync(async (req, res) => {
+    const { visitId, orderId } = req.params;
+    const { doctorNotes, deltaFlag, panicValueFlag, disposition, clinicalImpression, rejectionReason } = req.body;
+    const visit = await laboratoryService.verifyResults(
+      visitId,
+      orderId,
+      doctorNotes,
+      req.user.staffId,
+      deltaFlag,
+      panicValueFlag,
+      disposition,
+      clinicalImpression,
+      rejectionReason
+    );
+    return success(res, visit, 'Diagnostic test report verified and authorized');
+  });
+
+  dispatchVisit = catchAsync(async (req, res) => {
+    const { visitId } = req.params;
+    const { disposition, notes } = req.body;
+    const visit = await laboratoryService.dispatchVisit(visitId, disposition, notes, req.user.staffId);
+    return success(res, visit, 'Visit successfully dispatched and routed');
+  });
+
   // ── Scan Files (Technician — LAB_PROCESS) ────────────────────────────────────────
 
   /**
@@ -88,7 +165,7 @@ class LaboratoryController {
    * This must be a route middleware, not a class method, to run before multer.
    */
   static injectDeptCode = catchAsync(async (req, res, next) => {
-    const AppError = require('../../core/errors/AppError');
+    const AppError = require('../../core/errors/app-error');
     const visitRepository = require('../visits/visit.repository');
 
     const { visitId, orderId } = req.params;
@@ -113,7 +190,7 @@ class LaboratoryController {
   uploadScan = catchAsync(async (req, res) => {
     const { visitId, orderId } = req.params;
     const fs = require('fs');
-    const AppError = require('../../core/errors/AppError');
+    const AppError = require('../../core/errors/app-error');
 
     if (!req.file) {
       throw new AppError('VALIDATION_001', 'No file attached to the request');

@@ -1,43 +1,31 @@
 import React, { useState } from 'react';
-import { staffAPI } from '../../services/staffAPI';
 import Md3FileUpload from './Md3FileUpload';
 
-const Md3FileUploader = ({ value, onChange, disabled }) => {
-  const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [error, setError] = useState(null);
+const Md3FileUploader = ({ value, onChange, disabled, uploading = false, uploadProgress = 0, error = null }) => {
+  const [internalError, setInternalError] = useState(null);
 
-  const handleFileSelect = async (file) => {
-    setError(null);
+  const handleFileSelect = (file) => {
+    setInternalError(null);
     if (!file) {
       onChange?.(null);
       return;
     }
 
-    // If it's already a metadata object
+    // If it's already a Cloudinary metadata object from existing profile
     if (!file.name && file.url) {
       onChange?.(file);
       return;
     }
 
-    const formData = new FormData();
-    formData.append('document', file);
-    setUploading(true);
-    setUploadProgress(20);
-
-    try {
-      setUploadProgress(60);
-      const response = await staffAPI.uploadCertificate(formData);
-      setUploadProgress(100);
-      
-      const metadata = response.data || response;
-      onChange?.(metadata);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to upload certificate to secure cloud storage');
-      onChange?.(null);
-    } finally {
-      setUploading(false);
-    }
+    // Stage the file locally without immediate network upload
+    const stagedMetadata = {
+      file,
+      fileName: file.name,
+      sizeBytes: file.size,
+      mimeType: file.type,
+      isStaged: true,
+    };
+    onChange?.(stagedMetadata);
   };
 
   return (
@@ -49,7 +37,7 @@ const Md3FileUploader = ({ value, onChange, disabled }) => {
       disabled={disabled || uploading}
       uploading={uploading}
       uploadProgress={uploadProgress}
-      error={error}
+      error={error || internalError}
     />
   );
 };

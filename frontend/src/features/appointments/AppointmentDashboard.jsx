@@ -125,7 +125,7 @@ export const AppointmentDashboard = ({ user, onVisitCreated }) => {
             <Icon.UserCheck />
           </div>
           <div className="appt-stat-content">
-            <span className="appt-stat-label">Checked In / Triage</span>
+            <span className="appt-stat-label">Checked In / Waiting Nurse</span>
             <span className="appt-stat-val">{summary.CHECKED_IN || 0}</span>
           </div>
         </div>

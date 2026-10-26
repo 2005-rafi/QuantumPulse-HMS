@@ -2,13 +2,14 @@
    PatientCard.css — Pure Material 3 Clinical Patient Card
    Path: frontend/src/components/patients/PatientCard.css
    Compact, Informative & Responsive Multi-Card Grid Component
+   Optimized for Medical Professionals (Phone, Tablet, Desktop)
    ========================================================================== */
 
 .md3-patient-card {
   position: relative;
-  background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
+  background-color: var(--md-sys-color-surface, #ffffff);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
-  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border: 1px solid var(--md-sys-color-outline-variant, #e2e8f0);
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
@@ -19,22 +20,23 @@
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .md3-patient-card:hover {
-  background-color: var(--md-sys-color-surface-container, #f3ede8);
-  border-color: var(--md-sys-color-primary, #6750a4);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  background-color: var(--md-sys-color-surface-container-low);
+  border-color: var(--md-sys-color-primary);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transform: translateY(-2px);
 }
 
 .md3-patient-card:active {
-  transform: scale(0.98) translateY(0);
+  transform: scale(0.99) translateY(0);
 }
 
 .md3-patient-card--selected {
-  background-color: var(--md-sys-color-primary-container, #eaddff);
-  border-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-primary-container);
+  border-color: var(--md-sys-color-primary);
 }
 
 /* Subtle Interactive Rail */
@@ -51,15 +53,16 @@
 }
 
 .md3-patient-card:hover .md3-patient-card-rail {
-  background-color: var(--md-sys-color-primary, #6750a4);
+  background-color: var(--md-sys-color-primary);
   transform: scaleY(1);
 }
 
-/* ── HEADER ROW ── */
+/* ── HEADER ROW: AVATAR, NAME, MODALITY & LIVE STATUS ── */
 .md3-patient-card-header {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  width: 100%;
 }
 
 .md3-patient-card-avatar-wrap {
@@ -72,102 +75,65 @@
   flex-direction: column;
   min-width: 0;
   flex: 1;
+  gap: 3px;
+}
+
+.md3-patient-card-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
 
 .md3-patient-card-name {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 700;
-  color: var(--md-sys-color-on-surface, #1d1b20);
+  color: var(--md-sys-color-on-surface);
   line-height: 1.25;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.md3-patient-card-sub-id {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.md3-patient-mrn-badge {
+  cursor: copy;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-family: var(--md-sys-typescale-font-mono, 'Roboto Mono', 'SFMono-Regular', Consolas, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface);
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  letter-spacing: -0.01em;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.md3-patient-mrn-badge .material-symbols-rounded {
+  font-size: 11px;
+  color: var(--md-sys-color-outline);
 }
 
 .md3-patient-card-demographics {
   font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  margin-top: 1px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-.md3-patient-card-badges {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.md3-patient-type-pill {
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background-color: var(--md-sys-color-surface-container-highest, #ece6f0);
-  color: var(--md-sys-color-primary, #6750a4);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 20%, transparent);
-}
-
-.md3-patient-type-pill--opd {
-  background-color: var(--md-sys-color-primary-container, #eaddff);
-  color: var(--md-sys-color-on-primary-container, #21005d);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
-}
-
-.md3-patient-type-pill--ipd {
-  background-color: var(--md-sys-color-tertiary-container, #ffd8e4);
-  color: var(--md-sys-color-on-tertiary-container, #31111d);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary, #7d5260) 25%, transparent);
-}
-
-.md3-patient-type-pill--emergency {
-  background-color: var(--md-sys-color-error-container, #ffdad6);
-  color: var(--md-sys-color-on-error-container, #410002);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 30%, transparent);
-}
-
-.md3-patient-type-pill--idle {
-  background-color: var(--md-sys-color-surface-container-highest, #e6e0e9);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-}
-
-.md3-patient-status-pill {
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 6px;
-  background-color: color-mix(in srgb, #2e7d32 15%, transparent);
-  color: #2e7d32;
-}
-
-/* ── SUB HEADER (MRN + BLOOD GROUP) ── */
-.md3-patient-card-sub-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding-top: 2px;
-}
-
-.md3-patient-mrn-badge {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background-color: var(--md-sys-color-surface, #ffffff);
-  color: var(--md-sys-color-on-surface, #1d1b20);
-  padding: 2px 6px;
-  border-radius: 6px;
-  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-}
-
+/* Clinical Blood Group Badge */
 .md3-patient-blood-pill {
   display: inline-flex;
   align-items: center;
@@ -176,60 +142,180 @@
   font-weight: 700;
   padding: 2px 6px;
   border-radius: 6px;
-  background-color: color-mix(in srgb, #ba1a1a 12%, transparent);
-  color: #ba1a1a;
-  border: 1px solid color-mix(in srgb, #ba1a1a 25%, transparent);
+  letter-spacing: 0.02em;
 }
 
-.md3-patient-blood-pill svg {
-  width: 11px;
-  height: 11px;
+.md3-patient-blood-pill.is-recorded {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 25%, transparent);
 }
 
-/* ── CARD BODY DETAILS ── */
-.md3-patient-card-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 4px 0;
-  border-top: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
-  border-bottom: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+.md3-patient-blood-pill.is-empty {
+  background-color: var(--md-sys-color-surface-container-low);
+  color: var(--md-sys-color-outline);
+  border: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.md3-patient-meta-row {
+.md3-patient-blood-pill .md3-patient-blood-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* Modality Tag (OPD / IPD / EMERGENCY / REGISTERED) */
+.md3-patient-type-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background-color: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  white-space: nowrap;
+}
+
+.md3-patient-type-pill--opd {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+}
+
+.md3-patient-type-pill--ipd {
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 25%, transparent);
+}
+
+.md3-patient-type-pill--emergency {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
+}
+
+.md3-patient-type-pill--idle {
+  background-color: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+}
+
+/* Status Column */
+.md3-patient-card-status-col {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.74rem;
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.md3-patient-meta-row svg {
-  width: 13px;
-  height: 13px;
   flex-shrink: 0;
-  color: var(--md-sys-color-primary, #6750a4);
 }
 
-.md3-patient-meta-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.md3-patient-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.70rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
   white-space: nowrap;
 }
 
-.md3-patient-meta-text strong {
-  color: var(--md-sys-color-on-surface, #1d1b20);
+/* Semantic Status Badge Variants */
+.md3-status-badge--neutral {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
 }
 
-.md3-patient-meta-row--timeline svg {
-  color: #2e7d32;
+.md3-status-badge--primary {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
 }
 
-.md3-patient-meta-row--appt svg {
-  color: var(--md-sys-color-primary, #6750a4);
+.md3-status-badge--secondary {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-secondary) 25%, transparent);
+}
+
+.md3-status-badge--info {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-secondary) 25%, transparent);
+}
+
+.md3-status-badge--warning {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-secondary) 30%, transparent);
+}
+
+.md3-status-badge--success {
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 25%, transparent);
+}
+
+.md3-status-badge--error {
+  background-color: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 25%, transparent);
+}
+
+/* ── CLINICAL WORKFLOW / QUEUE DETAILS BOX ── */
+.md3-patient-card-workflow-box {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  padding: 6px 10px;
+  background-color: var(--md-sys-color-surface-container);
+  border-radius: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant);
+  font-size: 0.73rem;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.md3-patient-token-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.md3-patient-token-badge .material-symbols-rounded {
+  font-size: 13px;
+  color: var(--md-sys-color-primary);
+}
+
+.md3-patient-workflow-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.md3-patient-workflow-text .material-symbols-rounded {
+  font-size: 14px;
+  color: var(--md-sys-color-outline);
+}
+
+.md3-patient-workflow-text--bed {
+  color: var(--md-sys-color-on-tertiary-container);
+  font-weight: 600;
+}
+
+.md3-patient-workflow-text--bed .material-symbols-rounded {
+  color: var(--md-sys-color-tertiary);
 }
 
 /* ── CARD FOOTER ── */
@@ -237,25 +323,96 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 2px;
+  gap: 8px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--md-sys-color-outline-variant);
+}
+
+.md3-patient-card-footer-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 0.73rem;
+  color: var(--md-sys-color-on-surface-variant);
+  min-width: 0;
+}
+
+.md3-patient-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.md3-patient-meta-item .material-symbols-rounded {
+  font-size: 13px;
+  color: var(--md-sys-color-primary);
+}
+
+.md3-meta-last-visit .material-symbols-rounded {
+  color: var(--md-sys-color-tertiary);
+}
+
+.md3-meta-appt .material-symbols-rounded {
+  color: var(--md-sys-color-primary);
+}
+
+.md3-patient-card-action-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .md3-patient-view-action {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
+  gap: 2px;
+  font-size: 0.74rem;
   font-weight: 700;
-  color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-primary);
   transition: transform 150ms ease;
 }
 
-.md3-patient-view-action svg {
-  width: 13px;
-  height: 13px;
+.md3-patient-view-action .material-symbols-rounded {
+  font-size: 16px;
   transition: transform 150ms ease;
 }
 
-.md3-patient-card:hover .md3-patient-view-action svg {
-  transform: translateX(2px);
+.md3-patient-card:hover .md3-patient-view-action .material-symbols-rounded {
+  transform: translateX(3px);
+}
+
+/* ── RESPONSIVE CARD STYLES FOR PHONES AND TABLETS ── */
+@media (max-width: 640px) {
+  .md3-patient-card {
+    padding: 10px 12px;
+    gap: 7px;
+  }
+
+  .md3-patient-card-name {
+    font-size: 0.88rem;
+  }
+
+  .md3-patient-status-pill {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+
+  .md3-patient-card-workflow-box {
+    padding: 5px 8px;
+    gap: 4px 8px;
+  }
+
+  .md3-patient-card-footer {
+    padding-top: 5px;
+  }
+}
+
+.md3-patient-mrn-badge:hover {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-color: var(--md-sys-color-primary);
 }

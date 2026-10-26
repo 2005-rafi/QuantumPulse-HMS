@@ -5,12 +5,16 @@
 const mongoose = require('mongoose');
 const bedRepository = require('./bed.repository');
 const IPDAdmission = require('../admission/ipd-admission.model');
-const AppError = require('../../../core/errors/AppError');
+const { withTransaction } = require('../../../core/database/transaction');
+const AppError = require('../../../core/errors/app-error');
+const cacheService = require('../../../core/cache/cache.service');
 
 class BedService {
   // ── Floor Operations ────────────────────────────────────────
   async createFloor(data) {
-    return bedRepository.createFloor(data);
+    const res = await bedRepository.createFloor(data);
+    cacheService.del('beds:map:full');
+    return res;
   }
 
   async getAllFloors() {
@@ -20,14 +24,35 @@ class BedService {
   async updateFloor(id, data) {
     const floor = await bedRepository.updateFloor(id, data);
     if (!floor) throw new AppError('Floor not found', 404, 'NOT_FOUND');
+    cacheService.del('beds:map:full');
     return floor;
+  }
+
+  async deleteFloor(id) {
+    const floor = await bedRepository.getFloorById(id);
+    if (!floor) throw new AppError('Floor not found', 404, 'NOT_FOUND');
+
+    const occupiedCount = await bedRepository.countOccupiedBedsByFloor(id);
+    if (occupiedCount > 0) {
+      throw new AppError(
+        `Cannot delete floor: ${occupiedCount} bed(s) on this floor are currently OCCUPIED. Please discharge or transfer patients before deleting.`,
+        400,
+        'FLOOR_OCCUPIED'
+      );
+    }
+
+    const res = await bedRepository.deleteFloor(id);
+    cacheService.del('beds:map:full');
+    return res;
   }
 
   // ── Room Operations ─────────────────────────────────────────
   async createRoom(data) {
     const floor = await bedRepository.getFloorById(data.floorId);
     if (!floor) throw new AppError('Associated floor not found', 404, 'NOT_FOUND');
-    return bedRepository.createRoom(data);
+    const res = await bedRepository.createRoom(data);
+    cacheService.del('beds:map:full');
+    return res;
   }
 
   async getAllRooms(filter = {}) {
@@ -41,7 +66,26 @@ class BedService {
   async updateRoom(id, data) {
     const room = await bedRepository.updateRoom(id, data);
     if (!room) throw new AppError('Room not found', 404, 'NOT_FOUND');
+    cacheService.del('beds:map:full');
     return room;
+  }
+
+  async deleteRoom(id) {
+    const room = await bedRepository.getRoomById(id);
+    if (!room) throw new AppError('Room not found', 404, 'NOT_FOUND');
+
+    const occupiedCount = await bedRepository.countOccupiedBedsByRoom(id);
+    if (occupiedCount > 0) {
+      throw new AppError(
+        `Cannot delete room: ${occupiedCount} bed(s) in this room are currently OCCUPIED. Please discharge or transfer patients before deleting.`,
+        400,
+        'ROOM_OCCUPIED'
+      );
+    }
+
+    const res = await bedRepository.deleteRoom(id);
+    cacheService.del('beds:map:full');
+    return res;
   }
 
   // ── Bed Operations ──────────────────────────────────────────
@@ -54,7 +98,9 @@ class BedService {
       floorId: room.floorId,
       wardClass: data.wardClass || room.roomType,
     };
-    return bedRepository.createBed(bedData);
+    const res = await bedRepository.createBed(bedData);
+    cacheService.del('beds:map:full');
+    return res;
   }
 
   async getBeds(query) {
@@ -70,7 +116,25 @@ class BedService {
   async updateBed(id, data) {
     const bed = await bedRepository.updateBed(id, data);
     if (!bed) throw new AppError('Bed not found', 404, 'NOT_FOUND');
+    cacheService.del('beds:map:full');
     return bed;
+  }
+
+  async deleteBed(id) {
+    const bed = await bedRepository.getBedById(id);
+    if (!bed) throw new AppError('Bed not found', 404, 'NOT_FOUND');
+
+    if (bed.status === 'OCCUPIED') {
+      throw new AppError(
+        'Cannot delete bed while status is OCCUPIED. Please discharge or transfer the admitted patient first.',
+        400,
+        'BED_OCCUPIED'
+      );
+    }
+
+    const res = await bedRepository.deleteBed(id);
+    cacheService.del('beds:map:full');
+    return res;
   }
 
   async updateBedStatus(id, status, notes = '') {
@@ -82,20 +146,19 @@ class BedService {
     }
     const bed = await bedRepository.updateBed(id, update);
     if (!bed) throw new AppError('Bed not found', 404, 'NOT_FOUND');
+    cacheService.del('beds:map:full');
     return bed;
   }
 
   async getBedMap() {
-    return bedRepository.getFullBedMapHierarchy();
+    return cacheService.wrap('beds:map:full', 60, () => bedRepository.getFullBedMapHierarchy());
   }
 
   // ── Atomic Bed Transfer (ACID Transaction) ──────────────────
   async transferBed(admissionId, targetBedId, transferReason, staffId) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const admission = await IPDAdmission.findById(admissionId).session(session);
+    return withTransaction(async (session) => {
+      const sessionOpts = session ? { session } : {};
+      const admission = await IPDAdmission.findById(admissionId).setOptions(sessionOpts);
       if (!admission) throw new AppError('Admission not found', 404, 'NOT_FOUND');
       if (admission.status !== 'ADMITTED') {
         throw new AppError(`Cannot transfer patient with status: ${admission.status}`, 400, 'INVALID_STATUS');
@@ -104,6 +167,38 @@ class BedService {
       const currentBedId = admission.currentBedId;
       if (String(currentBedId) === String(targetBedId)) {
         throw new AppError('Target bed is identical to current bed', 400, 'SAME_BED');
+      }
+
+      // 0. Gender Privacy Validation for Target Bed & Room
+      const Patient = require('../../patient/patient.model');
+      const RoomMaster = require('./room.model');
+      const BedMaster = require('./bed.model');
+
+      const patient = await Patient.findById(admission.patientId).setOptions(sessionOpts);
+      const targetBedDoc = await BedMaster.findById(targetBedId).setOptions(sessionOpts);
+      if (!targetBedDoc || !targetBedDoc.isActive) {
+        throw new AppError('Target bed not found or is inactive', 404, 'NOT_FOUND');
+      }
+      const targetRoomDoc = await RoomMaster.findById(targetBedDoc.roomId).setOptions(sessionOpts);
+
+      if (patient && targetRoomDoc) {
+        const pGender = (patient.gender || '').trim().toUpperCase();
+        const rawRestriction = (targetRoomDoc.genderRestriction || 'UNRESTRICTED').toUpperCase();
+
+        if (pGender === 'MALE' && (rawRestriction === 'FEMALE_ONLY' || rawRestriction === 'FEMALE')) {
+          throw new AppError(
+            `Clinical Privacy Violation: Cannot transfer Male patient (${patient.firstName} ${patient.lastName}) to Female-only Room ${targetRoomDoc.roomNumber}. Please select a Male or Unisex ward.`,
+            422,
+            'GENDER_MISMATCH'
+          );
+        }
+        if (pGender === 'FEMALE' && (rawRestriction === 'MALE_ONLY' || rawRestriction === 'MALE')) {
+          throw new AppError(
+            `Clinical Privacy Violation: Cannot transfer Female patient (${patient.firstName} ${patient.lastName}) to Male-only Room ${targetRoomDoc.roomNumber}. Please select a Female or Unisex ward.`,
+            422,
+            'GENDER_MISMATCH'
+          );
+        }
       }
 
       // 1. Claim target bed atomically via Compare-And-Swap (CAS) inside transaction
@@ -160,10 +255,9 @@ class BedService {
       admission.currentBedId = targetBed._id;
       admission.currentRoomId = targetBed.roomId._id || targetBed.roomId;
       admission.currentFloorId = targetBed.floorId._id || targetBed.floorId;
-      await admission.save({ session });
+      await admission.save(sessionOpts);
 
-      await session.commitTransaction();
-      session.endSession();
+      cacheService.del('beds:map:full');
 
       return {
         success: true,
@@ -172,13 +266,16 @@ class BedService {
         newBedNumber: targetBed.bedNumber,
         newWardClass: targetBed.wardClass,
       };
-    } catch (err) {
-      if (session.inTransaction()) {
-        await session.abortTransaction();
-      }
-      session.endSession();
-      throw err;
-    }
+    });
+  }
+
+  // ── Allocation History & Ward Transfers ─────────────────────
+  async getAllocationsByAdmission(admissionId) {
+    return bedRepository.getAllocationsByAdmission(admissionId);
+  }
+
+  async getRecentTransfers(limit = 50) {
+    return bedRepository.getRecentTransfers(Number(limit) || 50);
   }
 }
 

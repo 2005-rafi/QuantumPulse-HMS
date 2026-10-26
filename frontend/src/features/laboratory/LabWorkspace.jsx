@@ -104,7 +104,7 @@ const LabWorkspace = ({
 
               <h2 className="lab-dashboard__patient-name">{formatPatientName(patient)}</h2>
               <p className="lab-dashboard__patient-subtitle">
-                Ordered by Dr. {context.requestedBy} · Updated {formatDate(selectedVisit.updatedAt)}
+                Ordered by {context.requestedBy} · Updated {formatDate(selectedVisit.updatedAt)}
               </p>
             </div>
           </div>
@@ -178,7 +178,7 @@ const LabWorkspace = ({
           >
             <Md3InfoRow icon={<Icon.Clipboard />} label="Chief Complaint" value={context.chiefComplaint} />
             <Md3InfoRow icon={<Icon.FileText />} label="Diagnosis" value={context.diagnosis} />
-            <Md3InfoRow icon={<Icon.Person />} label="Requested By" value={`Dr. ${context.requestedBy}`} />
+            <Md3InfoRow icon={<Icon.Person />} label="Requested By" value={context.requestedBy} />
             <Md3InfoRow icon={<Icon.Clock />} label="Visit Updated" value={formatDate(selectedVisit.updatedAt)} />
           </Md3Section>
         </Md3GridItem>

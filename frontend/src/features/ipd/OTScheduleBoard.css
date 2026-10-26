@@ -1,0 +1,989 @@
+/* ==========================================================================
+   OTScheduleBoard.css — Material 3 Operating Theatre & Surgical Suite Board
+   Path: frontend/src/features/ipd/OTScheduleBoard.css
+   ========================================================================== */
+@import '../../styles/admin-responsive-metrics.css';
+
+.ot-board-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--clinical-gap-page, 14px);
+  padding: var(--clinical-page-padding, 16px);
+  width: 100%;
+  max-width: 100%;
+  min-height: 100%;
+  box-sizing: border-box;
+  background-color: var(--md-sys-color-surface, #fdf8fd);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+}
+
+.ot-board-container--embedded {
+  padding: 0 !important;
+  background: transparent !important;
+  gap: var(--clinical-gap-page, 12px);
+}
+
+/* ── Compact Surgical Suite Telemetry Ribbon ── */
+.ot-compact-ribbon {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--md-sys-shape-corner-medium, 14px);
+  padding: 8px 14px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ot-ribbon-metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 0;
+}
+.ot-ribbon-metrics::-webkit-scrollbar {
+  display: none;
+}
+
+.ot-ribbon-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #e0dbe3);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.18s ease;
+  font-family: inherit;
+}
+
+.ot-ribbon-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border-color: var(--md-sys-color-primary, #006a6a);
+}
+
+.ot-ribbon-chip-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.ot-ribbon-chip-icon .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.ot-ribbon-chip-text {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ot-ribbon-chip-val {
+  font-size: 1.15rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.ot-ribbon-chip-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ot-ribbon-chip--active-pulse {
+  border-color: #137333;
+}
+
+.ot-ribbon-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #137333;
+  animation: ot-live-pulse 1.6s infinite ease-in-out;
+}
+
+@keyframes ot-live-pulse {
+  0%, 100% {
+    transform: scale(0.9);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+    box-shadow: 0 0 6px rgba(19, 115, 51, 0.6);
+  }
+}
+
+.ot-ribbon-chip--alert {
+  border-color: #ff897d;
+  background: #fff8f7;
+}
+
+.ot-ribbon-chip-badge {
+  background: #ba1a1a;
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.ot-ribbon-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ot-ribbon-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  color: var(--md-sys-color-on-surface, #191c1d);
+  font-size: 0.80rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ot-ribbon-refresh-btn:hover {
+  background: var(--md-sys-color-surface-container-high, #ede7f1);
+}
+
+.ot-spin {
+  animation: ot-spin-anim 0.8s linear infinite;
+}
+
+@keyframes ot-spin-anim {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ── Tab Switcher & Filter Bar ── */
+.ot-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--clinical-gap-element, 10px);
+  flex-wrap: wrap;
+  padding: 8px 14px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--clinical-card-radius, 14px);
+}
+
+.ot-nav-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ot-nav-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--clinical-tab-radius, 18px);
+  border: none;
+  font-size: var(--clinical-tab-font-size, 0.82rem);
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: all 0.18s ease;
+}
+
+.ot-nav-tab-btn--active {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  box-shadow: 0 2px 8px rgba(0, 106, 106, 0.25);
+}
+
+.ot-nav-tab-badge {
+  background: #ba1a1a;
+  color: #ffffff;
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.ot-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── OT Sessions Schedule List ── */
+.ot-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--clinical-proc-card-min-width, 340px), 1fr));
+  gap: var(--clinical-gap-card, 12px);
+}
+
+.ot-session-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: var(--clinical-card-radius, 14px);
+  padding: var(--clinical-card-padding, 12px 14px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.ot-session-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.ot-session-card--inprogress {
+  border: 2px solid #137333;
+  box-shadow: 0 2px 12px rgba(19, 115, 51, 0.12);
+}
+
+.ot-session-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.ot-room-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--md-sys-color-secondary-container, #cce8e7);
+  color: var(--md-sys-color-on-secondary-container, #051f1f);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.ot-procedure-title {
+  margin: 0 0 6px 0;
+  font-size: 1.08rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  line-height: 1.3;
+}
+
+.ot-patient-meta-box {
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ot-patient-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ot-patient-name {
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.ot-patient-mrn {
+  font-weight: 600;
+  color: var(--md-sys-color-primary, #006a6a);
+  font-size: 0.76rem;
+}
+
+.ot-team-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 0.78rem;
+}
+
+.ot-team-member {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ot-team-role {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--md-sys-color-outline, #79747e);
+  text-transform: uppercase;
+}
+
+.ot-team-name {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ot-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e4e8);
+  flex-wrap: wrap;
+}
+
+/* ── Urgent / Emergency Pulse ── */
+@keyframes ot-emergency-pulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.ot-emergency-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #ba1a1a;
+  display: inline-block;
+  animation: ot-emergency-pulse 1.4s infinite ease-in-out;
+}
+
+/* ── Checklist Checklist Item Box ── */
+.ot-checklist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 10px;
+  margin-bottom: 8px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.ot-checklist-row:hover {
+  background: var(--md-sys-color-surface-container, #f3edf7);
+}
+
+.ot-checklist-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--md-sys-color-primary, #006a6a);
+}
+
+/* ── Emergency Procedure Category Badges ── */
+.ot-tag-stat-trauma {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #ffdad6;
+  color: #ba1a1a;
+  border: 1px solid #ff897d;
+  font-size: 0.70rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  animation: ot-emergency-pulse 1.8s infinite ease-in-out;
+}
+
+.ot-tag-stat-maternity {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #ffd8ec;
+  color: #8c005f;
+  border: 1px solid #ff8ad0;
+  font-size: 0.70rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.ot-tag-stat-acute {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: #ffddb3;
+  color: #825500;
+  border: 1px solid #ffb951;
+  font-size: 0.70rem;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+/* ── Surgical History Workspace & Quality Metrics ── */
+.ot-history-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ot-history-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.ot-history-metric-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.ot-history-metric-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ot-history-metric-val {
+  font-size: 1.30rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.ot-history-metric-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── History Controls Bar & Segregation Chips ── */
+.ot-history-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 14px;
+}
+
+.ot-history-outcome-chips {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ot-segregation-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 18px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: inherit;
+}
+
+.ot-segregation-chip:hover {
+  background: var(--md-sys-color-surface-container, #f3edf7);
+}
+
+.ot-segregation-chip--active {
+  background: var(--md-sys-color-primary, #006a6a) !important;
+  color: #ffffff !important;
+  border-color: var(--md-sys-color-primary, #006a6a) !important;
+  box-shadow: 0 2px 6px rgba(0, 106, 106, 0.25);
+}
+
+.ot-segregation-chip-count {
+  font-size: 0.72rem;
+  padding: 1px 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.07);
+}
+
+.ot-segregation-chip--active .ot-segregation-chip-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+.ot-segregation-chip--success:not(.ot-segregation-chip--active) {
+  color: #137333;
+  border-color: #ceead6;
+  background: #f6fdf8;
+}
+
+.ot-segregation-chip--warning:not(.ot-segregation-chip--active) {
+  color: #825500;
+  border-color: #ffddb3;
+  background: #fffcf5;
+}
+
+.ot-segregation-chip--danger:not(.ot-segregation-chip--active) {
+  color: #ba1a1a;
+  border-color: #ffdad6;
+  background: #fff8f7;
+}
+
+.ot-history-filter-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ot-date-preset-group {
+  display: inline-flex;
+  gap: 3px;
+  background: var(--md-sys-color-surface-container-high, #e5f0eb);
+  padding: 3px;
+  border-radius: 9px;
+}
+
+.ot-date-preset-btn {
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: all 0.15s ease;
+}
+
+.ot-date-preset-btn--active {
+  background: var(--md-sys-color-primary, #006a6a);
+  color: #ffffff;
+}
+
+.ot-history-date-input,
+.ot-history-select {
+  padding: 6px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  color: var(--md-sys-color-on-surface, #191c1d);
+  font-size: 0.82rem;
+  font-family: inherit;
+}
+
+.ot-history-search-wrap {
+  display: flex;
+  align-items: center;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 9px;
+  padding: 0 8px;
+  min-width: 220px;
+}
+
+.ot-history-search-icon {
+  font-size: 18px;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.ot-history-search-input {
+  border: none;
+  outline: none;
+  padding: 6px 8px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  width: 100%;
+  background: transparent;
+}
+
+.ot-history-search-clear {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  padding: 0;
+}
+
+/* ── History Case Cards ── */
+.ot-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ot-history-card {
+  display: flex;
+  flex-direction: column;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.ot-history-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.07);
+}
+
+.ot-history-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--md-sys-color-surface-container-high, #f0ebf4);
+  margin-bottom: 12px;
+}
+
+.ot-history-card-timing {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.80rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.ot-history-duration-pill {
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container-high, #e5f0eb);
+  color: var(--md-sys-color-primary, #006a6a);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.ot-history-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.ot-history-badge--success {
+  background: #e6f4ea;
+  color: #137333;
+  border: 1px solid #ceead6;
+}
+
+.ot-history-badge--warning {
+  background: #ffddb3;
+  color: #825500;
+  border: 1px solid #ffb951;
+}
+
+.ot-history-badge--danger {
+  background: #ffdad6;
+  color: #ba1a1a;
+  border: 1px solid #ff897d;
+}
+
+.ot-history-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ot-history-patient-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ot-history-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--md-sys-color-primary-container, #cce8e7);
+  color: var(--md-sys-color-on-primary-container, #002020);
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.ot-history-proc-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  line-height: 1.25;
+}
+
+.ot-history-patient-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: 3px;
+  flex-wrap: wrap;
+}
+
+.ot-history-patient-name {
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.ot-history-mrn-chip {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--md-sys-color-surface-container, #f3edf7);
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.ot-history-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.ot-history-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ot-history-detail-label {
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+}
+
+.ot-history-detail-val {
+  font-size: 0.84rem;
+  color: var(--md-sys-color-on-surface, #191c1d);
+}
+
+.ot-history-sub-text {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-left: 4px;
+}
+
+.ot-history-notes-preview {
+  display: flex;
+  gap: 6px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  padding: 8px 10px;
+  border-left: 3px solid var(--md-sys-color-primary, #006a6a);
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 0 6px 6px 0;
+}
+
+.ot-history-notes-tag {
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #006a6a);
+  flex-shrink: 0;
+}
+
+.ot-history-notes-text {
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.ot-history-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+  border-top: 1px solid var(--md-sys-color-surface-container-high, #f0ebf4);
+}
+
+.ot-history-billed-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #e6f4ea;
+  color: #137333;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.ot-history-empty-card {
+  padding: 48px 20px;
+  text-align: center;
+  background: var(--md-sys-color-surface-container-lowest, #ffffff);
+  border-radius: 16px;
+  border: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
+  margin: 16px 0;
+}
+
+/* ── Case Record Modal Helpers ── */
+.ot-case-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ot-case-section-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ot-case-team-box {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
+  background: var(--md-sys-color-surface-container-low, #f7f2fa);
+  border-radius: 8px;
+  font-size: 0.82rem;
+}
+
+.ot-case-team-role {
+  font-size: 0.68rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.ot-case-team-sub {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  margin-top: 2px;
+}
+
+/* ── Responsive Viewport Optimizations ── */
+@media (max-width: 1024px) {
+  .ot-compact-ribbon {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .ot-history-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .ot-history-search-wrap {
+    min-width: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .ot-compact-ribbon {
+    padding: 6px 10px;
+  }
+  .ot-ribbon-chip {
+    padding: 4px 10px;
+    gap: 6px;
+  }
+  .ot-ribbon-chip-val {
+    font-size: 1.05rem;
+  }
+  .ot-ribbon-chip-label {
+    font-size: 0.66rem;
+  }
+  .ot-history-metrics-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .ot-history-controls-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ot-history-filter-inputs {
+    width: 100%;
+  }
+  .ot-history-search-wrap {
+    width: 100%;
+    min-width: 100%;
+  }
+  .ot-history-details-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .ot-ribbon-refresh-label {
+    display: none;
+  }
+  .ot-ribbon-chip {
+    padding: 4px 8px;
+  }
+  .ot-history-details-grid {
+    grid-template-columns: 1fr;
+  }
+  .ot-history-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .ot-history-card-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .ot-history-card-footer > div {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+

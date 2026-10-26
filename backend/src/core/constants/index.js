@@ -1,17 +1,22 @@
 const ROLES = {
   RECEPTION: 'Reception',
-  NURSE: 'Nurse',
+  OPD_NURSE: 'OPD Nurse',
+  IPD_NURSE: 'IPD Nurse',
+  LAB_NURSE: 'Lab Nurse',
   DOCTOR: 'Doctor',
+  SURGEON: 'Surgeon',
   LABORATORY: 'Laboratory',
   PHARMACY: 'Pharmacy',
   WARD_OPERATIONS: 'Ward Operations',
   ADMINISTRATOR: 'Administrator',
+  BILLING: 'Billing',
 };
 
 const PERMISSIONS = {
   PATIENT_REGISTER: 'PATIENT_REGISTER',
   PATIENT_UPDATE: 'PATIENT_UPDATE',
   PATIENT_VIEW: 'PATIENT_VIEW',
+  PATIENT_BASIC_VIEW: 'PATIENT_BASIC_VIEW',
   PATIENT_DELETE: 'PATIENT_DELETE',
   VISIT_CREATE: 'VISIT_CREATE',
   VISIT_VIEW: 'VISIT_VIEW',
@@ -61,6 +66,20 @@ const PERMISSIONS = {
   DISCHARGE_INITIATE: 'DISCHARGE_INITIATE',
   TIME_MONITOR_VIEW: 'TIME_MONITOR_VIEW',
   HOUSEKEEPING_UPDATE: 'HOUSEKEEPING_UPDATE',
+  // Nursing Domain Specific
+  EMAR_RECORD: 'EMAR_RECORD',
+  IO_BALANCE_LOG: 'IO_BALANCE_LOG',
+  SHIFT_HANDOVER: 'SHIFT_HANDOVER',
+  NURSING_CARE_PLAN: 'NURSING_CARE_PLAN',
+  OPD_TRIAGE: 'OPD_TRIAGE',
+  // Surgery & Operating Theatre (OT)
+  OT_REQUEST: 'OT_REQUEST',
+  OT_BOOK: 'OT_BOOK',
+  OT_MANAGE: 'OT_MANAGE',
+  OT_CONSUMABLE_LOG: 'OT_CONSUMABLE_LOG',
+  OT_VIEW: 'OT_VIEW',
+  SURGICAL_NOTES: 'SURGICAL_NOTES',
+  ICU_TRANSFER: 'ICU_TRANSFER',
 };
 
 const ACCOUNT_STATUS = {
@@ -95,13 +114,35 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.APPOINTMENT_MARK_MISSED,
     PERMISSIONS.BED_VIEW,
   ],
-  [ROLES.NURSE]: [
+  [ROLES.LAB_NURSE]: [
+    PERMISSIONS.PATIENT_VIEW,
+    PERMISSIONS.VISIT_VIEW,
+    PERMISSIONS.VITALS_RECORD,
+    PERMISSIONS.LAB_ORDER_CREATE,
+    PERMISSIONS.LAB_PROCESS,
+  ],
+  [ROLES.OPD_NURSE]: [
+    PERMISSIONS.PATIENT_VIEW,
+    PERMISSIONS.VISIT_VIEW,
+    PERMISSIONS.VITALS_RECORD,
+    PERMISSIONS.NOTE_OPEN,
+    PERMISSIONS.OPD_TRIAGE,
+    PERMISSIONS.APPOINTMENT_VIEW,
+    PERMISSIONS.APPOINTMENT_CHECKIN,
+  ],
+  [ROLES.IPD_NURSE]: [
     PERMISSIONS.PATIENT_VIEW,
     PERMISSIONS.VISIT_VIEW,
     PERMISSIONS.VITALS_RECORD,
     PERMISSIONS.NOTE_OPEN,
     PERMISSIONS.BED_VIEW,
     PERMISSIONS.BED_STATUS_UPDATE,
+    PERMISSIONS.EMAR_RECORD,
+    PERMISSIONS.IO_BALANCE_LOG,
+    PERMISSIONS.SHIFT_HANDOVER,
+    PERMISSIONS.NURSING_CARE_PLAN,
+    PERMISSIONS.DISCHARGE_VIEW,
+    PERMISSIONS.DISCHARGE_INITIATE,
   ],
   [ROLES.DOCTOR]: [
     PERMISSIONS.PATIENT_VIEW,
@@ -115,6 +156,30 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.APPROVE_DELETION,
     PERMISSIONS.APPOINTMENT_VIEW,
     PERMISSIONS.BED_VIEW,
+    PERMISSIONS.BED_ALLOCATE,
+    PERMISSIONS.OT_REQUEST,
+    PERMISSIONS.OT_VIEW,
+  ],
+  [ROLES.SURGEON]: [
+    PERMISSIONS.PATIENT_VIEW,
+    PERMISSIONS.VISIT_VIEW,
+    PERMISSIONS.BED_VIEW,
+    PERMISSIONS.BED_ALLOCATE,
+    PERMISSIONS.BED_TRANSFER,
+    PERMISSIONS.OT_REQUEST,
+    PERMISSIONS.OT_BOOK,
+    PERMISSIONS.OT_MANAGE,
+    PERMISSIONS.OT_CONSUMABLE_LOG,
+    PERMISSIONS.OT_VIEW,
+    PERMISSIONS.NOTE_UPDATE,
+    PERMISSIONS.NOTE_FINALIZE,
+    PERMISSIONS.NOTE_AMEND,
+    PERMISSIONS.SURGICAL_NOTES,
+    PERMISSIONS.LAB_ORDER_CREATE,
+    PERMISSIONS.RX_CREATE,
+    PERMISSIONS.ICU_TRANSFER,
+    PERMISSIONS.DISCHARGE_VIEW,
+    PERMISSIONS.DISCHARGE_INITIATE,
   ],
   [ROLES.LABORATORY]: [
     PERMISSIONS.VISIT_VIEW,
@@ -122,7 +187,7 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.LAB_VERIFY,
   ],
   [ROLES.PHARMACY]: [
-    PERMISSIONS.PATIENT_VIEW,
+    PERMISSIONS.PATIENT_BASIC_VIEW,
     PERMISSIONS.VISIT_VIEW,
     PERMISSIONS.VISIT_CREATE,
     PERMISSIONS.MEDICINE_DISPENSE,
@@ -143,6 +208,7 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.DISCHARGE_INITIATE,
     PERMISSIONS.TIME_MONITOR_VIEW,
     PERMISSIONS.HOUSEKEEPING_UPDATE,
+    PERMISSIONS.OT_VIEW,
   ],
   [ROLES.ADMINISTRATOR]: [
     PERMISSIONS.PATIENT_VIEW,
@@ -183,6 +249,33 @@ const ROLE_PERMISSIONS = {
     PERMISSIONS.DISCHARGE_INITIATE,
     PERMISSIONS.TIME_MONITOR_VIEW,
     PERMISSIONS.HOUSEKEEPING_UPDATE,
+    // Nursing & Surgery
+    PERMISSIONS.EMAR_RECORD,
+    PERMISSIONS.IO_BALANCE_LOG,
+    PERMISSIONS.SHIFT_HANDOVER,
+    PERMISSIONS.NURSING_CARE_PLAN,
+    PERMISSIONS.OPD_TRIAGE,
+    PERMISSIONS.OT_REQUEST,
+    PERMISSIONS.OT_BOOK,
+    PERMISSIONS.OT_MANAGE,
+    PERMISSIONS.OT_CONSUMABLE_LOG,
+    PERMISSIONS.OT_VIEW,
+    PERMISSIONS.SURGICAL_NOTES,
+    PERMISSIONS.ICU_TRANSFER,
+  ],
+  [ROLES.BILLING]: [
+    PERMISSIONS.PATIENT_VIEW,
+    PERMISSIONS.VISIT_VIEW,
+    PERMISSIONS.BILL_GENERATE,
+    PERMISSIONS.PAYMENT_RECORD,
+    PERMISSIONS.BILL_VIEW,
+    PERMISSIONS.BILL_FINALIZE,
+    PERMISSIONS.ADJUSTMENT_REQUEST,
+    PERMISSIONS.FINANCIAL_ANALYTICS,
+    PERMISSIONS.TARIFF_VIEW,
+    PERMISSIONS.BED_VIEW,
+    PERMISSIONS.OT_VIEW,
+    PERMISSIONS.DISCHARGE_VIEW,
   ],
 };
 
@@ -200,6 +293,44 @@ const getTariffGrade = (positionRank) => {
   if (positionRank <= 6) return TARIFF_GRADES.GRADE_3;
   if (positionRank <= 8) return TARIFF_GRADES.GRADE_4;
   return TARIFF_GRADES.GRADE_5;
+};
+
+const SALARY_BANDS = {
+  [TARIFF_GRADES.GRADE_1]: {
+    band: 'Band A',
+    label: 'Entry / Support',
+    minSalary: 20000,
+    maxSalary: 35000,
+    description: 'Entry-level support, junior reception, interns, nursing assistants'
+  },
+  [TARIFF_GRADES.GRADE_2]: {
+    band: 'Band B',
+    label: 'Operational / Associate',
+    minSalary: 35000,
+    maxSalary: 60000,
+    description: 'Staff nurses, front desk supervisors, lab technicians, residents'
+  },
+  [TARIFF_GRADES.GRADE_3]: {
+    band: 'Band C',
+    label: 'Senior / Specialist',
+    minSalary: 60000,
+    maxSalary: 120000,
+    description: 'Senior consultants, head nurses, lab supervisors, managers'
+  },
+  [TARIFF_GRADES.GRADE_4]: {
+    band: 'Band D',
+    label: 'Leadership / Department Head',
+    minSalary: 120000,
+    maxSalary: 250000,
+    description: 'Heads of departments, nursing superintendents, senior medical officers'
+  },
+  [TARIFF_GRADES.GRADE_5]: {
+    band: 'Band E',
+    label: 'Executive / CMO',
+    minSalary: 250000,
+    maxSalary: 500000,
+    description: 'Chief Medical Officer, Chief Executive Officer, Medical Director'
+  }
 };
 
 const DEPARTMENTS = [
@@ -237,15 +368,41 @@ const POSITIONS = {
     { title: 'Resident Doctor', rank: 2 },
     { title: 'Intern', rank: 1 }
   ],
-  [ROLES.NURSE]: [
+  [ROLES.SURGEON]: [
+    { title: 'Chief Surgeon', rank: 9 },
+    { title: 'Medical Superintendent', rank: 8 },
+    { title: 'Head of Surgery Department', rank: 7 },
+    { title: 'Senior Consultant Surgeon', rank: 6 },
+    { title: 'Consultant Surgeon', rank: 5 },
+    { title: 'Associate Consultant Surgeon', rank: 4 },
+    { title: 'Junior Consultant Surgeon', rank: 3 },
+    { title: 'Surgical Resident', rank: 2 },
+    { title: 'Surgical Intern', rank: 1 }
+  ],
+  [ROLES.LAB_NURSE]: [
+    { title: 'Chief Lab Nursing Officer', rank: 7 },
+    { title: 'Head Lab Nurse / Phlebotomy Lead', rank: 5 },
+    { title: 'Senior Lab Staff Nurse', rank: 4 },
+    { title: 'Lab Staff Nurse', rank: 3 },
+    { title: 'Junior Lab Nurse', rank: 2 },
+    { title: 'Lab Nursing Assistant', rank: 1 }
+  ],
+  [ROLES.OPD_NURSE]: [
+    { title: 'Head OPD Nurse', rank: 5 },
+    { title: 'Senior OPD Staff Nurse', rank: 4 },
+    { title: 'OPD Staff Nurse', rank: 3 },
+    { title: 'Junior OPD Nurse', rank: 2 },
+    { title: 'OPD Nursing Assistant', rank: 1 }
+  ],
+  [ROLES.IPD_NURSE]: [
     { title: 'Chief Nursing Officer', rank: 8 },
     { title: 'Nursing Superintendent', rank: 7 },
     { title: 'Deputy Nursing Superintendent', rank: 6 },
-    { title: 'Head Nurse', rank: 5 },
-    { title: 'Senior Staff Nurse', rank: 4 },
-    { title: 'Staff Nurse', rank: 3 },
-    { title: 'Junior Nurse', rank: 2 },
-    { title: 'Nursing Assistant', rank: 1 }
+    { title: 'Head Ward Nurse', rank: 5 },
+    { title: 'Senior Ward Staff Nurse', rank: 4 },
+    { title: 'Ward Staff Nurse', rank: 3 },
+    { title: 'Junior Ward Nurse', rank: 2 },
+    { title: 'Ward Nursing Assistant', rank: 1 }
   ],
   [ROLES.LABORATORY]: [
     { title: 'Laboratory Director', rank: 7 },
@@ -275,6 +432,7 @@ const POSITIONS = {
     { title: 'Front Office Manager', rank: 5 },
     { title: 'Reception Supervisor', rank: 4 },
     { title: 'Senior Receptionist', rank: 3 },
+    { title: 'Front Desk Supervisor', rank: 2 },
     { title: 'Receptionist', rank: 2 },
     { title: 'Front Desk Assistant', rank: 1 }
   ],
@@ -283,7 +441,51 @@ const POSITIONS = {
     { title: 'Administrative Director', rank: 3 },
     { title: 'Admin Officer', rank: 2 },
     { title: 'Admin Assistant', rank: 1 }
+  ],
+  [ROLES.BILLING]: [
+    { title: 'Billing Manager / Finance Lead', rank: 5 },
+    { title: 'Billing Manager', rank: 5 },
+    { title: 'Senior Billing Officer', rank: 4 },
+    { title: 'Senior Billing Executive', rank: 4 },
+    { title: 'Billing Executive', rank: 3 },
+    { title: 'Cashier / Billing Associate', rank: 2 },
+    { title: 'Junior Billing Executive', rank: 2 },
+    { title: 'Billing Assistant', rank: 1 }
+  ],
+  Nurse: [
+    { title: 'Chief Nursing Officer', rank: 8 },
+    { title: 'Nursing Superintendent', rank: 7 },
+    { title: 'Deputy Nursing Superintendent', rank: 6 },
+    { title: 'Head Nurse', rank: 5 },
+    { title: 'Senior Staff Nurse', rank: 4 },
+    { title: 'Staff Nurse', rank: 3 },
+    { title: 'Junior Nurse', rank: 2 },
+    { title: 'Nursing Assistant', rank: 1 }
   ]
 };
 
-module.exports = { ROLES, PERMISSIONS, ACCOUNT_STATUS, STAFF_STATUS, ROLE_PERMISSIONS, DEPARTMENTS, POSITIONS, TARIFF_GRADES, getTariffGrade };
+const {
+  PATIENT_STATUS_CODES,
+  PATIENT_STATUS_REGISTRY,
+  ACTIVE_STATUS_CODES,
+  getPatientStatus,
+  isEncounterActive,
+} = require('./patient-status.constants');
+
+module.exports = {
+  ROLES,
+  PERMISSIONS,
+  ACCOUNT_STATUS,
+  STAFF_STATUS,
+  ROLE_PERMISSIONS,
+  DEPARTMENTS,
+  POSITIONS,
+  TARIFF_GRADES,
+  getTariffGrade,
+  SALARY_BANDS,
+  PATIENT_STATUS_CODES,
+  PATIENT_STATUS_REGISTRY,
+  ACTIVE_STATUS_CODES,
+  getPatientStatus,
+  isEncounterActive,
+};

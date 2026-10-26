@@ -100,9 +100,17 @@ export const LaboratoryListView = ({
 
                 {/* 5. Status */}
                 <td className="col-lab-status">
-                  <span className={`md3-lab-status-pill ${isActive ? 'md3-lab-status-pill--active' : 'md3-lab-status-pill--inactive'}`}>
-                    {isActive ? 'Active' : 'Inactive'}
-                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                    <span className={`md3-lab-status-pill ${isActive ? 'md3-lab-status-pill--active' : 'md3-lab-status-pill--inactive'}`}>
+                      {isActive ? 'Active' : 'Inactive'}
+                    </span>
+                    {lab.requireVitalsCollection && (
+                      <span className="md3-lab-vitals-pill" title="Pre-Analytical Vitals Collection Required for Nurses">
+                        <span className="material-symbols-rounded" style={{ fontSize: '12px' }}>monitor_heart</span>
+                        Vitals Req
+                      </span>
+                    )}
+                  </div>
                 </td>
 
                 {/* 6. Actions */}

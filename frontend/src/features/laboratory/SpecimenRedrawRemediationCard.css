@@ -1,0 +1,242 @@
+@import './laboratory.tokens.css';
+
+/* SpecimenRedrawRemediationCard.css - Dynamic Clinical Remediation & Redraw Interface */
+
+.srr-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--md-sys-spacing-md, 12px);
+  background: var(--md-lab-status-redraw-bg, #fff1f2);
+  border: 1.5px solid var(--md-lab-status-redraw-border, #fecdd3);
+  border-radius: var(--md-sys-shape-corner-md, 12px);
+  padding: var(--md-sys-spacing-md, 14px) var(--md-sys-spacing-md, 16px);
+  margin: var(--md-sys-spacing-sm, 10px) 0;
+  box-shadow: var(--md-sys-elevation-1);
+  animation: srr-glow 3s infinite ease-in-out;
+}
+
+@keyframes srr-glow {
+  0%, 100% {
+    border-color: var(--md-lab-status-redraw-border, #fecdd3);
+    box-shadow: 0 2px 8px rgba(225, 29, 72, 0.08);
+  }
+  50% {
+    border-color: var(--md-lab-status-redraw-text, #be123c);
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.16);
+  }
+}
+
+/* ─── 1. Header Alert Strip ─── */
+.srr-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-sm, 10px);
+  padding-bottom: var(--md-sys-spacing-sm, 10px);
+  border-bottom: 1px solid var(--md-lab-status-redraw-border, #fecdd3);
+}
+
+.srr-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-sm, 10px);
+}
+
+.srr-card__alert-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--md-sys-shape-corner-sm, 8px);
+  background: var(--md-lab-status-redraw-text, #be123c);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  flex-shrink: 0;
+}
+
+.srr-card__title {
+  font-family: var(--md-sys-typescale-title-small-font, 'Inter', sans-serif);
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--md-lab-status-redraw-text, #9f1239);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.srr-card__subtitle {
+  font-family: var(--md-sys-typescale-body-medium-font, 'Inter', sans-serif);
+  font-size: 0.74rem;
+  color: var(--md-sys-color-on-surface-variant, #881337);
+  margin: 2px 0 0 0;
+}
+
+.srr-card__attempt-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-lab-status-redraw-text, #be123c);
+  border: 1px solid var(--md-lab-status-redraw-border, #fecdd3);
+  font-family: var(--md-sys-typescale-label-small-font, 'Inter', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px var(--md-sys-spacing-sm, 8px);
+  border-radius: var(--md-sys-shape-corner-full, 999px);
+}
+
+/* ─── 2. Diagnostics Failure Box ─── */
+.srr-card__failure-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--md-sys-color-surface, #ffffff);
+  border: 1px solid var(--md-lab-status-redraw-border, #fecdd3);
+  border-radius: var(--md-sys-shape-corner-sm, 8px);
+  padding: var(--md-sys-spacing-sm, 10px) var(--md-sys-spacing-md, 12px);
+}
+
+.srr-card__failure-label {
+  font-family: var(--md-sys-typescale-label-small-font, 'Inter', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--md-lab-status-redraw-text, #be123c);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.srr-card__failure-reason {
+  font-family: var(--md-sys-typescale-body-medium-font, 'Inter', sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #4c0519);
+}
+
+.srr-card__failure-meta {
+  font-family: var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant, #881337);
+  display: flex;
+  align-items: center;
+  gap: var(--md-sys-spacing-sm, 8px);
+}
+
+/* ─── 3. Clinical Remediation Guide ─── */
+.srr-card__remediation-guide {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--md-lab-tube-sst-bg, #fffbeb);
+  border: 1px solid var(--md-lab-tube-sst-border, #fde68a);
+  border-radius: var(--md-sys-shape-corner-sm, 8px);
+  padding: var(--md-sys-spacing-sm, 10px) var(--md-sys-spacing-md, 12px);
+}
+
+.srr-card__guide-title {
+  font-family: var(--md-sys-typescale-label-small-font, 'Inter', sans-serif);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--md-lab-tube-sst-text, #92400e);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.srr-card__guide-list {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--md-sys-typescale-body-small-font, 'Inter', sans-serif);
+  font-size: 0.76rem;
+  color: var(--md-sys-color-on-surface, #78350f);
+}
+
+.srr-card__guide-list li strong {
+  color: var(--md-sys-color-on-surface, #451a03);
+}
+
+/* ─── 4. Comparison Grid (Previous vs New Specimen) ─── */
+.srr-card__comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--md-sys-spacing-sm, 10px);
+}
+
+@media (max-width: 680px) {
+  .srr-card__comparison-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.srr-card__specimen-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--md-sys-spacing-sm, 10px) var(--md-sys-spacing-md, 12px);
+  border-radius: var(--md-sys-shape-corner-sm, 8px);
+  font-size: 0.76rem;
+}
+
+.srr-card__specimen-col--previous {
+  background: var(--md-sys-color-error-container, #fef2f2);
+  border: 1px dashed var(--md-sys-color-error, #f87171);
+  color: var(--md-sys-color-error, #991b1b);
+}
+
+.srr-card__specimen-col--new {
+  background: var(--md-lab-status-authorized-bg, #f0fdf4);
+  border: 1px solid var(--md-lab-status-authorized-border, #86efac);
+  color: var(--md-lab-status-authorized-text, #166534);
+}
+
+.srr-card__col-title {
+  font-family: var(--md-sys-typescale-label-small-font, 'Inter', sans-serif);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.srr-card__specimen-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+/* ─── 5. Actions Footer ─── */
+.srr-card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--md-sys-spacing-sm, 8px);
+  padding-top: var(--md-sys-spacing-sm, 8px);
+  border-top: 1px solid var(--md-lab-status-redraw-border, #fecdd3);
+}
+
+.srr-card__btn-redraw {
+  background: linear-gradient(
+    135deg,
+    var(--md-lab-status-redraw-text, #be123c) 0%,
+    var(--md-sys-color-error, #9f1239) 100%
+  ) !important;
+  color: var(--md-sys-color-on-primary, #ffffff) !important;
+  font-weight: 700 !important;
+}
+
+.srr-card__btn-redraw:hover {
+  background: linear-gradient(
+    135deg,
+    var(--md-sys-color-error, #9f1239) 0%,
+    var(--md-sys-color-error-container, #881337) 100%
+  ) !important;
+}

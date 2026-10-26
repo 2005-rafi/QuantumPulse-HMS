@@ -1,4 +1,4 @@
-const path = require('path');
+﻿const path = require('path');
 const fs = require('fs');
 
 const secretsEnvPath = path.resolve(__dirname, '../../../../secrets/backend.env');
@@ -19,10 +19,18 @@ try {
   // Graceful fallback if config file is absent
 }
 
+const defaultLocalUri = 'mongodb://127.0.0.1:27017/quantum_careone';
+const isAtlasExplicit = process.env.USE_ATLAS === 'true';
+
 const config = {
   env: process.env.NODE_ENV || 'development',
+  hospitalCode: (process.env.HOSPITAL_CODE || 'QPO').toUpperCase(),
   port: parseInt(process.env.PORT, 10) || centralPorts.BACKEND?.PORT || 7722,
-  mongoUri: process.env.MONGO_URI || 'mongodb://localhost:27017/quantum_careone',
+  // Connect to local MongoDB in development mode without modifying secrets/backend.env
+  // Atlas can still be explicitly toggled via USE_ATLAS=true
+  mongoUri: isAtlasExplicit
+    ? (process.env.MONGO_URI || defaultLocalUri)
+    : (process.env.LOCAL_MONGO_URI || defaultLocalUri),
   corsOrigin: process.env.CORS_ORIGIN || centralPorts.FRONTEND?.URL || 'http://localhost:7123',
   jsonLimit: process.env.JSON_BODY_LIMIT || '10mb',
   rateLimit: {
@@ -79,6 +87,7 @@ const config = {
   },
   bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS, 10) || 12,
   maxFailedAttempts: parseInt(process.env.MAX_FAILED_ATTEMPTS, 10) || 5,
+  lockoutDurationMs: parseInt(process.env.LOCKOUT_DURATION_MS, 10) || 15 * 60 * 1000, // 15 mins default lockout
   initialAdmin: {
     username: process.env.INITIAL_ADMIN_USERNAME || 'admin',
     password: process.env.INITIAL_ADMIN_PASSWORD || 'Password123!',

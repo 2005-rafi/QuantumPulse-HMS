@@ -1,0 +1,229 @@
+/* ============================================================
+   ThermalPosTokenSlip.css
+   Dedicated 80mm Thermal POS Continuous Roll Slip Stylesheet
+   Pure High-Contrast Monochrome, Zero-Margin Roll Print Optimization
+   ============================================================ */
+
+.thermal-pos-slip {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+  padding: 12px 10px;
+  background: #ffffff;
+  color: #000000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', Helvetica, Arial, sans-serif;
+  font-size: 11px;
+  line-height: 1.3;
+  box-sizing: border-box;
+}
+
+/* ── 1. Header ── */
+.pos-header {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.pos-hospital-title {
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 2px 0;
+  line-height: 1.2;
+}
+
+.pos-hospital-sub {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin: 0 0 1px 0;
+}
+
+.pos-hospital-contact {
+  font-size: 8.5px;
+  margin: 0 0 3px 0;
+}
+
+.pos-time {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: ui-monospace, monospace;
+}
+
+/* Dividers */
+.pos-divider {
+  border: 0;
+  margin: 6px 0;
+}
+
+.pos-divider--heavy {
+  border-top: 2px solid #000000;
+}
+
+.pos-divider--dashed {
+  border-top: 1px dashed #000000;
+}
+
+.pos-divider--cut {
+  border-top: 1px dotted #000000;
+  margin: 10px 0 6px 0;
+}
+
+/* ── 2. Giant Queue Token Block ── */
+.pos-token-block {
+  text-align: center;
+  border: 2px solid #000000;
+  border-radius: 4px;
+  padding: 8px 4px;
+  margin: 4px 0 8px 0;
+  background: #ffffff;
+}
+
+.pos-token-tag {
+  display: block;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.pos-token-number {
+  font-size: 34px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  line-height: 1.05;
+  margin: 2px 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, sans-serif;
+}
+
+.pos-chamber-tag {
+  display: inline-block;
+  font-size: 9.5px;
+  font-weight: 800;
+  border-top: 1px solid #000000;
+  padding-top: 3px;
+  margin-top: 2px;
+}
+
+/* ── 3. Barcode Container ── */
+.pos-barcode-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.pos-barcode-wrap svg {
+  shape-rendering: crispEdges !important;
+}
+
+/* ── 4. Key-Value Rows ── */
+.pos-meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5px;
+}
+
+.pos-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 10px;
+}
+
+.pos-label {
+  font-weight: 500;
+  color: #000000;
+}
+
+.pos-val {
+  font-weight: 600;
+  text-align: right;
+  word-break: break-word;
+}
+
+.pos-val--bold {
+  font-weight: 800;
+}
+
+.pos-val--mono {
+  font-family: ui-monospace, monospace;
+}
+
+/* ── 5. Fee Block ── */
+.pos-fee-block {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pos-meta-row--total {
+  border-top: 1.5px solid #000000;
+  padding-top: 3px;
+  margin-top: 2px;
+}
+
+.pos-label--heavy,
+.pos-val--heavy {
+  font-size: 11.5px;
+  font-weight: 900;
+}
+
+.pos-fee-sub {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ── 6. Footer ── */
+.pos-footer {
+  text-align: center;
+  font-size: 8.5px;
+  line-height: 1.25;
+}
+
+.pos-footer-p {
+  margin: 2px 0;
+}
+
+.pos-cut-notice {
+  font-size: 7.5px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-top: 6px;
+}
+
+/* ── 7. Thermal POS Print Rules (80mm Continuous Roll) ── */
+@media print {
+  @page {
+    size: 80mm auto;
+    margin: 0 !important;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box !important;
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 80mm !important;
+  }
+
+  .thermal-pos-slip {
+    max-width: 76mm !important;
+    width: 76mm !important;
+    margin: 0 auto !important;
+    padding: 4mm 2mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+  }
+}

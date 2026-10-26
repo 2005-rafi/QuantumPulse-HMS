@@ -9,6 +9,10 @@ const createServiceMasterSchema = Joi.object({
 });
 
 const createTariffRuleSchema = Joi.object({
+  ruleNumber: Joi.string().allow(null, '').trim(),
+  name: Joi.string().allow(null, '').trim(),
+  description: Joi.string().allow(null, '').trim(),
+  inclusions: Joi.string().allow(null, '').trim(),
   serviceMasterId: Joi.string().allow(null, ''),
   testCode: Joi.string().allow(null, '').trim(),
   category: Joi.string().valid('REGISTRATION', 'CONSULTATION', 'DIAGNOSTICS', 'PROCEDURE', 'PACKAGE', 'BED_CHARGES').required(),
@@ -16,7 +20,7 @@ const createTariffRuleSchema = Joi.object({
     departmentId: Joi.string().allow(null, ''),
     tariffGrade: Joi.string().valid('GRADE_1', 'GRADE_2', 'GRADE_3', 'GRADE_4', 'GRADE_5').allow(null),
     staffId: Joi.string().allow(null, ''),
-    visitType: Joi.string().valid('OPD', 'EMERGENCY', 'IPD').allow(null),
+    visitType: Joi.string().valid('OPD', 'IPD', 'EMERGENCY', 'SURGERY', 'DAY_CARE', 'HEALTH_CHECKUP').allow(null, ''),
     appointmentType: Joi.string().valid('WALK_IN', 'FOLLOW_UP', 'SCHEDULED').allow(null),
     wardClass: Joi.string().allow(null, ''),
     floorId: Joi.string().allow(null, ''),
@@ -28,7 +32,7 @@ const createTariffRuleSchema = Joi.object({
     gracePeriodMinutes: Joi.number().min(0).default(60),
   }).default({}),
   amount: Joi.number().min(0).required(),
-  unit: Joi.string().valid('PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_DAY', 'PER_HOUR').default('PER_VISIT'),
+  unit: Joi.string().valid('PER_VISIT', 'PER_TEST', 'PER_ITEM', 'PER_PROCEDURE', 'PER_PACKAGE', 'PER_DAY', 'PER_HOUR').default('PER_VISIT'),
   effectiveFrom: Joi.date().required(),
   effectiveTo: Joi.date().allow(null),
 });

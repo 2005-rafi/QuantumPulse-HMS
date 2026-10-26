@@ -1,0 +1,505 @@
+/**
+ * features/ipd/FacilityBuilderSheet.css
+ * Material Design 3 Slide-over Sheet styles for Physical Facility Builder.
+ * Includes Collapsible/Expandable Accordion Cards & Centered Add Trigger Styles.
+ */
+
+.facility-sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  overflow: hidden;
+  animation: sheetBackdropFade 0.2s ease-out;
+}
+
+@keyframes sheetBackdropFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.facility-sheet-container {
+  width: 100%;
+  max-width: 640px;
+  height: 100%;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  color: var(--md-sys-color-on-surface, #191c1b);
+  display: flex;
+  flex-direction: column;
+  box-shadow: -6px 0 28px rgba(0, 0, 0, 0.18);
+  animation: sheetSlideIn 0.28s cubic-bezier(0.1, 0.9, 0.2, 1);
+  overflow: hidden;
+}
+
+@keyframes sheetSlideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* ── 1. Sheet Header ── */
+.facility-sheet-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--md-sys-color-surface-container-low, #f4f4f7);
+  flex-shrink: 0;
+}
+
+.facility-sheet-header__title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.facility-sheet-header__icon {
+  font-size: 28px;
+  color: var(--md-sys-color-primary, #00668b);
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  padding: 8px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.facility-sheet-header__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.facility-sheet-header__desc {
+  margin: 3px 0 0 0;
+  font-size: 0.8rem;
+  color: var(--md-sys-color-outline, #73777f);
+}
+
+.facility-sheet-header__close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  transition: all 0.15s ease;
+}
+
+.facility-sheet-header__close-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #e0e4df);
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+/* ── 2. Navigation Tabs (Material 3 Primary Tab Bar) ── */
+.facility-sheet-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  flex-shrink: 0;
+}
+
+.facility-sheet-tab {
+  flex: 1;
+  padding: 14px 8px;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.facility-sheet-tab:hover {
+  background-color: var(--md-sys-color-surface-container-low, #f4f4f7);
+  color: var(--md-sys-color-primary, #00668b);
+}
+
+.facility-sheet-tab--active {
+  border-bottom-color: var(--md-sys-color-primary, #00668b);
+  color: var(--md-sys-color-primary, #00668b);
+  font-weight: 700;
+}
+
+.facility-sheet-tab .material-symbols-rounded {
+  font-size: 19px;
+}
+
+/* ── 3. Scrollable Form Body ── */
+.facility-sheet-body {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.facility-sheet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.facility-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  width: 100%;
+}
+
+.facility-form-row--floor-num {
+  grid-template-columns: 130px 1fr;
+}
+
+.facility-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.facility-form-field__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface-variant, #404944);
+  letter-spacing: 0.01em;
+}
+
+/* ── 4. Section Header in Batch Mode ── */
+.facility-accordion-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.facility-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.facility-section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.facility-section-hint {
+  font-size: 0.76rem;
+  color: var(--md-sys-color-outline, #73777f);
+}
+
+/* ── 5. Accordion Card List & Cards ── */
+.facility-accordion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.facility-accordion-card {
+  border: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  border-radius: 14px;
+  background-color: var(--md-sys-color-surface-container-lowest, #ffffff);
+  overflow: hidden;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.facility-accordion-card--expanded {
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 3px 12px rgba(0, 102, 139, 0.08);
+  background-color: var(--md-sys-color-surface, #ffffff);
+}
+
+.facility-accordion-card--error {
+  border-color: var(--md-sys-color-error, #ba1a1a) !important;
+  background-color: #fff8f8;
+}
+
+/* ── Accordion Card Header ── */
+.facility-accordion-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  background-color: var(--md-sys-color-surface-container-low, #f4f4f7);
+  transition: background-color 0.15s ease;
+}
+
+.facility-accordion-header:hover {
+  background-color: var(--md-sys-color-surface-container-high, #e0e8e4);
+}
+
+.facility-accordion-card--expanded .facility-accordion-header {
+  background-color: var(--md-sys-color-surface-container, #eceff1);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+}
+
+.facility-accordion-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.facility-item-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  background: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2e);
+  flex-shrink: 0;
+}
+
+.facility-accordion-header__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.facility-accordion-header__main {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--md-sys-color-on-surface, #191c1b);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.facility-accordion-header__sub {
+  font-size: 0.74rem;
+  color: var(--md-sys-color-outline, #73777f);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.facility-accordion-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.facility-item-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--md-sys-color-on-surface-variant, #44474e);
+  transition: all 0.15s ease;
+}
+
+.facility-item-btn:hover {
+  background: var(--md-sys-color-surface-container-highest, #d8ded9);
+  color: var(--md-sys-color-on-surface, #191c1b);
+}
+
+.facility-item-btn--delete:hover {
+  background: #ffdad6;
+  color: var(--md-sys-color-error, #ba1a1a);
+}
+
+.facility-item-btn .material-symbols-rounded {
+  font-size: 19px;
+}
+
+/* ── Accordion Card Body ── */
+.facility-accordion-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background-color: var(--md-sys-color-surface, #ffffff);
+  animation: bodyExpand 0.2s cubic-bezier(0.1, 0.9, 0.2, 1);
+}
+
+@keyframes bodyExpand {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ── 6. Centered Add Trigger Row ── */
+.facility-add-trigger-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.facility-add-another-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-radius: 24px;
+  border: 1.5px dashed var(--md-sys-color-primary, #00668b);
+  background-color: var(--md-sys-color-surface-container-low, #f4f4f7);
+  color: var(--md-sys-color-primary, #00668b);
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.facility-add-another-btn:hover {
+  background-color: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2e);
+  border-color: var(--md-sys-color-primary, #00668b);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0, 102, 139, 0.15);
+}
+
+.facility-add-another-btn .material-symbols-rounded {
+  font-size: 20px;
+}
+
+/* ── 7. Single Edit Container ── */
+.facility-edit-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ── 8. Medical Telemetry Filter Chips ── */
+.facility-telemetry-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.facility-telemetry-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.facility-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--md-sys-color-outline-variant, #c0c9c4);
+  background-color: var(--md-sys-color-surface-container-low, #f4f4f7);
+  color: var(--md-sys-color-on-surface, #1b1b1f);
+  font-size: 0.76rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.2, 0, 0, 1);
+  user-select: none;
+}
+
+.facility-filter-chip:hover {
+  background-color: var(--md-sys-color-surface-container-high, #e0e8e4);
+  border-color: var(--md-sys-color-primary, #00668b);
+  transform: translateY(-1px);
+}
+
+.facility-filter-chip--selected {
+  border-color: var(--md-sys-color-primary, #00668b);
+  background-color: var(--md-sys-color-primary-container, #c3e7ff);
+  color: var(--md-sys-color-on-primary-container, #001e2e);
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 102, 139, 0.14);
+}
+
+.facility-filter-chip .material-symbols-rounded {
+  font-size: 15px;
+}
+
+/* ── 9. Inline & Sticky Footer ── */
+.facility-sheet-footer-inline {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  margin-top: 8px;
+}
+
+.facility-sheet-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--md-sys-color-outline-variant, #e0e4df);
+  background: var(--md-sys-color-surface, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* ── Responsive Behavior ── */
+@media (max-width: 600px) {
+  .facility-sheet-container {
+    max-width: 100%;
+  }
+
+  .facility-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .facility-form-row--floor-num {
+    grid-template-columns: 1fr;
+  }
+
+  .facility-sheet-body {
+    padding: 16px;
+  }
+
+  .facility-sheet-footer,
+  .facility-sheet-footer-inline {
+    padding: 12px 16px;
+  }
+}
+

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { staffAPI } from '../../services/staffAPI';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 import { POSITIONS } from '../../core/constants';
 import { Md3Select, Md3TextField } from '../../components/md3/Md3FormComponents';
 
@@ -63,6 +64,7 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
       fetchHistory();
       setSelectedPosition('');
       setReason('');
+      if (onClose) onClose();
     } catch (err) {
       showError(err.response?.data?.message || 'Error updating position');
     } finally {
@@ -72,10 +74,21 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
 
   if (!isOpen || !staff) return null;
 
+  const { user } = useAuth();
+  const isCallerAdmin = user?.role === 'Administrator' || (user?.permissions && user.permissions.includes('MANAGE_USERS'));
+  const isCallerHod = Boolean(user?.isHod) && !isCallerAdmin;
+
   // Filter valid positions for selected staff member's role
   const roleName = staff.roleId?.name || '';
   const availablePositions = roleName ? (POSITIONS[roleName] || []) : [];
-  const otherPositions = availablePositions.filter(p => p.title !== staff.position);
+  const otherPositions = availablePositions.filter(p => {
+    if (p.title === staff.position) return false;
+    if (isCallerHod) {
+      if (p.rank >= (user?.positionRank || 7)) return false;
+      if (p.title.includes('Head of') || p.title.includes('Director') || p.title.includes('Superintendent') || p.title.includes('Chief')) return false;
+    }
+    return true;
+  });
 
   const positionOptions = [
     { value: '', label: '-- Select New Position --' },
@@ -151,6 +164,22 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
         {/* Form to Update Position */}
         {otherPositions.length > 0 ? (
           <form onSubmit={handleUpdatePosition} style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '16px', background: 'var(--md-sys-color-surface-container)', borderRadius: '16px', border: '1px solid var(--md-sys-color-outline-variant)' }}>
+            {isCallerHod && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                background: 'var(--md-sys-color-surface-container-high, #e8edf4)',
+                color: 'var(--md-sys-color-on-surface, #1b1c1e)',
+                borderRadius: '8px',
+                fontSize: '12px',
+                borderLeft: '3px solid var(--md-sys-color-primary, #00668b)'
+              }}>
+                <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary, #00668b)' }}>info</span>
+                <span><strong>Departmental Promotion Ceiling:</strong> As HOD, you can promote or demote departmental staff up to Rank {Math.max(1, (user?.positionRank || 7) - 1)}. Appointment to Head of Department or executive leadership is reserved for Hospital Administration.</span>
+              </div>
+            )}
             <h4 style={{ margin: 0, color: 'var(--md-sys-color-primary)', fontSize: '14px', fontWeight: 'bold' }}>Change Staff Position Hierarchy</h4>
             
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
@@ -216,8 +245,14 @@ const PositionProgressionDialog = ({ isOpen, onClose, staff, onUpdate }) => {
                         </span>
                       </div>
                       
-                      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--md-sys-color-on-surface)' }}>
-                        {log.previousPosition ? `${log.previousPosition} ➔ ` : ''} {log.newPosition}
+                      <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--md-sys-color-on-surface)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        {log.previousPosition && (
+                          <>
+                            <span>{log.previousPosition}</span>
+                            <span className="material-symbols-rounded" style={{ fontSize: 14 }}>arrow_forward</span>
+                          </>
+                        )}
+                        <span>{log.newPosition}</span>
                       </div>
                       
                       <div style={{ fontSize: '12px', color: 'var(--md-sys-color-on-surface-variant)', background: 'var(--md-sys-color-surface-container-high)', padding: '6px 12px', borderRadius: '8px', marginTop: '4px' }}>

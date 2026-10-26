@@ -188,3 +188,17 @@
   color: #ffffff;
   border-color: #2e7d32;
 }
+
+.md3-lab-vitals-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #00668b) 12%, transparent);
+  color: var(--md-sys-color-primary, #00668b);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #00668b) 25%, transparent);
+  white-space: nowrap;
+}

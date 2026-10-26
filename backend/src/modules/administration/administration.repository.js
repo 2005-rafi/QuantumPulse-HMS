@@ -1,6 +1,6 @@
 const Role = require('./role.model');
 const Permission = require('./permission.model');
-const RolePermission = require('./rolePermission.model');
+const RolePermission = require('./role-permission.model');
 const Department = require('./department.model');
 const Setting = require('./setting.model');
 

@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import CommonHeader from '../components/shell/CommonHeader';
 import Md3NavigationRail from '../components/md3/Md3NavigationRail';
+import Md3ClinicalDrawer from '../components/md3/Md3ClinicalDrawer';
 import './UserProfilePage.css';
 
 const PROFILE_NAV_ITEMS = [
@@ -24,6 +25,9 @@ const ROLE_HOME_ROUTES = {
   Laboratory: '/dashboard/laboratory',
   Pharmacy: '/dashboard/pharmacy',
   Administrator: '/dashboard/administrator',
+  Surgeon: '/dashboard/surgeon',
+  'Ward Operations': '/dashboard/ward-operations',
+  Billing: '/dashboard/billing',
 };
 
 const UserProfilePage = () => {
@@ -35,6 +39,7 @@ const UserProfilePage = () => {
   const [staffDetails, setStaffDetails] = useState(null);
   const [positionHistory, setPositionHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const handleBackToDashboard = () => {
     const targetRoute = (user?.role && ROLE_HOME_ROUTES[user.role]) || '/dashboard';
@@ -150,6 +155,7 @@ const UserProfilePage = () => {
         brandSubtitle={staffDetails?.departmentId?.name || user?.department || 'CareOne HMS'}
         user={user}
         onLogout={handleLogout}
+        onMenuClick={() => setIsDrawerOpen(true)}
       />
 
       <div className="user-profile-body-layout">
@@ -281,6 +287,22 @@ const UserProfilePage = () => {
           )}
         </main>
       </div>
+
+      {/* ─── Mobile/Tablet MD3 Clinical Drawer ─── */}
+      <Md3ClinicalDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        brandTitle="Staff Profile Console"
+        brandSubtitle={staffDetails?.departmentId?.name || user?.department || 'CareOne HMS'}
+        navItems={PROFILE_NAV_ITEMS}
+        activeTab={activeTab}
+        onNavigate={(id) => {
+          navigate(`/dashboard/profile/${id}`, { replace: true });
+          setIsDrawerOpen(false);
+        }}
+        user={user}
+        onLogout={handleLogout}
+      />
     </div>
   );
 };

@@ -119,8 +119,26 @@ export const SbarHandoverForm = ({
 
       {/* Handover List */}
       {handovers.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '24px', color: 'var(--md-sys-color-outline)', fontSize: '0.85rem' }}>
-          No handover notes recorded for this patient yet.
+        <div
+          style={{
+            background: 'var(--md-sys-color-surface-container-low, #f7f9f8)',
+            border: '1.5px dashed var(--md-sys-color-outline-variant, #cedbd5)',
+            borderRadius: '12px',
+            padding: '20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            gap: '6px',
+          }}
+        >
+          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--md-sys-color-on-surface, #1d1b20)' }}>
+            No SBAR Handover Notes Recorded for This Patient Yet
+          </div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-outline, #707973)', maxWidth: '380px' }}>
+            Document shift handover using the SBAR framework (Situation, Background, Assessment, Recommendation) at every nurse rotation.
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -161,8 +179,9 @@ export const SbarHandoverForm = ({
 
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '8px', borderTop: '1px dashed var(--md-sys-color-outline-variant)' }}>
                 {h.isAcknowledged ? (
-                  <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600 }}>
-                    ✓ Acknowledged by {h.nurseIn?.firstName || 'Incoming Nurse'} ({new Date(h.acknowledgedAt).toLocaleTimeString('en-IN')})
+                  <span style={{ color: 'var(--md-sys-color-primary)', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span className="material-symbols-rounded" style={{ fontSize: 14 }}>check_circle</span>
+                    <span>Acknowledged by {h.nurseIn?.firstName || 'Incoming Nurse'} ({new Date(h.acknowledgedAt).toLocaleTimeString('en-IN')})</span>
                   </span>
                 ) : (
                   <Md3Button variant="tonal" size="small" onClick={() => onAcknowledge && onAcknowledge(h._id)}>

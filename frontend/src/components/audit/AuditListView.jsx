@@ -29,9 +29,9 @@ export const AuditListView = ({
         </thead>
         <tbody>
           {auditLogs.map((log) => {
-            const actor = log.actorId || {};
-            const actorName = actor.fullName || actor.username || 'System Administrator';
-            const actorRole = log.actorRole || 'ADMINISTRATOR';
+            const actor = log.actorSnapshot || log.actorId || {};
+            const actorName = actor.fullName || actor.username || log.actorRole || 'System Administrator';
+            const actorRole = log.actorSnapshot?.role || log.actorRole || 'ADMINISTRATOR';
             const roleClass = actorRole.toLowerCase().includes('admin')
               ? 'admin'
               : actorRole.toLowerCase().includes('doc')
@@ -45,7 +45,7 @@ export const AuditListView = ({
             const initials = getActorInitials(actorName, actorRole);
             const relTime = formatRelativeTime(log.timestamp);
             const fullTime = log.timestamp ? new Date(log.timestamp).toLocaleString() : '—';
-            const targetId = log.targetId || (log.details?.patientId ? String(log.details.patientId) : null);
+            const targetId = log.targetSnapshot?.identifier || log.targetSnapshot?.label || log.targetId || (log.details?.patientId ? String(log.details.patientId) : null);
             const ipAddress = log.ipAddress || 'Internal';
 
             const detailKeyCount = log.details && typeof log.details === 'object' ? Object.keys(log.details).length : 0;
@@ -58,19 +58,48 @@ export const AuditListView = ({
                 {/* 1. Time & Date */}
                 <td className="col-audit-time">
                   <div className="md3-audit-time-cell">
-                    <span className="md3-audit-rel-time">{relTime}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="md3-audit-rel-time">{relTime}</span>
+                      {log.chainIndex !== undefined && (
+                        <span style={{ fontSize: '0.66rem', fontWeight: 700, padding: '1px 5px', borderRadius: '4px', background: '#e0f2fe', color: '#0369a1' }}>
+                          #{log.chainIndex}
+                        </span>
+                      )}
+                    </div>
                     <span className="md3-audit-iso-time" title={fullTime}>{fullTime}</span>
                   </div>
                 </td>
 
                 {/* 2. Action & Domain */}
                 <td className="col-audit-action">
-                  <span className={`md3-audit-action-badge md3-audit-action-badge--${category.type}`}>
-                    <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>
-                      {category.icon}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    <span className={`md3-audit-action-badge md3-audit-action-badge--${category.type}`}>
+                      <span className="material-symbols-rounded" style={{ fontSize: '13px' }}>
+                        {category.icon}
+                      </span>
+                      <span>{formattedAction}</span>
                     </span>
-                    <span>{formattedAction}</span>
-                  </span>
+                    {log.severity && log.severity !== 'INFO' && (
+                      <span
+                        style={{
+                          fontSize: '0.62rem',
+                          fontWeight: 700,
+                          padding: '1px 6px',
+                          borderRadius: '100px',
+                          backgroundColor: log.severity === 'CRITICAL' ? '#fee2e2' : '#fef3c7',
+                          color: log.severity === 'CRITICAL' ? '#b91c1c' : '#b45309',
+                          border: `1px solid ${log.severity === 'CRITICAL' ? '#fca5a5' : '#fcd34d'}`,
+                        }}
+                      >
+                        {log.severity}
+                      </span>
+                    )}
+                  </div>
+                  {log.statusChange && (log.statusChange.from || log.statusChange.to) && (
+                    <div style={{ fontSize: '0.70rem', color: '#c2410c', marginTop: '3px', fontWeight: 600 }}>
+                      {log.statusChange.from || 'START'} &rarr; {log.statusChange.to}
+                    </div>
+                  )}
                 </td>
 
                 {/* 3. Actor & Role */}

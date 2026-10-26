@@ -17,11 +17,15 @@ const assignPermissionsSchema = Joi.object({
 const DEPT_TYPES = ['CLINICAL', 'DIAGNOSTIC', 'CLINICAL/DIAGNOSTIC', 'SUPPORT', 'ADMINISTRATIVE'];
 
 const vitalFieldSchema = Joi.object({
-  name:     Joi.string().trim().required(),
-  label:    Joi.string().trim().required(),
-  type:     Joi.string().valid('text', 'number', 'boolean').optional(),
-  unit:     Joi.string().trim().allow('').optional(),
-  required: Joi.boolean().optional(),
+  name:            Joi.string().trim().required(),
+  label:           Joi.string().trim().required(),
+  type:            Joi.string().valid('text', 'number', 'boolean', 'select').optional(),
+  unit:            Joi.string().trim().allow('').optional(),
+  min:             Joi.number().allow(null, '').optional(),
+  max:             Joi.number().allow(null, '').optional(),
+  options:         Joi.array().items(Joi.string().allow('')).optional(),
+  clinicalPurpose: Joi.string().trim().allow('').max(500).optional(),
+  required:        Joi.boolean().optional(),
 });
 
 const createDepartmentSchema = Joi.object({

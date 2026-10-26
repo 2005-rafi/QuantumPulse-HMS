@@ -1,0 +1,177 @@
+/* ============================================================
+   Quantum CareOne Laboratory Module — Material Design 3 Tokens
+   Centralized design tokens for Color Theory, Spacing, Shapes,
+   Typescale, and Multi-Device Responsive Breakpoints.
+   ============================================================ */
+
+:root {
+  /* ── 1. Centralized Spacing System (8dp Grid Baseline) ── */
+  --md-sys-spacing-xxs: 2px;
+  --md-sys-spacing-xs: 4px;
+  --md-sys-spacing-sm: 8px;
+  --md-sys-spacing-md: 12px;
+  --md-sys-spacing-lg: 16px;
+  --md-sys-spacing-xl: 20px;
+  --md-sys-spacing-xxl: 24px;
+  --md-sys-spacing-xxxl: 32px;
+
+  /* ── 2. Centralized Shape & Corner Radii Scale ── */
+  --md-sys-shape-corner-xs: 4px;
+  --md-sys-shape-corner-sm: 8px;
+  --md-sys-shape-corner-md: 12px;
+  --md-sys-shape-corner-lg: 16px;
+  --md-sys-shape-corner-xl: 24px;
+  --md-sys-shape-corner-full: 9999px;
+
+  /* ── 3. Centralized Elevation & Shadow System ── */
+  --md-sys-elevation-level0: none;
+  --md-sys-elevation-level1: 0 1px 3px 1px rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --md-sys-elevation-level2: 0 2px 6px 2px rgba(0, 0, 0, 0.08), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  --md-sys-elevation-level3: 0 4px 12px 3px rgba(0, 0, 0, 0.10), 0 1px 3px 0 rgba(0, 0, 0, 0.08);
+  --md-sys-elevation-level4: 0 8px 24px 4px rgba(0, 0, 0, 0.12), 0 2px 6px 0 rgba(0, 0, 0, 0.08);
+
+  /* ── 4. Centralized Typescale & Font Weights ── */
+  --md-sys-typescale-display-large: 700 2.25rem/1.2 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-title-large: 700 1.25rem/1.3 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-title-medium: 700 1rem/1.4 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-title-small: 700 0.875rem/1.4 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-body-large: 400 1rem/1.5 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-body-medium: 400 0.875rem/1.5 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-body-small: 400 0.75rem/1.4 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-label-large: 700 0.875rem/1.2 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-label-medium: 700 0.75rem/1.2 'Inter', system-ui, sans-serif;
+  --md-sys-typescale-label-small: 700 0.6875rem/1.2 'Inter', system-ui, sans-serif;
+
+  /* ── 5. Specimen Vacutainer Thematic Colors (Light Mode) ── */
+  --md-lab-tube-edta-bg: #f3e8ff;
+  --md-lab-tube-edta-text: #7e22ce;
+  --md-lab-tube-edta-border: #d8b4fe;
+
+  --md-lab-tube-sst-bg: #fef3c7;
+  --md-lab-tube-sst-text: #b45309;
+  --md-lab-tube-sst-border: #fde68a;
+
+  --md-lab-tube-citrate-bg: #e0f2fe;
+  --md-lab-tube-citrate-text: #0369a1;
+  --md-lab-tube-citrate-border: #bae6fd;
+
+  --md-lab-tube-fluoride-bg: #f1f5f9;
+  --md-lab-tube-fluoride-text: #475569;
+  --md-lab-tube-fluoride-border: #cbd5e1;
+
+  --md-lab-tube-sterile-bg: #dcfce7;
+  --md-lab-tube-sterile-text: #15803d;
+  --md-lab-tube-sterile-border: #86efac;
+
+  /* ── 6. Clinical State & Urgency Tokens (Light Mode) ── */
+  --md-lab-status-verify-bg: #fef3c7;
+  --md-lab-status-verify-text: #92400e;
+  --md-lab-status-verify-border: #fde68a;
+
+  --md-lab-status-doctor-bg: #e0f2fe;
+  --md-lab-status-doctor-text: #0369a1;
+  --md-lab-status-doctor-border: #bae6fd;
+
+  --md-lab-status-analysis-bg: #f3e8ff;
+  --md-lab-status-analysis-text: #7e22ce;
+  --md-lab-status-analysis-border: #e9d5ff;
+
+  --md-lab-status-phlebotomy-bg: #ccfbf1;
+  --md-lab-status-phlebotomy-text: #0f766e;
+  --md-lab-status-phlebotomy-border: #99f6e4;
+
+  --md-lab-status-redraw-bg: #ffe4e6;
+  --md-lab-status-redraw-text: #be123c;
+  --md-lab-status-redraw-border: #fecdd3;
+
+  --md-lab-status-authorized-bg: #dcfce7;
+  --md-lab-status-authorized-text: #15803d;
+  --md-lab-status-authorized-border: #bbf7d0;
+
+  --md-lab-status-billing-bg: #cffafe;
+  --md-lab-status-billing-text: #0e7490;
+  --md-lab-status-billing-border: #a5f3fc;
+
+  --md-lab-status-pharmacy-bg: #ede9fe;
+  --md-lab-status-pharmacy-text: #6d28d9;
+  --md-lab-status-pharmacy-border: #ddd6fe;
+
+  --md-lab-delta-normal-bg: #f0fdf4;
+  --md-lab-delta-normal-text: #166534;
+  --md-lab-delta-normal-border: #bbf7d0;
+
+  --md-lab-delta-abnormal-bg: #fff7ed;
+  --md-lab-delta-abnormal-text: #c2410c;
+  --md-lab-delta-abnormal-border: #ffedd5;
+
+  --md-lab-delta-critical-bg: #fef2f2;
+  --md-lab-delta-critical-text: #991b1b;
+  --md-lab-delta-critical-border: #fecaca;
+}
+
+/* ── Specimen Vacutainer & State Thematic Colors (Dark Mode) ── */
+.dark {
+  --md-lab-tube-edta-bg: rgba(126, 34, 206, 0.22);
+  --md-lab-tube-edta-text: #d8b4fe;
+  --md-lab-tube-edta-border: rgba(168, 85, 247, 0.4);
+
+  --md-lab-tube-sst-bg: rgba(180, 83, 9, 0.22);
+  --md-lab-tube-sst-text: #fde68a;
+  --md-lab-tube-sst-border: rgba(245, 158, 11, 0.4);
+
+  --md-lab-tube-citrate-bg: rgba(3, 105, 161, 0.22);
+  --md-lab-tube-citrate-text: #7dd3fc;
+  --md-lab-tube-citrate-border: rgba(14, 165, 233, 0.4);
+
+  --md-lab-tube-fluoride-bg: rgba(71, 85, 105, 0.22);
+  --md-lab-tube-fluoride-text: #cbd5e1;
+  --md-lab-tube-fluoride-border: rgba(148, 163, 184, 0.4);
+
+  --md-lab-tube-sterile-bg: rgba(21, 128, 61, 0.22);
+  --md-lab-tube-sterile-text: #86efac;
+  --md-lab-tube-sterile-border: rgba(34, 197, 94, 0.4);
+
+  --md-lab-status-verify-bg: rgba(217, 119, 6, 0.22);
+  --md-lab-status-verify-text: #fde68a;
+  --md-lab-status-verify-border: rgba(245, 158, 11, 0.4);
+
+  --md-lab-status-doctor-bg: rgba(2, 132, 199, 0.22);
+  --md-lab-status-doctor-text: #7dd3fc;
+  --md-lab-status-doctor-border: rgba(14, 165, 233, 0.4);
+
+  --md-lab-status-analysis-bg: rgba(147, 51, 234, 0.22);
+  --md-lab-status-analysis-text: #d8b4fe;
+  --md-lab-status-analysis-border: rgba(168, 85, 247, 0.4);
+
+  --md-lab-status-phlebotomy-bg: rgba(13, 148, 136, 0.22);
+  --md-lab-status-phlebotomy-text: #99f6e4;
+  --md-lab-status-phlebotomy-border: rgba(20, 184, 166, 0.4);
+
+  --md-lab-status-redraw-bg: rgba(225, 29, 72, 0.22);
+  --md-lab-status-redraw-text: #fecdd3;
+  --md-lab-status-redraw-border: rgba(244, 63, 94, 0.4);
+
+  --md-lab-status-authorized-bg: rgba(22, 163, 74, 0.22);
+  --md-lab-status-authorized-text: #bbf7d0;
+  --md-lab-status-authorized-border: rgba(34, 197, 94, 0.4);
+
+  --md-lab-status-billing-bg: rgba(14, 116, 144, 0.22);
+  --md-lab-status-billing-text: #a5f3fc;
+  --md-lab-status-billing-border: rgba(6, 182, 212, 0.4);
+
+  --md-lab-status-pharmacy-bg: rgba(109, 40, 217, 0.22);
+  --md-lab-status-pharmacy-text: #ddd6fe;
+  --md-lab-status-pharmacy-border: rgba(139, 92, 246, 0.4);
+
+  --md-lab-delta-normal-bg: rgba(22, 163, 74, 0.18);
+  --md-lab-delta-normal-text: #86efac;
+  --md-lab-delta-normal-border: rgba(34, 197, 94, 0.35);
+
+  --md-lab-delta-abnormal-bg: rgba(234, 88, 12, 0.18);
+  --md-lab-delta-abnormal-text: #fdba74;
+  --md-lab-delta-abnormal-border: rgba(249, 115, 22, 0.35);
+
+  --md-lab-delta-critical-bg: rgba(220, 38, 38, 0.22);
+  --md-lab-delta-critical-text: #fca5a5;
+  --md-lab-delta-critical-border: rgba(239, 68, 68, 0.4);
+}

@@ -1,6 +1,6 @@
 const appointmentService = require('./appointment.service');
 const { success } = require('../../core/responses');
-const catchAsync = require('../../core/utils/catchAsync');
+const catchAsync = require('../../core/utils/catch-async');
 const auditService = require('../audit/audit.service');
 
 /**

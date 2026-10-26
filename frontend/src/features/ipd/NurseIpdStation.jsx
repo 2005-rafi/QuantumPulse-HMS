@@ -1,29 +1,66 @@
 /**
  * features/ipd/NurseIpdStation.jsx
- * Inpatient Nursing Clinical Workstation (Vitals & NEWS2, e-MAR, Fluid I/O, SBAR Handovers).
+ * Inpatient Nursing Clinical Workstation & Unified Care Deck.
+ * Refactored: Left-attached collapsible patient queue sidebar & rail, mobile queue drawer portal,
+ * and high-intent Material Design 3 clinical duty tabs (Vitals & Directives, e-MAR, Fluid I/O, SBAR Handover).
  */
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import IpdPatientBanner from '../../components/ipd/IpdPatientBanner';
+import VitalsMonitorCard from '../../components/ipd/VitalsMonitorCard';
+import ClinicalDirectivesCard from '../../components/ipd/ClinicalDirectivesCard';
 import EmarMedicationGrid from '../../components/ipd/EmarMedicationGrid';
 import IoBalanceCard from '../../components/ipd/IoBalanceCard';
 import SbarHandoverForm from '../../components/ipd/SbarHandoverForm';
+import News2Badge from '../../components/ipd/News2Badge';
+import { IpdNursingUtilitiesSuite } from '../../components/ipd/IpdNursingUtilitiesSuite';
 import { Md3Button, Md3TextField, Md3Select, Md3BottomSheet } from '../../components/md3/Md3FormComponents';
-import { Icon } from '../../components/md3/Md3Widgets';
+import ClinicalStationIdleDeck from '../../components/md3/ClinicalStationIdleDeck';
+import { formatPatientName, getPatientInitials } from '../../utils/patientFormatters';
 import ipdApi from '../../services/ipdApi';
+import './NurseIpdStation.css';
 
-export const NurseIpdStation = () => {
+import Md3MarqueeText from '../../components/md3/Md3MarqueeText';
+
+const ROSTER_FILTERS = [
+  { id: 'ALL', label: 'All Inpatients', icon: 'groups' },
+  { id: 'HIGH_RISK', label: 'NEWS2 Alert', icon: 'warning', alert: true },
+  { id: 'POST_OP', label: 'Post-Op', icon: 'medical_services' },
+  { id: 'STABLE', label: 'Stable', icon: 'check_circle' },
+];
+
+export const NurseIpdStation = ({ defaultMode }) => {
   const { admissionId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const isOperationsMode = location.pathname.includes('/ipd-operations') || defaultMode === 'OPERATIONS';
 
   const [admissionList, setAdmissionList] = useState([]);
   const [currentAdmission, setCurrentAdmission] = useState(null);
   const [vitalsList, setVitalsList] = useState([]);
   const [latestVitals, setLatestVitals] = useState(null);
+  const [cpoeOrders, setCpoeOrders] = useState([]);
   const [emarRecords, setEmarRecords] = useState([]);
   const [ioRecords, setIoRecords] = useState([]);
   const [handovers, setHandovers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingList, setLoadingList] = useState(false);
+
+  // Desktop sidebar & Mobile drawer states
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isMobileQueueDrawerOpen, setIsMobileQueueDrawerOpen] = useState(false);
+
+  // Filter & Search states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCategory, setFilterCategory] = useState('ALL');
+
+  // Clinical duty active tab state
+  const [activeTab, setActiveTab] = useState('VITALS'); // 'VITALS' | 'EMAR' | 'IO' | 'SBAR'
+
+  // Active operations utility tab
+  const [activeUtilTab, setActiveUtilTab] = useState('ADMIT_BED_MAP');
 
   // Vitals record bottom sheet
   const [showVitalsSheet, setShowVitalsSheet] = useState(false);
@@ -39,34 +76,78 @@ export const NurseIpdStation = () => {
   const [vitalsNotes, setVitalsNotes] = useState('');
   const [savingVitals, setSavingVitals] = useState(false);
 
-  // Load admissions list if no specific admissionId
+  // Close mobile drawer on Escape key
   useEffect(() => {
-    const fetchAdmissions = async () => {
-      try {
-        const res = await ipdApi.getAdmissions({ status: 'ADMITTED' });
-        const list = res.data?.data || [];
-        setAdmissionList(list);
-        if (!admissionId && list.length > 0) {
-          navigate(`/dashboard/nurse/ipd/${list[0]._id}`, { replace: true });
-        }
-      } catch (err) {
-        console.error('Failed to load active admissions:', err);
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        if (isMobileQueueDrawerOpen) setIsMobileQueueDrawerOpen(false);
+        if (showVitalsSheet) setShowVitalsSheet(false);
       }
     };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobileQueueDrawerOpen, showVitalsSheet]);
+
+  // Prevent background scroll when mobile queue drawer is open
+  useEffect(() => {
+    if (isMobileQueueDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileQueueDrawerOpen]);
+
+  const openUtility = (tabKey) => {
+    if (tabKey) setActiveUtilTab(tabKey);
+    navigate('/dashboard/nurse/ipd-operations');
+  };
+
+  const handleReturnToClinical = () => {
+    if (currentAdmission?._id) {
+      navigate(`/dashboard/nurse/ipd/${currentAdmission._id}`);
+    } else if (admissionList.length > 0) {
+      navigate(`/dashboard/nurse/ipd/${admissionList[0]._id}`);
+    } else {
+      navigate('/dashboard/nurse/ipd');
+    }
+  };
+
+  // Load admissions list
+  const fetchAdmissions = useCallback(async () => {
+    try {
+      setLoadingList(true);
+      const res = await ipdApi.getAdmissions({ status: 'ADMITTED' });
+      const list = res.data?.data || [];
+      setAdmissionList(list);
+      if (!isOperationsMode && !admissionId && list.length > 0) {
+        navigate(`/dashboard/nurse/ipd/${list[0]._id}`, { replace: true });
+      }
+    } catch (err) {
+      console.error('Failed to load active admissions:', err);
+    } finally {
+      setLoadingList(false);
+    }
+  }, [admissionId, isOperationsMode, navigate]);
+
+  useEffect(() => {
     fetchAdmissions();
-  }, [admissionId, navigate]);
+  }, [fetchAdmissions]);
 
   // Load admission clinical data
-  const loadClinicalData = async () => {
+  const loadClinicalData = useCallback(async () => {
     if (!admissionId) return;
     try {
       setLoading(true);
-      const [admRes, vitRes, emarRes, ioRes, handRes] = await Promise.allSettled([
+      const [admRes, vitRes, emarRes, ioRes, handRes, cpoeRes] = await Promise.allSettled([
         ipdApi.getAdmissionById(admissionId),
         ipdApi.getVitals(admissionId),
         ipdApi.getEmarGrid(admissionId),
         ipdApi.getIO(admissionId),
         ipdApi.getHandovers(admissionId),
+        ipdApi.getCpoeOrders(admissionId),
       ]);
 
       if (admRes.status === 'fulfilled') {
@@ -86,16 +167,19 @@ export const NurseIpdStation = () => {
       if (handRes.status === 'fulfilled') {
         setHandovers(handRes.value.data?.data || []);
       }
+      if (cpoeRes.status === 'fulfilled') {
+        setCpoeOrders(cpoeRes.value.data?.data || []);
+      }
       setLoading(false);
     } catch (err) {
       setLoading(false);
       console.error('Failed to load inpatient clinical records:', err);
     }
-  };
+  }, [admissionId]);
 
   useEffect(() => {
     loadClinicalData();
-  }, [admissionId]);
+  }, [loadClinicalData]);
 
   // Record vitals & NEWS2
   const handleSaveVitals = async (e) => {
@@ -116,11 +200,38 @@ export const NurseIpdStation = () => {
       });
       setShowVitalsSheet(false);
       await loadClinicalData();
-      alert('Vitals evaluated & NEWS2 score calculated successfully.');
     } catch (err) {
       alert(err.response?.data?.message || 'Failed to record vitals');
     } finally {
       setSavingVitals(false);
+    }
+  };
+
+  // Vitals frequency order updates
+  const handleUpdateVitalsFrequency = async (planData) => {
+    const targetAdmId = admissionId || currentAdmission?._id;
+    if (!targetAdmId) {
+      alert('Please select an active inpatient admission first.');
+      return;
+    }
+    try {
+      const res = await ipdApi.updateVitalsFrequency(targetAdmId, planData);
+      const updatedData = res.data?.data;
+      if (updatedData) {
+        setCurrentAdmission((prev) => prev ? {
+          ...prev,
+          vitalsMonitoringPlan: updatedData.vitalsMonitoringPlan || {
+            ...prev.vitalsMonitoringPlan,
+            frequency: planData.frequency,
+            specialInstructions: planData.specialInstructions,
+          },
+          nextVitalsDueAt: updatedData.nextVitalsDueAt !== undefined ? updatedData.nextVitalsDueAt : prev.nextVitalsDueAt,
+        } : prev);
+      }
+      await loadClinicalData();
+    } catch (err) {
+      console.error('Failed to update vitals monitoring frequency:', err);
+      alert(err.response?.data?.message || err.message || 'Failed to update vitals monitoring frequency');
     }
   };
 
@@ -163,73 +274,529 @@ export const NurseIpdStation = () => {
     }
   };
 
-  if (!admissionId && admissionList.length === 0) {
+  // Patient queue filtering
+  const filteredAdmissions = useMemo(() => {
+    return admissionList.filter((adm) => {
+      const p = adm.patientId || {};
+      const pName = formatPatientName(p).toLowerCase();
+      const mrn = (p.mrn || '').toLowerCase();
+      const bedLabel = (adm.currentBedId?.bedLabel || adm.currentBedId?.bedNumber || '').toString().toLowerCase();
+
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch = !q || pName.includes(q) || mrn.includes(q) || bedLabel.includes(q);
+      if (!matchesSearch) return false;
+
+      if (filterCategory === 'HIGH_RISK') {
+        const score = adm.latestVitals?.news2Score || 0;
+        return score >= 3 || adm.latestVitals?.news2RiskLevel === 'HIGH' || adm.latestVitals?.news2RiskLevel === 'MEDIUM';
+      }
+      if (filterCategory === 'POST_OP') {
+        return (adm.admissionType || '').toUpperCase() === 'SURGICAL' || (adm.conversionType || '').toUpperCase() === 'POST_OP';
+      }
+      if (filterCategory === 'STABLE') {
+        const score = adm.latestVitals?.news2Score || 0;
+        return score < 3;
+      }
+      return true;
+    });
+  }, [admissionList, filterCategory, searchQuery]);
+
+  // Summary counts
+  const highRiskCount = useMemo(
+    () => admissionList.filter((a) => (a.latestVitals?.news2Score || 0) >= 3 || a.latestVitals?.news2RiskLevel === 'HIGH').length,
+    [admissionList]
+  );
+  const postOpCount = useMemo(
+    () => admissionList.filter((a) => (a.admissionType || '').toUpperCase() === 'SURGICAL').length,
+    [admissionList]
+  );
+  const stableCount = useMemo(
+    () => admissionList.filter((a) => (a.latestVitals?.news2Score || 0) < 3).length,
+    [admissionList]
+  );
+
+  const filterCounts = {
+    ALL: admissionList.length,
+    HIGH_RISK: highRiskCount,
+    POST_OP: postOpCount,
+    STABLE: stableCount,
+  };
+
+  const handleSelectAdmission = (admId) => {
+    navigate(`/dashboard/nurse/ipd/${admId}`);
+    setIsMobileQueueDrawerOpen(false);
+  };
+
+  // Render Patient Roster (Used in both Desktop Sidebar and Mobile Drawer)
+  const renderRosterContent = () => (
+    <>
+      <div className="ipd-terminal__sidebar-header">
+        <div className="ipd-terminal__sidebar-header-left">
+          <button
+            type="button"
+            className="ipd-terminal__collapse-btn"
+            onClick={() => setIsSidebarCollapsed(true)}
+            title="Collapse Patient Roster Sidebar"
+            aria-label="Collapse Roster"
+          >
+            <span className="material-symbols-rounded">left_panel_close</span>
+          </button>
+          <span className="ipd-terminal__sidebar-count" title={`${filteredAdmissions.length} Admitted Patients`}>
+            {filteredAdmissions.length}
+          </span>
+        </div>
+
+        <div className="ipd-terminal__sidebar-header-actions">
+          <button
+            type="button"
+            className="ipd-terminal__admit-btn"
+            onClick={() => openUtility('ADMIT_BED_MAP')}
+            title="Admit Patient / Bed Map"
+          >
+            <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>person_add</span>
+            <span>Admit</span>
+          </button>
+
+          <button
+            type="button"
+            className={`ipd-terminal__icon-btn ${loadingList ? 'is-loading' : ''}`}
+            onClick={fetchAdmissions}
+            disabled={loadingList}
+            title="Refresh Inpatient Roster"
+            aria-label="Refresh Roster"
+          >
+            <span className="material-symbols-rounded" style={{ animation: loadingList ? 'spin 1s linear infinite' : 'none' }}>
+              sync
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="ipd-terminal__mobile-close-btn"
+            onClick={() => setIsMobileQueueDrawerOpen(false)}
+            title="Close Drawer"
+            aria-label="Close Drawer"
+          >
+            <span className="material-symbols-rounded">close</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 2x2 Clinical Risk Segregation Matrix */}
+      <div className="ipd-filter-matrix" role="tablist" aria-label="Inpatient Risk Segregation Filters">
+        {ROSTER_FILTERS.map((item) => {
+          const isSelected = filterCategory === item.id;
+          const count = filterCounts[item.id] ?? 0;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={isSelected}
+              className={`ipd-matrix-tile ${isSelected ? 'ipd-matrix-tile--active' : ''} ${item.alert && count > 0 ? 'ipd-matrix-tile--alert' : ''}`}
+              onClick={() => setFilterCategory(item.id)}
+              title={`Filter by ${item.label} (${count})`}
+            >
+              <div className="ipd-matrix-tile__top">
+                <span className="material-symbols-rounded ipd-matrix-tile__icon">{item.icon}</span>
+                <span className="ipd-matrix-tile__count">{count}</span>
+              </div>
+              <span className="ipd-matrix-tile__label">{item.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Search Bar */}
+      <div className="ipd-terminal__sidebar-search">
+        <Md3TextField
+          label="Search Patient or Bed"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="e.g. John, Bed 101, Bay 1"
+        />
+      </div>
+
+      {/* Inpatient Cards Deck */}
+      <div className="ipd-terminal__card-list">
+        {filteredAdmissions.length === 0 ? (
+          <div className="ipd-terminal__empty-state">
+            <span className="material-symbols-rounded">hotel</span>
+            <p>No inpatients match the selected filter</p>
+          </div>
+        ) : (
+          filteredAdmissions.map((adm) => {
+            const p = adm.patientId || {};
+            const fullName = formatPatientName(p) || 'Admitted Patient';
+            const initials = getPatientInitials(p) || 'P';
+            const bed = adm.currentBedId;
+            const bedLabel = bed?.bedLabel || bed?.bedNumber || '—';
+            const roomNumber = adm.currentRoomId?.roomNumber;
+            const ageGender = [p.age ? `${p.age}y` : '', p.gender ? `${p.gender}` : ''].filter(Boolean).join(' • ');
+            const isSelected = adm._id === admissionId;
+            const news2Score = adm.latestVitals?.news2Score ?? 0;
+            const news2Risk = adm.latestVitals?.news2RiskLevel || (news2Score >= 7 ? 'HIGH' : news2Score >= 5 ? 'MEDIUM' : 'LOW');
+
+            return (
+              <div
+                key={adm._id}
+                role="button"
+                tabIndex={0}
+                className={`ipd-queue-card ${isSelected ? 'ipd-queue-card--active' : ''}`}
+                onClick={() => handleSelectAdmission(adm._id)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSelectAdmission(adm._id)}
+              >
+                {/* 1. Header: Avatar + Patient Full Name (Marquee) + Demographics */}
+                <div className="ipd-queue-card__header">
+                  <div className="ipd-queue-card__avatar">{initials}</div>
+                  <div className="ipd-queue-card__name-wrapper">
+                    <Md3MarqueeText text={fullName} className="ipd-queue-card__name" as="h4" />
+                    {ageGender && <span className="ipd-queue-card__demog">{ageGender}</span>}
+                  </div>
+                </div>
+
+                {/* 2. Sequential Chips: Bed Location (Marquee) followed by NEWS2 / Vitals Status */}
+                <div className="ipd-queue-card__chips-col">
+                  <div className="ipd-queue-card__bed-tag" title={`Bed ${bedLabel}${roomNumber ? `, Room ${roomNumber}` : ''}`}>
+                    <span className="material-symbols-rounded">hotel</span>
+                    <Md3MarqueeText
+                      text={`Bed ${bedLabel}${roomNumber ? ` (Rm ${roomNumber})` : ''}`}
+                      className="ipd-queue-card__chip-marquee"
+                    />
+                  </div>
+
+                  <div className="ipd-queue-card__status-wrap">
+                    {adm.latestVitals ? (
+                      <News2Badge score={news2Score} riskLevel={news2Risk} />
+                    ) : (
+                      <span className="ipd-queue-card__vitals-pending">
+                        <span className="ipd-queue-card__pending-dot" />
+                        Vitals Pending
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
+
+  // ─── FULL-SCREEN WARD OPERATIONS & LOGISTICS WORKSPACE (ROUTED) ───
+  if (isOperationsMode) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px', color: 'var(--md-sys-color-outline)' }}>
-        No currently active inpatient admissions found. Admit a patient from Reception / Bed Map to open the Nursing Station.
+      <div className="ipd-ward-operations-viewport">
+        <IpdNursingUtilitiesSuite
+          activeTab={activeUtilTab}
+          onChangeTab={setActiveUtilTab}
+          admission={currentAdmission}
+          onAdmissionCreated={() => {
+            fetchAdmissions();
+            loadClinicalData();
+          }}
+          onTransferSuccess={() => {
+            fetchAdmissions();
+            loadClinicalData();
+          }}
+          onReturnToClinical={handleReturnToClinical}
+        />
       </div>
     );
   }
 
+  // ─── IDLE DECK WHEN NO ACTIVE INPATIENTS EXIST (CLINICAL MODE) ───
+  if (!admissionId && admissionList.length === 0) {
+    return (
+      <div className="ipd-terminal-viewport">
+        <ClinicalStationIdleDeck
+          preset="IPD_NURSE"
+          readinessChips={[
+            { label: 'Ward Floor Stock: Active', icon: 'medication', onClick: () => openUtility('EMERGENCY_REQUISITION') },
+            { label: 'Crash Cart Protocol: Armed', icon: 'emergency', onClick: () => openUtility('CRASH_CART_CODE_BLUE') },
+            { label: 'IV Infusion Doser: Ready', icon: 'water_drop', onClick: () => openUtility('IV_INFUSION_DOSER') },
+            { label: 'Ward Transfers: Active', icon: 'swap_horiz', onClick: () => openUtility('WARD_TRANSFERS') },
+          ]}
+          primaryAction={{
+            label: 'Open Bed Map & Admit Patient',
+            icon: 'person_add',
+            onClick: () => openUtility('ADMIT_BED_MAP'),
+          }}
+          quickCards={[
+            {
+              title: 'Bed Allocation Matrix',
+              subtitle: 'View spatial floor layout & available ward beds',
+              icon: 'grid_view',
+              onClick: () => openUtility('ADMIT_BED_MAP'),
+            },
+            {
+              title: 'Ward Transfer Ledger',
+              subtitle: 'Inspect inter-ward & ICU bed transfers',
+              icon: 'swap_horiz',
+              onClick: () => openUtility('WARD_TRANSFERS'),
+            },
+            {
+              title: 'Discharged Patients',
+              subtitle: 'Search past inpatient summaries & gate passes',
+              icon: 'history',
+              onClick: () => openUtility('DISCHARGED_ARCHIVE'),
+            },
+          ]}
+        />
+      </div>
+    );
+  }
+
+  const currentPatientName = currentAdmission?.patientId
+    ? formatPatientName(currentAdmission.patientId)
+    : 'Active Inpatient';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '8px' }}>
-      {/* Patient Switcher & Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div>
-          <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
-            Inpatient Nursing Station &amp; Care Deck
-          </h1>
-          <p style={{ fontSize: '0.85rem', color: 'var(--md-sys-color-outline)', margin: '4px 0 0 0' }}>
-            Automated NEWS2 Telemetry • 24-Hr e-MAR Charting • Shift Fluid I/O • SBAR Handover Notes
-          </p>
-        </div>
+    <div className="ipd-terminal-viewport">
+      {/* ─── Mobile/Tablet Dedicated Patient Queue Drawer Portal ─── */}
+      {isMobileQueueDrawerOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div className="ipd-queue-drawer-portal" role="dialog" aria-modal="true" aria-label="Inpatient Ward Roster Drawer">
+            <div
+              className="ipd-queue-drawer-scrim"
+              onClick={() => setIsMobileQueueDrawerOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="ipd-queue-drawer-surface">
+              {renderRosterContent()}
+            </div>
+          </div>,
+          document.body
+        )}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{ width: '280px' }}>
-            <Md3Select
-              label="Switch Inpatient Roster"
-              value={admissionId || ''}
-              onChange={(e) => navigate(`/dashboard/nurse/ipd/${e.target.value}`)}
-            >
-              {admissionList.map((a) => (
-                <option key={a._id} value={a._id}>
-                  {a.patientId?.firstName} {a.patientId?.lastName} (Bed: {a.currentBedId?.bedLabel || a.currentBedId?.bedNumber || '—'})
-                </option>
-              ))}
-            </Md3Select>
+      {/* ─── Mobile/Tablet Sticky Toolbar ─── */}
+      <div className="ipd-mobile-toolbar">
+        <button
+          type="button"
+          className="ipd-mobile-drawer-btn"
+          onClick={() => setIsMobileQueueDrawerOpen(true)}
+          aria-label="Open Inpatient Ward Roster"
+        >
+          <span className="material-symbols-rounded">menu_open</span>
+          <span>Ward Roster</span>
+          <span className="ipd-mobile-count-badge">{filteredAdmissions.length}</span>
+        </button>
+
+        {currentAdmission && (
+          <div className="ipd-mobile-patient-preview">
+            <span className="ipd-mobile-token-pill" title={currentPatientName}>
+              {currentPatientName} (Bed {currentAdmission.currentBedId?.bedLabel || currentAdmission.currentBedId?.bedNumber || '—'})
+            </span>
           </div>
+        )}
 
-          <Md3Button variant="filled" onClick={() => setShowVitalsSheet(true)}>
-            + Record Vitals &amp; NEWS2
-          </Md3Button>
+        <div className="ipd-mobile-quick-actions">
+          <button
+            type="button"
+            className="ipd-mobile-action-icon-btn"
+            onClick={() => setShowVitalsSheet(true)}
+            title="Record Vitals"
+          >
+            <span className="material-symbols-rounded">favorite</span>
+          </button>
+          <button
+            type="button"
+            className="ipd-mobile-action-icon-btn"
+            onClick={() => openUtility('ADMIT_BED_MAP')}
+            title="Ward Utilities"
+          >
+            <span className="material-symbols-rounded">medical_services</span>
+          </button>
         </div>
       </div>
 
-      {/* Sticky Inpatient Banner */}
-      {currentAdmission && (
-        <IpdPatientBanner admission={currentAdmission} latestVitals={latestVitals} />
-      )}
+      {/* ─── 2-PANE MASTER-DETAIL CLINICAL WORKSPACE ─── */}
+      <div className={`ipd-terminal-layout ${isSidebarCollapsed ? 'ipd-terminal-layout--rail' : ''}`}>
+        {/* ─── LEFT MASTER: COLLAPSIBLE / RAIL PATIENT ROSTER (DESKTOP) ─── */}
+        {isSidebarCollapsed ? (
+          <aside className="ipd-terminal__rail" aria-label="Collapsed Patient Roster Rail">
+            <div className="ipd-terminal__rail-header">
+              <button
+                type="button"
+                className="ipd-terminal__rail-toggle-btn"
+                onClick={() => setIsSidebarCollapsed(false)}
+                title="Expand Inpatient Roster Sidebar"
+                aria-label="Expand Roster"
+              >
+                <span className="material-symbols-rounded">right_panel_open</span>
+              </button>
+              <span className="ipd-terminal__rail-count-badge" title={`${filteredAdmissions.length} Inpatients`}>
+                {filteredAdmissions.length}
+              </span>
+            </div>
 
-      {/* Main Clinical Grid: e-MAR & I/O & SBAR */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        {/* e-MAR 24-hr Medication Matrix */}
-        <EmarMedicationGrid
-          records={emarRecords}
-          onUpdateStatus={handleUpdateEmar}
-        />
+            <div className="ipd-terminal__rail-body">
+              {filteredAdmissions.map((adm) => {
+                const p = adm.patientId || {};
+                const fullName = formatPatientName(p) || 'Patient';
+                const firstName = p.firstName || fullName.split(' ')[0] || 'Patient';
+                const initials = getPatientInitials(p) || 'P';
+                const bedLabel = adm.currentBedId?.bedLabel || adm.currentBedId?.bedNumber || '—';
+                const isSelected = adm._id === admissionId;
 
-        {/* Fluid I/O Balance */}
-        <IoBalanceCard
-          ioRecords={ioRecords}
-          onLogIO={handleLogIO}
-        />
+                return (
+                  <div
+                    key={adm._id}
+                    role="button"
+                    tabIndex={0}
+                    className={`ipd-terminal__rail-item ${isSelected ? 'ipd-terminal__rail-item--selected' : ''}`}
+                    onClick={() => handleSelectAdmission(adm._id)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSelectAdmission(adm._id)}
+                    title={`${fullName} (Bed ${bedLabel})`}
+                  >
+                    <div className="ipd-terminal__rail-avatar">{initials}</div>
+                    <span className="ipd-terminal__rail-bed">B-{bedLabel}</span>
+                    <div className="ipd-terminal__rail-name-box">
+                      <Md3MarqueeText text={firstName} className="ipd-terminal__rail-name" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
+        ) : (
+          <aside className="ipd-terminal__sidebar" aria-label="Inpatient Ward Roster">
+            {renderRosterContent()}
+          </aside>
+        )}
 
-        {/* SBAR Shift Handover */}
-        <SbarHandoverForm
-          handovers={handovers}
-          onCreateHandover={handleCreateHandover}
-          onAcknowledge={handleAcknowledgeHandover}
-        />
+        {/* ─── RIGHT DETAIL: ACTIVE PATIENT CLINICAL WORKSPACE ─── */}
+        <main className="ipd-workspace">
+          {currentAdmission ? (
+            <>
+              {/* 1. Inpatient Clinical Identity Banner */}
+              <IpdPatientBanner
+                admission={currentAdmission}
+                latestVitals={latestVitals}
+                onOpenRecordVitals={() => setShowVitalsSheet(true)}
+                onOpenUtilities={openUtility}
+              />
+
+              {/* 2. MD3 Clinical Workflow Duty Tab Bar */}
+              <div className="ipd-tab-bar-container" role="tablist" aria-label="Clinical Duty Tabs">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'VITALS'}
+                  className={`ipd-tab-btn ${activeTab === 'VITALS' ? 'ipd-tab-btn--active' : ''}`}
+                  onClick={() => setActiveTab('VITALS')}
+                >
+                  <span className="material-symbols-rounded">monitor_heart</span>
+                  <span>Vitals &amp; Directives</span>
+                  {latestVitals && (
+                    <span className="ipd-tab-badge">NEWS2: {latestVitals.news2Score ?? 0}</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'EMAR'}
+                  className={`ipd-tab-btn ${activeTab === 'EMAR' ? 'ipd-tab-btn--active' : ''}`}
+                  onClick={() => setActiveTab('EMAR')}
+                >
+                  <span className="material-symbols-rounded">medication</span>
+                  <span>e-MAR &amp; Meds</span>
+                  {emarRecords.length > 0 && (
+                    <span className="ipd-tab-badge ipd-tab-badge--neutral">{emarRecords.length} Doses</span>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'IO'}
+                  className={`ipd-tab-btn ${activeTab === 'IO' ? 'ipd-tab-btn--active' : ''}`}
+                  onClick={() => setActiveTab('IO')}
+                >
+                  <span className="material-symbols-rounded">opacity</span>
+                  <span>Fluid I/O Balance</span>
+                </button>
+
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab === 'SBAR'}
+                  className={`ipd-tab-btn ${activeTab === 'SBAR' ? 'ipd-tab-btn--active' : ''}`}
+                  onClick={() => setActiveTab('SBAR')}
+                >
+                  <span className="material-symbols-rounded">assignment</span>
+                  <span>SBAR Handover</span>
+                  {handovers.length > 0 && (
+                    <span className="ipd-tab-badge ipd-tab-badge--neutral">{handovers.length}</span>
+                  )}
+                </button>
+              </div>
+
+              {/* 3. Tab Content Panels */}
+              <div className="ipd-tab-panel">
+                {activeTab === 'VITALS' && (
+                  <div className="ipd-tab-content ipd-tab-content--vitals">
+                    {/* Bedside Vitals & NEWS2 Telemetry */}
+                    <VitalsMonitorCard
+                      latestVitals={latestVitals}
+                      vitalsList={vitalsList}
+                      admissionId={admissionId}
+                      monitoringPlan={currentAdmission?.vitalsMonitoringPlan}
+                      lastVitalsRecordedAt={currentAdmission?.lastVitalsRecordedAt || latestVitals?.recordedAt}
+                      nextVitalsDueAt={currentAdmission?.nextVitalsDueAt}
+                      onOpenRecordSheet={() => setShowVitalsSheet(true)}
+                      onUpdateFrequency={handleUpdateVitalsFrequency}
+                    />
+
+                    {/* Physician Directives & Active CPOE Orders */}
+                    <ClinicalDirectivesCard
+                      admission={currentAdmission}
+                      cpoeOrders={cpoeOrders}
+                      onOpenUtilities={openUtility}
+                    />
+                  </div>
+                )}
+
+                {activeTab === 'EMAR' && (
+                  <div className="ipd-tab-content">
+                    <EmarMedicationGrid
+                      records={emarRecords}
+                      onUpdateStatus={handleUpdateEmar}
+                    />
+                  </div>
+                )}
+
+                {activeTab === 'IO' && (
+                  <div className="ipd-tab-content">
+                    <IoBalanceCard
+                      ioRecords={ioRecords}
+                      onLogIO={handleLogIO}
+                    />
+                  </div>
+                )}
+
+                {activeTab === 'SBAR' && (
+                  <div className="ipd-tab-content">
+                    <SbarHandoverForm
+                      handovers={handovers}
+                      onCreateHandover={handleCreateHandover}
+                      onAcknowledge={handleAcknowledgeHandover}
+                    />
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="ipd-workspace-empty">
+              <span className="material-symbols-rounded">hotel</span>
+              <h3>No Inpatient Selected</h3>
+              <p>Select a patient from the ward roster on the left to review bedside vitals, e-MAR charts, and clinical directives.</p>
+            </div>
+          )}
+        </main>
       </div>
 
       {/* Record Vitals Bottom Sheet */}

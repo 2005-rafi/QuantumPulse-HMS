@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Icon, Md3Avatar, Md3Tabs, Md3IconButton, Md3Badge, Md3Divider,
 } from '../../components/md3/Md3Widgets';
+import { formatDoctorName } from '../../utils/patientFormatters';
 
 const CONSULTATION_TAB = {
   id: 'consultation',
@@ -61,7 +62,7 @@ const DoctorHeader = ({
         <div className="doctor-header__user-info">
           <Md3Avatar initials={initials} size="medium" variant="primary" />
           <div className="doctor-header__user-meta">
-            <span className="doctor-header__user-name">Dr. {fullName.replace(/^Dr\.\s*/i, '')}</span>
+            <span className="doctor-header__user-name">{formatDoctorName(user || fullName)}</span>
             <span className="doctor-header__user-role">
               {user?.role ? user.role.replace(/_/g, ' ') : 'Physician'}
             </span>

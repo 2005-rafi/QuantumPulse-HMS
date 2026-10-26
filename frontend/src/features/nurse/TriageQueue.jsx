@@ -1,15 +1,17 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { visitAPI } from '../../services/visitAPI';
+import Md3MarqueeText from '../../components/md3/Md3MarqueeText';
 import './TriageQueue.css';
 
 /* ============================================================
-   TriageQueue — Pure Material 3 Clinical Queue Panel
+   TriageQueue — Material 3 Collapsible Clinical Queue Panel
    Path: frontend/src/features/nurse/TriageQueue.jsx
-
-   SOLID:
-     SRP — Renders patient triage queue; delegates state to useTriageQueue / visitAPI.
-     OCP — Extensible via variant classes and clinical meta slots.
-     DIP — Relies on visitAPI and utility abstractions.
+   
+   Features:
+   - Expanded (Card Deck): Clean, compact patient cards with arrival date/time.
+   - Collapsed (Rail Mode): 76px compact sidebar with initials avatar, status dot,
+     token capsule, and smooth marquee first name.
+   - Independent vertical scrolling in both modes.
    ============================================================ */
 
 /* ─── Helpers ─────────────────────────────────────────────── */
@@ -25,42 +27,87 @@ const formatPhone = (phone = '') => {
   return `•••• ${digits.slice(-4)}`;
 };
 
-const formatDob = (dob) => {
-  if (!dob) return null;
-  return new Date(dob).toLocaleDateString('en-IN', {
+/**
+ * Formats arrival timestamp cleanly (e.g. "Today, 10:45 AM" or "28 Sep, 04:15 PM")
+ */
+const formatArrivalDateTime = (createdAt) => {
+  if (!createdAt) return '—';
+  const d = new Date(createdAt);
+  if (isNaN(d.getTime())) return '—';
+
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  const timeStr = d.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  if (isToday) {
+    return `Today, ${timeStr}`;
+  }
+  if (isYesterday) {
+    return `Yesterday, ${timeStr}`;
+  }
+
+  const dateStr = d.toLocaleDateString('en-IN', {
     day: '2-digit',
     month: 'short',
-    year: 'numeric',
   });
+  return `${dateStr}, ${timeStr}`;
 };
 
-const getUrgencyInfo = (createdAt) => {
-  if (!createdAt) return { variant: 'default', text: 'Recent', mins: 0 };
-  const createdDate = new Date(createdAt);
-  const mins = Math.max(0, Math.floor((Date.now() - createdDate.getTime()) / 60000));
-  const timeStr = createdDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+/* ─── NurseQueueRailItem — Compact 76px Sidebar Rail Item ─── */
+const NurseQueueRailItem = ({ visit, selected, onSelect }) => {
+  const patient = visit?.patientId || {};
+  const firstName = patient.firstName || patient.name?.split(' ')[0] || 'Patient';
+  const fullName = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || patient.name || 'Unnamed Patient';
+  const initials = ((patient.firstName?.charAt?.(0) || '') + (patient.lastName?.charAt?.(0) || '')).toUpperCase() || 'P';
+  const tokenDisplay = visit.tokenString ?? (visit.visitNumber?.slice(-4) ?? '—');
+  const isCalled = visit.status === 'CALLED';
+  const arrivalText = formatArrivalDateTime(visit.createdAt);
+  const tooltipText = `${fullName} (${tokenDisplay}) • Arrived: ${arrivalText}`;
 
-  let text = `${mins}m wait`;
-  if (mins < 1) text = 'Just now';
-  else if (mins >= 60) {
-    const hrs = Math.floor(mins / 60);
-    const remMins = mins % 60;
-    text = `${hrs}h ${remMins}m wait`;
-  }
+  return (
+    <div
+      className={`ntq-rail-item ${selected ? 'ntq-rail-item--selected' : ''} ${isCalled ? 'ntq-rail-item--called' : ''}`}
+      onClick={() => onSelect?.(visit)}
+      role="button"
+      tabIndex={0}
+      title={tooltipText}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.(visit);
+        }
+      }}
+      aria-label={`Select patient ${fullName}, Token ${tokenDisplay}`}
+    >
+      <div className="ntq-rail-item__avatar-wrapper">
+        <div className="ntq-rail-item__avatar">{initials}</div>
+        {isCalled && (
+          <span className="ntq-rail-item__called-dot" title="Currently Called" />
+        )}
+      </div>
 
-  if (mins >= 45) {
-    return { variant: 'error', text, timeStr, mins };
-  }
-  if (mins >= 20) {
-    return { variant: 'secondary', text, timeStr, mins };
-  }
-  return { variant: 'default', text, timeStr, mins };
+      <span className="ntq-rail-item__token">{tokenDisplay}</span>
+
+      <div className="ntq-rail-item__name-box">
+        <Md3MarqueeText text={firstName} className="ntq-rail-item__marquee" />
+      </div>
+    </div>
+  );
 };
 
-/* ─── QueueItemCard — Single Clinical Triage Patient Card ─── */
+/* ─── QueueItemCard — Compact Material 3 Patient Card (Expanded Deck) ─── */
 const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoading }) => {
   const patient = visit.patientId || {};
-  const urgency = getUrgencyInfo(visit.createdAt);
+  const arrivalDisplay = formatArrivalDateTime(visit.createdAt);
   const initials = (
     (patient.firstName?.charAt?.(0) || '') + (patient.lastName?.charAt?.(0) || '')
   ).toUpperCase() || 'P';
@@ -71,39 +118,21 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
     patient.gender,
   ].filter(Boolean).join(' • ');
 
-  const dob = formatDob(patient.dob);
   const phone = formatPhone(patient.phone);
-
-  // Clean Token format
   const tokenDisplay = visit.tokenString ?? (visit.visitNumber?.slice(-4) ?? '—');
 
-  // Visit Status
+  // Visit Status & Call Actions
   const isCalled = visit.status === 'CALLED';
   const isWaiting = visit.status === 'WAITING_TRIAGE' || visit.status === 'SKIPPED';
   const isLoading = actionLoading === (visit._id || visit.id);
-
-  // Visit Type badge (OPD / Walk-in / Follow-up)
   const visitTypeLabel = visit.appointmentType?.replace(/_/g, ' ') || visit.visitType || 'OPD';
 
-  const historyChips = useMemo(() => {
-    const list = [];
-    if (patient.allergies) {
-      list.push({ key: 'allergies', label: `Allergy: ${patient.allergies}`, isAlert: true });
-    }
-    if (Array.isArray(patient.medicalHistory)) {
-      patient.medicalHistory.slice(0, 2).forEach((h, i) => {
-        const text = typeof h === 'string' ? h : h?.condition || 'Condition';
-        list.push({ key: `med-${i}`, label: text, isAlert: false });
-      });
-    }
-    return list;
-  }, [patient.allergies, patient.medicalHistory]);
+  const mrnFormatted = patient.mrn ? (patient.mrn.startsWith('MRN') ? patient.mrn : `MRN: ${patient.mrn}`) : null;
 
   return (
     <article
       className={[
         'triage-queue-card',
-        `triage-queue-card--urgency-${urgency.variant}`,
         selected ? 'triage-queue-card--selected' : '',
         isCalled ? 'triage-queue-card--called' : '',
       ].filter(Boolean).join(' ')}
@@ -119,7 +148,7 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
         }
       }}
     >
-      {/* ── 1. Top Meta Row: Token Hero + Type + Urgency + Call Action ── */}
+      {/* ── 1. Top Meta Row: Token + Type Tag | Arrival Time + Call Action ── */}
       <div className="triage-queue-card__header-row">
         <div className="triage-queue-card__badge-cluster">
           <span className="triage-queue-card__token" title={`Token: ${tokenDisplay}`}>
@@ -131,12 +160,9 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
         </div>
 
         <div className="triage-queue-card__time-cluster">
-          <span
-            className={`triage-queue-card__urgency-pill triage-queue-card__urgency-pill--${urgency.variant}`}
-            title={`Checked in at ${urgency.timeStr || ''}`}
-          >
+          <span className="triage-queue-card__arrival-pill" title={`Checked in: ${arrivalDisplay}`}>
             <span className="material-symbols-rounded">schedule</span>
-            <span>{urgency.text}</span>
+            <span>{arrivalDisplay}</span>
           </span>
 
           {/* Quick Action Button (Call / Skip) */}
@@ -171,11 +197,9 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
         </div>
       </div>
 
-      {/* ── 2. Patient Identity: Avatar + Name + Demographics + Blood Group ── */}
+      {/* ── 2. Patient Identity: Compact Avatar + Name + Tags ── */}
       <div className="triage-queue-card__identity-row">
-        <div className="triage-queue-card__avatar">
-          {initials}
-        </div>
+        <div className="triage-queue-card__avatar">{initials}</div>
 
         <div className="triage-queue-card__identity-details">
           <div className="triage-queue-card__name-row">
@@ -185,9 +209,9 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
           </div>
 
           <div className="triage-queue-card__tags-row">
-            {patient.mrn && (
+            {mrnFormatted && (
               <span className="triage-queue-card__mrn-tag">
-                {patient.mrn.startsWith('MRN') ? patient.mrn : `MRN: ${patient.mrn}`}
+                {mrnFormatted}
               </span>
             )}
             {ageGender && (
@@ -195,7 +219,7 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
                 {ageGender}
               </span>
             )}
-            {patient.bloodGroup && (
+            {patient.bloodGroup && patient.bloodGroup !== 'Unknown' && (
               <span className="triage-queue-card__blood-tag" title="Blood Group">
                 <span className="material-symbols-rounded">bloodtype</span>
                 {patient.bloodGroup}
@@ -205,21 +229,13 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
         </div>
       </div>
 
-      {/* ── 3. Collision Guard: DOB & Clean Masked Mobile ── */}
-      <div className="triage-queue-card__collision-row">
-        {dob && (
-          <span className="triage-queue-card__collision-item" title="Date of Birth">
-            <span className="material-symbols-rounded">cake</span>
-            <span>{dob}</span>
-          </span>
-        )}
-        {phone && (
-          <span className="triage-queue-card__collision-item" title="Contact Number">
-            <span className="material-symbols-rounded">phone</span>
-            <span>{phone}</span>
-          </span>
-        )}
-      </div>
+      {/* ── 3. Phone Contact (if available) ── */}
+      {phone && phone !== '—' && (
+        <div className="triage-queue-card__contact-row">
+          <span className="material-symbols-rounded">phone</span>
+          <span>{phone}</span>
+        </div>
+      )}
 
       {/* ── 4. Clinical Reason for Visit ── */}
       {visit.reasonForVisit && (
@@ -230,41 +246,38 @@ const QueueItemCard = ({ visit, selected, onSelect, onCall, onSkip, actionLoadin
           </span>
         </div>
       )}
-
-      {/* ── 5. Critical Alerts / Allergies ── */}
-      {historyChips.length > 0 && (
-        <div className="triage-queue-card__chips-cluster">
-          {historyChips.map((h) => (
-            <span
-              key={h.key}
-              className={`triage-queue-card__info-chip ${h.isAlert ? 'triage-queue-card__info-chip--alert' : ''}`}
-            >
-              <span className="material-symbols-rounded">{h.isAlert ? 'warning' : 'history'}</span>
-              <span>{h.label}</span>
-            </span>
-          ))}
-        </div>
-      )}
     </article>
   );
 };
 
-/* ─── Main TriageQueue Panel ────────────────────────────────── */
+/* ─── Main TriageQueue Component ───────────────────────────── */
 const TriageQueue = ({
   visits = [],
   selectedVisitId,
   onSelectVisit,
   onRefresh,
+  departmentName,
   loading = false,
+  isCollapsed = false,
+  onToggleCollapse,
+  onCloseMobileDrawer,
   className = '',
   style = {},
 }) => {
   const [actionLoading, setActionLoading] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Defensive FIFO sort (oldest first)
+  // Defensive FIFO sort (oldest first) and exclusion of deleted records
   const sortedVisits = useMemo(() => {
-    const list = [...visits].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    const validVisits = (visits || []).filter((v) => {
+      const p = v.patientId;
+      if (!p || p.isDeleted === true || p.isOrphaned === true || p.mrn === 'DELETED-RECORD') {
+        return false;
+      }
+      return true;
+    });
+
+    const list = [...validVisits].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     if (!searchQuery.trim()) return list;
     const query = searchQuery.toLowerCase().trim();
     return list.filter((v) => {
@@ -313,12 +326,17 @@ const TriageQueue = ({
     [onRefresh]
   );
 
+  const handleSelectPatient = (visit) => {
+    onSelectVisit?.(visit);
+    onCloseMobileDrawer?.();
+  };
+
   const renderCard = (visit) => (
     <QueueItemCard
       key={visit._id || visit.id}
       visit={visit}
       selected={(visit._id || visit.id) === selectedVisitId}
-      onSelect={onSelectVisit}
+      onSelect={handleSelectPatient}
       onCall={handleCall}
       onSkip={handleSkip}
       actionLoading={actionLoading}
@@ -326,43 +344,121 @@ const TriageQueue = ({
   );
 
   return (
-    <aside
-      className={['triage-queue-panel', className].filter(Boolean).join(' ')}
-      style={style}
-    >
-      {/* ─── Compact Material 3 Queue Header ─── */}
-      <header className="triage-queue__header">
-        <div className="triage-queue__header-left">
-          <div className="triage-queue__header-icon">
-            <span className="material-symbols-rounded">medical_information</span>
+    <>
+      {/* ─────────────────────────────────────────────────────────────
+       * 1. COLLAPSED (RAIL) MODE (~76px Desktop Only)
+       * ───────────────────────────────────────────────────────────── */}
+      {isCollapsed && (
+        <aside className={`ntq-rail ntq-rail--desktop-only ${className}`.trim()} style={style} aria-label="Collapsed Triage Queue Rail">
+          <div className="ntq-rail__header">
+            <button
+              type="button"
+              className="ntq-rail__toggle-btn"
+              onClick={onToggleCollapse}
+              title="Expand Triage Worklist"
+              aria-label="Expand Triage Worklist"
+            >
+              <span className="material-symbols-rounded">chevron_right</span>
+            </button>
+            <span className="ntq-rail__count-badge" title={`${sortedVisits.length} waiting patients`}>
+              {sortedVisits.length}
+            </span>
           </div>
-          <div className="triage-queue__header-titles">
-            <div className="triage-queue__header-title-row">
-              <h3 className="triage-queue__header-title">Triage Queue</h3>
-              <span
-                className="triage-queue__count-badge"
-                title={`${visits.length} patient${visits.length === 1 ? '' : 's'} waiting`}
-              >
-                {visits.length}
-              </span>
-            </div>
-            <p className="triage-queue__header-sub">FIFO · Oldest check-in first</p>
-          </div>
-        </div>
 
-        <div className="triage-queue__header-actions">
-          <button
-            type="button"
-            className={`triage-queue__refresh-btn ${loading ? 'is-loading' : ''}`}
-            onClick={onRefresh}
-            title="Refresh Queue"
-            aria-label="Refresh Queue"
-            disabled={loading}
-          >
-            <span className="material-symbols-rounded">refresh</span>
-          </button>
-        </div>
-      </header>
+          <div className="ntq-rail__body">
+            {loading && sortedVisits.length === 0 ? (
+              <div className="ntq-rail__spinner" title="Loading queue...">
+                <span className="ntq-rail__spinner-ring" />
+              </div>
+            ) : sortedVisits.length === 0 ? (
+              <div className="ntq-rail__empty" title="Queue is empty">
+                <span className="material-symbols-rounded">hourglass_empty</span>
+              </div>
+            ) : (
+              sortedVisits.map((v) => (
+                <NurseQueueRailItem
+                  key={v._id || v.id}
+                  visit={v}
+                  selected={Boolean(selectedVisitId && (v._id || v.id) === selectedVisitId)}
+                  onSelect={handleSelectPatient}
+                />
+              ))
+            )}
+          </div>
+        </aside>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+       * 2. FULL QUEUE CARDS DECK (Expanded on Desktop, Drawer on Mobile/Tablet)
+       * ───────────────────────────────────────────────────────────── */}
+      <aside
+        className={[
+          'triage-queue-panel',
+          isCollapsed ? 'ntq-queue--collapsed-desktop' : '',
+          className,
+        ].filter(Boolean).join(' ')}
+        style={style}
+        aria-label="Triage Worklist Panel"
+      >
+        {/* ─── Compact Material 3 Queue Header ─── */}
+        <header className="triage-queue__header">
+          <div className="triage-queue__header-left">
+            {onToggleCollapse && (
+              <button
+                type="button"
+                className="triage-queue__collapse-btn"
+                onClick={onToggleCollapse}
+                title="Collapse into Compact Rail"
+                aria-label="Collapse into Compact Rail"
+              >
+                <span className="material-symbols-rounded">chevron_left</span>
+              </button>
+            )}
+
+            <div className="triage-queue__header-icon">
+              <span className="material-symbols-rounded">vital_signs</span>
+            </div>
+
+            <div className="triage-queue__header-titles">
+              <div className="triage-queue__header-title-row">
+                <h3 className="triage-queue__header-title">
+                  {departmentName ? `${departmentName}` : 'Triage Worklist'}
+                </h3>
+                <span
+                  className="triage-queue__count-badge"
+                  title={`${visits.length} patient${visits.length === 1 ? '' : 's'} waiting`}
+                >
+                  {visits.length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="triage-queue__header-actions">
+            <button
+              type="button"
+              className={`triage-queue__refresh-btn ${loading ? 'is-loading' : ''}`}
+              onClick={onRefresh}
+              title="Refresh List"
+              aria-label="Refresh List"
+              disabled={loading}
+            >
+              <span className="material-symbols-rounded">refresh</span>
+            </button>
+
+            {onCloseMobileDrawer && (
+              <button
+                type="button"
+                className="ntq-mobile-close-btn"
+                onClick={onCloseMobileDrawer}
+                title="Close Drawer"
+                aria-label="Close Drawer"
+              >
+                <span className="material-symbols-rounded">close</span>
+              </button>
+            )}
+          </div>
+        </header>
 
       {/* ─── Quick Filter Bar (if 3+ items) ─── */}
       {visits.length > 3 && (
@@ -374,14 +470,14 @@ const TriageQueue = ({
             placeholder="Search token, name, MRN..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Filter triage queue"
+            aria-label="Filter patient list"
           />
           {searchQuery && (
             <button
               type="button"
               className="triage-queue__search-clear"
               onClick={() => setSearchQuery('')}
-              aria-label="Clear filter"
+              aria-label="Clear search"
             >
               <span className="material-symbols-rounded">close</span>
             </button>
@@ -389,21 +485,21 @@ const TriageQueue = ({
         </div>
       )}
 
-      {/* ─── Queue Card List ─── */}
+      {/* ─── Queue Card List with Independent Scrolling ─── */}
       <div className="triage-queue__body">
         {loading && visits.length === 0 ? (
           <div className="triage-queue__loading">
             <div className="triage-queue__spinner" aria-hidden="true" />
-            <span>Loading triage queue…</span>
+            <span>Loading worklist…</span>
           </div>
         ) : visits.length === 0 ? (
           <div className="triage-queue__empty-state">
             <div className="triage-queue__empty-icon">
-              <span className="material-symbols-rounded">inbox</span>
+              <span className="material-symbols-rounded">check_circle</span>
             </div>
-            <h4 className="triage-queue__empty-title">No Patients Waiting</h4>
+            <h4 className="triage-queue__empty-title">All Clear</h4>
             <p className="triage-queue__empty-desc">
-              Patients will appear here automatically when checked in by reception.
+              No patients currently waiting for triage.
             </p>
           </div>
         ) : sortedVisits.length === 0 ? (
@@ -435,7 +531,8 @@ const TriageQueue = ({
         )}
       </div>
     </aside>
-  );
+  </>
+);
 };
 
 export default TriageQueue;

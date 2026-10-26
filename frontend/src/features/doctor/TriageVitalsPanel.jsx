@@ -119,12 +119,16 @@ const TriageVitalsPanel = ({ vitals = {} }) => {
             <Icon.Heart size={18} />
           </span>
           <div>
-            <h4 className="summary-card__title">Triage Vitals &amp; Clinical Measurements</h4>
-            <p className="summary-card__subtitle">Recorded at check-in triage by nursing staff</p>
+            <h4 className="summary-card__title">Nurse Intake Vitals &amp; Clinical Measurements</h4>
+            <p className="summary-card__subtitle">Recorded at check-in by nursing staff</p>
           </div>
         </div>
-        <Md3Chip variant="default" size="small">
-          {hasVitals ? '✓ Vitals Recorded' : 'Pending Triage'}
+        <Md3Chip
+          variant={hasVitals ? 'success' : 'default'}
+          size="small"
+          icon={hasVitals ? <span className="material-symbols-rounded" style={{ fontSize: 14 }}>check_circle</span> : undefined}
+        >
+          {hasVitals ? 'Vitals Recorded' : 'Pending Nurse'}
         </Md3Chip>
       </div>
 
@@ -245,7 +249,7 @@ const TriageVitalsPanel = ({ vitals = {} }) => {
                 <Icon.Alert size={16} />
               </div>
               <div className="summary-complaint-content">
-                <span className="summary-complaint-label">Triage Chief Complaint</span>
+                <span className="summary-complaint-label">Nurse Chief Complaint</span>
                 <span className="summary-complaint-text">{decodeHtml(vitals.chiefComplaint)}</span>
               </div>
             </div>

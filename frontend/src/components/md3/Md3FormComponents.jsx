@@ -7,7 +7,10 @@ export const Md3TextField = (props) => {
   const {
     id, name, type = 'text', label, value, onChange, placeholder,
     error, disabled, leadingIcon, trailingIcon, onTrailingIconClick,
-    trailingIconAriaLabel, autoComplete, autoFocus
+    trailingIconAriaLabel, autoComplete, autoFocus,
+    multiline, rows, minRows, maxRows, fullWidth, variant, helperText,
+    className = '',
+    ...rest
   } = props;
 
   const isDate = type === 'date';
@@ -16,26 +19,59 @@ export const Md3TextField = (props) => {
     return <Md3DatePicker {...props} />;
   }
 
+  const safeValue = value ?? '';
+
+  // MD3 Standard: Outlined inputs with floating labels should not render example placeholder text
+  // that clashes with labels or clutters the UI. Use ' ' for CSS :placeholder-shown hook.
+  // Standalone inputs without a label (e.g. search bars) preserve their placeholder.
+  const resolvedPlaceholder = label ? ' ' : (placeholder || ' ');
+
   return (
-    <div className={`md3-text-field-container ${error ? 'md3-error' : ''} ${disabled ? 'md3-disabled' : ''}`}>
+    <div className={`md3-text-field-container ${error ? 'md3-error' : ''} ${disabled ? 'md3-disabled' : ''} ${fullWidth ? 'md3-full-width' : ''} ${className}`.trim()}>
       <div className="md3-field-wrapper">
-        <input
-          id={id}
-          name={name}
-          type={type}
-          className={`md3-field-input ${leadingIcon ? 'has-leading' : ''} ${trailingIcon ? 'has-trailing' : ''} ${value ? 'is-filled' : ''}`}
-          value={value}
-          onChange={onChange}
-          placeholder=" "
-          disabled={disabled}
-          autoComplete={autoComplete}
-          autoFocus={autoFocus}
-          aria-invalid={!!error}
-          aria-describedby={error ? `${id}-error` : undefined}
-        />
+        {multiline ? (
+          <textarea
+            id={id}
+            name={name}
+            rows={rows || 3}
+            className={`md3-field-input md3-field-textarea ${leadingIcon ? 'has-leading' : ''} ${trailingIcon ? 'has-trailing' : ''} ${safeValue !== '' ? 'is-filled' : ''}`}
+            value={safeValue}
+            onChange={onChange}
+            placeholder={resolvedPlaceholder}
+            disabled={disabled}
+            autoFocus={autoFocus}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            {...rest}
+          />
+        ) : (
+          <input
+            id={id}
+            name={name}
+            type={type}
+            className={`md3-field-input ${leadingIcon ? 'has-leading' : ''} ${trailingIcon ? 'has-trailing' : ''} ${safeValue !== '' ? 'is-filled' : ''}`}
+            value={safeValue}
+            onChange={onChange}
+            placeholder={resolvedPlaceholder}
+            disabled={disabled}
+            autoComplete={autoComplete}
+            autoFocus={autoFocus}
+            aria-invalid={!!error}
+            aria-describedby={error ? `${id}-error` : undefined}
+            {...rest}
+          />
+        )}
         {label && <label htmlFor={id} className="md3-field-label">{label}</label>}
         
-        {leadingIcon && <span className="md3-field-leading-icon">{leadingIcon}</span>}
+        {leadingIcon && (
+          <span className="md3-field-leading-icon">
+            {typeof leadingIcon === 'string' ? (
+              <span className="material-symbols-rounded">{leadingIcon}</span>
+            ) : (
+              leadingIcon
+            )}
+          </span>
+        )}
         {trailingIcon && (
           <button
             type="button"
@@ -51,6 +87,9 @@ export const Md3TextField = (props) => {
       </div>
       {error && (
         <span id={`${id}-error`} className="md3-field-error-text">{error}</span>
+      )}
+      {helperText && !error && (
+        <span className="md3-field-helper-text">{helperText}</span>
       )}
     </div>
   );
@@ -116,6 +155,119 @@ export const Md3Checkbox = ({
   );
 };
 
+// Helper to extract clean plain text from React nodes / children
+const extractNodeText = (node) => {
+  if (node == null || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(extractNodeText).join('');
+  if (React.isValidElement(node) && node.props?.children) {
+    return extractNodeText(node.props.children);
+  }
+  return '';
+};
+
+// Helper to parse children or options into a flat array of group headers and selectable items
+const parseSelectItems = (children, options) => {
+  const items = [];
+
+  const traverseNodes = (nodes, currentGroup = null) => {
+    React.Children.forEach(nodes, (child) => {
+      if (!child) return;
+
+      // Handle React.Fragment
+      if (child.type === React.Fragment) {
+        traverseNodes(child.props.children, currentGroup);
+        return;
+      }
+
+      // Handle <optgroup>
+      if (child.type === 'optgroup' || (child.props && child.props.label && child.props.children && child.type !== 'option')) {
+        const groupLabel = child.props.label || '';
+        if (groupLabel) {
+          items.push({
+            isGroupHeader: true,
+            label: groupLabel,
+            key: `gh-${groupLabel}-${items.length}`,
+            disabled: true,
+          });
+        }
+        traverseNodes(child.props.children, groupLabel);
+        return;
+      }
+
+      // Handle <option> or elements with value/children
+      if (child.type === 'option' || (child.props && ('value' in child.props || 'children' in child.props))) {
+        const optVal = child.props.value !== undefined ? child.props.value : '';
+        const rawChildren = child.props.children;
+        const textLabel = extractNodeText(rawChildren) || String(optVal);
+
+        items.push({
+          isGroupHeader: false,
+          value: optVal,
+          label: textLabel,
+          disabled: !!child.props.disabled,
+          group: currentGroup,
+          key: `opt-${optVal}-${items.length}`,
+        });
+        return;
+      }
+
+      // Fallback: nested wrappers
+      if (child.props?.children) {
+        traverseNodes(child.props.children, currentGroup);
+      }
+    });
+  };
+
+  if (children) {
+    traverseNodes(children);
+  } else if (Array.isArray(options)) {
+    options.forEach((opt, idx) => {
+      if (typeof opt === 'string' || typeof opt === 'number') {
+        items.push({
+          isGroupHeader: false,
+          value: opt,
+          label: String(opt),
+          disabled: false,
+          key: `opt-${opt}-${idx}`,
+        });
+      } else if (opt && typeof opt === 'object') {
+        if (opt.group && Array.isArray(opt.options)) {
+          items.push({
+            isGroupHeader: true,
+            label: opt.group,
+            key: `gh-${opt.group}-${idx}`,
+            disabled: true,
+          });
+          opt.options.forEach((subOpt, subIdx) => {
+            const subVal = typeof subOpt === 'object' ? subOpt.value : subOpt;
+            const subLabel = typeof subOpt === 'object' ? (subOpt.label ?? subOpt.value) : subOpt;
+            items.push({
+              isGroupHeader: false,
+              value: subVal,
+              label: String(subLabel),
+              disabled: !!subOpt.disabled,
+              group: opt.group,
+              key: `opt-${subVal}-${idx}-${subIdx}`,
+            });
+          });
+        } else {
+          items.push({
+            isGroupHeader: !!opt.isGroupHeader,
+            value: opt.value !== undefined ? opt.value : '',
+            label: String(opt.label ?? opt.value ?? ''),
+            disabled: !!opt.disabled,
+            group: opt.group || null,
+            key: opt.key || `opt-${opt.value}-${idx}`,
+          });
+        }
+      }
+    });
+  }
+
+  return items;
+};
+
 export const Md3Select = ({
   id,
   name,
@@ -127,6 +279,8 @@ export const Md3Select = ({
   error,
   disabled,
   leadingIcon,
+  className = '',
+  compact = false,
 }) => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isClosing, setIsClosing] = React.useState(false);
@@ -138,9 +292,7 @@ export const Md3Select = ({
   const searchInputRef = React.useRef(null);
   
   const [listStyle, setListStyle] = React.useState({});
-  
-  const isFilled = value !== '' && value !== null && value !== undefined;
-  
+
   const handleClose = React.useCallback(() => {
     setIsClosing(true);
     setTimeout(() => {
@@ -243,32 +395,79 @@ export const Md3Select = ({
     }
   }, [isOpen]);
   
-  // Flatten options for easy indexing and keyboard navigation
-  const flatOptions = React.useMemo(() => {
-    if (children) {
-      const childrenArray = React.Children.toArray(children);
-      return childrenArray.map(child => ({
-        value: child.props?.value,
-        label: child.props?.children,
-        disabled: child.props?.disabled || false
-      }));
-    }
-    return options || [];
+  // Parse options recursively (handling <optgroup>, Fragments, raw arrays)
+  const parsedItems = React.useMemo(() => {
+    return parseSelectItems(children, options);
   }, [children, options]);
 
-  // Filter options based on user search term
-  const filteredOptions = React.useMemo(() => {
-    if (!searchTerm.trim()) return flatOptions;
-    return flatOptions.filter(opt => 
-      String(opt.label || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [flatOptions, searchTerm]);
+  // Selectable options (excluding group headers)
+  const selectableOptions = React.useMemo(() => {
+    return parsedItems.filter(item => !item.isGroupHeader);
+  }, [parsedItems]);
 
-  let selectedLabel = '';
-  const selectedOption = flatOptions.find(opt => opt.value === value);
-  if (selectedOption) {
-    selectedLabel = selectedOption.label;
-  }
+  // Filter options based on user search term (preserving group headers if group has matches)
+  const filteredOptions = React.useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    if (!query) return parsedItems;
+
+    const result = [];
+    let currentGroupHeader = null;
+    let groupHasMatch = false;
+    let currentGroupItems = [];
+
+    parsedItems.forEach((item) => {
+      if (item.isGroupHeader) {
+        if (currentGroupHeader && groupHasMatch) {
+          result.push(currentGroupHeader);
+          result.push(...currentGroupItems);
+        }
+        currentGroupHeader = item;
+        groupHasMatch = false;
+        currentGroupItems = [];
+      } else {
+        const matches = String(item.label || '').toLowerCase().includes(query);
+        if (matches) {
+          if (currentGroupHeader) {
+            groupHasMatch = true;
+            currentGroupItems.push(item);
+          } else {
+            result.push(item);
+          }
+        }
+      }
+    });
+
+    if (currentGroupHeader && groupHasMatch) {
+      result.push(currentGroupHeader);
+      result.push(...currentGroupItems);
+    }
+
+    return result;
+  }, [parsedItems, searchTerm]);
+
+  // Determine matching option and display label
+  const hasValue = value !== '' && value !== null && value !== undefined;
+  const selectedOption = selectableOptions.find(opt => {
+    if (hasValue) {
+      return String(opt.value) === String(value);
+    }
+    return opt.value === '' || opt.value === null || opt.value === undefined;
+  });
+
+  const selectedLabel = selectedOption ? selectedOption.label : '';
+  // Only consider filled if we have a non-empty value or if the selected option value is not empty
+  const isFilled = hasValue && selectedLabel !== '';
+
+  const getNextSelectableIndex = (items, currentIndex, direction) => {
+    let next = currentIndex + direction;
+    while (next >= 0 && next < items.length) {
+      if (!items[next].isGroupHeader && !items[next].disabled) {
+        return next;
+      }
+      next += direction;
+    }
+    return currentIndex;
+  };
 
   const toggleOpen = () => {
     if (disabled) return;
@@ -277,8 +476,13 @@ export const Md3Select = ({
     } else {
       updatePosition();
       setIsOpen(true);
-      const currentIndex = filteredOptions.findIndex(o => o.value === value);
-      setFocusedIndex(currentIndex >= 0 ? currentIndex : 0);
+      const currentIndex = filteredOptions.findIndex(o => !o.isGroupHeader && String(o.value) === String(value));
+      if (currentIndex >= 0) {
+        setFocusedIndex(currentIndex);
+      } else {
+        const firstValid = filteredOptions.findIndex(o => !o.isGroupHeader && !o.disabled);
+        setFocusedIndex(firstValid >= 0 ? firstValid : 0);
+      }
     }
   };
 
@@ -296,7 +500,7 @@ export const Md3Select = ({
       } else {
         if (focusedIndex >= 0 && focusedIndex < filteredOptions.length) {
           const opt = filteredOptions[focusedIndex];
-          if (!opt.disabled) handleSelect(opt.value);
+          if (!opt.isGroupHeader && !opt.disabled) handleSelect(opt.value);
         }
       }
     } else if (e.key === ' ' && e.target.className !== 'md3-select-search-input') {
@@ -309,7 +513,7 @@ export const Md3Select = ({
       if (!isOpen) {
         toggleOpen();
       } else {
-        setFocusedIndex(prev => Math.min(prev + 1, filteredOptions.length - 1));
+        setFocusedIndex(prev => getNextSelectableIndex(filteredOptions, prev, 1));
       }
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
@@ -317,7 +521,7 @@ export const Md3Select = ({
       if (!isOpen) {
         toggleOpen();
       } else {
-        setFocusedIndex(prev => Math.max(prev - 1, 0));
+        setFocusedIndex(prev => getNextSelectableIndex(filteredOptions, prev, -1));
       }
     } else if (e.key === 'Escape') {
       if (isOpen) {
@@ -344,7 +548,7 @@ export const Md3Select = ({
 
   return (
     <div 
-      className={`md3-text-field-container md3-custom-select-container ${error ? 'md3-error' : ''} ${disabled ? 'md3-disabled' : ''}`}
+      className={`md3-text-field-container md3-custom-select-container ${compact ? 'md3-select--compact' : ''} ${error ? 'md3-error' : ''} ${disabled ? 'md3-disabled' : ''} ${className}`.trim()}
       ref={containerRef}
     >
       <div className="md3-field-wrapper" onClick={toggleOpen}>
@@ -358,10 +562,18 @@ export const Md3Select = ({
           aria-invalid={!!error}
           onKeyDown={handleKeyDown}
         >
-          <span className="md3-select-display-text">{selectedLabel}</span>
+          <span className="md3-select-display-text">{isFilled ? selectedLabel : ''}</span>
         </div>
         {label && <label htmlFor={id} className={`md3-field-label md3-select-label ${isOpen || isFilled ? 'is-floating' : ''}`}>{label}</label>}
-        {leadingIcon && <span className="md3-field-leading-icon">{leadingIcon}</span>}
+        {leadingIcon && (
+          <span className="md3-field-leading-icon">
+            {typeof leadingIcon === 'string' ? (
+              <span className="material-symbols-rounded">{leadingIcon}</span>
+            ) : (
+              leadingIcon
+            )}
+          </span>
+        )}
         <span className={`md3-select-caret ${isOpen && !isClosing ? 'is-open' : ''}`}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <polyline points="6 9 12 15 18 9" />
@@ -396,19 +608,30 @@ export const Md3Select = ({
               <li className="md3-select-dropdown-item is-disabled">No results found</li>
             ) : (
               filteredOptions.map((opt, index) => (
-                <li 
-                  key={opt.value}
-                  className={`md3-select-dropdown-item ${opt.value === value ? 'is-selected' : ''} ${opt.disabled ? 'is-disabled' : ''} ${focusedIndex === index ? 'is-focused' : ''}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!opt.disabled) handleSelect(opt.value);
-                  }}
-                  onMouseEnter={() => !opt.disabled && setFocusedIndex(index)}
-                  role="option"
-                  aria-selected={opt.value === value}
-                >
-                  {opt.label}
-                </li>
+                opt.isGroupHeader ? (
+                  <li
+                    key={opt.key || `gh-${index}`}
+                    className="md3-select-group-header"
+                    role="presentation"
+                    aria-hidden="true"
+                  >
+                    {opt.label}
+                  </li>
+                ) : (
+                  <li 
+                    key={opt.key || `opt-${opt.value}-${index}`}
+                    className={`md3-select-dropdown-item ${String(opt.value) === String(value) ? 'is-selected' : ''} ${opt.disabled ? 'is-disabled' : ''} ${focusedIndex === index ? 'is-focused' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!opt.disabled) handleSelect(opt.value);
+                    }}
+                    onMouseEnter={() => !opt.disabled && setFocusedIndex(index)}
+                    role="option"
+                    aria-selected={String(opt.value) === String(value)}
+                  >
+                    {opt.label}
+                  </li>
+                )
               ))
             )}
           </ul>
@@ -746,24 +969,38 @@ export const Md3DatePicker = ({
   if (value) {
     const parts = value.split('-');
     if (parts.length === 3) displayValue = `${parts[2]}/${parts[1]}/${parts[0]}`;
+    else displayValue = value;
   }
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) {
+      onChange({ target: { name, value: val } });
+    } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(val)) {
+      const [d, m, y] = val.split('/');
+      onChange({ target: { name, value: `${y}-${m}-${d}` } });
+    } else {
+      onChange({ target: { name, value: val } });
+    }
+  };
 
   return (
     <div className={`md3-text-field-container md3-custom-select-container ${error ? 'md3-error' : ''} ${disabled ? 'md3-disabled' : ''}`} ref={containerRef}>
-      <div className="md3-field-wrapper" onClick={toggleOpen}>
+      <div className="md3-field-wrapper">
         <input
           id={id}
           name={name}
           type="text"
           className={`md3-field-input md3-date-input has-trailing ${leadingIcon ? 'has-leading' : ''} ${isFilled ? 'is-filled' : ''} ${isOpen ? 'is-focused' : ''}`}
           value={displayValue}
-          readOnly
+          onChange={handleInputChange}
+          onClick={toggleOpen}
           placeholder={isOpen ? "DD/MM/YYYY" : " "}
           disabled={disabled}
           aria-invalid={!!error}
           autoComplete="off"
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            if (e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowUp') {
               e.preventDefault();
               e.stopPropagation();
               if (!isOpen) toggleOpen();
@@ -771,7 +1008,15 @@ export const Md3DatePicker = ({
           }}
         />
         {label && <label htmlFor={id} className={`md3-field-label ${isOpen || isFilled ? 'is-floating' : ''}`}>{label}</label>}
-        {leadingIcon && <span className="md3-field-leading-icon">{leadingIcon}</span>}
+        {leadingIcon && (
+          <span className="md3-field-leading-icon">
+            {typeof leadingIcon === 'string' ? (
+              <span className="material-symbols-rounded">{leadingIcon}</span>
+            ) : (
+              leadingIcon
+            )}
+          </span>
+        )}
         <button
           type="button"
           className="md3-field-trailing-icon"
@@ -860,3 +1105,6 @@ export const Md3DatePicker = ({
     </div>
   );
 };
+
+export { Md3UnsavedChangesDialog } from './Md3UnsavedChangesDialog';
+

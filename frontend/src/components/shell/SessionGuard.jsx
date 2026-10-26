@@ -21,8 +21,8 @@ export const SessionGuard = ({ children }) => {
     extendSession,
   } = useIdleTimer({
     enabled: Boolean(user),
-    warnTimeMs: 12 * 60 * 1000, // 12 minutes warning
-    lockTimeMs: 15 * 60 * 1000, // 15 minutes lock
+    warnTimeMs: 13 * 60 * 1000, // 13 minutes warning (2 min notice before lock)
+    lockTimeMs: 15 * 60 * 1000, // 15 minutes lock (HIPAA § 164.312(a)(2)(iii) Standard)
   });
 
   // Privacy Blur on Window/Tab Focus Loss (Shoulder-Surfing Defense)

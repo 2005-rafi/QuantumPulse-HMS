@@ -2,9 +2,9 @@
 .md3-patient-list-table-container {
   width: 100%;
   overflow-x: auto;
-  border-radius: 16px;
-  background: var(--md-sys-color-surface, #ffffff);
-  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  border-radius: 14px;
+  background: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
@@ -15,11 +15,11 @@
   text-align: left;
   font-size: 13.5px;
   line-height: 1.4;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface);
 }
 
 .md3-patient-list-table thead {
-  background: var(--md-sys-color-surface-container-high, #ede8dc);
+  background: var(--md-sys-color-surface-container-high);
   position: sticky;
   top: 0;
   z-index: 2;
@@ -31,20 +31,21 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--md-sys-color-on-surface-variant, #4a4539);
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  color: var(--md-sys-color-on-surface-variant);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
   white-space: nowrap;
 }
 
 .md3-patient-list-table td {
   padding: var(--md-comp-table-cell-padding, 8px 14px);
   vertical-align: middle;
-  border-bottom: 1px solid var(--md-sys-color-outline-variant, rgba(231, 224, 211, 0.6));
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
   transition: background-color 0.15s ease;
 }
 
 .md3-patient-list-row {
   cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.1s ease;
 }
 
 .md3-patient-list-row:last-child td {
@@ -52,17 +53,20 @@
 }
 
 .md3-patient-list-row:hover td {
-  background-color: var(--md-sys-color-surface-container-low, #f7f3e8);
+  background-color: var(--md-sys-color-surface-container-low);
 }
 
 .md3-patient-list-row:focus-visible {
-  outline: 2px solid var(--md-sys-color-primary, #6b5f19);
+  outline: 2px solid var(--md-sys-color-primary);
   outline-offset: -2px;
 }
 
 /* ── Columns Width & Alignment ── */
 .col-patient {
   min-width: 200px;
+}
+.col-status {
+  min-width: 170px;
 }
 .col-age {
   min-width: 110px;
@@ -98,8 +102,8 @@
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--md-sys-color-secondary-container, #e8e2d0);
-  color: var(--md-sys-color-on-secondary-container, #1e1b11);
+  background: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
   font-weight: 700;
   font-size: 13px;
   display: flex;
@@ -116,14 +120,20 @@
 
 .md3-patient-name {
   font-weight: 600;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface);
   font-size: 14px;
+}
+
+.md3-patient-sub-line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .md3-patient-mrn {
   font-size: 11.5px;
-  font-family: monospace;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  font-family: var(--md-sys-typescale-font-mono, monospace);
+  color: var(--md-sys-color-on-surface-variant);
   display: inline-flex;
   align-items: center;
   gap: 2px;
@@ -131,6 +141,57 @@
 
 .md3-patient-mrn .material-symbols-rounded {
   font-size: 13px;
+}
+
+.md3-mobile-demographics {
+  display: none;
+}
+
+.md3-desktop-only {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Cell: Status & Live Queue Token ── */
+.md3-status-container {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.md3-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.md3-status-token {
+  font-size: 0.72rem;
+  color: var(--md-sys-color-on-surface-variant);
+  font-weight: 600;
+  padding-left: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.md3-status-token-icon {
+  font-size: 12px !important;
+  color: var(--md-sys-color-outline);
+}
+
+.md3-status-dept-text {
+  color: var(--md-sys-color-outline);
+  font-weight: 400;
 }
 
 /* ── Cell: Age & Gender ── */
@@ -142,12 +203,12 @@
 
 .md3-age-val {
   font-weight: 500;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface);
 }
 
 .md3-gender-val {
   font-size: 12px;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  color: var(--md-sys-color-on-surface-variant);
 }
 
 /* ── Cell: Phone Badge ── */
@@ -157,12 +218,12 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface);
 }
 
 .md3-phone-badge .material-symbols-rounded {
   font-size: 15px;
-  color: var(--md-sys-color-primary, #6b5f19);
+  color: var(--md-sys-color-primary);
 }
 
 /* ── Cell: Location (City alone) ── */
@@ -171,12 +232,12 @@
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface);
 }
 
 .md3-location-cell .material-symbols-rounded {
   font-size: 16px;
-  color: var(--md-sys-color-secondary, #615f40);
+  color: var(--md-sys-color-secondary);
 }
 
 .md3-city-text {
@@ -192,13 +253,13 @@
 
 .md3-visit-cell .material-symbols-rounded {
   font-size: 15px;
-  color: var(--md-sys-color-tertiary, #3e6653);
+  color: var(--md-sys-color-tertiary);
 }
 
 .md3-visit-date {
   font-size: 13px;
   font-weight: 500;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface);
 }
 
 .md3-visit-type-chip {
@@ -207,33 +268,34 @@
   font-size: 10.5px;
   font-weight: 600;
   text-transform: uppercase;
-  background: var(--md-sys-color-surface-container, #f3eee3);
-  color: var(--md-sys-color-on-surface-variant, #4a4539);
-  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
+  background: var(--md-sys-color-surface-container);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  white-space: nowrap;
 }
 
 .md3-visit-type-chip--ipd {
-  background: var(--md-sys-color-tertiary-container, #ffd8e4);
-  color: var(--md-sys-color-on-tertiary-container, #31111d);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary, #7d5260) 25%, transparent);
+  background: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-tertiary) 25%, transparent);
 }
 
 .md3-visit-type-chip--emergency {
-  background: var(--md-sys-color-error-container, #ffdad6);
-  color: var(--md-sys-color-on-error-container, #410002);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-error, #ba1a1a) 30%, transparent);
+  background: var(--md-sys-color-error-container);
+  color: var(--md-sys-color-on-error-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-error) 30%, transparent);
 }
 
 .md3-visit-type-chip--opd {
-  background: var(--md-sys-color-primary-container, #eaddff);
-  color: var(--md-sys-color-on-primary-container, #21005d);
-  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 25%, transparent);
+  background: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary) 25%, transparent);
 }
 
 .md3-visit-type-chip--idle {
-  background: var(--md-sys-color-surface-container-highest, #ece6f0);
-  color: var(--md-sys-color-on-surface-variant, #49454f);
-  border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: var(--md-sys-color-surface-container-highest);
+  color: var(--md-sys-color-on-surface-variant);
+  border: 1px solid var(--md-sys-color-outline-variant);
 }
 
 /* ── Cell: Latest Appointment ── */
@@ -249,12 +311,12 @@
   gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--md-sys-color-on-surface, #1d1b16);
+  color: var(--md-sys-color-on-surface);
 }
 
 .md3-appt-top .material-symbols-rounded {
   font-size: 15px;
-  color: var(--md-sys-color-primary, #6b5f19);
+  color: var(--md-sys-color-primary);
 }
 
 .md3-appt-time {
@@ -262,7 +324,7 @@
   align-items: center;
   gap: 4px;
   font-size: 11.5px;
-  color: var(--md-sys-color-on-surface-variant, #797667);
+  color: var(--md-sys-color-on-surface-variant);
   padding-left: 21px;
 }
 
@@ -274,12 +336,12 @@
 .md3-badge-none {
   display: inline-block;
   font-size: 11.5px;
-  color: var(--md-sys-color-outline, #797667);
+  color: var(--md-sys-color-outline);
   font-style: italic;
 }
 
 .md3-text-muted {
-  color: var(--md-sys-color-outline, #797667);
+  color: var(--md-sys-color-outline);
 }
 
 /* ── Action Button ── */
@@ -291,9 +353,9 @@
   height: var(--md-comp-action-btn-height, 28px);
   padding: var(--md-comp-action-btn-padding, 2px 10px);
   border-radius: var(--md-comp-action-corner, 8px);
-  border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
-  background: var(--md-sys-color-surface-container-high, #ede8dc);
-  color: var(--md-sys-color-primary, #6b5f19);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-primary);
   font-size: var(--md-comp-action-font-size, 0.76rem);
   font-weight: 600;
   cursor: pointer;
@@ -302,9 +364,9 @@
 }
 
 .md3-btn-view-profile:hover {
-  background: var(--md-sys-color-primary, #6b5f19);
-  color: var(--md-sys-color-on-primary, #ffffff);
-  border-color: var(--md-sys-color-primary, #6b5f19);
+  background: var(--md-sys-color-primary);
+  color: var(--md-sys-color-on-primary);
+  border-color: var(--md-sys-color-primary);
   transform: translateY(-1px);
 }
 
@@ -318,8 +380,8 @@
 
 /* ── Responsive Adaptations (MD3 Window Size Classes) ── */
 
-/* Medium: Tablet (600px - 1023px) */
-@media (min-width: 600px) and (max-width: 1023px) {
+/* Medium: Tablet (641px - 1023px) — High-Density Compact Table */
+@media (min-width: 641px) and (max-width: 1023px) {
   .md3-patient-list-table {
     font-size: 12.5px;
   }
@@ -334,33 +396,46 @@
   }
 
   .col-age {
-    min-width: 90px;
+    min-width: 85px;
   }
 
   .col-phone {
-    min-width: 120px;
+    min-width: 110px;
   }
 
   .col-location {
-    min-width: 100px;
+    min-width: 95px;
   }
 
   .col-last-visit {
-    min-width: 120px;
+    min-width: 115px;
   }
 
   .col-appointment {
-    min-width: 140px;
+    min-width: 135px;
+  }
+
+  .col-actions {
+    min-width: 75px;
+    width: 75px;
+  }
+
+  .md3-btn-view-profile {
+    height: 26px;
+    min-height: 26px;
+    padding: 0 8px;
+    font-size: 0.72rem;
   }
 }
 
-/* Compact: Mobile (< 600px) — Transform Table to Touch-Friendly Cards */
-@media (max-width: 599px) {
+/* Compact: Mobile (<= 640px) — Ultra-Compact Clinical List Tile (Billing-Style) */
+@media (max-width: 640px) {
   .md3-patient-list-table-container {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    overflow: visible;
+    background: var(--md-sys-color-surface);
+    border: 1px solid var(--md-sys-color-outline-variant);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
   }
 
   .md3-patient-list-table thead {
@@ -372,39 +447,159 @@
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 10px;
   }
 
   .md3-patient-list-row {
     display: flex;
-    flex-direction: column;
-    background: var(--md-sys-color-surface, #ffffff);
-    border: 1px solid var(--md-sys-color-outline-variant, #e7e0d3);
-    border-radius: 14px;
-    padding: 12px 14px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--md-sys-color-surface);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    padding: 8px 12px;
     gap: 8px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    min-height: 56px;
     box-sizing: border-box;
+    transition: background 120ms ease, transform 100ms ease;
   }
 
-  .md3-patient-list-table td {
-    padding: 0;
-    border: none;
+  .md3-patient-list-row:last-child {
+    border-bottom: none;
+  }
+
+  .md3-patient-list-row:hover {
+    background: var(--md-sys-color-surface-container-low);
+  }
+
+  .md3-patient-list-row:active {
+    background: var(--md-sys-color-surface-container);
+    transform: scale(0.99);
+  }
+
+  /* Hide detailed secondary table columns on mobile */
+  .col-age,
+  .col-phone,
+  .col-location,
+  .col-appointment,
+  .md3-desktop-only {
+    display: none !important;
+  }
+
+  /* Left: Patient Profile (Avatar + Name + Sub-demographics) */
+  .col-patient {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    min-width: 0;
+    padding: 0 !important;
+    border: none !important;
+  }
+
+  .md3-patient-cell-profile {
     display: flex;
     align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .md3-patient-avatar {
+    width: 34px;
+    height: 34px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .md3-patient-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .md3-patient-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .md3-patient-sub-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--md-sys-color-on-surface-variant);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .md3-patient-mrn {
+    font-size: 0.72rem;
+  }
+
+  .md3-mobile-demographics {
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.72rem;
+    color: var(--md-sys-color-on-surface-variant);
+  }
+
+  /* Right: Status Badge & Chevron Action */
+  .col-last-visit {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 !important;
+    border: none !important;
+    flex-shrink: 0;
+    min-width: auto;
+    margin-left: 4px;
+  }
+
+  .md3-visit-type-chip {
+    font-size: 0.65rem;
+    padding: 2px 6px;
+    border-radius: 6px;
+    letter-spacing: 0.2px;
+    font-weight: 700;
   }
 
   .col-actions {
-    width: 100%;
-    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 !important;
+    border: none !important;
+    flex-shrink: 0;
+    width: auto;
+    min-width: auto;
   }
 
   .md3-btn-view-profile {
-    width: 100%;
-    height: 34px;
-    min-height: 34px;
+    width: 24px;
+    height: 24px;
+    min-height: 24px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--md-sys-color-outline);
     justify-content: center;
-    font-size: 0.82rem;
-    border-radius: 10px;
+    box-shadow: none;
+  }
+
+  .md3-btn-view-profile:hover {
+    background: transparent;
+    color: var(--md-sys-color-primary);
+    transform: none;
+  }
+
+  .md3-btn-view-profile .material-symbols-rounded {
+    font-size: 18px !important;
   }
 }
+

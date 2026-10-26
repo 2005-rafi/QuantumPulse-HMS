@@ -2,14 +2,15 @@ import React from 'react';
 import { Md3Section, Icon, Md3TextArea } from '../../components/md3/Md3Widgets';
 import { Md3Button } from '../../components/md3/Md3FormComponents';
 
-const ClinicalNotesEditor = ({ form, onChange, triageComplaint }) => {
+const ClinicalNotesEditor = ({ form, onChange, triageComplaint, nurseComplaint }) => {
+  const activeComplaint = nurseComplaint || triageComplaint;
   const handleChange = (field) => (e) => {
     onChange({ ...form, [field]: e.target.value });
   };
 
-  const handleCopyTriage = () => {
-    if (triageComplaint) {
-      onChange({ ...form, chiefComplaint: triageComplaint });
+  const handleCopyNurseComplaint = () => {
+    if (activeComplaint) {
+      onChange({ ...form, chiefComplaint: activeComplaint });
     }
   };
 
@@ -24,11 +25,11 @@ const ClinicalNotesEditor = ({ form, onChange, triageComplaint }) => {
           <Md3Button
             variant="tonal"
             size="small"
-            onClick={handleCopyTriage}
+            onClick={handleCopyNurseComplaint}
             icon={<Icon.Copy />}
-            disabled={!triageComplaint || !!form.chiefComplaint}
+            disabled={!activeComplaint || !!form.chiefComplaint}
           >
-            Copy Triage
+            Copy Nurse Notes
           </Md3Button>
         }
       >

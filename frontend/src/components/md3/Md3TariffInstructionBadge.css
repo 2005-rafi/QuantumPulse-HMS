@@ -1,0 +1,150 @@
+﻿/* ============================================================
+   Md3TariffInstructionBadge.css
+   Material Design 3 Clinical Tariff & Fee Instruction Widget
+   ============================================================ */
+
+.md3-tariff-badge {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--md-sys-shape-corner-medium, 10px);
+  background: var(--md-sys-color-surface-container-low, #f7f9f9);
+  border: 1px solid var(--md-sys-color-outline-variant, rgba(0, 104, 116, 0.12));
+  box-sizing: border-box;
+  animation: md3TariffFadeIn 0.25s cubic-bezier(0.2, 0, 0, 1) forwards;
+  margin-top: 4px;
+}
+
+@keyframes md3TariffFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.md3-tariff-badge__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.md3-tariff-badge__lead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.md3-tariff-badge__icon {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--md-sys-color-primary, #006874);
+  flex-shrink: 0;
+}
+
+.md3-tariff-badge__title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface, #191c1d);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.md3-tariff-badge__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  background: var(--md-sys-color-surface-container-high, #e6eded);
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  border: 1px solid var(--md-sys-color-outline-variant, rgba(0, 0, 0, 0.08));
+  flex-shrink: 0;
+}
+
+.md3-tariff-badge__instruction {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+  opacity: 0.9;
+}
+
+/* ── Context Modifiers ── */
+
+/* Complimentary / Zero-rated */
+.md3-tariff-badge--free {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.25);
+}
+
+.md3-tariff-badge--free .md3-tariff-badge__icon {
+  color: #059669;
+}
+
+.md3-tariff-badge--free .md3-tariff-badge__chip {
+  background: rgba(16, 185, 129, 0.16);
+  color: #065f46;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* Specialist Override */
+.md3-tariff-badge--specialist {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.md3-tariff-badge--specialist .md3-tariff-badge__icon {
+  color: #4f46e5;
+}
+
+.md3-tariff-badge--specialist .md3-tariff-badge__chip {
+  background: rgba(99, 102, 241, 0.14);
+  color: #3730a3;
+  border-color: rgba(99, 102, 241, 0.28);
+}
+
+/* Department Policy */
+.md3-tariff-badge--dept {
+  background: rgba(0, 104, 116, 0.08);
+  border-color: rgba(0, 104, 116, 0.22);
+}
+
+.md3-tariff-badge--dept .md3-tariff-badge__icon {
+  color: #006874;
+}
+
+.md3-tariff-badge--dept .md3-tariff-badge__chip {
+  background: rgba(0, 104, 116, 0.14);
+  color: #004f58;
+  border-color: rgba(0, 104, 116, 0.26);
+}
+
+/* ── Compact Inline Mode ── */
+.md3-tariff-badge--compact {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+.md3-tariff-badge--compact .md3-tariff-badge__explanation {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #3f484a);
+}

@@ -53,7 +53,7 @@ export const WardTimeMonitoringView = ({ userPosition = '' }) => {
           beds.push({
             ...bed,
             floorNumber: floor.floorNumber,
-            floorName: floor.name,
+            floorName: floor.floorName || floor.name || (floor.floorNumber !== undefined ? `Floor ${floor.floorNumber}` : 'Ward'),
             roomNumber: room.roomNumber,
             roomType: room.roomType,
           });
@@ -211,69 +211,39 @@ export const WardTimeMonitoringView = ({ userPosition = '' }) => {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' }}>
-      {/* ── TOP BAR: TITLE + VIEW SWITCHER + SEARCH BAR ── */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', width: '100%' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: 0, color: 'var(--md-sys-color-on-surface)' }}>
-              Ward Time &amp; Turnaround Telemetry
-            </h1>
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '5px',
-                padding: '2px 8px',
-                borderRadius: 'var(--md-sys-shape-corner-full, 999px)',
-                fontSize: '0.6875rem',
-                fontWeight: 700,
-                backgroundColor: 'var(--md-sys-color-primary-container)',
-                color: 'var(--md-sys-color-on-primary-container)',
-              }}
-            >
-              <span className="material-symbols-rounded" style={{ fontSize: '12px', color: 'var(--md-sys-color-primary)' }}>sensors</span>
-              LIVE TELEMETRY
-            </span>
-          </div>
-          <p style={{ fontSize: '0.78rem', color: 'var(--md-sys-color-on-surface-variant)', margin: '2px 0 0 0' }}>
-            Active Patient Length of Stay (LOS) • Sanitization Turnaround Timers • Housekeeping Dispatch &amp; SLA
-          </p>
+      {/* ── TOP BAR: VIEW SWITCHER (LEFT) + FULL-WIDTH EXPANDED SEARCH (RIGHT) ── */}
+      <div className="md3-ward-top-controls" style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', boxSizing: 'border-box' }}>
+        {/* Card / List Layout Toggle at Left End */}
+        <div className="md3-view-toggle-group" role="group" aria-label="Telemetry layout view mode" style={{ flexShrink: 0 }}>
+          <button
+            type="button"
+            className={`md3-view-toggle-btn ${layoutMode === 'cards' ? 'active' : ''}`}
+            onClick={() => setLayoutMode('cards')}
+            title="Card Grid View"
+            aria-pressed={layoutMode === 'cards'}
+          >
+            <span className="material-symbols-rounded">grid_view</span>
+            <span>Cards</span>
+          </button>
+          <button
+            type="button"
+            className={`md3-view-toggle-btn ${layoutMode === 'list' ? 'active' : ''}`}
+            onClick={() => setLayoutMode('list')}
+            title="Tabular List View"
+            aria-pressed={layoutMode === 'list'}
+          >
+            <span className="material-symbols-rounded">view_list</span>
+            <span>List</span>
+          </button>
         </div>
 
-        {/* View Switcher & Search Bar Group */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {/* Card / List Layout Toggle */}
-          <div className="md3-view-toggle-group" role="group" aria-label="Telemetry layout view mode">
-            <button
-              type="button"
-              className={`md3-view-toggle-btn ${layoutMode === 'cards' ? 'active' : ''}`}
-              onClick={() => setLayoutMode('cards')}
-              title="Card Grid View"
-              aria-pressed={layoutMode === 'cards'}
-            >
-              <span className="material-symbols-rounded">grid_view</span>
-              <span>Cards</span>
-            </button>
-            <button
-              type="button"
-              className={`md3-view-toggle-btn ${layoutMode === 'list' ? 'active' : ''}`}
-              onClick={() => setLayoutMode('list')}
-              title="Tabular List View"
-              aria-pressed={layoutMode === 'list'}
-            >
-              <span className="material-symbols-rounded">view_list</span>
-              <span>List</span>
-            </button>
-          </div>
-
-          {/* Quick Search */}
-          <div style={{ width: '240px' }}>
-            <Md3TextField
-              placeholder="Search bed, patient, MRN..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+        {/* Full-width Search Bar Expanding to Right End */}
+        <div style={{ flex: 1, minWidth: 0, width: '100%' }}>
+          <Md3TextField
+            placeholder="Search bed, patient, MRN..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 

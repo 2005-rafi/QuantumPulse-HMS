@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('./cpoe.controller');
-const authenticate = require('../../../core/middleware/authenticate');
+const authenticate = require('../../../core/middleware/authenticate.middleware');
 
 // ── CPOE Orders ─────────────────────────────────────────────
 router.post('/:admissionId/orders', authenticate, controller.createOrder);

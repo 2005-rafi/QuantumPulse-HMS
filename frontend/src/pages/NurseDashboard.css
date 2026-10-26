@@ -138,6 +138,11 @@
   width: 100%;
   box-sizing: border-box;
   animation: nurseMainIn 0.28s cubic-bezier(0.05, 0.7, 0.1, 1) both;
+  transition: grid-template-columns 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.nurse-layout.nurse-layout--rail {
+  grid-template-columns: 76px 1fr;
 }
 
 @keyframes nurseMainIn {
@@ -157,10 +162,204 @@
   align-self: start;
   max-height: calc(100vh - 64px - 80px - 48px);
   overflow: hidden;
+  transition: width 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.nurse-col--queue.nurse-col--queue-rail {
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
 }
 
 .nurse-col--sheet {
   min-width: 0;
+}
+
+/* ─── Mobile/Tablet Backdrop Scrim for Side-Based Drawer ─── */
+.nurse-drawer-backdrop {
+  display: none;
+}
+
+/* ─── Mobile/Tablet Sticky/Top Toolbar ─── */
+.nurse-mobile-toolbar {
+  display: none;
+}
+
+@keyframes nurseFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ─── Responsive: Mobile & Tablet Viewports (≤1024px) ─── */
+@media (max-width: 1024px) {
+  .nurse-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  .nurse-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 16px;
+    width: 100%;
+    min-height: calc(100vh - 64px);
+    box-sizing: border-box;
+  }
+
+  .nurse-layout {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+    animation: none; /* Avoid transform containing block on mobile fixed elements */
+  }
+
+  .nurse-layout.nurse-layout--rail {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: none;
+  }
+
+  /* Backdrop scrim overlay when side-drawer is opened */
+  .nurse-drawer-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1190;
+    animation: nurseFadeIn 0.22s ease-out;
+  }
+
+  /* Mobile Top Navigation Toolbar */
+  .nurse-mobile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--md-sys-color-surface, #ffffff);
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+    border-radius: var(--md-sys-shape-corner-md, 12px);
+    box-shadow: var(--md-sys-elevation-level1, 0 1px 3px rgba(0,0,0,0.08));
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 2px;
+  }
+
+  .nurse-mobile-drawer-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--md-sys-color-primary, #6750a4);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--md-sys-shape-corner-sm, 8px);
+    padding: 8px 14px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(103, 80, 164, 0.25);
+    transition: all 0.15s ease;
+  }
+
+  .nurse-mobile-drawer-btn:active {
+    transform: scale(0.97);
+  }
+
+  .nurse-mobile-drawer-btn .material-symbols-rounded {
+    font-size: 18px;
+  }
+
+  .nurse-mobile-count-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+    padding: 1px 7px;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .nurse-mobile-patient-preview {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .nurse-mobile-token-pill {
+    font-family: monospace;
+    font-size: 0.74rem;
+    font-weight: 700;
+    background: var(--md-sys-color-surface-container-high, #ece6f0);
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    padding: 3px 7px;
+    border-radius: 6px;
+    border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
+  }
+
+  .nurse-mobile-patient-name {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface, #1c1b1f);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+  }
+
+  /* Slide-Based Drawer on Mobile & Tablet: Fully hidden when closed, zero pixel leakage */
+  .nurse-col--queue {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 340px !important;
+    max-width: 86vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100vh !important;
+    z-index: 1200 !important;
+    border-radius: 0 16px 16px 0 !important;
+    border: none !important;
+    border-right: 1px solid var(--md-sys-color-outline-variant, #cac4d0) !important;
+    transform: translateX(-110%) !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    box-shadow: none !important;
+    transition: transform 0.28s cubic-bezier(0.1, 0.9, 0.2, 1), visibility 0.28s ease, box-shadow 0.28s ease !important;
+    background-color: var(--md-sys-color-surface, #ffffff) !important;
+    overflow: hidden !important;
+  }
+
+  .nurse-col--queue.is-mobile-open {
+    transform: translateX(0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    box-shadow: var(--md-sys-elevation-level4, 0 12px 32px rgba(0, 0, 0, 0.28)) !important;
+  }
+
+  .nurse-col--sheet {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 0;
+  }
 }
 
 /* ─── Responsive: Medium (600–900px) ─── */
@@ -173,17 +372,7 @@
     gap: 10px;
   }
 
-  .nurse-main { padding: 20px; }
-
-  .nurse-layout {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-
-  .nurse-col--queue {
-    position: static;
-    max-height: 480px;
-  }
+  .nurse-main { padding: 16px 20px; }
 }
 
 /* ─── Responsive: Compact (≤599px) ─── */
@@ -219,19 +408,13 @@
 
   .nurse-main { padding: 12px; }
 
-  .nurse-layout {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .nurse-col--queue {
-    position: static;
-    max-height: 420px;
+  .nurse-mobile-patient-name {
+    max-width: 120px;
   }
 }
 
-/* ─── Responsive: Desktop Docked Layout (≥901px) ─── */
-@media (min-width: 901px) {
+/* ─── Responsive: Desktop Docked Layout (≥1025px) ─── */
+@media (min-width: 1025px) {
   .nurse-page {
     height: 100vh !important;
     overflow: hidden !important;
@@ -246,6 +429,7 @@
     min-height: 0 !important;
     display: flex !important;
     flex-direction: column !important;
+    overflow-y: auto !important;
   }
 
   .nurse-layout {
@@ -256,6 +440,11 @@
     min-height: 0 !important;
     height: 100% !important;
     width: 100% !important;
+    transition: grid-template-columns 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
+  }
+
+  .nurse-layout.nurse-layout--rail {
+    grid-template-columns: 76px 1fr !important;
   }
 
   .nurse-col--queue {
@@ -266,6 +455,14 @@
     height: 100% !important;
     border-right: 1px solid var(--md-sys-color-outline-variant) !important;
     background-color: var(--md-sys-color-surface) !important;
+    transition: width 0.25s cubic-bezier(0.2, 0, 0, 1) !important;
+    overflow: hidden !important;
+  }
+
+  .nurse-col--queue.nurse-col--queue-rail {
+    width: 76px !important;
+    min-width: 76px !important;
+    max-width: 76px !important;
   }
 
   .nurse-col--sheet {

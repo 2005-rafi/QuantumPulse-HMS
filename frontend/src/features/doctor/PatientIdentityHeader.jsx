@@ -121,10 +121,13 @@ const PatientIdentityHeader = ({ visit }) => {
           <div className="doc-identity-banner__details">
             <div className="doc-identity-banner__name-row">
               <h2 className="doc-identity-banner__name">{name}</h2>
-              <span className="doc-identity-banner__mrn-pill">{mrnDisplay}</span>
+              <span className={`doc-identity-banner__status-pill doc-identity-banner__status-pill--mobile doc-identity-banner__status-pill--${config.variant}`}>
+                {config.label}
+              </span>
             </div>
 
             <div className="doc-identity-banner__chips-row">
+              <span className="doc-identity-banner__mrn-pill">{mrnDisplay}</span>
               {ageGender && (
                 <span className="doc-identity-banner__tag">
                   <span className="material-symbols-rounded">person</span>
@@ -138,18 +141,30 @@ const PatientIdentityHeader = ({ visit }) => {
                 </span>
               )}
               {maskedPhone && (
-                <span className="doc-identity-banner__tag">
+                <span className="doc-identity-banner__tag doc-identity-banner__tag--phone">
                   <span className="material-symbols-rounded">call</span>
                   <span>{maskedPhone}</span>
                 </span>
               )}
+              <span className="doc-identity-banner__tag doc-identity-banner__tag--token">
+                <span className="material-symbols-rounded">confirmation_number</span>
+                <span>{tokenString}</span>
+              </span>
+              <span className="doc-identity-banner__tag doc-identity-banner__tag--ticket">
+                <span className="material-symbols-rounded">receipt_long</span>
+                <span>
+                  {visit?.visitNumber && visit.visitNumber !== 'Pending Check-In'
+                    ? visit.visitNumber
+                    : (visit?.appointmentNumber || '—')}
+                </span>
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Appointment Details, Queue Token, Visit Number & Status */}
+        {/* Right Column: Appointment Details, Queue Token, Visit Number & Status (Desktop & Tablet) */}
         <div className="doc-identity-banner__right">
-          {/* Top Appointment Date & Time Box (Rendered before Queue Token & Visit Ticket) */}
+          {/* Top Appointment Date & Time Box */}
           {hasAppointment && (
             <div className="doc-identity-banner__appointment-box">
               <span className="doc-identity-banner__appointment-label">
@@ -181,7 +196,7 @@ const PatientIdentityHeader = ({ visit }) => {
 
           <div className="doc-identity-banner__divider" />
 
-          <span className={`doc-identity-banner__status-pill doc-identity-banner__status-pill--${config.variant}`}>
+          <span className={`doc-identity-banner__status-pill doc-identity-banner__status-pill--desktop doc-identity-banner__status-pill--${config.variant}`}>
             {config.label}
           </span>
         </div>

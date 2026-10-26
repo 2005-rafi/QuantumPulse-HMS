@@ -6,16 +6,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-
-const ROLE_DEFAULT_ROUTES = {
-  Reception: '/dashboard/reception',
-  Nurse: '/dashboard/nurse',
-  Doctor: '/dashboard/doctor',
-  Laboratory: '/dashboard/laboratory',
-  Pharmacy: '/dashboard/pharmacy',
-  'Ward Operations': '/dashboard/ward-operations',
-  Administrator: '/dashboard/administrator',
-};
+import { ROLE_DEFAULT_ROUTES, ROUTE_PATHS } from '../constants/navigation';
 
 /**
  * ProtectedRoute — redirects to /login if not authenticated.
@@ -37,7 +28,7 @@ export const ProtectedRoute = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to={ROUTE_PATHS.LOGIN} state={{ from: location }} replace />;
   }
 
   return children;
@@ -50,14 +41,14 @@ export const RoleRoute = ({ role, permission, requires, children }) => {
   const { user, hasPermission } = useAuth();
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={ROUTE_PATHS.LOGIN} replace />;
   }
 
   // 1. Role verification
   if (role) {
     const allowedRoles = Array.isArray(role) ? role : [role];
     if (!allowedRoles.includes(user.role) && user.role !== 'Administrator') {
-      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
+      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || ROUTE_PATHS.DASHBOARD;
       return <Navigate to={correctRoute} replace />;
     }
   }
@@ -68,7 +59,7 @@ export const RoleRoute = ({ role, permission, requires, children }) => {
     const perms = Array.isArray(reqPermissions) ? reqPermissions : [reqPermissions];
     const hasAccess = perms.some((p) => hasPermission(p));
     if (!hasAccess) {
-      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
+      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || ROUTE_PATHS.DASHBOARD;
       return <Navigate to={correctRoute} replace />;
     }
   }
@@ -83,7 +74,7 @@ export const PermissionRoute = ({ permission, requires, children }) => {
   const { user, hasPermission } = useAuth();
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={ROUTE_PATHS.LOGIN} replace />;
   }
 
   if (user.role === 'Administrator') {
@@ -95,7 +86,7 @@ export const PermissionRoute = ({ permission, requires, children }) => {
     const perms = Array.isArray(reqPermissions) ? reqPermissions : [reqPermissions];
     const hasAccess = perms.some((p) => hasPermission(p));
     if (!hasAccess) {
-      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
+      const correctRoute = ROLE_DEFAULT_ROUTES[user.role] || ROUTE_PATHS.DASHBOARD;
       return <Navigate to={correctRoute} replace />;
     }
   }
@@ -112,7 +103,7 @@ export const GuestRoute = ({ children }) => {
   if (loading) return null;
 
   if (user) {
-    const route = ROLE_DEFAULT_ROUTES[user.role] || '/dashboard';
+    const route = ROLE_DEFAULT_ROUTES[user.role] || ROUTE_PATHS.DASHBOARD;
     return <Navigate to={route} replace />;
   }
 

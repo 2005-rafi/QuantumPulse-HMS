@@ -126,7 +126,7 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
           </div>
           <div>
             <h3>Doctor's Appointment Schedule</h3>
-            <p>Pre-booked patient consultations, arrival status & triage vitals</p>
+            <p>Pre-booked patient consultations, arrival status & nurse vitals</p>
           </div>
         </div>
 
@@ -462,7 +462,7 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
                             <span className="appt-vitals-icon-badge">
                               <Icon.CheckCircle size={14} />
                             </span>
-                            <span className="appt-vitals-heading">Triage Vitals:</span>
+                            <span className="appt-vitals-heading">Nurse Vitals:</span>
                             <div className="appt-vitals-chips-list">
                               {vitals.bloodPressureSystolic && vitals.bloodPressureDiastolic && (
                                 <span className="appt-vital-chip">
@@ -502,7 +502,7 @@ export const DoctorAppointmentView = ({ doctorId, onOpenVisit }) => {
                               <Icon.Clock size={14} />
                             </span>
                             <span className="appt-vitals-heading">Checked In:</span>
-                            <span className="appt-vitals-sub">Patient in triage queue, waiting for nurse vitals recording</span>
+                            <span className="appt-vitals-sub">Patient in nurse queue, waiting for vitals recording</span>
                           </>
                         )}
                       </div>

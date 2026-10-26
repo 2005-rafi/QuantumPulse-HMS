@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { useTriageQueue } from '../hooks/useTriageQueue';
 import { Icon, Md3Tabs } from '../components/md3/Md3Widgets';
 import CommonHeader from '../components/shell/CommonHeader';
-import DashboardStatsBar from '../components/dashboard/DashboardStatsBar';
 import './NurseDashboard.css';
 
 /**
@@ -38,53 +37,73 @@ const NurseDashboard = () => {
     navigate('/login', { replace: true });
   };
 
-  const headerTabs = [
-    {
-      id: 'triage',
-      label: 'OPD Triage Station',
-      icon: <Icon.Stethoscope />,
-    },
-    {
-      id: 'ipd',
-      label: 'Inpatient Ward Station',
-      icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>hotel</span>,
-    },
-  ];
+  const isOpdNurse = user?.role === 'OPD Nurse';
+  const isIpdNurse = user?.role === 'IPD Nurse';
+
+  // Role-directed navigation guard
+  React.useEffect(() => {
+    if (isIpdNurse && !location.pathname.includes('/ipd')) {
+      navigate('/dashboard/nurse/ipd', { replace: true });
+    } else if (isOpdNurse && location.pathname.includes('/ipd')) {
+      navigate('/dashboard/nurse/triage', { replace: true });
+    }
+  }, [isIpdNurse, isOpdNurse, location.pathname, navigate]);
+
+  const headerTabs = React.useMemo(() => {
+    const opdTabs = [
+      {
+        id: 'triage',
+        label: 'OPD Nursing Station',
+        icon: <Icon.Stethoscope />,
+      },
+      {
+        id: 'history',
+        label: 'Triage History',
+        icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>history_edu</span>,
+      },
+    ];
+    const ipdTabs = [
+      {
+        id: 'ipd',
+        label: 'Patient Clinical Care',
+        icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>personal_injury</span>,
+      },
+      {
+        id: 'ipd-operations',
+        label: 'Ward Operations & Logistics',
+        icon: <span className="material-symbols-rounded" style={{ fontSize: '18px' }}>domain</span>,
+      },
+    ];
+
+    if (isIpdNurse) {
+      return ipdTabs;
+    }
+    if (isOpdNurse) return opdTabs;
+    return [
+      ...opdTabs,
+      ...ipdTabs,
+    ];
+  }, [isOpdNurse, isIpdNurse]);
 
   // Derive active tab from URL path
-  const activeTab = location.pathname.includes('/ipd') ? 'ipd' : 'triage';
+  const activeTab = location.pathname.includes('/ipd-operations')
+    ? 'ipd-operations'
+    : location.pathname.includes('/ipd')
+    ? 'ipd'
+    : location.pathname.includes('/history')
+    ? 'history'
+    : 'triage';
 
   const handleTabChange = (tabId) => {
     navigate(`/dashboard/nurse/${tabId}`);
   };
-
-  const stats = [
-    {
-      icon: <Icon.Stethoscope />,
-      label: 'Waiting for Triage',
-      value: queue.length >= 0 ? String(queue.length) : '—',
-      variant: 'tertiary',
-    },
-    {
-      icon: <Icon.Users />,
-      label: 'Sent to Doctor',
-      value: String(triagedToday),
-      variant: 'secondary',
-    },
-    {
-      icon: <Icon.Hospital />,
-      label: 'Department',
-      value: deptName,
-      variant: 'default',
-    },
-  ];
 
   return (
     <div className="nurse-page">
       {/* ─── TOP APP BAR ─── */}
       <CommonHeader
         brandTitle={`Nursing Portal · ${deptName}`}
-        brandSubtitle="OPD Triage &amp; Inpatient Clinical Care"
+        brandSubtitle="OPD Nursing &amp; Inpatient Clinical Care"
         centerSlot={
           <Md3Tabs tabs={headerTabs} activeTab={activeTab} onChange={handleTabChange} />
         }
@@ -92,10 +111,7 @@ const NurseDashboard = () => {
         onLogout={handleLogout}
       />
 
-      {/* ─── STATS BAR (Only on Triage tab) ─── */}
-      {activeTab === 'triage' && <DashboardStatsBar stats={stats} showToday />}
-
-      {/* ─── MAIN WORKSPACE ROUTED VIEWS ─── */}
+      {/* ─── MAIN WORKSPACE ROUTED VIEWS (Full Height) ─── */}
       <main className="nurse-main">
         <Outlet
           context={{

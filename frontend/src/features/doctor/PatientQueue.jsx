@@ -4,6 +4,7 @@ import { visitAPI } from '../../services/visitAPI';
 import { formatQueueWaitTime as timeSince } from '../../utils/dateFormatting';
 import { ClinicalQueueSearchIndex } from '../../utils/dsaSearchFilter';
 import { Md3SearchBar } from '../../components/md3/Md3SearchBar';
+import Md3MarqueeText from '../../components/md3/Md3MarqueeText';
 
 /* ============================================================
    PatientQueue — Doctor's Patient Queue Sidebar
@@ -47,21 +48,80 @@ const QueueFilterMatrix = ({ counts, filterStatus, onSelectFilter }) => {
   );
 };
 
+/* ─── DoctorQueueRailItem — Compact 76px Sidebar Rail Item ─── */
+const DoctorQueueRailItem = ({ visit, selected, onSelect }) => {
+  const patient = visit?.patientId || {};
+  const firstName = patient.firstName || patient.name?.split(' ')[0] || 'Patient';
+  const fullName = `${patient.firstName || ''} ${patient.lastName || ''}`.trim() || patient.name || 'Unnamed Patient';
+  const initials = ((patient.firstName?.charAt?.(0) || '') + (patient.lastName?.charAt?.(0) || '')).toUpperCase() || 'P';
+  const tokenDisplay = visit.tokenString ?? (visit.visitNumber?.slice(-4) ?? '—');
+  const isCalled = visit.status === 'CALLED';
+  const isInProgress = visit.status === 'IN_PROGRESS';
+  const isReview = visit.status === 'WAITING_DOCTOR_REVIEW';
+  const tooltipText = `${fullName} (${tokenDisplay}) • Status: ${visit.status}`;
+
+  return (
+    <div
+      className={`doc-rail-item ${selected ? 'doc-rail-item--selected' : ''} ${isCalled ? 'doc-rail-item--called' : ''} ${isInProgress ? 'doc-rail-item--in-progress' : ''}`}
+      onClick={() => onSelect?.(visit)}
+      role="button"
+      tabIndex={0}
+      title={tooltipText}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.(visit);
+        }
+      }}
+      aria-label={`Select patient ${fullName}, Token ${tokenDisplay}`}
+    >
+      <div className="doc-rail-item__avatar-wrapper">
+        <div className="doc-rail-item__avatar">{initials}</div>
+        {isCalled && (
+          <span className="doc-rail-item__called-dot" title="Currently Called" />
+        )}
+        {isInProgress && (
+          <span className="doc-rail-item__in-progress-dot" title="In Consultation" />
+        )}
+        {isReview && (
+          <span className="doc-rail-item__review-dot" title="Awaiting Review" />
+        )}
+      </div>
+
+      <span className="doc-rail-item__token">{tokenDisplay}</span>
+
+      <div className="doc-rail-item__name-box">
+        <Md3MarqueeText text={firstName} className="doc-rail-item__marquee" />
+      </div>
+    </div>
+  );
+};
+
 /* ─── Main PatientQueue Component ─────────────────────────── */
 const PatientQueue = ({
   queue = [],
   selectedVisitId,
   onSelectVisit,
   onRefresh,
+  isCollapsed = false,
+  onToggleCollapse,
+  onCloseMobileDrawer,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // FIFO defensive sort (oldest first)
-  const sortedQueue = useMemo(() =>
-    [...queue].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)),
-  [queue]);
+  // FIFO defensive sort (oldest first) and filter out deleted/orphaned patient records
+  const sortedQueue = useMemo(() => {
+    const validQueue = (queue || []).filter((v) => {
+      const p = v.patientId;
+      if (!p || p.isDeleted === true || p.isOrphaned === true || p.mrn === 'DELETED-RECORD') {
+        return false;
+      }
+      return true;
+    });
+    return [...validQueue].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+  }, [queue]);
 
   // Split skipped from active
   const { activeQueue, skippedQueue } = useMemo(() => ({
@@ -129,22 +189,78 @@ const PatientQueue = ({
     }
   }, [onRefresh]);
 
+  /* ─── Collapsed Desktop Rail Mode ─── */
+  if (isCollapsed) {
+    return (
+      <aside className="doc-queue-rail" aria-label="Doctor patient queue collapsed rail">
+        <div className="doc-rail__header">
+          <button
+            type="button"
+            className="doc-rail__toggle-btn"
+            onClick={onToggleCollapse}
+            title="Expand Doctor Queue"
+            aria-label="Expand Doctor Queue"
+          >
+            <span className="material-symbols-rounded">right_panel_open</span>
+          </button>
+          <span className="doc-rail__count-badge" title={`${activeQueue.length} Active Patients`}>
+            {activeQueue.length}
+          </span>
+        </div>
+
+        <div className="doc-rail__body">
+          {activeQueue.map((visit) => (
+            <DoctorQueueRailItem
+              key={visit._id}
+              visit={visit}
+              selected={selectedVisitId === visit._id}
+              onSelect={onSelectVisit}
+            />
+          ))}
+          {activeQueue.length === 0 && (
+            <div className="doc-rail__empty">
+              <span className="material-symbols-rounded" style={{ fontSize: 20 }}>inbox</span>
+            </div>
+          )}
+        </div>
+      </aside>
+    );
+  }
+
+  const todayDay = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const todayDate = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
   return (
     <div className="doc-queue-panel">
       {/* ─── 1. Compact Header Bar ─── */}
       <div className="doc-queue__header">
         <div className="doc-queue__header-left">
+          {onToggleCollapse && (
+            <button
+              type="button"
+              className="doc-queue__collapse-btn"
+              onClick={onToggleCollapse}
+              title="Collapse Doctor Queue to Rail"
+              aria-label="Collapse Queue"
+            >
+              <span className="material-symbols-rounded">left_panel_close</span>
+            </button>
+          )}
           <div className="doc-queue__header-icon">
-            <span className="material-symbols-rounded">group</span>
+            <span className="material-symbols-rounded">event</span>
           </div>
           <div className="doc-queue__header-titles">
             <div className="doc-queue__header-title-row">
-              <h3 className="doc-queue__header-title">My Queue</h3>
-              <span className="doc-queue__count-badge">{activeQueue.length}</span>
+              <h3 className="doc-queue__header-title">{todayDay}</h3>
+              <span className="doc-queue__count-badge" title={`${activeQueue.length} Active Patients`}>
+                {activeQueue.length}
+              </span>
             </div>
-            <p className="doc-queue__header-sub">
-              {activeQueue.length === 1 ? '1 patient waiting' : `${activeQueue.length} patients in queue`}
-            </p>
+            <p className="doc-queue__header-sub">{todayDate}</p>
           </div>
         </div>
 
@@ -158,6 +274,17 @@ const PatientQueue = ({
           >
             <span className="material-symbols-rounded">refresh</span>
           </button>
+          {onCloseMobileDrawer && (
+            <button
+              type="button"
+              className="doc-queue__mobile-close-btn"
+              onClick={onCloseMobileDrawer}
+              title="Close Queue Drawer"
+              aria-label="Close Queue Drawer"
+            >
+              <span className="material-symbols-rounded">close</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -194,7 +321,7 @@ const PatientQueue = ({
             <p className="doc-queue__empty-desc">
               {searchQuery
                 ? 'Check spelling or clear the search query.'
-                : 'Patients will appear here once checked in or triaged.'}
+                : 'Patients will appear here once checked in or assessed by nurse.'}
             </p>
           </div>
         ) : (

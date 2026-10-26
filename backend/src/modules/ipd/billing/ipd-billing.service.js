@@ -7,10 +7,17 @@ const AdvanceDeposit = require('./advance-deposit.model');
 const IPDAdmission = require('../admission/ipd-admission.model');
 const BedMaster = require('../beds/bed.model');
 const BedAllocation = require('../beds/bed-allocation.model');
+const RoomMaster = require('../beds/room.model');
+const FloorMaster = require('../beds/floor.model');
+const Staff = require('../../staff/staff.model');
+const Department = require('../../administration/department.model');
+const Patient = require('../../patient/patient.model');
 const Bill = require('../../billing/bill.model');
-const tariffResolver = require('../../tariff/tariff-resolver');
-const AppError = require('../../../core/errors/AppError');
+const tariffResolver = require('../../tariff/tariff-resolver.service');
+const AppError = require('../../../core/errors/app-error');
 const config = require('../../../core/config');
+const { withTransaction } = require('../../../core/database/transaction');
+const { broadcastIPDLedgerUpdate } = require('../../realtime/patient-status-events.service');
 
 class IPDBillingService {
   /**
@@ -19,7 +26,7 @@ class IPDBillingService {
   async resolveBedTariff({ bedId, floorId, wardClass, comfortTier, sharingType }) {
     let bed = null;
     if (bedId) {
-      bed = await BedMaster.findById(bedId).populate('floorId').lean();
+      bed = await BedMaster.findById(bedId).populate('floorId').populate('roomId').lean();
     }
 
     const resolvedWardClass = wardClass || bed?.wardClass || 'GENERAL_WARD';
@@ -68,9 +75,11 @@ class IPDBillingService {
       };
     }
 
+    // 3-Tier Pricing Hierarchy: Bed Daily Rate Override > Room Base Tariff > Institutional Master Tariff
+    const roomBaseTariff = bed?.roomId?.baseTariff;
     const dailyRate = bed?.dailyRateOverride != null && bed.dailyRateOverride > 0
       ? bed.dailyRateOverride
-      : tariff.dailyRate;
+      : (roomBaseTariff != null && roomBaseTariff > 0 ? roomBaseTariff : tariff.dailyRate);
 
     const hourlyRate = bed?.hourlyRateOverride != null && bed.hourlyRateOverride > 0
       ? bed.hourlyRateOverride
@@ -90,7 +99,11 @@ class IPDBillingService {
       sharingType: resolvedSharingType,
       floorId: resolvedFloorId,
       ruleId: tariff.ruleId || null,
-      explanation: tariff.explanation,
+      explanation: bed?.dailyRateOverride != null && bed.dailyRateOverride > 0
+        ? 'Bed Point-of-Care Daily Rate Override'
+        : (roomBaseTariff != null && roomBaseTariff > 0
+            ? 'Inherited from Room Base Tariff'
+            : tariff.explanation),
     };
   }
 
@@ -167,9 +180,27 @@ class IPDBillingService {
       totalStayHours += rawHours;
     }
 
+    const totalDays = segments.reduce((sum, s) => sum + (s.fullDays || 0), 0);
+    const totalRemainingHours = segments.reduce((sum, s) => sum + (s.billableRemainingHours || 0), 0);
+    const activeSegment = segments.find((s) => s.isActive) || segments[segments.length - 1] || null;
+    const dominantDailyRate = activeSegment ? activeSegment.dailyRate : (segments[0]?.dailyRate || 0);
+
+    const stayDurationFormatted = totalDays > 0 && totalRemainingHours > 0
+      ? `${totalDays} Days, ${totalRemainingHours} Hours`
+      : totalDays > 0
+      ? `${totalDays} Days`
+      : `${totalRemainingHours} Hours`;
+
     return {
       totalBedStayAmount,
       totalStayHours: parseFloat(totalStayHours.toFixed(1)),
+      billableDays: totalDays,
+      billableRemainingHours: totalRemainingHours,
+      dailyRate: dominantDailyRate,
+      stayDurationFormatted,
+      activeBedLabel: activeSegment?.bedLabel || 'Bed',
+      activeWardClass: activeSegment?.wardClass || 'Standard',
+      activeFloorName: activeSegment?.floorName || 'Floor 1',
       segments,
     };
   }
@@ -199,28 +230,58 @@ class IPDBillingService {
     // 1. Calculate live bed occupancy charges
     const bedChargesData = await this.calculateBedOccupancyCharges(admission._id);
 
-    // 2. Fetch all advance deposit receipts
+    // 2. Fetch all advance deposit receipts and reconcile with bill.payments
     const deposits = await AdvanceDeposit.find({ admissionId: admission._id })
       .populate('collectedBy', 'firstName lastName employeeId')
       .sort({ createdAt: -1 })
       .lean();
 
-    const totalDeposits = deposits.reduce((sum, d) => sum + (d.isRefunded ? 0 : d.amount), 0);
+    let totalDeposits = deposits.reduce((sum, d) => sum + (d.isRefunded ? 0 : d.amount), 0);
+
+    // Reconcile advance payments recorded in Bill.payments
+    const billAdvancePayments = (bill?.payments || []).filter(
+      (p) => p.reference && /DEPOSIT/i.test(p.reference)
+    );
+    const billAdvanceSum = billAdvancePayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    totalDeposits = Math.max(totalDeposits, billAdvanceSum, bill?.advanceCollected || 0);
+
+    // Regular counter / desk collections (excluding advance deposits)
+    const billDeskPayments = (bill?.payments || []).filter(
+      (p) => !p.reference || !/DEPOSIT/i.test(p.reference)
+    );
+    const billDeskSum = billDeskPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    // If payments array had desk payments, use billDeskSum. Otherwise, fallback to (bill.collectedAmount - advance)
+    const totalDeskPayments = billDeskSum > 0
+      ? billDeskSum
+      : Math.max(0, (bill?.collectedAmount || 0) - (billAdvanceSum > 0 ? billAdvanceSum : (bill?.advanceCollected || 0)));
+
+    const totalCollected = totalDeposits + totalDeskPayments;
 
     // 3. Itemize charges from existing Bill lineItems
     const rawLineItems = bill?.lineItems || [];
-    const otherCharges = rawLineItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+    const otherCharges = rawLineItems
+      .filter((i) => i.category !== 'BED_CHARGES')
+      .reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+    const existingBilledBedCharges = rawLineItems
+      .filter((i) => i.category === 'BED_CHARGES')
+      .reduce((sum, item) => sum + (item.lineTotal || 0), 0);
+
+    // Bed charges are dynamically calculated live until finalization, OR taken from existing finalized lineItems
+    const effectiveBedStay = (bill && bill.status === 'FINALIZED' && existingBilledBedCharges > 0)
+      ? existingBilledBedCharges
+      : bedChargesData.totalBedStayAmount;
 
     // Combined Gross Billed Amount (Live Bed Stay + Other Clinical Charges)
-    const totalGrossBilled = otherCharges + bedChargesData.totalBedStayAmount;
+    const totalGrossBilled = otherCharges + effectiveBedStay;
     const discountAmount = bill ? (bill.discountAmount || 0) : 0;
-    const netPayable = Math.max(0, totalGrossBilled - discountAmount);
-    const outstandingDue = Math.max(0, netPayable - totalDeposits);
-    const excessCredit = Math.max(0, totalDeposits - netPayable);
+    const adjustedAmount = bill ? (bill.adjustedAmount || 0) : 0;
+    const netPayable = Math.max(0, totalGrossBilled - discountAmount - adjustedAmount);
+    const outstandingDue = Math.max(0, netPayable - totalCollected);
+    const excessCredit = Math.max(0, totalCollected - netPayable);
 
     // Category breakdown
     const categoryBreakdown = {
-      BED_CHARGES: bedChargesData.totalBedStayAmount,
+      BED_CHARGES: effectiveBedStay,
       PHARMACY: rawLineItems.filter(i => i.category === 'PHARMACY').reduce((sum, i) => sum + i.lineTotal, 0),
       DIAGNOSTICS: rawLineItems.filter(i => i.category === 'DIAGNOSTICS').reduce((sum, i) => sum + i.lineTotal, 0),
       PROCEDURE: rawLineItems.filter(i => i.category === 'PROCEDURE').reduce((sum, i) => sum + i.lineTotal, 0),
@@ -238,16 +299,27 @@ class IPDBillingService {
       financialSummary: {
         totalGrossBilled,
         otherCharges,
-        bedStayCharges: bedChargesData.totalBedStayAmount,
+        bedStayCharges: effectiveBedStay,
         totalStayHours: bedChargesData.totalStayHours,
         discountAmount,
+        adjustedAmount,
         netPayable,
         totalAdvanceDeposited: totalDeposits,
+        totalDeskPayments,
+        totalCollected,
         outstandingDue,
         excessCredit,
         status: bill ? bill.status : 'OPEN',
+        isSettled: outstandingDue <= 0 && bill?.status === 'FINALIZED',
       },
     };
+  }
+
+  /**
+   * Authoritative alias for getRunningLedger to maintain cross-module API stability.
+   */
+  async getLedgerSummary(admissionId) {
+    return this.getRunningLedger(admissionId);
   }
 
   /**
@@ -260,36 +332,33 @@ class IPDBillingService {
       if (existing) return existing;
     }
 
-    const session = await mongoose.startSession();
-    session.startTransaction({
-      readConcern: { level: 'snapshot' },
-      writeConcern: { w: 'majority' },
-    });
-
-    try {
-      const admission = await IPDAdmission.findById(admissionId).session(session);
+    return await withTransaction(async (session) => {
+      const sessionOpts = session ? { session } : {};
+      const admission = await IPDAdmission.findById(admissionId).session(session || null);
       if (!admission) throw new AppError('Inpatient admission not found', 404, 'NOT_FOUND');
 
-      const count = await AdvanceDeposit.countDocuments({ admissionId }).session(session);
+      const count = await AdvanceDeposit.countDocuments({ admissionId }).session(session || null);
       const seq = String(count + 1).padStart(2, '0');
       const receiptNumber = `DEP-${admission.admissionNumber}-${seq}`;
 
+      const depositPayload = {
+        admissionId: admission._id,
+        patientId: admission.patientId,
+        receiptNumber,
+        amount: parseFloat(depositData.amount),
+        paymentMethod: depositData.paymentMethod || 'UPI',
+        transactionReference: depositData.transactionReference || '',
+        depositType: depositData.depositType || 'ADMISSION_ADVANCE',
+        collectedBy: staffId,
+        notes: depositData.notes || '',
+      };
+      if (depositData.idempotencyKey && typeof depositData.idempotencyKey === 'string' && depositData.idempotencyKey.trim()) {
+        depositPayload.idempotencyKey = depositData.idempotencyKey.trim();
+      }
+
       const depositDocs = await AdvanceDeposit.create(
-        [
-          {
-            admissionId: admission._id,
-            patientId: admission.patientId,
-            receiptNumber,
-            amount: parseFloat(depositData.amount),
-            paymentMethod: depositData.paymentMethod || 'UPI',
-            transactionReference: depositData.transactionReference || '',
-            depositType: depositData.depositType || 'ADMISSION_ADVANCE',
-            idempotencyKey: depositData.idempotencyKey || null,
-            collectedBy: staffId,
-            notes: depositData.notes || '',
-          },
-        ],
-        { session }
+        [depositPayload],
+        sessionOpts
       );
       const deposit = depositDocs[0];
 
@@ -300,21 +369,27 @@ class IPDBillingService {
           {
             $inc: { advanceCollected: deposit.amount },
           },
-          { session }
+          sessionOpts
         );
       }
 
-      await session.commitTransaction();
-      session.endSession();
-
       return deposit;
-    } catch (err) {
-      if (session.inTransaction()) {
-        await session.abortTransaction();
-      }
-      session.endSession();
-      throw err;
-    }
+    });
+
+    try {
+      const ledger = await this.getRunningLedger(admissionId);
+      broadcastIPDLedgerUpdate({
+        admissionId,
+        patientId: deposit.patientId,
+        eventType: 'ADVANCE_DEPOSIT_RECORDED',
+        depositId: deposit._id,
+        receiptNumber: deposit.receiptNumber,
+        amount: deposit.amount,
+        financialSummary: ledger?.financialSummary,
+      });
+    } catch (_) {}
+
+    return deposit;
   }
 
   async getAdvanceDeposits(admissionId) {
@@ -330,8 +405,8 @@ class IPDBillingService {
       .populate('currentBedId')
       .populate('primaryDoctorId');
 
-    if (!admission || admission.status !== 'ADMITTED') {
-      return { success: false, message: 'Patient not currently admitted' };
+    if (!admission || admission.status !== 'ADMITTED' || admission.status === 'DISCHARGE_INITIATED' || admission.status === 'DISCHARGED') {
+      return { success: false, message: 'Patient discharge already initiated or completed; recurring daily charges suspended' };
     }
 
     const bed = admission.currentBedId;
@@ -343,6 +418,9 @@ class IPDBillingService {
       bill = await Bill.findOne({ patientId: admission.patientId, visitType: 'IPD', status: 'OPEN' });
     }
     if (!bill) return { success: false, message: 'No open bill found for admission' };
+    if (bill.status === 'FINALIZED') {
+      return { success: false, message: 'Inpatient bill has already been finalized; no recurring charges can be appended' };
+    }
 
     const newLineItems = [];
     const addedByStaff = staffId || admission.primaryDoctorId?._id || admission.admittedBy;
@@ -424,6 +502,16 @@ class IPDBillingService {
     bill.outstandingAmount = Math.max(0, bill.billedAmount - (bill.advanceCollected || 0) - (bill.collectedAmount || 0) - (bill.adjustedAmount || 0));
     await bill.save();
 
+    try {
+      const ledger = await this.getRunningLedger(admissionId);
+      broadcastIPDLedgerUpdate({
+        admissionId,
+        patientId: admission.patientId,
+        eventType: 'CHARGES_INGESTED',
+        financialSummary: ledger?.financialSummary,
+      });
+    } catch (_) {}
+
     return {
       success: true,
       chargesAdded: newLineItems.length,
@@ -433,17 +521,41 @@ class IPDBillingService {
   }
 
   /**
+   * Append a single service line item (e.g., diagnostic order or medication) to the active IPD Bill.
+   */
+  async addBillLineItem(billId, itemData) {
+    const bill = await Bill.findById(billId);
+    if (!bill || bill.status !== 'OPEN') return null;
+    bill.lineItems.push(itemData);
+    bill.billedAmount = (bill.billedAmount || 0) + (itemData.lineTotal || 0);
+    bill.outstandingAmount = Math.max(0, bill.billedAmount - (bill.advanceCollected || 0) - (bill.collectedAmount || 0) - (bill.adjustedAmount || 0));
+    const saved = await bill.save();
+
+    if (bill.admissionId) {
+      try {
+        const ledger = await this.getRunningLedger(bill.admissionId);
+        broadcastIPDLedgerUpdate({
+          admissionId: bill.admissionId,
+          patientId: bill.patientId,
+          eventType: 'LINE_ITEM_ADDED',
+          financialSummary: ledger?.financialSummary,
+        });
+      } catch (_) {}
+    }
+
+    return saved;
+  }
+
+  /**
    * Finalize settlement and close bill during discharge.
    */
   async finalizeSettlement(admissionId, settlementData, staffId) {
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
-    try {
-      const admission = await IPDAdmission.findById(admissionId).session(session);
+    return await withTransaction(async (session) => {
+      const sessionOpts = session ? { session } : {};
+      const admission = await IPDAdmission.findById(admissionId).session(session || null);
       if (!admission) throw new AppError('Admission not found', 404, 'NOT_FOUND');
 
-      let bill = await Bill.findById(admission.billId).session(session);
+      let bill = await Bill.findById(admission.billId).session(session || null);
       if (!bill) throw new AppError('Inpatient bill not found', 404, 'NOT_FOUND');
 
       // 1. Calculate final bed stay charges and append to bill lineItems
@@ -465,7 +577,7 @@ class IPDBillingService {
       const totalBilled = bill.lineItems.reduce((sum, item) => sum + item.lineTotal, 0);
       bill.billedAmount = totalBilled;
 
-      const deposits = await AdvanceDeposit.find({ admissionId: admission._id }).session(session);
+      const deposits = await AdvanceDeposit.find({ admissionId: admission._id }).session(session || null);
       const totalDeposits = deposits.reduce((sum, d) => sum + (d.isRefunded ? 0 : d.amount), 0);
       bill.advanceCollected = totalDeposits;
 
@@ -506,7 +618,7 @@ class IPDBillingService {
       bill.finalizedBy = staffId;
       bill.finalizedAt = new Date();
 
-      await bill.save({ session });
+      await bill.save(sessionOpts);
 
       // Mark billing clearance
       const IPDClearance = require('../discharge/ipd-clearance.model');
@@ -520,24 +632,30 @@ class IPDBillingService {
             'billingClearance.notes': `Settled in full (Bill #${bill.billNumber})`,
           },
         },
-        { session }
+        sessionOpts
       );
-
-      await session.commitTransaction();
-      session.endSession();
 
       return {
         success: true,
         message: 'Final settlement processed and bill finalized successfully',
         bill,
       };
-    } catch (err) {
-      if (session.inTransaction()) {
-        await session.abortTransaction();
-      }
-      session.endSession();
-      throw err;
-    }
+    });
+
+    try {
+      broadcastIPDLedgerUpdate({
+        admissionId,
+        eventType: 'SETTLEMENT_FINALIZED',
+        isSettled: true,
+        outstandingDue: 0,
+        status: 'FINALIZED',
+        totalGrossBilled: result.bill?.billedAmount,
+        totalAdvanceDeposited: result.bill?.advanceCollected,
+        billNumber: result.bill?.billNumber,
+      });
+    } catch (_) {}
+
+    return result;
   }
 }
 

@@ -8,6 +8,7 @@ import {
 } from '../../components/md3/Md3Widgets';
 import { Md3Button } from '../../components/md3/Md3FormComponents';
 import LabStatusChip from './LabStatusChip';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './SpecimenTracker.css';
 
 const SAMPLE_STAGE_STYLE = {
@@ -118,6 +119,16 @@ const SpecimenTracker = ({
                             {order._mrn && order._mrn !== '—' && (
                               <span className="specimen-tracker__mrn-tag">{order._mrn}</span>
                             )}
+                            {order._gender && (
+                              <span
+                                className={`specimen-tracker__gender-tag specimen-tracker__gender-tag--${(order._gender || '').toLowerCase().startsWith('f') ? 'female' : 'male'}`}
+                              >
+                                <span className="material-symbols-rounded" style={{ fontSize: 13 }}>
+                                  {(order._gender || '').toLowerCase().startsWith('f') ? 'female' : 'male'}
+                                </span>
+                                <span>{(order._gender || '').toLowerCase().startsWith('f') ? 'Female' : (order._gender || '').toLowerCase().startsWith('m') ? 'Male' : order._gender}</span>
+                              </span>
+                            )}
                             {order._bloodGroup && (
                               <span className="specimen-tracker__blood-tag">{order._bloodGroup}</span>
                             )}
@@ -171,13 +182,13 @@ const SpecimenTracker = ({
                       </ul>
                     ) : (
                       <span className="specimen-tracker__ordered-by">
-                        Ordered by {order._orderedBy ? (order._orderedBy.startsWith('Dr.') ? order._orderedBy : `Dr. ${order._orderedBy}`) : (order.requestedBy || order.orderedBy || 'Attending Physician')}
+                        Ordered by {formatDoctorName(order._orderedBy || order.requestedBy || order.orderedBy || 'Attending Physician')}
                       </span>
                     )}
 
                     {order.sampleCollectedAt && (
                       <span className="specimen-tracker__timestamp">
-                        <Icon.Clock />
+                        <span className="material-symbols-rounded">schedule</span>
                         <span>Collected {formatDateTime(order.sampleCollectedAt)}</span>
                       </span>
                     )}
@@ -193,7 +204,7 @@ const SpecimenTracker = ({
                         loading={isCollecting}
                         loadingText="Collecting…"
                       >
-                        <Icon.Beaker />
+                        <span className="material-symbols-rounded">science</span>
                         <span>Collect sample</span>
                       </Md3Button>
                     </div>

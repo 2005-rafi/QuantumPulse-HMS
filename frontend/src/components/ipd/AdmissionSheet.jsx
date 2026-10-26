@@ -9,10 +9,12 @@ import { Md3BedComfortBadge } from '../md3/Md3BedComfortBadge';
 import api from '../../services/api';
 import ipdApi from '../../services/ipdApi';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import { formatDoctorName } from '../../utils/patientFormatters';
 import './BedDetailDrawer.css';
 
 export const AdmissionSheet = ({
   bed,
+  initialAdvice,
   onClose,
   onSuccess,
 }) => {
@@ -22,6 +24,7 @@ export const AdmissionSheet = ({
 
   const [searchPatient, setSearchPatient] = useState('');
   const [selectedPatientId, setSelectedPatientId] = useState('');
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const [primaryDoctorId, setPrimaryDoctorId] = useState('');
   const [admittingDepartmentId, setAdmittingDepartmentId] = useState('');
   const [admissionType, setAdmissionType] = useState('PLANNED');
@@ -37,6 +40,67 @@ export const AdmissionSheet = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Prefill when doctor advice is provided
+  useEffect(() => {
+    if (initialAdvice) {
+      const p = initialAdvice.patientId;
+      if (p) {
+        setSelectedPatientId(p._id || p);
+        setSelectedPatient(p);
+        setSearchPatient(`${p.firstName || ''} ${p.lastName || ''} (MRN: ${p.mrn || ''})`.trim());
+      }
+      const advice = initialAdvice.ipdAdmissionAdvice || {};
+      const docId =
+        advice.suggestedSurgeonId?._id ||
+        advice.suggestedSurgeonId ||
+        advice.advisingDoctorId?._id ||
+        advice.advisingDoctorId ||
+        initialAdvice.consultation?.doctorId?._id ||
+        initialAdvice.consultation?.doctorId;
+      if (docId) setPrimaryDoctorId(docId);
+      const deptId = initialAdvice.departmentId?._id || initialAdvice.departmentId;
+      if (deptId) setAdmittingDepartmentId(deptId);
+      if (advice.admissionType) setAdmissionType(advice.admissionType);
+      if (advice.provisionalDiagnosis || initialAdvice.consultation?.diagnosis) {
+        setProvisionalDiagnosis(advice.provisionalDiagnosis || initialAdvice.consultation?.diagnosis || '');
+      }
+      if (advice.chiefComplaints || initialAdvice.consultation?.chiefComplaint) {
+        setChiefComplaints(advice.chiefComplaints || initialAdvice.consultation?.chiefComplaint || '');
+      }
+      if (advice.dietTier) setDietTier(advice.dietTier);
+    }
+  }, [initialAdvice]);
+
+  // Gender compatibility helper
+  const checkBedGenderMatch = (p, b) => {
+    if (!p || !b) return { isMatch: true };
+    const pGender = (p.gender || '').toUpperCase();
+    if (!pGender || pGender === 'OTHER' || pGender === 'NON_BINARY' || pGender === 'TRANSGENDER' || pGender === 'UNKNOWN') {
+      return { isMatch: true };
+    }
+    const rawRestriction = (b.genderRestriction || b.roomId?.genderRestriction || b.room?.genderRestriction || 'UNRESTRICTED').toUpperCase();
+    const bedLabel = (b.bedLabel || b.bedNumber || '').toUpperCase();
+
+    const isFemaleWard = rawRestriction === 'FEMALE_ONLY' || rawRestriction === 'FEMALE' || bedLabel.includes('FEMALE') || bedLabel.startsWith('F-');
+    const isMaleWard = rawRestriction === 'MALE_ONLY' || rawRestriction === 'MALE' || (bedLabel.includes('MALE') && !bedLabel.includes('FEMALE')) || bedLabel.startsWith('M-');
+
+    if (isFemaleWard && pGender !== 'FEMALE') {
+      return {
+        isMatch: false,
+        reason: `Bed "${b.bedLabel || b.bedNumber}" is in a Female-only ward. Cannot assign Male patient (${p.gender}).`,
+      };
+    }
+    if (isMaleWard && pGender !== 'MALE') {
+      return {
+        isMatch: false,
+        reason: `Bed "${b.bedLabel || b.bedNumber}" is in a Male-only ward. Cannot assign Female patient (${p.gender}).`,
+      };
+    }
+    return { isMatch: true };
+  };
+
+  const genderWarning = selectedPatient ? checkBedGenderMatch(selectedPatient, bed) : { isMatch: true };
 
   // Fetch Authoritative Bed Tariff on load
   useEffect(() => {
@@ -63,7 +127,7 @@ export const AdmissionSheet = ({
           setTariffLoading(false);
         });
     }
-  }, [bed]);
+  }, [bed?._id]);
 
   // Fetch initial master data
   useEffect(() => {
@@ -128,25 +192,47 @@ export const AdmissionSheet = ({
       return;
     }
 
+    if (!genderWarning.isMatch) {
+      setError(genderWarning.reason);
+      return;
+    }
+
     setLoading(true);
     setError('');
 
     try {
-      const payload = {
-        patientId: selectedPatientId,
-        primaryDoctorId,
-        admittingDepartmentId,
-        bedId: bed._id,
-        admissionType,
-        provisionalDiagnosis: provisionalDiagnosis.trim(),
-        chiefComplaints: chiefComplaints.trim(),
-        dietTier,
-        initialDepositAmount: initialDepositAmount ? parseFloat(initialDepositAmount) : 0,
-        paymentMethod,
-        transactionReference: transactionReference.trim(),
-      };
-
-      await ipdApi.admitPatient(payload);
+      if (initialAdvice?._id) {
+        const payload = {
+          visitId: initialAdvice._id,
+          bedId: bed._id,
+          primaryDoctorId,
+          admittingDepartmentId,
+          admissionType,
+          provisionalDiagnosis: provisionalDiagnosis.trim(),
+          chiefComplaints: chiefComplaints.trim(),
+          carePlan: (initialAdvice.ipdAdmissionAdvice?.carePlan || initialAdvice.consultation?.treatmentPlan || '').trim(),
+          dietTier,
+          initialDepositAmount: initialDepositAmount ? parseFloat(initialDepositAmount) : 0,
+          paymentMethod,
+          transactionReference: transactionReference.trim(),
+        };
+        await ipdApi.convertFromOpd(payload);
+      } else {
+        const payload = {
+          patientId: selectedPatientId,
+          primaryDoctorId,
+          admittingDepartmentId,
+          bedId: bed._id,
+          admissionType,
+          provisionalDiagnosis: provisionalDiagnosis.trim(),
+          chiefComplaints: chiefComplaints.trim(),
+          dietTier,
+          initialDepositAmount: initialDepositAmount ? parseFloat(initialDepositAmount) : 0,
+          paymentMethod,
+          transactionReference: transactionReference.trim(),
+        };
+        await ipdApi.admitPatient(payload);
+      }
       setLoading(false);
       onSuccess && onSuccess();
       onClose();
@@ -173,8 +259,8 @@ export const AdmissionSheet = ({
               Allocating {bed.bedLabel} ({bed.wardClass})
             </span>
           </div>
-          <button type="button" className="ipd-drawer-close-btn" onClick={onClose}>
-            ✕
+          <button type="button" className="ipd-drawer-close-btn" onClick={onClose} aria-label="Close sheet">
+            <span className="material-symbols-rounded">close</span>
           </button>
         </div>
 
@@ -193,6 +279,80 @@ export const AdmissionSheet = ({
             </div>
           )}
 
+          {/* Doctor Admission Advice Banner */}
+          {initialAdvice && (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderRadius: '12px',
+                background: 'var(--md-sys-color-secondary-container, #e8f0fe)',
+                border: '1px solid var(--md-sys-color-outline-variant, #b6c4e2)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '6px',
+                fontSize: '0.82rem',
+                color: 'var(--md-sys-color-on-secondary-container, #041e49)',
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary)' }}>
+                    assignment
+                  </span>
+                  Doctor Inpatient Advice #{initialAdvice.visitNumber || ''}
+                </strong>
+                <span
+                  style={{
+                    padding: '2px 8px',
+                    borderRadius: '9999px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    background:
+                      initialAdvice.ipdAdmissionAdvice?.urgency === 'EMERGENCY_STAT'
+                        ? '#fee2e2'
+                        : initialAdvice.ipdAdmissionAdvice?.urgency === 'URGENT'
+                        ? '#fef3c7'
+                        : '#e0f2fe',
+                    color:
+                      initialAdvice.ipdAdmissionAdvice?.urgency === 'EMERGENCY_STAT'
+                        ? '#991b1b'
+                        : initialAdvice.ipdAdmissionAdvice?.urgency === 'URGENT'
+                        ? '#92400e'
+                        : '#075985',
+                  }}
+                >
+                  {initialAdvice.ipdAdmissionAdvice?.urgency || 'ROUTINE'}
+                </span>
+              </div>
+              <div>
+                <span>Advising Physician: </span>
+                <strong>
+                  {formatDoctorName(initialAdvice.ipdAdmissionAdvice?.advisingDoctorId)}
+                </strong>
+              </div>
+              {initialAdvice.ipdAdmissionAdvice?.suggestedSurgeonId && (
+                <div>
+                  <span>Suggested Surgeon: </span>
+                  <strong>
+                    {formatDoctorName(initialAdvice.ipdAdmissionAdvice.suggestedSurgeonId)}
+                    {initialAdvice.ipdAdmissionAdvice.suggestedSurgeonId.specialization
+                      ? ` (${initialAdvice.ipdAdmissionAdvice.suggestedSurgeonId.specialization})`
+                      : ''}
+                  </strong>
+                </div>
+              )}
+              {initialAdvice.ipdAdmissionAdvice?.otSessionId && (
+                <div>
+                  <span>Associated Surgical Procedure: </span>
+                  <strong>
+                    {initialAdvice.ipdAdmissionAdvice.otSessionId.procedureName} (
+                    {initialAdvice.ipdAdmissionAdvice.otSessionId.surgeryType})
+                  </strong>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Dynamic Bed Tariff Banner */}
           <div
             style={{
@@ -202,23 +362,35 @@ export const AdmissionSheet = ({
               border: '1px solid var(--md-sys-color-outline-variant, #c0c9c4)',
               display: 'flex',
               flexDirection: 'column',
-              gap: '6px',
+              gap: '8px',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--md-sys-color-primary)' }}>
-                Authoritative Bed Tariff
-              </span>
-              {tariffLoading ? (
-                <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>Resolving...</span>
-              ) : (
-                <span style={{ fontSize: '0.75rem', color: 'var(--md-sys-color-outline)' }}>
-                  {resolvedTariff?.explanation || 'Active Pricing Policy'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-primary, #006874)' }}>
+                  hotel
+                </span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--md-sys-color-on-surface)' }}>
+                  {tariffLoading ? 'Resolving Institutional Tariff...' : (resolvedTariff?.explanation || 'Inpatient Bed Tariff Policy')}
+                </span>
+              </div>
+              {resolvedTariff?.policyBadge && (
+                <span style={{
+                  fontSize: '0.6875rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  padding: '2px 8px',
+                  borderRadius: '9999px',
+                  background: 'var(--md-sys-color-surface-container-high, #e6eded)',
+                  color: 'var(--md-sys-color-on-surface-variant, #3f484a)',
+                  border: '1px solid var(--md-sys-color-outline-variant, rgba(0,0,0,0.08))'
+                }}>
+                  {resolvedTariff.policyBadge}
                 </span>
               )}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '4px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
               <div style={{ background: 'var(--md-sys-color-surface, #ffffff)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--md-sys-color-outline-variant, #e0e0e0)' }}>
                 <span style={{ fontSize: '0.7rem', color: 'var(--md-sys-color-outline)', display: 'block' }}>Daily Rate</span>
                 <strong style={{ fontSize: '0.92rem', color: 'var(--md-sys-color-primary)' }}>
@@ -240,6 +412,12 @@ export const AdmissionSheet = ({
                 </strong>
               </div>
             </div>
+
+            {resolvedTariff?.instructionNote && (
+              <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--md-sys-color-on-surface-variant)', opacity: 0.9 }}>
+                {resolvedTariff.instructionNote}
+              </p>
+            )}
           </div>
 
           {/* 1. Patient Selection */}
@@ -268,6 +446,7 @@ export const AdmissionSheet = ({
                     key={p._id}
                     onClick={() => {
                       setSelectedPatientId(p._id);
+                      setSelectedPatient(p);
                       setSearchPatient(`${p.firstName} ${p.lastName || ''} (MRN: ${p.mrn})`);
                       setPatients([]);
                     }}
@@ -284,6 +463,29 @@ export const AdmissionSheet = ({
                 ))}
               </div>
             )}
+
+            {selectedPatient && !genderWarning.isMatch && (
+              <div
+                style={{
+                  marginTop: '10px',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  background: '#fdf2f8',
+                  border: '1.5px solid #fbcfe8',
+                  color: '#9d174d',
+                  fontSize: '0.8125rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                }}
+                role="alert"
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '18px', flexShrink: 0, color: '#be185d' }}>
+                  lock
+                </span>
+                <span><strong>Gender Restriction:</strong> {genderWarning.reason}</span>
+              </div>
+            )}
           </div>
 
           {/* 2. Clinical Care Team & Diagnosis */}
@@ -297,7 +499,7 @@ export const AdmissionSheet = ({
               >
                 {doctors.map((d) => (
                   <option key={d._id} value={d._id}>
-                    Dr. {d.firstName} {d.lastName} ({d.position || 'Consultant'})
+                    {formatDoctorName(d)} ({d.position || 'Consultant'})
                   </option>
                 ))}
               </Md3Select>

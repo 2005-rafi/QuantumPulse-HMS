@@ -1,0 +1,635 @@
+/* ==========================================================================
+   admin-responsive-metrics.css
+   Centralized Design Tokens & Sizing Metrics for Admin Module Components
+   Desktop (>= 1024px) | Tablet (641px - 1023px) | Mobile (<= 640px)
+   ========================================================================== */
+
+:root {
+  /* ── 1. Desktop Standard Sizing Tier (>= 1024px) ── */
+  --admin-header-title-size: 1.5rem;
+  --admin-header-subtitle-size: 0.875rem;
+  --admin-header-gap: 12px;
+
+  --admin-section-gap: 20px;
+  --admin-grid-gap: 12px;
+  --admin-card-border-radius: 14px;
+  --admin-card-border-radius-large: 20px;
+
+  /* KPI Bento Grid */
+  --admin-kpi-grid-cols: repeat(5, minmax(0, 1fr));
+  --admin-kpi-card-min-height: 96px;
+  --admin-kpi-card-padding: 12px 14px;
+  --admin-kpi-label-size: 0.72rem;
+  --admin-kpi-value-size: 1.625rem;
+  --admin-kpi-footer-size: 0.72rem;
+  --admin-kpi-icon-size: 18px;
+  --admin-kpi-icon-padding: 5px;
+
+  /* Live Patient Workflow Hub */
+  --admin-workflow-card-padding: 20px;
+  --admin-workflow-header-title-size: 1.15rem;
+  --admin-workflow-header-sub-size: 0.8125rem;
+  --admin-workflow-track-padding: 14px 16px;
+  --admin-workflow-stage-padding: 10px 12px;
+  --admin-workflow-stage-min-height: 80px;
+  --admin-workflow-stage-val-size: 1.35rem;
+  --admin-workflow-stage-title-size: 0.78rem;
+  --admin-workflow-stage-desc-size: 0.7rem;
+
+  /* Department & Staff Cards */
+  --admin-dept-card-padding: 12px 14px;
+  --admin-dept-name-size: 0.875rem;
+  --admin-dept-icon-size: 38px;
+
+  /* Velocity & Insight Meters */
+  --admin-insight-card-padding: 22px;
+  --admin-velocity-info-size: 0.8125rem;
+
+  /* ── Clinical & Surgical Command Deck Metrics (Desktop >= 1024px) ── */
+  --clinical-deck-padding: 10px 16px;
+  --clinical-deck-icon-size: 36px;
+  --clinical-deck-title-size: 1.15rem;
+  --clinical-deck-sub-size: 0.8rem;
+
+  --clinical-kpi-grid-cols: repeat(5, minmax(0, 1fr));
+  --clinical-kpi-min-height: 68px;
+  --clinical-kpi-padding: 8px 12px;
+  --clinical-kpi-val-size: 1.25rem;
+  --clinical-kpi-label-size: 0.68rem;
+  --clinical-kpi-icon-size: 32px;
+
+  --clinical-suite-padding: 12px 14px;
+  --clinical-suite-grid-cols: repeat(auto-fill, minmax(320px, 1fr));
+  --clinical-proc-padding: 12px 14px;
+  --clinical-proc-grid-cols: repeat(auto-fill, minmax(340px, 1fr));
+  --clinical-tab-padding: 6px 14px;
+  --clinical-tab-font-size: 0.8125rem;
+
+  /* Billing & Financial Desk Metrics (Desktop) */
+  --billing-header-padding: 10px 16px;
+  --billing-icon-size: 36px;
+  --billing-title-size: 1.05rem;
+  --billing-subtitle-size: 0.74rem;
+
+  --billing-kpi-columns: repeat(4, minmax(0, 1fr));
+  --billing-kpi-min-height: 72px;
+  --billing-kpi-padding: 10px 14px;
+  --billing-kpi-val-size: 1.35rem;
+  --billing-kpi-label-size: 0.70rem;
+
+  --billing-card-padding: 14px 16px;
+  --billing-card-radius: 14px;
+  --billing-table-font-size: 0.82rem;
+  --billing-table-padding: 8px 10px;
+
+  /* Print Template Designer Tokens (Desktop) */
+  --template-card-padding: 16px 20px;
+  --template-header-size: 1.05rem;
+  --template-section-title-size: 0.95rem;
+  --template-section-sub-size: 0.76rem;
+  --template-badge-size: 0.68rem;
+
+  /* ── Universal Directory Action & Toolbar Tokens (Desktop >= 1024px) ── */
+  --admin-toolbar-gap: 12px;
+  --admin-search-width: 280px;
+  --admin-btn-height: 38px;
+  --admin-btn-padding: 0 16px;
+  --admin-btn-font-size: 0.8125rem;
+  --admin-btn-icon-size: 18px;
+  --admin-toggle-height: 38px;
+  --admin-toggle-btn-height: 32px;
+  --admin-toggle-font-size: 0.78rem;
+  --admin-filter-chip-padding: 6px 14px;
+  --admin-filter-chip-font-size: 0.75rem;
+
+  --admin-card-header-avatar-size: 34px;
+  --admin-card-header-title-size: 0.88rem;
+  --admin-card-header-sub-size: 0.72rem;
+  --admin-card-badge-size: 0.65rem;
+  --admin-card-action-btn-height: 28px;
+  --admin-card-action-btn-font-size: 0.70rem;
+  --admin-card-action-btn-padding: 0 8px;
+
+  /* ── Facility & Spatial Bed Management Tokens (Desktop >= 1024px) ── */
+  --facility-kpi-grid-cols: repeat(5, minmax(0, 1fr));
+  --facility-kpi-min-height: 72px;
+  --facility-kpi-padding: 12px 16px;
+  --facility-kpi-val-size: 1.35rem;
+  --facility-kpi-label-size: 0.72rem;
+  --facility-kpi-icon-size: 38px;
+  --facility-room-card-padding: 14px;
+  --facility-bed-slot-size: 48px;
+}
+
+/* ── 2. Tablet Responsive Sizing Tier (641px - 1023px) ── */
+@media (max-width: 1023px) {
+  :root {
+    --admin-header-title-size: 1.25rem;
+    --admin-header-subtitle-size: 0.78rem;
+    --admin-header-gap: 8px;
+
+    --admin-section-gap: 14px;
+    --admin-grid-gap: 10px;
+    --admin-card-border-radius: 12px;
+    --admin-card-border-radius-large: 16px;
+
+    /* KPI Bento Grid: 4 columns on large tablet */
+    --admin-kpi-grid-cols: repeat(4, minmax(0, 1fr));
+    --admin-kpi-card-min-height: 76px;
+    --admin-kpi-card-padding: 8px 10px;
+    --admin-kpi-label-size: 0.65rem;
+    --admin-kpi-value-size: 1.35rem;
+    --admin-kpi-footer-size: 0.65rem;
+    --admin-kpi-icon-size: 16px;
+    --admin-kpi-icon-padding: 4px;
+
+    /* Live Patient Workflow Hub */
+    --admin-workflow-card-padding: 14px 12px;
+    --admin-workflow-header-title-size: 1.05rem;
+    --admin-workflow-header-sub-size: 0.75rem;
+    --admin-workflow-track-padding: 10px 12px;
+    --admin-workflow-stage-padding: 8px 10px;
+    --admin-workflow-stage-min-height: 68px;
+    --admin-workflow-stage-val-size: 1.18rem;
+    --admin-workflow-stage-title-size: 0.72rem;
+    --admin-workflow-stage-desc-size: 0.64rem;
+
+    /* Department & Staff Cards */
+    --admin-dept-card-padding: 10px 12px;
+    --admin-dept-name-size: 0.8125rem;
+    --admin-dept-icon-size: 34px;
+
+    /* Velocity & Insight Meters */
+    --admin-insight-card-padding: 16px;
+    --admin-velocity-info-size: 0.75rem;
+
+    /* Clinical & Surgical Command Deck Metrics (Tablet) */
+    --clinical-deck-padding: 8px 14px;
+    --clinical-deck-icon-size: 32px;
+    --clinical-deck-title-size: 1.05rem;
+    --clinical-deck-sub-size: 0.74rem;
+
+    --clinical-kpi-grid-cols: repeat(3, minmax(0, 1fr));
+    --clinical-kpi-min-height: 60px;
+    --clinical-kpi-padding: 6px 10px;
+    --clinical-kpi-val-size: 1.15rem;
+    --clinical-kpi-label-size: 0.62rem;
+    --clinical-kpi-icon-size: 28px;
+
+    --clinical-suite-padding: 10px 12px;
+    --clinical-suite-grid-cols: repeat(auto-fill, minmax(280px, 1fr));
+    --clinical-proc-padding: 10px 12px;
+    --clinical-proc-grid-cols: repeat(auto-fill, minmax(300px, 1fr));
+    --clinical-tab-padding: 5px 12px;
+    --clinical-tab-font-size: 0.775rem;
+
+    /* Billing & Financial Desk Metrics (Tablet) */
+    --billing-header-padding: 8px 12px;
+    --billing-icon-size: 32px;
+    --billing-title-size: 0.98rem;
+    --billing-subtitle-size: 0.70rem;
+
+    --billing-kpi-columns: repeat(2, minmax(0, 1fr));
+    --billing-kpi-min-height: 64px;
+    --billing-kpi-padding: 8px 10px;
+    --billing-kpi-val-size: 1.18rem;
+    --billing-kpi-label-size: 0.64rem;
+
+    --billing-card-padding: 10px 12px;
+    --billing-card-radius: 12px;
+    --billing-table-font-size: 0.78rem;
+    --billing-table-padding: 6px 8px;
+
+    /* Print Template Designer Tokens (Tablet) */
+    --template-card-padding: 12px 14px;
+    --template-header-size: 0.98rem;
+    --template-section-title-size: 0.88rem;
+    --template-section-sub-size: 0.70rem;
+    --template-badge-size: 0.64rem;
+
+    /* Universal Directory Action & Toolbar Tokens (Tablet) */
+    --admin-toolbar-gap: 8px;
+    --admin-search-width: 220px;
+    --admin-btn-height: 34px;
+    --admin-btn-padding: 0 12px;
+    --admin-btn-font-size: 0.75rem;
+    --admin-btn-icon-size: 16px;
+    --admin-toggle-height: 34px;
+    --admin-toggle-btn-height: 28px;
+    --admin-toggle-font-size: 0.72rem;
+    --admin-filter-chip-padding: 4px 10px;
+    --admin-filter-chip-font-size: 0.70rem;
+
+    --admin-card-header-avatar-size: 30px;
+    --admin-card-header-title-size: 0.82rem;
+    --admin-card-header-sub-size: 0.68rem;
+    --admin-card-badge-size: 0.62rem;
+    --admin-card-action-btn-height: 26px;
+    --admin-card-action-btn-font-size: 0.66rem;
+    --admin-card-action-btn-padding: 0 6px;
+
+    /* Facility & Spatial Bed Management Tokens (Tablet) */
+    --facility-kpi-grid-cols: repeat(3, minmax(0, 1fr));
+    --facility-kpi-min-height: 60px;
+    --facility-kpi-padding: 8px 12px;
+    --facility-kpi-val-size: 1.15rem;
+    --facility-kpi-label-size: 0.65rem;
+    --facility-kpi-icon-size: 32px;
+    --facility-room-card-padding: 10px;
+    --facility-bed-slot-size: 42px;
+  }
+}
+
+/* Intermediate breakpoint for mid-tablets */
+@media (max-width: 820px) {
+  :root {
+    --admin-kpi-grid-cols: repeat(3, minmax(0, 1fr));
+    --clinical-kpi-grid-cols: repeat(3, minmax(0, 1fr));
+    --billing-kpi-columns: repeat(2, minmax(0, 1fr));
+    --facility-kpi-grid-cols: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ── 3. Mobile Responsive Sizing Tier (<= 640px) ── */
+@media (max-width: 640px) {
+  :root {
+    --admin-header-title-size: 1.1rem;
+    --admin-header-subtitle-size: 0.72rem;
+    --admin-header-gap: 6px;
+
+    --admin-section-gap: 10px;
+    --admin-grid-gap: 8px;
+    --admin-card-border-radius: 10px;
+    --admin-card-border-radius-large: 14px;
+
+    /* KPI Bento Grid: 2 clean columns fitting 4-6 cards per screen fold */
+    --admin-kpi-grid-cols: repeat(2, minmax(0, 1fr));
+    --admin-kpi-card-min-height: 66px;
+    --admin-kpi-card-padding: 6px 8px;
+    --admin-kpi-label-size: 0.58rem;
+    --admin-kpi-value-size: 1.18rem;
+    --admin-kpi-footer-size: 0.58rem;
+    --admin-kpi-icon-size: 14px;
+    --admin-kpi-icon-padding: 3px;
+
+    /* Live Patient Workflow Hub */
+    --admin-workflow-card-padding: 10px 8px;
+    --admin-workflow-header-title-size: 0.95rem;
+    --admin-workflow-header-sub-size: 0.68rem;
+    --admin-workflow-track-padding: 8px 10px;
+    --admin-workflow-stage-padding: 6px 8px;
+    --admin-workflow-stage-min-height: 60px;
+    --admin-workflow-stage-val-size: 1.05rem;
+    --admin-workflow-stage-title-size: 0.66rem;
+    --admin-workflow-stage-desc-size: 0.58rem;
+
+    /* Department & Staff Cards */
+    --admin-dept-card-padding: 8px 10px;
+    --admin-dept-name-size: 0.775rem;
+    --admin-dept-icon-size: 28px;
+
+    /* Velocity & Insight Meters */
+    --admin-insight-card-padding: 12px;
+    --admin-velocity-info-size: 0.7rem;
+
+    /* Clinical & Surgical Command Deck Metrics (Mobile) */
+    --clinical-deck-padding: 6px 10px;
+    --clinical-deck-icon-size: 26px;
+    --clinical-deck-title-size: 0.95rem;
+    --clinical-deck-sub-size: 0.68rem;
+
+    --clinical-kpi-grid-cols: repeat(2, minmax(0, 1fr));
+    --clinical-kpi-min-height: 54px;
+    --clinical-kpi-padding: 5px 8px;
+    --clinical-kpi-val-size: 1.05rem;
+    --clinical-kpi-label-size: 0.56rem;
+    --clinical-kpi-icon-size: 24px;
+
+    --clinical-suite-padding: 8px 10px;
+    --clinical-suite-grid-cols: 1fr;
+    --clinical-proc-padding: 8px 10px;
+    --clinical-proc-grid-cols: 1fr;
+    --clinical-tab-padding: 4px 10px;
+    --clinical-tab-font-size: 0.72rem;
+
+    /* Billing & Financial Desk Metrics (Mobile) */
+    --billing-header-padding: 6px 10px;
+    --billing-icon-size: 26px;
+    --billing-title-size: 0.92rem;
+    --billing-subtitle-size: 0.66rem;
+
+    --billing-kpi-columns: repeat(2, minmax(0, 1fr));
+    --billing-kpi-min-height: 54px;
+    --billing-kpi-padding: 5px 8px;
+    --billing-kpi-val-size: 1.05rem;
+    --billing-kpi-label-size: 0.58rem;
+
+    --billing-card-padding: 8px 10px;
+    --billing-card-radius: 10px;
+    --billing-table-font-size: 0.72rem;
+    --billing-table-padding: 5px 6px;
+
+    /* Print Template Designer Tokens (Mobile) */
+    --template-card-padding: 10px 12px;
+    --template-header-size: 0.92rem;
+    --template-section-title-size: 0.82rem;
+    --template-section-sub-size: 0.66rem;
+    --template-badge-size: 0.60rem;
+
+    /* Universal Directory Action & Toolbar Tokens (Mobile) */
+    --admin-toolbar-gap: 6px;
+    --admin-search-width: 100%;
+    --admin-btn-height: 30px;
+    --admin-btn-padding: 0 10px;
+    --admin-btn-font-size: 0.70rem;
+    --admin-btn-icon-size: 15px;
+    --admin-toggle-height: 30px;
+    --admin-toggle-btn-height: 24px;
+    --admin-toggle-font-size: 0.68rem;
+    --admin-filter-chip-padding: 3px 8px;
+    --admin-filter-chip-font-size: 0.66rem;
+
+    --admin-card-header-avatar-size: 26px;
+    --admin-card-header-title-size: 0.78rem;
+    --admin-card-header-sub-size: 0.64rem;
+    --admin-card-badge-size: 0.58rem;
+    --admin-card-action-btn-height: 24px;
+    --admin-card-action-btn-font-size: 0.62rem;
+    --admin-card-action-btn-padding: 0 4px;
+
+    /* Facility & Spatial Bed Management Tokens (Mobile) */
+    --facility-kpi-grid-cols: repeat(2, minmax(0, 1fr));
+    --facility-kpi-min-height: 52px;
+    --facility-kpi-padding: 6px 8px;
+    --facility-kpi-val-size: 1.05rem;
+    --facility-kpi-label-size: 0.58rem;
+    --facility-kpi-icon-size: 26px;
+    --facility-room-card-padding: 8px;
+    --facility-bed-slot-size: 36px;
+
+    /* Universal Responsive Table Tokens (Mobile) */
+    --table-font-size: 0.75rem;
+    --table-header-font-size: 0.68rem;
+    --table-cell-padding: 6px 8px;
+    --table-header-padding: 6px 8px;
+    --table-badge-size: 0.64rem;
+  }
+}
+
+
+/* ── 4. Universal Responsive Table Utilities ── */
+@media (max-width: 1023px) {
+  .col-hide-tablet {
+    display: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .col-hide-mobile {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1024px) {
+  .col-show-tablet-down {
+    display: none !important;
+  }
+}
+
+@media (min-width: 641px) {
+  .col-show-mobile-only {
+    display: none !important;
+  }
+}
+
+.table-row-tap-affordance {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: background-color 0.12s ease;
+}
+
+.table-row-tap-affordance:active {
+  background-color: var(--md-sys-color-surface-container-high, #ece6f0) !important;
+}
+
+/* ── 5. Universal Directory Layout & Toolbar Utilities ── */
+.admin-dir-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--admin-toolbar-gap, 12px);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.admin-dir-title-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.admin-dir-title {
+  margin: 0;
+  font-size: var(--admin-header-title-size, 1.35rem);
+  font-weight: 700;
+  color: var(--md-sys-color-primary, #00668b);
+  letter-spacing: -0.01em;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.2;
+}
+
+.admin-dir-title .material-symbols-rounded {
+  font-size: 1.45rem;
+  color: var(--md-sys-color-primary, #00668b);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.admin-dir-count-sub {
+  margin: 2px 0 0;
+  font-size: var(--admin-header-subtitle-size, 0.78rem);
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+}
+
+.admin-dir-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--admin-toolbar-gap, 8px);
+  flex-wrap: wrap;
+  max-width: 100%;
+}
+
+/* Universal Button Classes with State Feedback */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--admin-btn-height, 36px);
+  padding: var(--admin-btn-padding, 0 14px);
+  font-size: var(--admin-btn-font-size, 0.78rem);
+  font-weight: 700;
+  border-radius: var(--md-sys-shape-corner-full, 100px);
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  box-sizing: border-box;
+  transition: all 0.18s cubic-bezier(0.2, 0, 0, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.admin-btn .material-symbols-rounded {
+  font-size: var(--admin-btn-icon-size, 18px);
+}
+
+.admin-btn:hover {
+  transform: translateY(-1px);
+}
+
+.admin-btn:active {
+  transform: scale(0.96) !important;
+}
+
+.admin-btn-primary {
+  background: var(--md-sys-color-primary, #00668b);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.admin-btn-primary:hover {
+  box-shadow: 0 4px 10px rgba(0, 102, 139, 0.25);
+  background: color-mix(in srgb, var(--md-sys-color-primary, #00668b) 90%, black);
+}
+
+.admin-btn-secondary {
+  background: var(--md-sys-color-secondary-container, #e8def8);
+  color: var(--md-sys-color-on-secondary-container, #1d192b);
+}
+
+.admin-btn-secondary:hover {
+  background: color-mix(in srgb, var(--md-sys-color-secondary-container, #e8def8) 85%, black);
+}
+
+.admin-btn-tonal {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  color: var(--md-sys-color-on-surface, #1d1b20);
+  border-color: var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.admin-btn-tonal:hover {
+  background: var(--md-sys-color-surface-container-highest, #dee3e6);
+  border-color: var(--md-sys-color-outline, #79747e);
+}
+
+.admin-btn-outlined {
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+}
+
+.admin-btn-outlined:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+  border-color: var(--md-sys-color-primary, #00668b);
+  color: var(--md-sys-color-primary, #00668b);
+}
+
+/* Toggle Filter Chip */
+.admin-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--admin-filter-chip-padding, 5px 12px);
+  font-size: var(--admin-filter-chip-font-size, 0.75rem);
+  font-weight: 600;
+  border-radius: 100px;
+  cursor: pointer;
+  user-select: none;
+  border: 1.5px solid var(--md-sys-color-outline-variant, #cac4d0);
+  background: transparent;
+  color: var(--md-sys-color-on-surface-variant, #49454f);
+  transition: all 0.15s ease;
+  height: var(--admin-btn-height, 36px);
+  box-sizing: border-box;
+}
+
+.admin-filter-chip .material-symbols-rounded {
+  font-size: var(--admin-btn-icon-size, 16px);
+}
+
+.admin-filter-chip:hover {
+  background: var(--md-sys-color-surface-container-high, #ece6f0);
+}
+
+.admin-filter-chip.active {
+  background: var(--md-sys-color-primary, #00668b);
+  color: var(--md-sys-color-on-primary, #ffffff);
+  border-color: var(--md-sys-color-primary, #00668b);
+}
+
+.admin-filter-chip:active {
+  transform: scale(0.96);
+}
+
+/* ── Responsive Live Patient Workflow Hub Enhancements ── */
+@media (max-width: 768px) {
+  .workflow-hub-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .workflow-hub-title-group {
+    width: 100%;
+  }
+
+  .workflow-segmented-tabs {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding: 4px;
+    gap: 4px;
+    background: var(--md-sys-color-surface-container-high, #eceef2);
+    border-radius: var(--md-sys-shape-corner-medium, 12px);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .workflow-tab-btn {
+    flex: 1 0 auto;
+    justify-content: center;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    border-radius: var(--md-sys-shape-corner-small, 8px);
+  }
+}
+
+@media (max-width: 480px) {
+  .workflow-segmented-tabs {
+    border-radius: 10px;
+    padding: 3px;
+    gap: 3px;
+  }
+
+  .workflow-tab-btn {
+    padding: 5px 8px;
+    font-size: 0.72rem;
+    gap: 4px;
+  }
+
+  .workflow-tab-btn .material-symbols-rounded {
+    font-size: 14px !important;
+  }
+}
+

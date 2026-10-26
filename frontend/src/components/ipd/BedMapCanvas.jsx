@@ -1,11 +1,31 @@
 /**
  * components/ipd/BedMapCanvas.jsx
  * 2D Spatial Floor & Room Cluster Layout Canvas for BookMyShow Bed Management.
+ * Implements Material Design 3 expressive cards, clinical text sanitization,
+ * and robust responsive wrapping.
  */
 import React, { useState, useMemo } from 'react';
 import BedCell from './BedCell';
-import Md3TabSwitch from '../md3/Md3TabSwitch';
+import ClinicalStationIdleDeck from '../md3/ClinicalStationIdleDeck';
+import { cleanClinicalText } from '../../utils/clinicalText';
 import './BedMapCanvas.css';
+
+/**
+ * Helper to map room type to semantic MD3 color modifier
+ */
+const getRoomTypeBadgeModifier = (roomType) => {
+  const type = String(roomType || '').toUpperCase();
+  if (['ICU', 'CCU', 'HDU', 'NICU', 'PICU', 'EMERGENCY'].includes(type)) {
+    return 'ipd-room-type-badge--icu';
+  }
+  if (['OT', 'POST_OP_RECOVERY'].includes(type)) {
+    return 'ipd-room-type-badge--ot';
+  }
+  if (['PRIVATE', 'DELUXE_PRIVATE', 'SUITE'].includes(type)) {
+    return 'ipd-room-type-badge--private';
+  }
+  return 'ipd-room-type-badge--ward';
+};
 
 export const BedMapCanvas = ({
   floors = [],
@@ -14,18 +34,16 @@ export const BedMapCanvas = ({
   statusFilter = 'ALL',
   wardClassFilter = 'ALL',
   isAdminView = false,
+  activeFloorId: controlledFloorId = null,
+  onFloorChange,
   onAddBedToRoom,
+  onEditFloor,
+  onDeleteFloor,
+  onEditRoom,
+  onDeleteRoom,
 }) => {
-  const [activeFloorId, setActiveFloorId] = useState(null);
-
-  // Tab definitions for floors
-  const floorTabs = useMemo(() => {
-    return floors.map((f) => ({
-      id: String(f._id),
-      label: `Floor ${f.floorNumber}: ${f.wing || f.floorName.split('—')[0]}`,
-      badge: f.stats ? `${f.stats.vacantBeds} Free` : undefined,
-    }));
-  }, [floors]);
+  const [internalFloorId, setInternalFloorId] = useState(null);
+  const activeFloorId = controlledFloorId ? controlledFloorId : internalFloorId;
 
   // Set default active floor once floors load
   const currentFloor = useMemo(() => {
@@ -39,8 +57,12 @@ export const BedMapCanvas = ({
 
   if (!floors || floors.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '48px', color: 'var(--md-sys-color-outline)' }}>
-        No hospital floor layout configured. Create floors in the Administrator Setup panel.
+      <div style={{ padding: '24px 8px' }}>
+        <ClinicalStationIdleDeck
+          preset="WARD_OPERATIONS"
+          title="No Hospital Floor Layout Configured"
+          description="Hospital floors, rooms and bed comfort tiers have not been created yet. Configure floors and ward maps in the Facility Builder."
+        />
       </div>
     );
   }
@@ -54,23 +76,15 @@ export const BedMapCanvas = ({
     occupancyRate: 0,
   };
 
+  const cleanCurrentFloorName = cleanClinicalText(currentFloor?.floorName || `Floor ${currentFloor?.floorNumber}`);
+
   return (
     <div className="ipd-map-container">
-      {/* 1. Floor Selector Tabs */}
-      {floorTabs.length > 1 && (
-        <Md3TabSwitch
-          tabs={floorTabs}
-          activeTab={currentFloor ? String(currentFloor._id) : ''}
-          onChange={(tabId) => setActiveFloorId(tabId)}
-          size="medium"
-        />
-      )}
-
-      {/* 2. Floor KPI Summary Header Bar */}
+      {/* Floor KPI Summary Header Bar with Action Controls */}
       <div className="ipd-map-stats-bar">
-        <div>
-          <strong style={{ fontSize: '0.95rem' }}>{currentFloor?.floorName}</strong>
-          <span style={{ fontSize: '0.8rem', color: 'var(--md-sys-color-outline)', marginLeft: '8px' }}>
+        <div className="ipd-map-stats-bar__title-wrap">
+          <span className="ipd-map-stats-bar__floor-title">{cleanCurrentFloorName}</span>
+          <span className="ipd-map-stats-bar__floor-sub">
             ({stats.totalBeds} Total Beds • {stats.occupancyRate}% Occupied)
           </span>
         </div>
@@ -92,6 +106,38 @@ export const BedMapCanvas = ({
               <span>●</span> {stats.maintenanceBeds} Maint
             </span>
           )}
+
+          {isAdminView && currentFloor && (
+            <div className="ipd-admin-btn-group" style={{ marginLeft: '6px' }}>
+              <button
+                type="button"
+                className="ipd-admin-pill-btn"
+                onClick={() => onEditFloor?.(currentFloor)}
+                title={`Edit Floor ${currentFloor.floorNumber}`}
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
+                  edit
+                </span>
+                Edit Floor
+              </button>
+              <button
+                type="button"
+                className="ipd-admin-pill-btn ipd-admin-pill-btn--danger"
+                onClick={() => onDeleteFloor?.(currentFloor)}
+                disabled={stats.occupiedBeds > 0}
+                title={
+                  stats.occupiedBeds > 0
+                    ? 'Cannot delete floor with active occupied beds'
+                    : `Delete Floor ${currentFloor.floorNumber}`
+                }
+              >
+                <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
+                  delete
+                </span>
+                Delete Floor
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -109,34 +155,77 @@ export const BedMapCanvas = ({
             return null; // hide empty rooms when filtering
           }
 
+          const hasOccupiedBeds = room.beds?.some((b) => b.status === 'OCCUPIED');
+          const cleanRoomNumber = cleanClinicalText(room.roomNumber || '');
+          const cleanRoomName = cleanClinicalText(room.roomName || '');
+          const cleanRoomType = cleanClinicalText(room.roomType?.replace(/_/g, ' ') || 'ROOM');
+          const badgeClassModifier = getRoomTypeBadgeModifier(room.roomType);
+
           return (
             <div key={room._id} className="ipd-room-card">
               <div className="ipd-room-header">
                 <div className="ipd-room-title-group">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span className="ipd-room-number">Room {room.roomNumber}</span>
-                    <span className="ipd-room-type-badge">
-                      {room.roomType?.replace(/_/g, ' ')}
+                  <div className="ipd-room-number-row">
+                    <span className="ipd-room-number">Room {cleanRoomNumber}</span>
+                    <span className={`ipd-room-type-badge ${badgeClassModifier}`}>
+                      {cleanRoomType}
                     </span>
                   </div>
-                  <span className="ipd-room-name">{room.roomName}</span>
+                  {cleanRoomName && (
+                    <span className="ipd-room-name" title={cleanRoomName}>
+                      {cleanRoomName}
+                    </span>
+                  )}
                 </div>
 
                 {isAdminView && (
-                  <button
-                    type="button"
-                    className="ipd-admin-add-bed-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onAddBedToRoom?.(currentFloor._id, room._id);
-                    }}
-                    title={`Add new bed to Room ${room.roomNumber}`}
-                  >
-                    <span className="material-symbols-rounded" style={{ fontSize: '15px' }}>
-                      add
-                    </span>
-                    Add Bed
-                  </button>
+                  <div className="ipd-admin-btn-group">
+                    <button
+                      type="button"
+                      className="ipd-admin-add-bed-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onAddBedToRoom?.(currentFloor._id, room._id);
+                      }}
+                      title={`Add new bed to Room ${cleanRoomNumber}`}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
+                        add
+                      </span>
+                      Add Bed
+                    </button>
+                    <button
+                      type="button"
+                      className="ipd-admin-icon-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditRoom?.(currentFloor, room);
+                      }}
+                      title={`Edit Room ${cleanRoomNumber}`}
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
+                        edit
+                      </span>
+                    </button>
+                    <button
+                      type="button"
+                      className="ipd-admin-icon-btn ipd-admin-icon-btn--delete"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteRoom?.(room);
+                      }}
+                      disabled={hasOccupiedBeds}
+                      title={
+                        hasOccupiedBeds
+                          ? 'Cannot delete room with active occupied beds'
+                          : `Delete Room ${cleanRoomNumber}`
+                      }
+                    >
+                      <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
+                        delete
+                      </span>
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -152,14 +241,20 @@ export const BedMapCanvas = ({
 
                 {(!room.beds || room.beds.length === 0) && (
                   <div className="ipd-room-empty-state">
-                    <span>No beds configured</span>
+                    <div className="ipd-room-empty-state__info">
+                      <span className="material-symbols-rounded">single_bed</span>
+                      <span>No beds configured</span>
+                    </div>
                     {isAdminView && (
                       <button
                         type="button"
                         className="ipd-admin-add-bed-btn"
                         onClick={() => onAddBedToRoom?.(currentFloor._id, room._id)}
                       >
-                        + Add First Bed
+                        <span className="material-symbols-rounded" style={{ fontSize: '16px' }}>
+                          add
+                        </span>
+                        Add First Bed
                       </button>
                     )}
                   </div>

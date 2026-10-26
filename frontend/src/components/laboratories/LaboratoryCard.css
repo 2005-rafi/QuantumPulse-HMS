@@ -8,10 +8,10 @@
   background-color: var(--md-sys-color-surface-container-low, #f7f2fa);
   border-radius: var(--md-sys-shape-corner-medium, 12px);
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
-  padding: 12px 14px;
+  padding: var(--admin-dept-card-padding, 10px 12px);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow: hidden;
   box-sizing: border-box;
   height: fit-content;
@@ -59,7 +59,7 @@
 .md3-lab-card-header {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 8px;
 }
 
 .md3-lab-card-avatar-wrap {
@@ -76,7 +76,7 @@
 
 .md3-lab-card-name {
   margin: 0;
-  font-size: 0.88rem;
+  font-size: var(--admin-card-header-title-size, 0.88rem);
   font-weight: 700;
   color: var(--md-sys-color-on-surface, #1d1b20);
   line-height: 1.25;
@@ -86,7 +86,7 @@
 }
 
 .md3-lab-dept-pill {
-  font-size: 0.68rem;
+  font-size: var(--admin-card-header-sub-size, 0.68rem);
   font-weight: 500;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   margin-top: 1px;
@@ -104,12 +104,12 @@
 }
 
 .md3-lab-status-pill {
-  font-size: 0.65rem;
+  font-size: var(--admin-card-badge-size, 0.65rem);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 .md3-lab-status-pill--active {
@@ -124,6 +124,20 @@
   border: 1px solid color-mix(in srgb, #ba1a1a 30%, transparent);
 }
 
+.md3-lab-vitals-pill {
+  font-size: var(--admin-card-badge-size, 0.68rem);
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background-color: color-mix(in srgb, var(--md-sys-color-primary, #00668b) 12%, transparent);
+  color: var(--md-sys-color-primary, #00668b);
+  border: 1px solid color-mix(in srgb, var(--md-sys-color-primary, #00668b) 25%, transparent);
+  white-space: nowrap;
+}
+
 /* ── SUB HEADER ── */
 .md3-lab-card-sub-header {
   display: flex;
@@ -135,44 +149,44 @@
 
 .md3-lab-code-badge {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.72rem;
+  font-size: var(--admin-card-badge-size, 0.72rem);
   font-weight: 700;
   background-color: var(--md-sys-color-surface, #ffffff);
   color: var(--md-sys-color-on-surface, #1d1b20);
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
   border: 1px solid var(--md-sys-color-outline-variant, #cac4d0);
 }
 
 .md3-lab-test-counter {
-  font-size: 0.70rem;
+  font-size: var(--admin-card-badge-size, 0.70rem);
   font-weight: 600;
   color: var(--md-sys-color-tertiary, #7d5260);
   display: inline-flex;
   align-items: center;
   gap: 3px;
   background: var(--md-sys-color-tertiary-container, #ffd8e4);
-  padding: 2px 7px;
-  border-radius: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 
 /* ── CARD BODY DETAILS ── */
 .md3-lab-card-details {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 4px 0;
+  gap: 3px;
+  padding: 3px 0;
   border-top: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
   border-bottom: 1px dashed var(--md-sys-color-outline-variant, #cac4d0);
-  min-height: 38px;
+  min-height: 32px;
   justify-content: center;
 }
 
 .md3-lab-meta-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.74rem;
+  gap: 5px;
+  font-size: 0.72rem;
   color: var(--md-sys-color-on-surface-variant, #49454f);
   white-space: nowrap;
   overflow: hidden;
@@ -188,15 +202,16 @@
 /* ── ACTION BUTTONS ── */
 .md3-lab-card-actions {
   display: grid;
-  grid-template-columns: 1.2fr 0.9fr 1fr 1fr;
-  gap: 5px;
+  grid-template-columns: 1.1fr 0.9fr 1fr 1.1fr;
+  gap: 4px;
   margin-top: 2px;
 }
 
 .md3-lab-btn {
-  padding: 5px 6px;
-  border-radius: 8px;
-  font-size: 0.70rem;
+  height: var(--admin-card-action-btn-height, 28px);
+  padding: var(--admin-card-action-btn-padding, 0 4px);
+  border-radius: 6px;
+  font-size: var(--admin-card-action-btn-font-size, 0.70rem);
   font-weight: 600;
   cursor: pointer;
   border: none;
@@ -207,6 +222,11 @@
   text-align: center;
   white-space: nowrap;
   gap: 2px;
+  box-sizing: border-box;
+}
+
+.md3-lab-btn:active {
+  transform: scale(0.96);
 }
 
 .md3-lab-btn--primary {
@@ -257,7 +277,7 @@
 .lab-card-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--admin-grid-gap, 10px);
   width: 100%;
   box-sizing: border-box;
   align-items: start;
@@ -287,3 +307,4 @@
     grid-template-columns: 1fr;
   }
 }
+
