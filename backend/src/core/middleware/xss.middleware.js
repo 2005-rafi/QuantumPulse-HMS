@@ -41,9 +41,11 @@ const sanitize = (data) => {
     return data.map(sanitize);
   }
 
-  if (typeof data === 'object') {
+  if (typeof data === 'object' && !(data instanceof Date) && !(data instanceof RegExp) && !(data instanceof Buffer)) {
     const clean = {};
     for (const key of Object.keys(data)) {
+      if (!Object.prototype.hasOwnProperty.call(data, key)) continue;
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') continue;
       clean[key] = sanitize(data[key]);
     }
     return clean;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { auditAPI } from '../../services/auditAPI';
 import { Md3EmptyState } from '../../components/md3/Md3EmptyState';
 import Md3Pagination from '../../components/md3/Md3Pagination';
-import { Md3SearchBar } from '../../components/md3/AdminControls';
+import { Md3SearchBar } from '../../components/md3/Md3SearchBar';
 import { useAuditLayoutPreference } from '../../hooks/useAuditLayoutPreference';
 import AuditCard from '../../components/audit/AuditCard';
 import AuditListView from '../../components/audit/AuditListView';
@@ -233,7 +233,7 @@ export const AdminAuditLogs = () => {
           {/* Card 3: In-Memory Ring Buffer Status */}
           <div className="md3-audit-metric-card">
             <div className="md3-audit-metric-icon" style={{ background: '#f3e8ff', color: '#6b21a8' }}>
-              <span className="material-symbols-rounded">buffer</span>
+              <span className="material-symbols-rounded">memory</span>
             </div>
             <div className="md3-audit-metric-info">
               <div className="md3-audit-metric-value">
@@ -331,25 +331,15 @@ export const AdminAuditLogs = () => {
           </div>
         )}
 
-        {/* ── HEADER & SEARCH BAR ROW ── */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap', flex: 1 }}>
-            <div>
-              <h2 style={{ color: 'var(--md-sys-color-primary, #00668b)', margin: 0, fontSize: '1.4rem', fontWeight: 700 }}>
-                System Audit Studio
-              </h2>
-              <p style={{ margin: '2px 0 0', fontSize: '13px', color: 'var(--md-sys-color-on-surface-variant, #49454f)' }}>
-                Immutable, cryptographic SHA-256 clinical and administrative ledger
-              </p>
-            </div>
-
-            <div style={{ maxWidth: '340px', flex: 1, minWidth: '220px' }}>
-              <Md3SearchBar
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder="Search action, actor, target or IP..."
-              />
-            </div>
+        {/* ── 1. HEADER ROW: IDENTITY & ACTION BUTTONS ── */}
+        <div className="md3-audit-header-bar">
+          <div className="md3-audit-title-block">
+            <h2 className="md3-audit-title">
+              System Audit Studio
+            </h2>
+            <p className="md3-audit-subtitle">
+              Immutable, cryptographic SHA-256 clinical and administrative ledger
+            </p>
           </div>
 
           {/* Action Tools: Verify Integrity, Export CSV, and Card/List switcher */}
@@ -406,44 +396,45 @@ export const AdminAuditLogs = () => {
           </div>
         </div>
 
-        {/* ── FILTER CONTROLS: CATEGORY CHIPS & SECONDARY DROPDOWNS ── */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-          {/* Domain Category Quick Filters */}
-          <div className="md3-audit-chips-bar" role="tablist" aria-label="Audit Domain Filters" style={{ marginBottom: 0 }}>
-            {CATEGORY_FILTERS.map((cat) => {
-              const isActive = activeCategory === cat.id;
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`md3-audit-chip-btn ${isActive ? 'is-active' : ''}`}
-                  onClick={() => handleCategoryChange(cat.id)}
-                  role="tab"
-                  aria-selected={isActive}
-                >
-                  <span className="material-symbols-rounded">{cat.icon}</span>
-                  <span>{cat.label}</span>
-                </button>
-              );
-            })}
+        {/* ── 2. REUSABLE SEARCH & FILTER RIBBON ── */}
+        <div className="md3-audit-search-filter-ribbon">
+          {/* Full-featured Reusable M3 Search Bar */}
+          <div className="md3-audit-search-container">
+            <Md3SearchBar
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="Search action, actor, target or IP (Press Ctrl+K)..."
+              matchCount={debouncedSearch ? auditTotalItems : undefined}
+              loading={loading}
+            />
           </div>
 
-          {/* Secondary Filters: Severity & Date Range */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Secondary / Responsive Filter Controls */}
+          <div className="md3-audit-filter-controls-group">
+            {/* Mobile/Tablet Category Dropdown Selector (Active when < 1024px) */}
+            <div className="md3-audit-category-dropdown-wrap">
+              <span className="material-symbols-rounded md3-audit-dropdown-icon">
+                {CATEGORY_FILTERS.find((c) => c.id === activeCategory)?.icon || 'filter_list'}
+              </span>
+              <select
+                value={activeCategory}
+                onChange={(e) => handleCategoryChange(e.target.value)}
+                className="md3-audit-filter-select md3-audit-category-select"
+                aria-label="Filter by domain category"
+              >
+                {CATEGORY_FILTERS.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Severity Filter */}
             <select
               value={activeSeverity}
               onChange={(e) => setActiveSeverity(e.target.value)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '100px',
-                border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
-                background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
-                color: 'var(--md-sys-color-on-surface, #1d1b20)',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              className="md3-audit-filter-select"
               aria-label="Filter by severity"
             >
               {SEVERITY_FILTERS.map((sev) => (
@@ -457,16 +448,7 @@ export const AdminAuditLogs = () => {
             <select
               value={activeDateRange}
               onChange={(e) => setActiveDateRange(e.target.value)}
-              style={{
-                padding: '6px 12px',
-                borderRadius: '100px',
-                border: '1px solid var(--md-sys-color-outline-variant, #cac4d0)',
-                background: 'var(--md-sys-color-surface-container-low, #f7f2fa)',
-                color: 'var(--md-sys-color-on-surface, #1d1b20)',
-                fontSize: '0.78rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
+              className="md3-audit-filter-select"
               aria-label="Filter by date range"
             >
               {DATE_RANGE_OPTIONS.map((rng) => (
@@ -475,7 +457,45 @@ export const AdminAuditLogs = () => {
                 </option>
               ))}
             </select>
+
+            {/* Quick Reset Filter Button (Visible if any filter or query is active) */}
+            {(activeCategory !== 'ALL' || activeSeverity !== 'ALL' || activeDateRange !== 'ALL' || debouncedSearch) && (
+              <button
+                type="button"
+                className="md3-audit-clear-filter-btn"
+                onClick={() => {
+                  setActiveCategory('ALL');
+                  setActiveSeverity('ALL');
+                  setActiveDateRange('ALL');
+                  setSearchQuery('');
+                }}
+                title="Reset all search queries and active filters"
+              >
+                <span className="material-symbols-rounded">filter_alt_off</span>
+                <span>Reset</span>
+              </button>
+            )}
           </div>
+        </div>
+
+        {/* ── 3. DESKTOP DOMAIN CATEGORY CHIPS BAR (Visible >= 1024px) ── */}
+        <div className="md3-audit-chips-bar" role="tablist" aria-label="Audit Domain Filters">
+          {CATEGORY_FILTERS.map((cat) => {
+            const isActive = activeCategory === cat.id;
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`md3-audit-chip-btn ${isActive ? 'is-active' : ''}`}
+                onClick={() => handleCategoryChange(cat.id)}
+                role="tab"
+                aria-selected={isActive}
+              >
+                <span className="material-symbols-rounded">{cat.icon}</span>
+                <span>{cat.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* ── TOP PAGINATION ── */}

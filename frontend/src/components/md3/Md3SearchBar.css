@@ -31,8 +31,8 @@
 
 .md3-search-bar:focus-within {
   background-color: var(--md-sys-color-surface, #ffffff);
-  border-color: var(--md-sys-color-primary, #6750a4);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #6750a4) 20%, transparent);
+  border-color: var(--md-sys-color-primary, #00668b);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-sys-color-primary, #00668b) 20%, transparent);
 }
 
 .md3-search-bar__leading-icon {
@@ -45,7 +45,7 @@
 }
 
 .md3-search-bar:focus-within .md3-search-bar__leading-icon {
-  color: var(--md-sys-color-primary, #6750a4);
+  color: var(--md-sys-color-primary, #00668b);
 }
 
 .md3-search-bar__input {
@@ -81,8 +81,8 @@
   font-weight: 700;
   padding: 2px 7px;
   border-radius: 999px;
-  background-color: var(--md-sys-color-primary-container, #eaddff);
-  color: var(--md-sys-color-on-primary-container, #21005d);
+  background-color: var(--md-sys-color-primary-container, #c2e8ff);
+  color: var(--md-sys-color-on-primary-container, #004d67);
   white-space: nowrap;
 }
 

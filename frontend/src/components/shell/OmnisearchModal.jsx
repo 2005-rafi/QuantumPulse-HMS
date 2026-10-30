@@ -47,10 +47,10 @@ export const OmnisearchModal = ({ isOpen, onClose }) => {
   const [wardFilter, setWardFilter] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
 
-  // Actual Recent Patient Dossiers (localStorage only)
+  // Actual Recent Patient Dossiers (sessionStorage for HIPAA/PHI compliance on shared workstations)
   const [recentItems, setRecentItems] = useState([]);
 
-  // Reset state and load actual recent items from localStorage on open
+  // Reset state and load actual recent items from sessionStorage on open
   useEffect(() => {
     if (isOpen) {
       setQuery('');
@@ -58,7 +58,9 @@ export const OmnisearchModal = ({ isOpen, onClose }) => {
       setResults({ patients: [], admissions: [], bills: [], labOrders: [] });
       setSelectedIndex(0);
       try {
-        const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+        // Clean legacy localStorage key if present
+        localStorage.removeItem(RECENT_SEARCHES_KEY);
+        const stored = sessionStorage.getItem(RECENT_SEARCHES_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
           if (Array.isArray(parsed)) {
@@ -77,12 +79,16 @@ export const OmnisearchModal = ({ isOpen, onClose }) => {
     }
   }, [isOpen]);
 
-  // Save an actual selected item to recent ring buffer
+  // Save an actual selected item to recent ring buffer (sessionStorage only, de-identified)
   const saveRecentItem = useCallback((item) => {
     if (!item || !item.id) return;
     try {
-      const existing = JSON.parse(localStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
+      const existing = JSON.parse(sessionStorage.getItem(RECENT_SEARCHES_KEY) || '[]');
       const filtered = existing.filter((x) => String(x.id) !== String(item.id));
+      const safeSubtitle = (item.subtitle || '')
+        .replace(/\+?\d{10,12}/g, '••••••••')
+        .replace(/\b\d{4}\s\d{4}\s\d{4}\b/g, '•••• •••• ••••');
+
       const next = [
         {
           id: item.id,
@@ -91,17 +97,16 @@ export const OmnisearchModal = ({ isOpen, onClose }) => {
           billId: item.billId || (item.type === 'BILL' ? item.id : null),
           visitId: item.visitId || (item.type === 'LAB' ? item.id : null),
           title: item.title,
-          subtitle: item.subtitle,
+          subtitle: safeSubtitle,
           type: item.type,
           link: item.link,
           badge: item.badge,
-          rawMetadata: item.rawMetadata || null,
           timestamp: Date.now(),
         },
         ...filtered,
       ].slice(0, 6);
 
-      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
+      sessionStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(next));
       setRecentItems(next);
     } catch (err) {
       console.warn('Could not save recent item:', err);
@@ -111,6 +116,7 @@ export const OmnisearchModal = ({ isOpen, onClose }) => {
   // Clear actual history
   const handleClearHistory = () => {
     try {
+      sessionStorage.removeItem(RECENT_SEARCHES_KEY);
       localStorage.removeItem(RECENT_SEARCHES_KEY);
       setRecentItems([]);
     } catch (err) {

@@ -2,22 +2,35 @@
  * NoSQL Injection Protection Middleware
  * Recursively inspects and sanitizes request body, query, and params.
  * Neutralizes keys starting with '$' or containing '.' to prevent MongoDB operator injection.
+ * Drops prototype pollution keys ('__proto__', 'constructor', 'prototype').
  */
-const sanitizeValue = (value) => {
-  if (value === null || value === undefined) {
+const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+const sanitizeValue = (value, depth = 0) => {
+  if (depth > 15 || value === null || value === undefined) {
     return value;
   }
 
   if (Array.isArray(value)) {
-    return value.map(sanitizeValue);
+    return value.map((item) => sanitizeValue(item, depth + 1));
   }
 
-  if (typeof value === 'object' && !(value instanceof Date) && !(value instanceof RegExp)) {
+  if (typeof value === 'object' && !(value instanceof Date) && !(value instanceof RegExp) && !(value instanceof Buffer)) {
     const cleanObj = {};
     for (const key of Object.keys(value)) {
-      // Prohibit or sanitize keys starting with $ or containing .
-      const safeKey = key.replace(/^\$/, '_').replace(/\./g, '_');
-      cleanObj[safeKey] = sanitizeValue(value[key]);
+      if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+
+      // Neutralize Prototype Pollution
+      if (FORBIDDEN_KEYS.has(key)) {
+        continue;
+      }
+
+      // Neutralize MongoDB operator injection ($prefix) and dot notation keys
+      if (key.startsWith('$') || key.includes('.')) {
+        continue;
+      }
+
+      cleanObj[key] = sanitizeValue(value[key], depth + 1);
     }
     return cleanObj;
   }
@@ -39,3 +52,4 @@ const mongoSanitize = (req, res, next) => {
 };
 
 module.exports = mongoSanitize;
+

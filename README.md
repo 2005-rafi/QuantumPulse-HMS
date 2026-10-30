@@ -654,7 +654,7 @@ Every clinical, administrative, or financial state alteration is captured in an 
 
 ### Prerequisites
 - **Node.js**: `v18.0.0` or higher (LTS recommended)
-- **MongoDB**: MongoDB Community Server `v6.0+` locally on port `27017` OR a MongoDB Atlas cluster URI
+- **MongoDB**: MongoDB Atlas Cloud cluster (`v6.0+`) accessed via network URI (`mongodb+srv://`). Note: Deployment hosts run without a local database cluster.
 - **Package Manager**: `npm` `v9.0.0+`
 
 ---
@@ -668,8 +668,8 @@ The backend reads configuration files from the `/secrets` directory. Create a fi
 PORT=7722
 CORS_ORIGIN=http://localhost:7123
 
-# Database Connection URI (MongoDB Atlas or Local)
-MONGO_URI=mongodb://localhost:27017/quantum_careone
+# Database Connection URI (MongoDB Atlas Cloud Cluster)
+MONGO_URI=mongodb+srv://<db_user>:<db_password>@<cluster-name>.mongodb.net/quantum_careone?retryWrites=true&w=majority
 
 # Cryptographic Keys (Must be 32-byte / 64-char hex string)
 ENCRYPTION_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef

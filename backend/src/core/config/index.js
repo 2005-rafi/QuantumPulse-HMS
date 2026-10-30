@@ -1,4 +1,4 @@
-﻿const path = require('path');
+const path = require('path');
 const fs = require('fs');
 
 const secretsEnvPath = path.resolve(__dirname, '../../../../secrets/backend.env');
@@ -19,18 +19,50 @@ try {
   // Graceful fallback if config file is absent
 }
 
-const defaultLocalUri = 'mongodb://127.0.0.1:27017/quantum_careone';
-const isAtlasExplicit = process.env.USE_ATLAS === 'true';
+// Cloud Atlas Exclusive Persistence - Pre-flight Validation
+function validateCloudMongoUri(rawUri) {
+  if (!rawUri || typeof rawUri !== 'string' || !rawUri.trim()) {
+    throw new Error(
+      'FATAL CONFIGURATION ERROR: MONGO_URI environment variable is required. ' +
+      'The deployment environment has no local database cluster and requires an active MongoDB Atlas cloud connection.'
+    );
+  }
+
+  const cleanUri = rawUri.trim();
+  const prohibitedHosts = ['localhost', '127.0.0.1', '::1', '0.0.0.0'];
+  const hasProhibitedHost = prohibitedHosts.some((host) => cleanUri.includes(host));
+  const hasLocalPort = cleanUri.includes(':27017');
+
+  if (hasProhibitedHost || hasLocalPort) {
+    throw new Error(
+      'SECURITY VIOLATION: Local MongoDB cluster connection is strictly prohibited. ' +
+      'The deployment system operates without a local database cluster. ' +
+      'All backend services must connect exclusively to MongoDB Atlas via network.'
+    );
+  }
+
+  if (!cleanUri.startsWith('mongodb+srv://') && !cleanUri.startsWith('mongodb://')) {
+    throw new Error(
+      'FATAL CONFIGURATION ERROR: MONGO_URI must be a valid MongoDB protocol string (mongodb+srv:// or mongodb://).'
+    );
+  }
+
+  return cleanUri;
+}
+
+const rawMongoUri = process.env.MONGO_URI || process.env.MONGODB_URI;
+
 
 const config = {
   env: process.env.NODE_ENV || 'development',
   hospitalCode: (process.env.HOSPITAL_CODE || 'QPO').toUpperCase(),
   port: parseInt(process.env.PORT, 10) || centralPorts.BACKEND?.PORT || 7722,
-  // Connect to local MongoDB in development mode without modifying secrets/backend.env
-  // Atlas can still be explicitly toggled via USE_ATLAS=true
-  mongoUri: isAtlasExplicit
-    ? (process.env.MONGO_URI || defaultLocalUri)
-    : (process.env.LOCAL_MONGO_URI || defaultLocalUri),
+  // Cloud Atlas exclusive connection URI - strictly validated against local cluster connections
+  mongoUri: validateCloudMongoUri(rawMongoUri),
+
+
+
+
   corsOrigin: process.env.CORS_ORIGIN || centralPorts.FRONTEND?.URL || 'http://localhost:7123',
   jsonLimit: process.env.JSON_BODY_LIMIT || '10mb',
   rateLimit: {
@@ -43,7 +75,9 @@ const config = {
   db: {
     maxPoolSize: parseInt(process.env.DB_MAX_POOL, 10) || 50,
     minPoolSize: parseInt(process.env.DB_MIN_POOL, 10) || 5,
-    serverSelectionTimeoutMS: parseInt(process.env.DB_SERVER_SELECT_TIMEOUT, 10) || 10000,
+    serverSelectionTimeoutMS: parseInt(process.env.DB_SERVER_SELECT_TIMEOUT, 10) || 15000,
+    connectTimeoutMS: parseInt(process.env.DB_CONNECT_TIMEOUT, 10) || 15000,
+    heartbeatFrequencyMS: parseInt(process.env.DB_HEARTBEAT_MS, 10) || 10000,
     socketTimeoutMS: parseInt(process.env.DB_SOCKET_TIMEOUT, 10) || 45000,
     dnsServers: process.env.DNS_SERVERS
       ? process.env.DNS_SERVERS.split(',').map((s) => s.trim())
@@ -94,4 +128,5 @@ const config = {
   },
 };
 
+config.validateCloudMongoUri = validateCloudMongoUri;
 module.exports = config;

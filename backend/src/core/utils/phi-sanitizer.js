@@ -162,6 +162,96 @@ const sanitizePatientForRole = (patient, user = {}, options = {}) => {
   };
 };
 
+/**
+ * Detects whether an object represents a Patient entity.
+ */
+const isPatientLike = (obj) => {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return false;
+  if (obj.mrn && (obj.phone !== undefined || obj.aadhaar !== undefined || obj.firstName !== undefined || obj.bloodGroup !== undefined)) {
+    return true;
+  }
+  return false;
+};
+
+/**
+ * Recursively traverses a payload to sanitize any patient entity or populated patient subdocument
+ * according to the requesting user's role and clearances.
+ *
+ * @param {*} payload - Response data (array, object, or scalar)
+ * @param {Object} user - Requesting user context { role, permissions, ... }
+ * @param {Object} options - Options { hasBreakGlassGrant, forceSafeHarbor }
+ * @returns {*} Sanitized payload
+ */
+const deepSanitizePayload = (payload, user = {}, options = {}, visited = new WeakSet(), depth = 0) => {
+  if (!payload || typeof payload !== 'object' || depth > 10) {
+    return payload;
+  }
+
+  const role = (user?.role || '').toUpperCase();
+  const permissions = user?.permissions || [];
+  const hasBreakGlass = Boolean(options.hasBreakGlassGrant);
+
+  // 1. Full clinical clearance: Administrators, active Break-Glass, or explicit full PHI permission
+  const hasFullClinicalClearance =
+    role === 'ADMINISTRATOR' ||
+    role === 'ADMIN' ||
+    hasBreakGlass ||
+    permissions.includes('PATIENT_PHI_FULL_VIEW');
+
+  // 2. Attending medical staff clearance
+  const isClinicalRole = [
+    'DOCTOR',
+    'SURGEON',
+    'EMERGENCY PHYSICIAN',
+    'HEAD OF DEPARTMENT',
+    'NURSE',
+    'ANESTHETIST',
+  ].includes(role);
+
+  // Fast-path: Skip deep traversal for fully cleared clinical & administrative staff
+  if ((hasFullClinicalClearance || isClinicalRole) && !options.forceSafeHarbor) {
+    return payload;
+  }
+
+  // Handle circular references
+  if (visited.has(payload)) {
+    return payload;
+  }
+  visited.add(payload);
+
+  if (Array.isArray(payload)) {
+    return payload.map((item) => deepSanitizePayload(item, user, options, visited, depth + 1));
+  }
+
+  // If payload itself is a direct patient record
+  if (isPatientLike(payload)) {
+    return sanitizePatientForRole(payload, user, options);
+  }
+
+  // Clone object shallowly to prevent mutating in-memory cache/references
+  const clone = { ...payload };
+
+  // Explicitly check populated subdocuments: patientId, patient, patientSnapshot, selectedPatient
+  const patientKeys = ['patientId', 'patient', 'patientSnapshot', 'selectedPatient'];
+  for (const key of patientKeys) {
+    if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+      if (isPatientLike(clone[key]) || clone[key].mrn || clone[key].phone) {
+        clone[key] = sanitizePatientForRole(clone[key], user, options);
+      }
+    }
+  }
+
+  // Recursively sanitize all other properties
+  for (const key of Object.keys(clone)) {
+    const val = clone[key];
+    if (val && typeof val === 'object' && !patientKeys.includes(key)) {
+      clone[key] = deepSanitizePayload(val, user, options, visited, depth + 1);
+    }
+  }
+
+  return clone;
+};
+
 module.exports = {
   maskPhoneNumber,
   maskAadhaar,
@@ -169,4 +259,7 @@ module.exports = {
   maskAddress,
   maskClinicalData,
   sanitizePatientForRole,
+  isPatientLike,
+  deepSanitizePayload,
 };
+

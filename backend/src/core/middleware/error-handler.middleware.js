@@ -67,6 +67,14 @@ const errorHandler = (err, req, res, next) => { // eslint-disable-line no-unused
     message = 'Invalid ID format';
     isOperational = true;
   }
+  // 7. CORS origin rejection
+  else if (err.message && err.message.includes('CORS')) {
+    errorCode = 'SECURITY_001';
+    httpStatus = 403;
+    message = 'Cross-Origin Request Blocked by Security Policy';
+    isOperational = true;
+  }
+
 
   // Look up severity/retryable metadata from central catalog
   const errorDef = ERROR_CODES[errorCode] || {};

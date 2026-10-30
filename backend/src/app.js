@@ -7,6 +7,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const mongoose = require('mongoose');
 
 const config = require('./core/config');
 const requestId = require('./core/middleware/request-id.middleware');
@@ -15,6 +16,7 @@ const logger = require('./core/logger');
 const xssClean = require('./core/middleware/xss.middleware');
 const mongoSanitize = require('./core/middleware/mongo-sanitize.middleware');
 const parameterCoercion = require('./core/middleware/parameter-coercion.middleware');
+const phiSanitizer = require('./core/middleware/phi-sanitizer.middleware');
 const { getClientIp } = require('./core/utils/ip-resolver');
 const { verifyAccessToken } = require('./modules/auth/token.service');
 const threatDetector = require('./core/security/threat-detector');
@@ -42,19 +44,24 @@ const { handlePatientStatusSSE } = require('./modules/realtime/patient-status-ev
 const createApp = () => {
   const app = express();
 
-  // 1. Security & CORS configuration (Optimized for Cloudflare Tunnels & Local Dev)
+  // 1. Security & CORS configuration (Zero-Trust Origin Boundary)
   const allowedCors = (origin, callback) => {
+    // Allow same-origin, curl, mobile native or server-to-server requests without Origin header
     if (!origin) return callback(null, true);
-    if (
-      config.corsOrigin === '*' ||
-      config.corsOrigin === origin ||
-      origin.endsWith('.trycloudflare.com') ||
-      origin.includes('localhost') ||
-      origin.includes('127.0.0.1')
-    ) {
+
+    const isLocalDev = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(origin);
+    const isCloudflareTunnel = /^https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com$/.test(origin);
+    const isExplicitlyAllowed =
+      config.corsOrigin &&
+      config.corsOrigin !== '*' &&
+      (config.corsOrigin === origin || (Array.isArray(config.corsOrigin) && config.corsOrigin.includes(origin)));
+
+    if (isLocalDev || isCloudflareTunnel || isExplicitlyAllowed) {
       return callback(null, true);
     }
-    return callback(null, true);
+
+    logger.warn(`[Security Alert] Blocked unauthorized CORS origin: ${origin}`);
+    return callback(new Error(`CORS origin '${origin}' is not permitted by security policy`));
   };
   app.use(cors({ origin: allowedCors, credentials: true }));
 
@@ -87,6 +94,7 @@ const createApp = () => {
   app.use(parameterCoercion);
   app.use(xssClean);
   app.use(requestId);
+  app.use(phiSanitizer);
 
   // 4. Transport-Level Anti-Caching Headers for all Clinical & Admin API endpoints
   // Prevents browser disk caching, intermediate proxy retention, and Back-Forward cache (bfcache) leaks
@@ -203,6 +211,7 @@ const createApp = () => {
 
   // Apply rate limiters
   app.use('/api/v1/auth/login', loginLimiter);
+  app.use('/api/v1/auth/unlock', loginLimiter);
   app.use('/api', apiLimiter);
 
   // HTTP logging (dev only) â€” with noise filter for high-frequency telemetry/polls
@@ -258,9 +267,41 @@ const createApp = () => {
     app.use('/api/v1/development', developmentRoutes);
   }
 
-  // Health check
-  app.get('/api/v1/health', (req, res) => {
-    res.json({ status: 'success', message: 'HMS API is running', timestamp: new Date().toISOString() });
+  // Health check with real-time cloud Atlas telemetry
+  app.get('/api/v1/health', async (req, res) => {
+    const isDbConnected = mongoose.connection.readyState === 1;
+    let pingLatencyMs = null;
+    let pingSuccess = false;
+
+    if (isDbConnected && mongoose.connection.db) {
+      try {
+        const start = Date.now();
+        await mongoose.connection.db.admin().ping();
+        pingLatencyMs = Date.now() - start;
+        pingSuccess = true;
+      } catch (pingErr) {
+        pingSuccess = false;
+      }
+    }
+
+    const maskedHost = config.mongoUri ? config.mongoUri.replace(/:([^:@]{3,})@/, ':***@') : 'unknown';
+    const isHealthy = isDbConnected && pingSuccess;
+
+    const healthData = {
+      status: isHealthy ? 'success' : 'degraded',
+      message: isHealthy ? 'HMS API & Database operational' : 'Database disconnected or degraded',
+      service: 'Quantum CareOne HMS API',
+      timestamp: new Date().toISOString(),
+      database: {
+        status: isDbConnected ? 'connected' : 'disconnected',
+        clusterType: 'MongoDB Atlas Cloud',
+        endpoint: maskedHost,
+        networkPingMs: pingLatencyMs,
+        readyState: mongoose.connection.readyState,
+      },
+    };
+
+    res.status(isHealthy ? 200 : 503).json(healthData);
   });
 
   // Dedicated 404 handler for unmatched API routes
