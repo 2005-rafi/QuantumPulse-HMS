@@ -1,0 +1,27 @@
+name: Render Keep-Alive Cron
+
+on:
+  schedule:
+    # Ping every 12 minutes to keep the free Render instance awake (Render sleeps after 15 minutes of inactivity)
+    - cron: '*/12 * * * *'
+  workflow_dispatch: # Allows manual on-demand trigger from GitHub Actions UI
+
+jobs:
+  keepalive:
+    name: Ping Render Health Probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping Health Endpoint
+        run: |
+          echo "Sending keep-alive ping to Render backend..."
+          response=$(curl -s -w "\nHTTP_STATUS:%{http_code}" "https://quantumpulse-hms.onrender.com/api/v1/health")
+          http_code=$(echo "$response" | grep "HTTP_STATUS" | cut -d':' -f2)
+          body=$(echo "$response" | grep -v "HTTP_STATUS")
+          echo "Response Body: $body"
+          echo "HTTP Status: $http_code"
+          if [ "$http_code" -ne 200 ]; then
+            echo "::warning::Health check returned non-200 HTTP code: $http_code"
+            exit 1
+          fi
+          echo "Render instance successfully kept warm and active."
