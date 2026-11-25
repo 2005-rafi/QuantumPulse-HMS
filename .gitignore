@@ -103,6 +103,7 @@ docs/
 # ── Seed Datasets & Database Seeding Scripts ──────────────────────────────────
 # Prevent synthetic patient, test lab, and mock data scripts from polluting repo
 *seed*.js
+!backend/src/modules/tariff/tariff-seed.service.js
 *seed*.mjs
 *seed*.cjs
 *seed*.json
