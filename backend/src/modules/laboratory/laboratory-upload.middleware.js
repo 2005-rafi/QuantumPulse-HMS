@@ -1,6 +1,5 @@
 const multer = require('multer');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
 const AppError = require('../../core/errors/app-error');
 const { verifyFileMagicBytes } = require('../../core/utils/file-validation');
 
