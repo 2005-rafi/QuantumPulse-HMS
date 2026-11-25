@@ -1,0 +1,19 @@
+{
+  "name": "quantum-careone",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Quantum CareOne - Hospital Information & OPD/IPD Management System",
+  "engines": {
+    "node": ">=20.0.0 <=22.x"
+  },
+  "scripts": {
+    "start": "npm start --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "test": "npm test --prefix backend",
+    "dev": "npm run dev --prefix backend"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ]
+}
