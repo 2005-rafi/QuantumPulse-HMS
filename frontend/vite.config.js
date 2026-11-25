@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import portsConfig from '../config/ports.config.json';
+import portsConfig from '../config/ports.config.json' with { type: 'json' };
 
 // https://vite.dev/config/
 export default defineConfig({
