@@ -1,0 +1,23 @@
+# ==============================================================================
+# Quantum CareOne - Render Infrastructure as Code Blueprint
+# Defines the isolated backend web service specification
+# ==============================================================================
+services:
+  - type: web
+    name: quantum-careone-backend
+    runtime: node
+    plan: free
+    region: frankfurt # or oregon
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 7722
+      - key: RATE_LIMIT_ENABLED
+        value: true
+      - key: USE_CUSTOM_DNS
+        value: false

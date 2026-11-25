@@ -51,12 +51,13 @@ const createApp = () => {
 
     const isLocalDev = /^https?:\/\/(localhost|127\.0\.0\.1)(:[0-9]+)?$/.test(origin);
     const isCloudflareTunnel = /^https:\/\/[a-zA-Z0-9-]+\.trycloudflare\.com$/.test(origin);
+    const isVercelOrigin = /^https:\/\/[a-zA-Z0-9_-]+\.vercel\.app$/.test(origin);
     const isExplicitlyAllowed =
       config.corsOrigin &&
       config.corsOrigin !== '*' &&
       (config.corsOrigin === origin || (Array.isArray(config.corsOrigin) && config.corsOrigin.includes(origin)));
 
-    if (isLocalDev || isCloudflareTunnel || isExplicitlyAllowed) {
+    if (isLocalDev || isCloudflareTunnel || isVercelOrigin || isExplicitlyAllowed) {
       return callback(null, true);
     }
 
@@ -320,8 +321,21 @@ const createApp = () => {
     const indexPath = path.join(frontendDistPath, 'index.html');
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
+    } else if (req.path === '/' || req.path === '') {
+      res.status(200).json({
+        status: 'online',
+        service: 'Quantum CareOne HMS API',
+        version: '1.0.0',
+        health: '/api/v1/health',
+        timestamp: new Date().toISOString(),
+      });
     } else {
-      res.status(404).send('HMS Frontend production build not found. Please run "npm run build" in frontend/');
+      res.status(404).json({
+        status: 'error',
+        errorCode: 'NOT_FOUND',
+        message: `API Route ${req.method} ${req.originalUrl || req.path} not found`,
+        timestamp: new Date().toISOString(),
+      });
     }
   });
 

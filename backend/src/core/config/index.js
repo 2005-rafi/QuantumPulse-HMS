@@ -63,7 +63,11 @@ const config = {
 
 
 
-  corsOrigin: process.env.CORS_ORIGIN || centralPorts.FRONTEND?.URL || 'http://localhost:7123',
+  corsOrigin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.includes(',')
+      ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+      : process.env.CORS_ORIGIN.trim()
+    : centralPorts.FRONTEND?.URL || 'http://localhost:7123',
   jsonLimit: process.env.JSON_BODY_LIMIT || '10mb',
   rateLimit: {
     enabled: process.env.RATE_LIMIT_ENABLED !== 'false',

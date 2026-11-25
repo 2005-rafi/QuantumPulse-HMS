@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { getPatientStatus, PATIENT_STATUS_REGISTRY } from '../constants/patientStatus';
+import { getApiBaseUrl } from '../services/api';
 
 const PatientStatusContext = createContext(null);
 
@@ -18,7 +19,7 @@ export const PatientStatusProvider = ({ children }) => {
     }
 
     try {
-      const sseUrl = '/api/v1/realtime/patient-status';
+      const sseUrl = `${getApiBaseUrl()}/realtime/patient-status`;
       const es = new EventSource(sseUrl);
       eventSourceRef.current = es;
 

@@ -16,19 +16,22 @@ import { sanitizeQueryParams, sanitizePayload } from '../core/security/query-san
 
 /**
  * Dynamic API Base URL resolution:
- * On remote devices, mobile phones, or public tunnels (*.trycloudflare.com, LAN IP 10.x.x.x),
- * always use the same-origin relative path '/api/v1'.
- * This prevents hardcoded localhost URLs from leaking to remote clients,
- * completely resolving Content Security Policy (CSP) and Mixed Content blocking.
+ * 1. If VITE_API_URL is configured (e.g., Vercel frontend pointing to Render backend),
+ *    it takes absolute precedence.
+ * 2. On remote devices, mobile phones, or public tunnels (*.trycloudflare.com, LAN IP 10.x.x.x),
+ *    fallback to same-origin relative path '/api/v1' if no explicit URL is given.
  */
-const getApiBaseUrl = () => {
+export const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/+$/, '');
+  }
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
     if (host !== 'localhost' && host !== '127.0.0.1') {
       return '/api/v1';
     }
   }
-  return import.meta.env.VITE_API_URL || '/api/v1';
+  return '/api/v1';
 };
 
 const API_BASE_URL = getApiBaseUrl();
