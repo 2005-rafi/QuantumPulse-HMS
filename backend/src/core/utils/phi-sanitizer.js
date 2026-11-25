@@ -174,6 +174,26 @@ const isPatientLike = (obj) => {
 };
 
 /**
+ * Detects BSON/Mongoose primitive objects (ObjectId, Date, RegExp, Buffer, TypedArray)
+ * that must never be spread with `{ ...val }` because doing so strips their prototype
+ * (.toJSON()) and corrupts IDs into `{ buffer: ... }` or Dates into `{}`.
+ */
+const isPreservedScalarObject = (val) => {
+  if (!val || typeof val !== 'object') return false;
+  if (val instanceof Date || val instanceof RegExp) return true;
+  if (typeof Buffer !== 'undefined' && Buffer.isBuffer(val)) return true;
+  if (ArrayBuffer.isView(val)) return true;
+  if (
+    val._bsontype === 'ObjectId' ||
+    val._bsontype === 'ObjectID' ||
+    typeof val.toHexString === 'function'
+  ) {
+    return true;
+  }
+  return false;
+};
+
+/**
  * Recursively traverses a payload to sanitize any patient entity or populated patient subdocument
  * according to the requesting user's role and clearances.
  *
@@ -184,6 +204,11 @@ const isPatientLike = (obj) => {
  */
 const deepSanitizePayload = (payload, user = {}, options = {}, visited = new WeakSet(), depth = 0) => {
   if (!payload || typeof payload !== 'object' || depth > 10) {
+    return payload;
+  }
+
+  // Preserve BSON ObjectId, Date, Buffer, RegExp untouched so JSON.stringify serializes them properly
+  if (isPreservedScalarObject(payload)) {
     return payload;
   }
 
@@ -223,18 +248,28 @@ const deepSanitizePayload = (payload, user = {}, options = {}, visited = new Wea
     return payload.map((item) => deepSanitizePayload(item, user, options, visited, depth + 1));
   }
 
+  // Convert Mongoose Documents safely before inspecting/cloning to avoid spreading $__ / _doc internals
+  const plain = typeof payload.toObject === 'function'
+    ? payload.toObject({ virtuals: true })
+    : payload;
+
   // If payload itself is a direct patient record
-  if (isPatientLike(payload)) {
-    return sanitizePatientForRole(payload, user, options);
+  if (isPatientLike(plain)) {
+    return sanitizePatientForRole(plain, user, options);
   }
 
   // Clone object shallowly to prevent mutating in-memory cache/references
-  const clone = { ...payload };
+  const clone = { ...plain };
 
   // Explicitly check populated subdocuments: patientId, patient, patientSnapshot, selectedPatient
   const patientKeys = ['patientId', 'patient', 'patientSnapshot', 'selectedPatient'];
   for (const key of patientKeys) {
-    if (clone[key] && typeof clone[key] === 'object' && !Array.isArray(clone[key])) {
+    if (
+      clone[key] &&
+      typeof clone[key] === 'object' &&
+      !Array.isArray(clone[key]) &&
+      !isPreservedScalarObject(clone[key])
+    ) {
       if (isPatientLike(clone[key]) || clone[key].mrn || clone[key].phone) {
         clone[key] = sanitizePatientForRole(clone[key], user, options);
       }
@@ -244,7 +279,12 @@ const deepSanitizePayload = (payload, user = {}, options = {}, visited = new Wea
   // Recursively sanitize all other properties
   for (const key of Object.keys(clone)) {
     const val = clone[key];
-    if (val && typeof val === 'object' && !patientKeys.includes(key)) {
+    if (
+      val &&
+      typeof val === 'object' &&
+      !isPreservedScalarObject(val) &&
+      !patientKeys.includes(key)
+    ) {
       clone[key] = deepSanitizePayload(val, user, options, visited, depth + 1);
     }
   }

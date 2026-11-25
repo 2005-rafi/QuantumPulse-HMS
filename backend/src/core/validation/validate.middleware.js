@@ -6,12 +6,16 @@ const { error: sendError } = require('../responses');
  * Returns VALIDATION errors before any DB write.
  */
 const validate = (schema) => (req, res, next) => {
-  const { error } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
-  if (!error) return next();
+  const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
+  if (!error) {
+    req.body = value;
+    return next();
+  }
 
   const details = error.details.map((d) => ({
-    field: d.context.key || d.path.join('.'),
-    message: d.message,
+    field: d.path.length ? d.path.join('.') : (d.context.key || 'body'),
+    key: d.context.key || d.path[d.path.length - 1],
+    message: d.message.replace(/"/g, ''),
   }));
 
   const logger = require('../logger');

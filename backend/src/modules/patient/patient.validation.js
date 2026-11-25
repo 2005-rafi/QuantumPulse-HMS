@@ -63,13 +63,19 @@ const addHistorySchema = Joi.object({
   status: Joi.string().valid('Active', 'Resolved').default('Active')
 });
 
+const objectIdRule = Joi.string()
+  .trim()
+  .pattern(/^[0-9a-fA-F]{24}$/)
+  .allow('', null)
+  .messages({ 'string.pattern.base': '{{#label}} must be a valid 24-character ID' });
+
 const createPatientWithVisitSchema = Joi.object({
   patient: createPatientSchema.required(),
   workflowType: Joi.string().valid('OPD', 'EMERGENCY', 'IPD_MEDICAL', 'IPD_SURGICAL', 'NONE').optional(),
   visit: Joi.object({
     isDirectPharmacy: Joi.boolean().optional(),
-    departmentId: Joi.string().allow('', null).optional(),
-    doctorId: Joi.string().allow('', null).optional(),
+    departmentId: objectIdRule.optional(),
+    doctorId: objectIdRule.optional(),
     visitType: Joi.string().valid('OPD', 'IPD', 'EMERGENCY').optional(),
     reasonForVisit: Joi.string().allow('', null).optional(),
     receptionPayment: Joi.object({

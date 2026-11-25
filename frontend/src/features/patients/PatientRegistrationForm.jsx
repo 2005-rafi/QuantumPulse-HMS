@@ -10,6 +10,7 @@ import { Md3TextField, Md3Select, Md3Button } from '../../components/md3/Md3Form
 import BedAllocationPicker from '../../components/ipd/BedAllocationPicker';
 import IpdAdmissionSlip from '../../components/ipd/IpdAdmissionSlip';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
+import { extractEntityId } from '../../utils/patientFormatters';
 import './PatientRegistrationForm.css';
 
 export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
@@ -87,8 +88,9 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           const clinicalDepts = depts.filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC');
           if (clinicalDepts.length > 0) {
             const defaultDept = clinicalDepts.find((d) => d.name?.toLowerCase().includes('general medicine')) || clinicalDepts[0];
-            if (defaultDept) {
-              setForm((prev) => (prev.departmentId ? prev : { ...prev, departmentId: defaultDept._id }));
+            const defaultDeptId = extractEntityId(defaultDept);
+            if (defaultDeptId) {
+              setForm((prev) => (prev.departmentId ? prev : { ...prev, departmentId: defaultDeptId }));
             }
           }
         }
@@ -289,9 +291,20 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       value = isIndia ? value.replace(/\D/g, '').slice(0, 12) : value.slice(0, 20);
     } else if (name === 'pinCode') {
       value = isIndia ? value.replace(/\D/g, '').slice(0, 6) : value.slice(0, 10);
+    } else if (name === 'departmentId' || name === 'doctorId') {
+      value = extractEntityId(value);
     }
 
-    setForm((prev) => ({ ...prev, [name]: value }));
+    if (name === 'departmentId') {
+      setForm((prev) => {
+        const currentDoc = doctors.find((d) => extractEntityId(d) === extractEntityId(prev.doctorId));
+        const docDeptId = currentDoc ? extractEntityId(currentDoc.departmentId) : '';
+        const keepDoctor = !prev.doctorId || !value || docDeptId === value;
+        return { ...prev, departmentId: value, ...(keepDoctor ? {} : { doctorId: '' }) };
+      });
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
     setFieldErrors((prev) => ({ ...prev, [name]: null }));
     setError(null);
   };
@@ -572,13 +585,15 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       }
       // Case B: Standard OPD or Emergency Visit
       else if (form.workflowType === 'OPD' || form.workflowType === 'EMERGENCY') {
+        const cleanDepartmentId = extractEntityId(form.departmentId);
+        const cleanDoctorId = extractEntityId(form.doctorId);
         const registerPayload = {
           patient: patientPayload,
           workflowType: form.workflowType,
           visit: {
             visitType: form.workflowType === 'EMERGENCY' ? 'EMERGENCY' : 'OPD',
-            ...(form.departmentId && { departmentId: form.departmentId }),
-            ...(form.doctorId && { doctorId: form.doctorId }),
+            ...(cleanDepartmentId && { departmentId: cleanDepartmentId }),
+            ...(cleanDoctorId && { doctorId: cleanDoctorId }),
             reasonForVisit: form.reasonForVisit || (form.workflowType === 'EMERGENCY' ? 'Emergency Evaluation' : ''),
             receptionPayment: {
               registrationFee: Number(form.registrationFee) || 0,
@@ -613,6 +628,19 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       setFieldErrors({});
     } catch (err) {
       console.error('[PatientRegistrationForm] Registration submission error:', err);
+      const apiDetails = err.response?.data?.details;
+      if (Array.isArray(apiDetails) && apiDetails.length > 0) {
+        const mappedErrors = {};
+        apiDetails.forEach((detail) => {
+          const fieldKey = detail.key || (detail.field ? detail.field.split('.').pop() : null);
+          if (fieldKey && detail.message) {
+            mappedErrors[fieldKey] = detail.message;
+          }
+        });
+        if (Object.keys(mappedErrors).length > 0) {
+          setFieldErrors((prev) => ({ ...prev, ...mappedErrors }));
+        }
+      }
       setError(err.response?.data?.message || err.message || 'Registration failed. Please check inputs.');
     } finally {
       setLoading(false);

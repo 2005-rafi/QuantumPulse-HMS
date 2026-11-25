@@ -127,4 +127,20 @@ export const formatPatientPhone = (phone) => {
   return str;
 };
 
+/**
+ * Safely extracts a canonical string entity ID from a string, populated object ({ _id } or { id }),
+ * or returns empty string if missing/malformed. Prevents BSON/object structures from leaking into API payloads.
+ */
+export const extractEntityId = (value) => {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim();
+  if (typeof value === 'object') {
+    if (typeof value._id === 'string') return value._id.trim();
+    if (typeof value.id === 'string') return value.id.trim();
+    if (typeof value.$oid === 'string') return value.$oid.trim();
+  }
+  return '';
+};
+
+
 
