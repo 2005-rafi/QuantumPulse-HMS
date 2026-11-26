@@ -527,7 +527,7 @@
   .unified-print-docked-header,
   .no-print,
   nav,
-  header,
+  .app-header,
   aside {
     display: none !important;
   }
@@ -595,8 +595,11 @@
   }
 
   .unified-print-paper-sheet *,
+  .unified-print-paper-sheet .a4-header,
+  .unified-print-paper-sheet .a4-footer,
   .unified-print-paper-sheet .billing-template-container,
   .unified-print-paper-sheet .billing-template-container * {
+    display: revert;
     visibility: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;

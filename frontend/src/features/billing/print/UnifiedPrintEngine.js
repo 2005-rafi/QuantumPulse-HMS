@@ -11,7 +11,7 @@
  *     and admission accounts into a uniform structure ready for BillingTemplate rendering.
  */
 
-import { formatPatientPhone, formatDoctorName, extractEntityId } from '../../../utils/patientFormatters';
+import { formatPatientPhone, formatDoctorName, extractEntityId, formatSafeDate } from '../../../utils/patientFormatters';
 import { CURRENCY_SYMBOL } from '../../../constants/currency';
 
 /**
@@ -69,16 +69,30 @@ export const normalizeBillData = (rawBill = {}, rawPatient = null, rawVisit = nu
   const billNumber = bill.billNumber || (rawBillId ? `INV-${rawBillId.slice(-8).toUpperCase()}` : `INV-${Date.now().toString(36).toUpperCase()}`);
 
   // Resolve Line Items
-  const lineItems = (bill.lineItems || []).map((li, idx) => ({
-    _id: li._id || `li-${idx}`,
-    category: li.category || 'OTHER',
-    description: li.description || 'Medical Service / Consumable',
-    quantity: Number(li.quantity) || 1,
-    unitPrice: Number(li.price != null ? li.price : (li.unitPrice != null ? li.unitPrice : 0)),
-    lineTotal: Number(li.lineTotal != null ? li.lineTotal : (li.amount != null ? li.amount : 0)),
-    serviceDate: li.serviceDate || bill.serviceDate || bill.createdAt,
-    proofReference: li.proofReference || '',
-  }));
+  const lineItems = (bill.lineItems || []).map((li, idx) => {
+    const rawQty = Number(li.quantity) || 1;
+    const rawTotal = Number(li.lineTotal != null ? li.lineTotal : (li.amount != null ? li.amount : 0));
+    const rawPrice = li.snapshotPrice != null
+      ? Number(li.snapshotPrice)
+      : li.unitPrice != null
+      ? Number(li.unitPrice)
+      : li.price != null
+      ? Number(li.price)
+      : (rawTotal > 0 ? rawTotal / rawQty : 0);
+
+    return {
+      _id: li._id || `li-${idx}`,
+      category: li.category || 'OTHER',
+      description: li.description || 'Medical Service / Consumable',
+      quantity: rawQty,
+      unitPrice: rawPrice,
+      lineTotal: rawTotal,
+      serviceDate: formatSafeDate(li.serviceDate || li.addedAt || bill.serviceDate || bill.createdAt, { day: '2-digit', month: 'short', year: 'numeric' }, 'Today'),
+      proofReference: li.proofReference || '',
+      hsnSacCode: li.hsnSacCode || (li.category === 'PHARMACY' ? '3004' : '999312'),
+      taxRate: Number(li.taxRate) || 0,
+    };
+  });
 
   // Resolve Advance Payments
   const payments = bill.payments || [];
@@ -208,6 +222,12 @@ export const printViaIframe = (printableHtml, options = {}) => {
                 position: static !important;
               }
 
+              /* Explicitly force medical branding headers and footers to be visible, immune to parent print styles */
+              header, .a4-header, .pos-header, footer, .a4-footer, .pos-footer {
+                display: block !important;
+                visibility: visible !important;
+              }
+
               /* ── A4 Hospital Invoice Styles ── */
               .a4-invoice-sheet {
                 width: 100% !important;
@@ -220,6 +240,8 @@ export const printViaIframe = (printableHtml, options = {}) => {
                 line-height: 1.35 !important;
               }
               .a4-header {
+                display: block !important;
+                visibility: visible !important;
                 text-align: center !important;
                 margin-bottom: 6px !important;
               }
@@ -390,16 +412,67 @@ export const printViaIframe = (printableHtml, options = {}) => {
               }
               .a4-summary-section {
                 display: flex !important;
-                justify-content: flex-end !important;
+                justify-content: space-between !important;
+                align-items: flex-start !important;
+                gap: 16px !important;
                 margin-top: 8px !important;
                 page-break-inside: avoid !important;
+                break-inside: avoid !important;
               }
               .a4-summary-box {
-                width: 320px !important;
+                flex: 1 1 45% !important;
+                max-width: 320px !important;
                 background: #f8fafc !important;
                 border: 1px solid #cbd5e1 !important;
                 border-radius: 6px !important;
                 padding: 8px 12px !important;
+                box-sizing: border-box !important;
+              }
+              .a4-gst-tax-box {
+                flex: 1 1 55% !important;
+                background: #f8fafc !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 6px !important;
+                padding: 8px 12px !important;
+                margin-top: 0 !important;
+                page-break-inside: avoid !important;
+                box-sizing: border-box !important;
+              }
+              .a4-gst-tax-title {
+                font-size: 9px !important;
+                font-weight: 700 !important;
+                color: #0f172a !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+                margin-bottom: 6px !important;
+                border-bottom: 1px dashed #cbd5e1 !important;
+                padding-bottom: 4px !important;
+              }
+              .a4-gst-tax-grid {
+                display: grid !important;
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 4px 16px !important;
+              }
+              .a4-gst-tax-item {
+                display: flex !important;
+                justify-content: space-between !important;
+                font-size: 9px !important;
+              }
+              .a4-gst-tax-label {
+                color: #64748b !important;
+                font-weight: 500 !important;
+              }
+              .a4-gst-tax-val {
+                color: #0f172a !important;
+                font-weight: 700 !important;
+                font-variant-numeric: tabular-nums !important;
+              }
+              .a4-gst-tax-item--total {
+                grid-column: span 2 !important;
+                border-top: 1px solid #cbd5e1 !important;
+                margin-top: 2px !important;
+                padding-top: 4px !important;
+                font-size: 9.5px !important;
               }
               .a4-summary-row {
                 display: flex !important;

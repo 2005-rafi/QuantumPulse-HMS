@@ -38,7 +38,7 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
   // Configuration resolution
   const activeTemplate = config?.templates?.[effectiveWorkflow] || config?.templates?.OPD || {};
   const hospitalInfo = {
-    name: 'QUANTUM CAREONE HOSPITAL',
+    name: 'QUANTUM CAREONE',
     subHeader: 'Advanced Center for Clinical Care & Surgery',
     address: 'Plot 42, Health City Expressway, Tech Zone 4, Chennai, TN - 600101',
     phone: '+91 (044) 4900-8800',
@@ -72,27 +72,17 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
 
   // Date Formatter
   const formatDate = (d, withTime = false) => {
-    if (!d) return '—';
-    try {
-      const dateObj = new Date(d);
-      if (isNaN(dateObj.getTime())) return String(d);
-      if (withTime) {
-        return dateObj.toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        });
-      }
-      return dateObj.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
-    } catch (_) {
-      return String(d);
-    }
+    return formatSafeDate(d, withTime ? {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    } : {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    }, '—');
   };
 
   // Patient Demographic Resolution
@@ -183,11 +173,20 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
   rawItems.forEach((item) => {
     const catKey = (item.category && categoryMap[item.category]) ? item.category : 'OTHER';
     const total = Number(item.lineTotal != null ? item.lineTotal : (item.amount != null ? item.amount : 0));
+    const qty = Number(item.quantity) || 1;
+    const resolvedUnitRate = item.snapshotPrice != null
+      ? Number(item.snapshotPrice)
+      : item.unitPrice != null && Number(item.unitPrice) > 0
+      ? Number(item.unitPrice)
+      : item.price != null && Number(item.price) > 0
+      ? Number(item.price)
+      : (total > 0 ? (total / qty) : 0);
+
     categoryMap[catKey].items.push({
       ...item,
       lineTotal: total,
-      unitPrice: Number(item.unitPrice != null ? item.unitPrice : (item.price != null ? item.price : total / (item.quantity || 1))),
-      quantity: Number(item.quantity) || 1,
+      unitPrice: resolvedUnitRate,
+      quantity: qty,
       serviceDate: item.serviceDate || billingDate,
     });
     categoryMap[catKey].subtotal += total;
@@ -258,7 +257,7 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
   return (
     <div ref={ref} className="a4-invoice-sheet unified-bill-sheet unified-print-portal">
       {/* ── 1. HOSPITAL BRANDING HEADER ── */}
-      <header className="a4-header">
+      <div className="a4-header" role="banner">
         <h1 className="a4-header__title">{hospitalInfo.name}</h1>
         {hospitalInfo.subHeader && (
           <p className="a4-header__sub">{hospitalInfo.subHeader}</p>
@@ -274,7 +273,7 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
             </span>
           )}
         </div>
-      </header>
+      </div>
 
       <div className="a4-divider" />
 
@@ -521,7 +520,7 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
       </section>
 
       {/* ── 6. SIGNATURE & VERIFICATION SECTION ── */}
-      <footer className="a4-footer">
+      <div className="a4-footer" role="contentinfo">
         <div className="a4-signatures">
           <div className="a4-sig-block">
             <div className="a4-sig-line" />
@@ -540,7 +539,7 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
         <div className="a4-footer-note">
           <p>This is a computer-generated official hospital document. Valid for medical reimbursement, insurance claims, and tax filing without physical signature.</p>
         </div>
-      </footer>
+      </div>
     </div>
   );
 });
