@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useOutletContext, useParams, useNavigate } from 'react-router-dom';
 import PatientList from './PatientList';
@@ -12,6 +12,7 @@ import { Md3BottomSheet, Md3Fab, Md3Button } from '../../components/md3/Md3FormC
 import { Icon } from '../../components/md3/Md3Widgets';
 import BillHistoryViewer from '../billing/bills/BillHistoryViewer';
 import { extractEntityId } from '../../utils/patientFormatters';
+import { printElement } from '../billing/print/UnifiedPrintEngine';
 
 /**
  * ReceptionPatientsView — Handles Walk-in & Patient directory, profile view,
@@ -38,6 +39,20 @@ export const ReceptionPatientsView = () => {
   const { config: billingConfig } = useBillingTemplateSettings();
   const [documentMode, setDocumentMode] = useState('COMBINED'); // 'COMBINED' | 'INVOICE' | 'TOKEN_SLIP'
   const [activeBill, setActiveBill] = useState(null);
+  const printSheetRef = useRef(null);
+
+  const handlePrint = async () => {
+    if (printSheetRef.current) {
+      const patientMrn = printData?.patient?.mrn || 'Patient';
+      const visitToken = printData?.visit?.tokenString || 'OPD';
+      await printElement(printSheetRef.current, {
+        title: `VisitSlip_${visitToken}_${patientMrn}`,
+        paperSize: 'A4 portrait',
+      });
+    } else {
+      window.print();
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -128,7 +143,7 @@ export const ReceptionPatientsView = () => {
 
               <Md3Button
                 variant="primary"
-                onClick={() => window.print()}
+                onClick={handlePrint}
                 style={{ width: 'auto', minWidth: '130px' }}
               >
                 Print Document
@@ -146,6 +161,7 @@ export const ReceptionPatientsView = () => {
 
           {/* Screen Card Presentation */}
           <div
+            ref={printSheetRef}
             className="billing-template-screen-card"
             style={{
               margin: '0 auto',

@@ -700,20 +700,24 @@
   .unified-print-portal .patient-info-grid,
   .billing-print-portal .patient-info-grid,
   .print-only-document .patient-info-grid,
-  .unified-bill-sheet .patient-info-grid {
-    display: flex !important;
-    flex-wrap: wrap !important;
-    gap: 3px 14px !important;
+  .unified-bill-sheet .patient-info-grid,
+  .patient-info-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 4px 16px !important;
+    width: 100% !important;
   }
 
   .unified-print-portal .patient-info-row,
   .billing-print-portal .patient-info-row,
   .print-only-document .patient-info-row,
-  .unified-bill-sheet .patient-info-row {
-    flex: 1 1 calc(50% - 14px) !important;
-    width: calc(50% - 14px) !important;
+  .unified-bill-sheet .patient-info-row,
+  .patient-info-row {
     display: flex !important;
+    flex-direction: row !important;
     align-items: baseline !important;
+    width: 100% !important;
+    min-width: 0 !important;
     font-size: 9.5px !important;
     line-height: 1.35 !important;
   }
@@ -721,9 +725,11 @@
   .unified-print-portal .info-label,
   .billing-print-portal .info-label,
   .print-only-document .info-label,
-  .unified-bill-sheet .info-label {
-    flex: 0 0 115px !important;
-    width: 115px !important;
+  .unified-bill-sheet .info-label,
+  .patient-info-row .info-label {
+    flex: 0 0 110px !important;
+    width: 110px !important;
+    min-width: 110px !important;
     color: #475569 !important;
     font-weight: 600 !important;
     white-space: nowrap !important;
@@ -732,9 +738,14 @@
   .unified-print-portal .info-value,
   .billing-print-portal .info-value,
   .print-only-document .info-value,
-  .unified-bill-sheet .info-value {
+  .unified-bill-sheet .info-value,
+  .patient-info-row .info-value {
     flex: 1 !important;
+    min-width: 0 !important;
     color: #0f172a !important;
+    font-weight: 600 !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
   }
 
   .unified-print-portal .billing-table,

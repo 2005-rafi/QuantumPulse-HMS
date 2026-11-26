@@ -152,9 +152,12 @@ export const printViaIframe = (printableHtml, options = {}) => {
       const pageTitle = options.title || 'Official Hospital Invoice';
       const paperSize = options.paperSize || 'A4 portrait';
 
-      // Harvest active stylesheets (excluding main root-hiding rules)
+      // Harvest active stylesheets and style tags (excluding main root-hiding rules)
       let stylesMarkup = '';
       document.querySelectorAll('link[rel="stylesheet"]').forEach((node) => {
+        stylesMarkup += node.outerHTML;
+      });
+      document.querySelectorAll('style').forEach((node) => {
         stylesMarkup += node.outerHTML;
       });
 
@@ -483,26 +486,34 @@ export const printViaIframe = (printableHtml, options = {}) => {
                 margin-bottom: 8px !important;
               }
               .patient-info-grid {
-                display: flex !important;
-                flex-wrap: wrap !important;
-                gap: 4px 14px !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 4px 16px !important;
+                width: 100% !important;
               }
               .patient-info-row {
-                flex: 1 1 calc(50% - 14px) !important;
                 display: flex !important;
+                flex-direction: row !important;
                 align-items: baseline !important;
+                width: 100% !important;
+                min-width: 0 !important;
                 font-size: 9.5px !important;
                 line-height: 1.35 !important;
               }
               .patient-info-row .info-label {
-                flex: 0 0 115px !important;
-                width: 115px !important;
+                flex: 0 0 110px !important;
+                width: 110px !important;
+                min-width: 110px !important;
                 color: #64748b !important;
                 font-weight: 600 !important;
+                white-space: nowrap !important;
               }
               .patient-info-row .info-value {
                 flex: 1 !important;
+                min-width: 0 !important;
                 color: #0f172a !important;
+                word-break: normal !important;
+                overflow-wrap: break-word !important;
               }
 
               .no-print {
