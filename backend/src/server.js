@@ -1,10 +1,7 @@
 const dns = require('dns');
 try {
-  const currentServers = dns.getServers();
-  if (!currentServers.length || currentServers.includes('127.0.0.1') || process.env.USE_CUSTOM_DNS === 'true') {
-    const servers = process.env.DNS_SERVERS ? process.env.DNS_SERVERS.split(',').map((s) => s.trim()) : ['8.8.8.8', '1.1.1.1', '8.8.4.4'];
-    dns.setServers(servers);
-  }
+  const servers = process.env.DNS_SERVERS ? process.env.DNS_SERVERS.split(',').map((s) => s.trim()) : ['8.8.8.8', '1.1.1.1', '8.8.4.4'];
+  dns.setServers(servers);
 } catch (e) {
   // Ignore
 }

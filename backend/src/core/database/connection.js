@@ -3,13 +3,9 @@ const dns = require('dns');
 const config = require('../config');
 const logger = require('../logger');
 
-// On Windows environments where default resolver is 127.0.0.1 without DNS server,
-// fallback to reliable public DNS resolvers (Google / Cloudflare) to ensure MongoDB Atlas SRV resolution
+// Ensure reliable public DNS resolvers (Google / Cloudflare) for MongoDB Atlas SRV record resolution
 try {
-  const currentServers = dns.getServers();
-  if (!currentServers.length || currentServers.includes('127.0.0.1')) {
-    dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
-  }
+  dns.setServers(['8.8.8.8', '1.1.1.1', '8.8.4.4']);
 } catch (e) {
   // Ignore
 }
@@ -56,10 +52,14 @@ const connectDB = async () => {
       minPoolSize: config.db?.minPoolSize || 5,
     });
   } catch (error) {
+    const isSelectionError = error.name === 'MongooseServerSelectionError' || (error.message && error.message.includes('Could not connect to any servers'));
     logger.error('MongoDB Atlas cloud connection failed:', {
       error: error.message,
-      stack: error.stack,
-      guidance: 'Verify active network connection and MONGO_URI in secrets/backend.env',
+      errorCode: isSelectionError ? 'ATLAS_FIREWALL_IP_NOT_WHITELISTED' : 'DATABASE_CONNECTION_ERROR',
+      guidance: isSelectionError
+        ? 'Your IP is not whitelisted in MongoDB Atlas. Go to MongoDB Atlas (cloud.mongodb.com) -> Security -> Network Access -> Add IP Address -> Add 0.0.0.0/0 (Allow Access from Anywhere).'
+        : 'Verify active network connection and MONGO_URI in secrets/backend.env',
+      actionRequired: isSelectionError ? 'Whitelist 0.0.0.0/0 in MongoDB Atlas Cloud Console' : 'Check network',
     });
     process.exit(1);
   }

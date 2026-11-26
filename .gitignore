@@ -116,14 +116,16 @@ scripts/
 frontend/test-artifacts/
 test-artifacts/
 docs/screenshots/
-*.png
-*.jpg
-*.jpeg
-*.webp
-*.gif
+assets/background/
+assets/sample/
 *.mp4
 *.webm
 *.avi
+
+# Allow production static public assets, icons, and UI background images
+!frontend/public/**
+!frontend/src/assets/**
+!assets/logo/**
 
 # ── Storage & Local Runtime Utility Scripts ───────────────────────────────────
 certificates/
