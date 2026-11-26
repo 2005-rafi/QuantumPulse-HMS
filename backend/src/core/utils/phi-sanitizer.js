@@ -174,6 +174,45 @@ const isPatientLike = (obj) => {
 };
 
 /**
+ * Converts BSON/Mongoose ObjectId representations to a canonical 24-char hex string.
+ * Supports native ObjectId instances, Mongoose IDs, decomposed { i0..i3 }, and { buffer }.
+ */
+const toCanonicalObjectIdString = (val) => {
+  if (!val) return null;
+  if (typeof val === 'string' && /^[0-9a-fA-F]{24}$/.test(val)) {
+    return val;
+  }
+  if (typeof val.toHexString === 'function') {
+    return val.toHexString();
+  }
+  if (val._bsontype === 'ObjectId' || val._bsontype === 'ObjectID') {
+    if (typeof val.toString === 'function') {
+      const str = val.toString();
+      if (/^[0-9a-fA-F]{24}$/.test(str)) return str;
+    }
+  }
+  if (
+    val.i0 !== undefined &&
+    val.i1 !== undefined &&
+    val.i2 !== undefined &&
+    val.i3 !== undefined
+  ) {
+    const hex = [val.i0, val.i1, val.i2, val.i3]
+      .map((n) => Number(n).toString(16).padStart(6, '0'))
+      .join('');
+    if (hex.length === 24 && /^[0-9a-fA-F]{24}$/.test(hex)) return hex;
+  }
+  if (val.buffer && typeof val.buffer === 'object') {
+    const bytes = Array.isArray(val.buffer) ? val.buffer : Object.values(val.buffer);
+    if (bytes.length === 12) {
+      const hex = bytes.map((b) => Number(b).toString(16).padStart(2, '0')).join('');
+      if (hex.length === 24 && /^[0-9a-fA-F]{24}$/.test(hex)) return hex;
+    }
+  }
+  return null;
+};
+
+/**
  * Detects BSON/Mongoose primitive objects (ObjectId, Date, RegExp, Buffer, TypedArray)
  * that must never be spread with `{ ...val }` because doing so strips their prototype
  * (.toJSON()) and corrupts IDs into `{ buffer: ... }` or Dates into `{}`.
@@ -186,7 +225,9 @@ const isPreservedScalarObject = (val) => {
   if (
     val._bsontype === 'ObjectId' ||
     val._bsontype === 'ObjectID' ||
-    typeof val.toHexString === 'function'
+    typeof val.toHexString === 'function' ||
+    (val.i0 !== undefined && val.i3 !== undefined) ||
+    (val.buffer && typeof val.buffer === 'object')
   ) {
     return true;
   }
@@ -207,7 +248,13 @@ const deepSanitizePayload = (payload, user = {}, options = {}, visited = new Wea
     return payload;
   }
 
-  // Preserve BSON ObjectId, Date, Buffer, RegExp untouched so JSON.stringify serializes them properly
+  // Canonicalize ObjectId to string early to prevent any downstream serialization loss
+  const oidStr = toCanonicalObjectIdString(payload);
+  if (oidStr) {
+    return oidStr;
+  }
+
+  // Preserve Date, Buffer, RegExp untouched so JSON.stringify serializes them properly
   if (isPreservedScalarObject(payload)) {
     return payload;
   }
@@ -279,7 +326,10 @@ const deepSanitizePayload = (payload, user = {}, options = {}, visited = new Wea
   // Recursively sanitize all other properties
   for (const key of Object.keys(clone)) {
     const val = clone[key];
-    if (
+    const canonicalOid = toCanonicalObjectIdString(val);
+    if (canonicalOid) {
+      clone[key] = canonicalOid;
+    } else if (
       val &&
       typeof val === 'object' &&
       !isPreservedScalarObject(val) &&
@@ -301,5 +351,6 @@ module.exports = {
   sanitizePatientForRole,
   isPatientLike,
   deepSanitizePayload,
+  toCanonicalObjectIdString,
 };
 

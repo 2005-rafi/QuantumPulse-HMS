@@ -9,7 +9,7 @@ import api from '../../services/api';
 import BedAllocationPicker from '../../components/ipd/BedAllocationPicker';
 import IpdAdmissionSlip from '../../components/ipd/IpdAdmissionSlip';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
-import { formatVisitStatus, formatDoctorName } from '../../utils/patientFormatters';
+import { formatVisitStatus, formatDoctorName, extractEntityId } from '../../utils/patientFormatters';
 import '../appointments/AppointmentDashboard.css';
 
 const QUICK_COMPLAINTS = [
@@ -115,7 +115,13 @@ export const NewVisitDialog = ({
 
         if (deptRes.status === 'fulfilled') {
           const raw = deptRes.value.data?.data || deptRes.value.data || [];
-          setDepartments(Array.isArray(raw) ? raw : []);
+          const rawList = Array.isArray(raw) ? raw : [];
+          setDepartments(
+            rawList.map((dept) => ({
+              ...dept,
+              _id: extractEntityId(dept._id || dept.id || dept),
+            }))
+          );
         }
 
         if (staffRes.status === 'fulfilled') {
@@ -126,11 +132,17 @@ export const NewVisitDialog = ({
             rawStaff?.staff ||
             (Array.isArray(rawStaff) ? rawStaff : []);
           setDoctors(
-            staffItems.filter(
-              (s) =>
-                /Doctor|Surgeon/i.test(s.roleId?.name || s.role || '') ||
-                /Doctor|Surgeon|Physician/i.test(s.position || '')
-            )
+            staffItems
+              .filter(
+                (s) =>
+                  /Doctor|Surgeon/i.test(s.roleId?.name || s.role || '') ||
+                  /Doctor|Surgeon|Physician/i.test(s.position || '')
+              )
+              .map((s) => ({
+                ...s,
+                _id: extractEntityId(s._id || s.id || s),
+                departmentId: extractEntityId(s.departmentId?._id || s.departmentId?.id || s.departmentId),
+              }))
           );
         }
       } catch (err) {
@@ -148,10 +160,11 @@ export const NewVisitDialog = ({
 
   // Filter doctors strictly by chosen department
   const availableDoctors = useMemo(() => {
-    if (!visitForm.departmentId) return doctors;
+    const selectedDeptId = extractEntityId(visitForm.departmentId);
+    if (!selectedDeptId) return doctors;
     return doctors.filter((doc) => {
-      const docDeptId = doc.departmentId?._id || doc.departmentId?.id || doc.departmentId;
-      return String(docDeptId) === String(visitForm.departmentId);
+      const docDeptId = extractEntityId(doc.departmentId?._id || doc.departmentId?.id || doc.departmentId);
+      return docDeptId === selectedDeptId;
     });
   }, [doctors, visitForm.departmentId]);
 
@@ -249,7 +262,10 @@ export const NewVisitDialog = ({
   if (!isOpen || !patient) return null;
 
   const handleField = (e) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    if (name === 'departmentId' || name === 'doctorId') {
+      value = extractEntityId(value);
+    }
     setVisitForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -528,7 +544,14 @@ export const NewVisitDialog = ({
                     value={visitForm.registrationFee}
                     readOnly={true}
                     disabled={formLoading}
-                    helperText="🔒 Hospital Standard Tariff (Read Only)"
+                    trailingIcon={<span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-on-surface-variant)' }}>lock</span>}
+                    trailingIconAriaLabel="Hospital Standard Tariff (Read Only)"
+                    helperText={
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                        <span className="material-symbols-rounded" style={{ fontSize: '14px', lineHeight: 1 }}>lock</span>
+                        <span>Hospital Standard Tariff (Read Only)</span>
+                      </span>
+                    }
                   />
                   <Md3Select
                     id="nv-paymentMethod"

@@ -129,16 +129,67 @@ export const formatPatientPhone = (phone) => {
 
 /**
  * Safely extracts a canonical string entity ID from a string, populated object ({ _id } or { id }),
- * or returns empty string if missing/malformed. Prevents BSON/object structures from leaking into API payloads.
+ * BSON ObjectId, or BSON serialized structures ({ i0..i3 } or { buffer }).
+ * Prevents BSON/object structures from leaking into API payloads and guarantees clean string matching.
  */
 export const extractEntityId = (value) => {
   if (!value) return '';
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'object') {
-    if (typeof value._id === 'string') return value._id.trim();
-    if (typeof value.id === 'string') return value.id.trim();
-    if (typeof value.$oid === 'string') return value.$oid.trim();
+
+  // 1. Primitive string
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (trimmed.length === 24 && /^[0-9a-fA-F]{24}$/.test(trimmed)) return trimmed;
+    return trimmed;
   }
+
+  // 2. Objects
+  if (typeof value === 'object') {
+    // If wrapped entity object with _id or id property
+    if (value._id !== undefined) return extractEntityId(value._id);
+    if (value.id !== undefined) return extractEntityId(value.id);
+    if (value.$oid !== undefined) return extractEntityId(value.$oid);
+
+    // Mongoose/BSON ObjectId with toHexString() method
+    if (typeof value.toHexString === 'function') {
+      return value.toHexString();
+    }
+
+    // Standard BSON 4-integer decomposition { i0, i1, i2, i3 }
+    if (
+      value.i0 !== undefined &&
+      value.i1 !== undefined &&
+      value.i2 !== undefined &&
+      value.i3 !== undefined
+    ) {
+      const hex = [value.i0, value.i1, value.i2, value.i3]
+        .map((n) => Number(n).toString(16).padStart(6, '0'))
+        .join('');
+      if (hex.length === 24 && /^[0-9a-fA-F]{24}$/.test(hex)) {
+        return hex;
+      }
+    }
+
+    // BSON buffer decomposition { buffer: { 0: ..., 1: ... } } or Array/Buffer
+    const rawBuffer = value.buffer || (ArrayBuffer.isView(value) ? value : null);
+    if (rawBuffer && typeof rawBuffer === 'object') {
+      const bytes = Array.isArray(rawBuffer) ? rawBuffer : Object.values(rawBuffer);
+      if (bytes.length === 12) {
+        const hex = bytes.map((b) => Number(b).toString(16).padStart(2, '0')).join('');
+        if (hex.length === 24 && /^[0-9a-fA-F]{24}$/.test(hex)) {
+          return hex;
+        }
+      }
+    }
+
+    // Standard toString() fallback
+    if (typeof value.toString === 'function') {
+      const str = value.toString();
+      if (str && str !== '[object Object]' && /^[0-9a-fA-F]{24}$/.test(str)) {
+        return str;
+      }
+    }
+  }
+
   return '';
 };
 

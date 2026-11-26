@@ -83,9 +83,13 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         ]);
 
         if (deptRes.status === 'fulfilled') {
-          const depts = deptRes.value.data?.data || deptRes.value.data || [];
-          setDepartments(depts);
-          const clinicalDepts = depts.filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC');
+          const rawDepts = deptRes.value.data?.data || deptRes.value.data || [];
+          const cleanDepts = (Array.isArray(rawDepts) ? rawDepts : []).map((d) => ({
+            ...d,
+            _id: extractEntityId(d._id || d),
+          }));
+          setDepartments(cleanDepts);
+          const clinicalDepts = cleanDepts.filter((d) => d.type === 'CLINICAL' || d.type === 'CLINICAL/DIAGNOSTIC');
           if (clinicalDepts.length > 0) {
             const defaultDept = clinicalDepts.find((d) => d.name?.toLowerCase().includes('general medicine')) || clinicalDepts[0];
             const defaultDeptId = extractEntityId(defaultDept);
@@ -102,8 +106,13 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
             rawStaff?.data?.items ||
             rawStaff?.staff ||
             (Array.isArray(rawStaff) ? rawStaff : []);
+          const cleanStaff = staffItems.map((s) => ({
+            ...s,
+            _id: extractEntityId(s._id || s),
+            departmentId: extractEntityId(s.departmentId?._id || s.departmentId),
+          }));
           setDoctors(
-            staffItems.filter(
+            cleanStaff.filter(
               (s) =>
                 /Doctor|Surgeon/i.test(s.roleId?.name || s.role || '') ||
                 /Doctor|Surgeon|Physician/i.test(s.position || '')
@@ -160,10 +169,11 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
 
   // Filter available doctors by department
   const availableDoctors = useMemo(() => {
-    if (!form.departmentId) return doctors;
+    const currentDeptId = extractEntityId(form.departmentId);
+    if (!currentDeptId) return doctors;
     return doctors.filter((doc) => {
-      const docDeptId = doc.departmentId?._id || doc.departmentId?.id || doc.departmentId;
-      return String(docDeptId) === String(form.departmentId);
+      const docDeptId = extractEntityId(doc.departmentId?._id || doc.departmentId?.id || doc.departmentId);
+      return docDeptId === currentDeptId;
     });
   }, [doctors, form.departmentId]);
 
@@ -1239,7 +1249,14 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
                   value={form.registrationFee}
                   readOnly={true}
                   disabled={loading}
-                  helperText="🔒 Hospital Standard Tariff (Read Only)"
+                  trailingIcon={<span className="material-symbols-rounded" style={{ fontSize: '18px', color: 'var(--md-sys-color-on-surface-variant)' }}>lock</span>}
+                  trailingIconAriaLabel="Hospital Standard Tariff (Read Only)"
+                  helperText={
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span className="material-symbols-rounded" style={{ fontSize: '14px', lineHeight: 1 }}>lock</span>
+                      <span>Hospital Standard Tariff (Read Only)</span>
+                    </span>
+                  }
                   error={fieldErrors.registrationFee}
                 />
               </div>
