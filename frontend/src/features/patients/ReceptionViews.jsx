@@ -11,6 +11,7 @@ import { billingAPI } from '../../services/billingAPI';
 import { Md3BottomSheet, Md3Fab, Md3Button } from '../../components/md3/Md3FormComponents';
 import { Icon } from '../../components/md3/Md3Widgets';
 import BillHistoryViewer from '../billing/bills/BillHistoryViewer';
+import { extractEntityId } from '../../utils/patientFormatters';
 
 /**
  * ReceptionPatientsView — Handles Walk-in & Patient directory, profile view,
@@ -41,7 +42,8 @@ export const ReceptionPatientsView = () => {
   useEffect(() => {
     let isMounted = true;
     const fetchBill = async () => {
-      const vId = printData?.visit?._id || printData?.visit?.id;
+      const rawVisitId = printData?.visit?._id || printData?.visit?.id;
+      const vId = extractEntityId(rawVisitId);
       if (!isPrintActive || !vId) {
         setActiveBill(null);
         return;

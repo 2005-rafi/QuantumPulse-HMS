@@ -4,19 +4,32 @@
  */
 import api from './api';
 import { API_ENDPOINTS } from '../constants/endpoints';
+import { extractEntityId } from '../utils/patientFormatters';
 
 export const billingApi = {
   // Bills Lookup & Unified Cashier Queue
   getEncountersQueue: (params = {}) => api.get(API_ENDPOINTS.BILLING.ENCOUNTERS_QUEUE, { params }),
   listBills: (params = {}) => api.get(API_ENDPOINTS.BILLING.BASE, { params }),
-  getBillById: (id) => api.get(API_ENDPOINTS.BILLING.BY_ID(id)),
-  getBillByVisit: (visitId) => api.get(API_ENDPOINTS.BILLING.BY_VISIT(visitId)),
+  getBillById: (id) => api.get(API_ENDPOINTS.BILLING.BY_ID(extractEntityId(id) || id)),
+  getBillByVisit: (visitId) => {
+    const cleanId = extractEntityId(visitId);
+    if (!cleanId) return Promise.resolve({ data: { status: 'success', data: null } });
+    return api.get(API_ENDPOINTS.BILLING.BY_VISIT(cleanId));
+  },
   getOutstandingBills: (params = {}) => api.get(API_ENDPOINTS.BILLING.OUTSTANDING, { params }),
 
   // Bill Actions
-  addLineItem: (id, data) => api.post(API_ENDPOINTS.BILLING.LINE_ITEMS(id), data),
-  getOrCreateForVisit: (visitId, data = {}) => api.post(API_ENDPOINTS.BILLING.GET_OR_CREATE_FOR_VISIT(visitId), data),
-  getOrCreateForAdmission: (admissionId, data = {}) => api.post(API_ENDPOINTS.BILLING.GET_OR_CREATE_FOR_ADMISSION(admissionId), data),
+  addLineItem: (id, data) => api.post(API_ENDPOINTS.BILLING.LINE_ITEMS(extractEntityId(id) || id), data),
+  getOrCreateForVisit: (visitId, data = {}) => {
+    const cleanId = extractEntityId(visitId);
+    if (!cleanId) return Promise.reject(new Error('Invalid visit ID'));
+    return api.post(API_ENDPOINTS.BILLING.GET_OR_CREATE_FOR_VISIT(cleanId), data);
+  },
+  getOrCreateForAdmission: (admissionId, data = {}) => {
+    const cleanId = extractEntityId(admissionId);
+    if (!cleanId) return Promise.reject(new Error('Invalid admission ID'));
+    return api.post(API_ENDPOINTS.BILLING.GET_OR_CREATE_FOR_ADMISSION(cleanId), data);
+  },
   recordPayment: (id, data) => api.post(API_ENDPOINTS.BILLING.PAYMENTS(id), data),
   finalizeBill: (id) => api.post(API_ENDPOINTS.BILLING.FINALIZE(id)),
   requestAdjustment: (id, data) => api.post(API_ENDPOINTS.BILLING.ADJUSTMENTS(id), data),

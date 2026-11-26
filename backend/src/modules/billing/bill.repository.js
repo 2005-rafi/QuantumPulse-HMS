@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const Bill = require('./bill.model');
 const Patient = require('../patient/patient.model');
 
@@ -11,6 +12,9 @@ class BillRepository {
   }
 
   async findByVisitId(visitId, options = {}) {
+    if (!visitId || !mongoose.Types.ObjectId.isValid(visitId)) {
+      return null;
+    }
     return Bill.findOne({ visitId }, null, options)
       .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
       .populate('lineItems.addedBy', 'fullName')
@@ -23,6 +27,9 @@ class BillRepository {
   }
 
   async findByAdmissionId(admissionId, options = {}) {
+    if (!admissionId || !mongoose.Types.ObjectId.isValid(admissionId)) {
+      return null;
+    }
     return Bill.findOne({ admissionId }, null, options)
       .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
       .populate('lineItems.addedBy', 'fullName')
@@ -35,6 +42,9 @@ class BillRepository {
   }
 
   async findById(id, options = {}) {
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return null;
+    }
     return Bill.findById(id, null, options)
       .populate('patientId', 'firstName lastName mrn phoneNumber phone gender age dateOfBirth')
       .populate('lineItems.addedBy', 'fullName')

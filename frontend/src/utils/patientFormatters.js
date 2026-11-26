@@ -3,13 +3,48 @@ export const getPatientInitials = (patient) => {
   return `${patient.firstName?.charAt(0) || ''}${patient.lastName?.charAt(0) || ''}`.toUpperCase();
 };
 
+/**
+ * Safely formats dates into Indian locale (en-IN) strings without ever throwing or displaying 'Invalid Date'.
+ * Supports ISO strings, Date instances, timestamps, wrapped objects ({ $date, date }), or empty/invalid values.
+ *
+ * @param {*} dateInput - Date instance, ISO-8601 string, timestamp number, or date-wrapper object
+ * @param {Intl.DateTimeFormatOptions} [options] - DateTimeFormat options
+ * @param {string} [fallback] - Fallback string if unparseable, or 'TODAY' to use current date
+ * @returns {string} Formatted date string (e.g. '26 Nov, 2026')
+ */
+export const formatSafeDate = (
+  dateInput,
+  options = { day: '2-digit', month: 'short', year: 'numeric' },
+  fallback = '—'
+) => {
+  const getFallback = () =>
+    fallback === 'TODAY' ? new Date().toLocaleDateString('en-IN', options) : fallback;
+
+  if (!dateInput) return getFallback();
+
+  let raw = dateInput;
+  if (typeof dateInput === 'object') {
+    if (dateInput instanceof Date) {
+      raw = dateInput;
+    } else if (dateInput.$date) {
+      raw = dateInput.$date;
+    } else if (dateInput.date) {
+      raw = dateInput.date;
+    } else {
+      return getFallback();
+    }
+  }
+
+  const d = new Date(raw);
+  if (isNaN(d.getTime())) {
+    return getFallback();
+  }
+
+  return d.toLocaleDateString('en-IN', options);
+};
+
 export const formatDob = (dob) => {
-  if (!dob) return '—';
-  return new Date(dob).toLocaleDateString('en-IN', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric'
-  });
+  return formatSafeDate(dob, { day: 'numeric', month: 'short', year: 'numeric' }, '—');
 };
 
 export const formatPatientName = (patient) => {

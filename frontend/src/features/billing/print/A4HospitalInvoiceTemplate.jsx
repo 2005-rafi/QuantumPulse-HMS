@@ -1,6 +1,6 @@
 import React from 'react';
 import { CURRENCY_SYMBOL } from '../../../constants/currency';
-import { formatDoctorName, formatPatientPhone } from '../../../utils/patientFormatters';
+import { formatDoctorName, formatPatientPhone, extractEntityId, formatSafeDate } from '../../../utils/patientFormatters';
 import './A4HospitalInvoiceTemplate.css';
 
 /**
@@ -146,8 +146,9 @@ export const A4HospitalInvoiceTemplate = React.forwardRef(({
   const policyNo = admission?.insuranceDetails?.policyNumber || visit?.insuranceDetails?.policyNumber || bill?.policyNumber || (insuranceProvider ? 'POL-SH-8828184' : null);
 
   // Invoice Number & Billing Date
-  const billNumber = bill?.billNumber || bill?._id || `INV-${Date.now().toString(36).toUpperCase()}`;
-  const billingDate = bill?.createdAt || bill?.serviceDate || visit?.createdAt || new Date();
+  const rawBillId = extractEntityId(bill?._id || visit?._id);
+  const billNumber = bill?.billNumber || (rawBillId ? `INV-${rawBillId.slice(-8).toUpperCase()}` : `INV-${Date.now().toString(36).toUpperCase()}`);
+  const billingDate = formatSafeDate(bill?.createdAt || bill?.serviceDate || visit?.createdAt, { day: '2-digit', month: 'short', year: 'numeric' }, 'TODAY');
 
   // Payment Mode
   const effectivePaymentMethod = (bill?.payments?.[0]?.method || bill?.paymentMethod || 'UPI').toUpperCase();

@@ -11,7 +11,7 @@
  *     and admission accounts into a uniform structure ready for BillingTemplate rendering.
  */
 
-import { formatPatientPhone, formatDoctorName } from '../../../utils/patientFormatters';
+import { formatPatientPhone, formatDoctorName, extractEntityId } from '../../../utils/patientFormatters';
 import { CURRENCY_SYMBOL } from '../../../constants/currency';
 
 /**
@@ -65,7 +65,8 @@ export const normalizeBillData = (rawBill = {}, rawPatient = null, rawVisit = nu
   ).toUpperCase();
 
   // Resolve Invoice / Bill Number
-  const billNumber = bill.billNumber || bill._id || `INV-${Date.now().toString(36).toUpperCase()}`;
+  const rawBillId = extractEntityId(bill.billNumber || bill._id);
+  const billNumber = bill.billNumber || (rawBillId ? `INV-${rawBillId.slice(-8).toUpperCase()}` : `INV-${Date.now().toString(36).toUpperCase()}`);
 
   // Resolve Line Items
   const lineItems = (bill.lineItems || []).map((li, idx) => ({

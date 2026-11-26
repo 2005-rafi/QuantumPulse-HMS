@@ -9,6 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { patientAPI } from '../services/patientAPI';
 import { appointmentAPI } from '../services/appointmentAPI';
+import { extractEntityId } from '../utils/patientFormatters';
 
 /**
  * @returns {{
@@ -68,7 +69,16 @@ export const useReceptionDashboard = () => {
   const handleVisitCreated = useCallback(({ patient, visit, isIpd, admission }) => {
     setIsRegSheetOpen(false);
     if (!isIpd && visit) {
-      setPrintData({ patient, visit });
+      const cleanPatient = patient ? {
+        ...patient,
+        _id: extractEntityId(patient._id || patient.id || patient),
+      } : null;
+      const cleanVisit = {
+        ...visit,
+        _id: extractEntityId(visit._id || visit.id || visit),
+        createdAt: visit.createdAt || new Date().toISOString(),
+      };
+      setPrintData({ patient: cleanPatient, visit: cleanVisit });
     }
     setTotalPatients((prev) => prev + 1);
     setTodaysVisits((prev) => prev + 1);

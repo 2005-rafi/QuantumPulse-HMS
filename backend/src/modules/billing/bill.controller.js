@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const billingService = require('./bill.service');
 const billingQueueService = require('./billing-queue.service');
 const { success, error: sendError } = require('../../core/responses');
@@ -11,7 +12,11 @@ class BillController {
   });
 
   getBillByVisit = catchAsync(async (req, res) => {
-    const bill = await billingService.getBillForVisit(req.params.visitId);
+    const { visitId } = req.params;
+    if (!visitId || !mongoose.Types.ObjectId.isValid(visitId)) {
+      return success(res, null, 'No bill found for invalid visit ID');
+    }
+    const bill = await billingService.getBillForVisit(visitId);
     return success(res, bill);
   });
 

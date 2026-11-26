@@ -615,9 +615,21 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
 
         const result = await patientAPI.registerWithVisit(registerPayload);
         if (onSuccess) {
+          const rawPatient = result.data?.patient || result.patient;
+          const rawVisit = result.data?.visit || result.visit;
+          const cleanPatient = rawPatient ? {
+            ...rawPatient,
+            _id: extractEntityId(rawPatient._id || rawPatient.id || rawPatient),
+          } : null;
+          const cleanVisit = rawVisit ? {
+            ...rawVisit,
+            _id: extractEntityId(rawVisit._id || rawVisit.id || rawVisit),
+            createdAt: rawVisit.createdAt || new Date().toISOString(),
+          } : null;
+
           onSuccess({
-            patient: result.data?.patient || result.patient,
-            visit: result.data?.visit || result.visit,
+            patient: cleanPatient,
+            visit: cleanVisit,
             isIpd: false,
           });
         }

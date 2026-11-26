@@ -1,6 +1,6 @@
 import React from 'react';
 import { CURRENCY_SYMBOL } from '../../constants/currency';
-import { formatDoctorName } from '../../utils/patientFormatters';
+import { formatDoctorName, extractEntityId, formatSafeDate } from '../../utils/patientFormatters';
 import './BillingTemplate.css';
 
 /**
@@ -112,17 +112,19 @@ const BillingTemplate = React.forwardRef(({
 
   // Clean invoice number
   const formatInvoiceNumber = (rawId, vType) => {
-    if (!rawId) return 'INV-2026-0894';
-    const str = String(rawId);
-    if (str.startsWith('INV-') || str.startsWith('OPD-') || str.startsWith('IPD-') || str.startsWith('EMG-') || str.startsWith('VST-')) {
-      return str;
+    const clean = extractEntityId(rawId);
+    const prefix = vType ? `${vType}-` : 'INV-';
+    if (!clean) {
+      return `${prefix}${new Date().getFullYear()}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
     }
-    const clean = str.replace(/^[_\W]+/, '').replace(/^visit_mock_/, '');
-    if (clean.length === 24) {
-      const prefix = vType ? `${vType}-` : 'INV-';
-      return `${prefix}${new Date().getFullYear()}-${clean.substring(clean.length - 8).toUpperCase()}`;
+    if (clean.startsWith('INV-') || clean.startsWith('OPD-') || clean.startsWith('IPD-') || clean.startsWith('EMG-') || clean.startsWith('VST-')) {
+      return clean;
     }
-    return `INV-${clean.toUpperCase()}`;
+    const stripped = clean.replace(/^[_\W]+/, '').replace(/^visit_mock_/, '');
+    if (stripped.length === 24) {
+      return `${prefix}${new Date().getFullYear()}-${stripped.substring(stripped.length - 8).toUpperCase()}`;
+    }
+    return `${prefix}${stripped.toUpperCase()}`;
   };
 
   const cleanInvoiceNo = bill?.billNumber || visit?.billNumber || formatInvoiceNumber(bill?._id || visit?._id, effectiveWorkflow);
@@ -138,7 +140,7 @@ const BillingTemplate = React.forwardRef(({
     if (fieldPath === 'admission.diagnosis') return diagnosis || 'N/A';
     if (fieldPath === 'insurance.provider') return insuranceProvider || 'N/A';
     if (fieldPath === 'insurance.policyNo') return policyNo || 'N/A';
-    if (fieldPath === 'visit.date') return visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN');
+    if (fieldPath === 'visit.date') return formatSafeDate(visit?.createdAt, { day: '2-digit', month: 'short', year: 'numeric' }, 'TODAY');
     return 'N/A';
   };
 
@@ -221,7 +223,7 @@ const BillingTemplate = React.forwardRef(({
         subtotal: effectiveRegFee,
         items: [{
           description: labels.registrationFee || 'Patient Registration Fee',
-          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
+          dateRange: formatSafeDate(visit?.createdAt, undefined, 'TODAY'),
           quantity: '1 Token',
           amount: effectiveRegFee,
           category: 'REGISTRATION',
@@ -237,7 +239,7 @@ const BillingTemplate = React.forwardRef(({
         subtotal: effectiveConsultFee,
         items: [{
           description: labels.consultationFee || (effectiveConsultFee === 0 ? 'Doctor Consultation Fee (Complimentary)' : 'Doctor Consultation Fee'),
-          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
+          dateRange: formatSafeDate(visit?.createdAt, undefined, 'TODAY'),
           quantity: '1 Visit',
           amount: effectiveConsultFee,
           category: 'CONSULTATION',
@@ -253,7 +255,7 @@ const BillingTemplate = React.forwardRef(({
         subtotal: Number(labCharges),
         items: [{
           description: labels.labCharges || 'Laboratory Diagnostic Investigation',
-          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
+          dateRange: formatSafeDate(visit?.createdAt, undefined, 'TODAY'),
           quantity: '1 Panel',
           amount: Number(labCharges),
           category: 'DIAGNOSTICS',
@@ -281,7 +283,7 @@ const BillingTemplate = React.forwardRef(({
           return {
             description: med.recommended + (med.alternativeGiven ? ` (Given: ${med.alternativeGiven})` : '') + (unitPrice > 0 ? ` @ ${currency}${unitPrice.toFixed(2)}/unit` : ''),
             dosageSchedule: med.dosageSchedule,
-            dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
+            dateRange: formatSafeDate(visit?.createdAt, undefined, 'TODAY'),
             quantity: `${qty} Units`,
             unitPrice,
             amount: totalAmt,
@@ -299,7 +301,7 @@ const BillingTemplate = React.forwardRef(({
         subtotal: 0,
         items: [{
           description: 'Clinical Review & Consultation',
-          dateRange: visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'),
+          dateRange: formatSafeDate(visit?.createdAt, undefined, 'TODAY'),
           quantity: 1,
           amount: 0,
           category: 'CONSULTATION',
@@ -439,7 +441,7 @@ const BillingTemplate = React.forwardRef(({
           <div className="billing-title-right">
             <div className="title-meta-item">
               <span className="meta-label">{labels.date || 'Date'}:</span>
-              <span className="meta-val">{visit?.createdAt ? new Date(visit.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+              <span className="meta-val">{formatSafeDate(visit?.createdAt, { day: '2-digit', month: 'short', year: 'numeric' }, 'TODAY')}</span>
             </div>
             <div className="title-meta-item">
               <span className="meta-label">{labels.billNo || 'Receipt No'}:</span>
@@ -513,13 +515,13 @@ const BillingTemplate = React.forwardRef(({
               {doa && isVisible('admissionDate') && (
                 <div className="patient-info-row">
                   <span className="info-label">{labels.admissionDate || 'DOA'}:</span>
-                  <span className="info-value">{new Date(doa).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  <span className="info-value">{formatSafeDate(doa, { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                 </div>
               )}
               {dod && isVisible('dischargeDate') && (
                 <div className="patient-info-row">
                   <span className="info-label">{labels.dischargeDate || 'DOD'}:</span>
-                  <span className="info-value">{new Date(dod).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                  <span className="info-value">{formatSafeDate(dod, { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                 </div>
               )}
               {diagnosis && isVisible('diagnosis') && (
@@ -609,7 +611,7 @@ const BillingTemplate = React.forwardRef(({
                           )}
                         </td>
                         <td className="item-date-text">
-                          {item.dateRange || (item.addedAt ? new Date(item.addedAt).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN'))}
+                          {item.dateRange || formatSafeDate(item.addedAt || visit?.createdAt, undefined, 'TODAY')}
                         </td>
                         <td style={{ textAlign: 'center' }}>{item.quantity || 1}</td>
                         <td className="amount-col">
