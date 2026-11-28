@@ -562,14 +562,21 @@ const registerWithVisit = async (data, staffId) => {
 
     if (isIpdWorkflow) {
       const ipdAdmissionService = require('../ipd/admission/ipd-admission.service');
+      const extractId = (val) => {
+        if (!val) return undefined;
+        if (typeof val === 'string') return val.trim();
+        if (typeof val === 'object') return (val._id || val.id || val.value || '').toString().trim();
+        return String(val).trim();
+      };
+
       const adm = data.admission || {};
       const admissionPayload = {
-        patientId: patient._id,
-        primaryDoctorId: adm.primaryDoctorId || data.visit?.doctorId,
-        admittingDepartmentId: adm.admittingDepartmentId || data.visit?.departmentId,
-        bedId: adm.bedId || adm.selectedBedId,
+        patientId: patient._id.toString(),
+        primaryDoctorId: extractId(adm.primaryDoctorId || data.visit?.doctorId),
+        admittingDepartmentId: extractId(adm.admittingDepartmentId || data.visit?.departmentId),
+        bedId: extractId(adm.bedId || adm.selectedBedId),
         admissionType: adm.admissionType || (data.workflowType === 'IPD_SURGICAL' ? 'SURGICAL' : 'PLANNED'),
-        provisionalDiagnosis: adm.provisionalDiagnosis || data.visit?.reasonForVisit || 'Inpatient Admission',
+        provisionalDiagnosis: (adm.provisionalDiagnosis || data.visit?.reasonForVisit || 'Inpatient Admission').trim(),
         chiefComplaints: adm.chiefComplaints || data.visit?.reasonForVisit || '',
         carePlan: adm.carePlan || '',
         dietTier: adm.dietTier || 'REGULAR_DIET',

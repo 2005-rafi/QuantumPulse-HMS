@@ -372,12 +372,18 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     
     // Workflow Specific Validation
     if (form.workflowType === 'OPD') {
-      if (!form.departmentId) errors.departmentId = 'Please select an outpatient department';
+      const cleanDept = extractEntityId(form.departmentId);
+      if (!cleanDept) errors.departmentId = 'Please select an outpatient department';
     } else if (form.workflowType === 'IPD_MEDICAL' || form.workflowType === 'IPD_SURGICAL') {
-      if (!form.departmentId) errors.departmentId = 'Please select an admitting clinical department';
-      if (!form.doctorId) errors.doctorId = 'Attending doctor / surgeon is required for IPD';
-      if (!form.selectedBedId) errors.selectedBedId = 'Please select a vacant bed from the live bed map';
-      if (!form.provisionalDiagnosis.trim()) errors.provisionalDiagnosis = 'Provisional diagnosis is required';
+      const cleanDept = extractEntityId(form.departmentId);
+      const cleanDoc = extractEntityId(form.doctorId);
+      const cleanBed = extractEntityId(form.selectedBedId);
+      if (!cleanDept) errors.departmentId = 'Please select an admitting clinical department';
+      if (!cleanDoc) errors.doctorId = form.workflowType === 'IPD_SURGICAL' ? 'Operating surgeon is required for surgical admission' : 'Attending physician is required for IPD';
+      if (!cleanBed) errors.selectedBedId = 'Please select a vacant bed from the live bed map';
+      if (!form.provisionalDiagnosis || form.provisionalDiagnosis.trim().length < 3) {
+        errors.provisionalDiagnosis = 'Provisional diagnosis is required (minimum 3 characters)';
+      }
     }
 
     setFieldErrors(errors);
@@ -438,11 +444,15 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     setError(null);
     try {
       if (form.workflowType === 'IPD_MEDICAL' || form.workflowType === 'IPD_SURGICAL') {
+        const cleanDepartmentId = extractEntityId(form.departmentId);
+        const cleanDoctorId = extractEntityId(form.doctorId);
+        const cleanBedId = extractEntityId(form.selectedBedId);
+
         const admissionPayload = {
-          patientId: existingPatientId,
-          primaryDoctorId: form.doctorId,
-          admittingDepartmentId: form.departmentId,
-          bedId: form.selectedBedId,
+          patientId: extractEntityId(existingPatientId),
+          primaryDoctorId: cleanDoctorId,
+          admittingDepartmentId: cleanDepartmentId,
+          bedId: cleanBedId,
           admissionType: form.workflowType === 'IPD_SURGICAL' ? 'SURGICAL' : (form.admissionType || 'PLANNED'),
           provisionalDiagnosis: form.provisionalDiagnosis.trim(),
           chiefComplaints: form.chiefComplaints || form.reasonForVisit || '',
@@ -455,21 +465,23 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         const admitRes = await ipdApi.admitPatient(admissionPayload);
         const admissionData = admitRes.data?.data;
         
-        const matchedPatient = duplicateMatches.find(p => p._id === existingPatientId || p.id === existingPatientId);
+        const matchedPatient = duplicateMatches.find(p => (p._id || p.id) === existingPatientId);
         setGeneratedAdmission({
           ...admissionData,
           patient: matchedPatient || { _id: existingPatientId },
-          primaryDoctor: doctors.find(d => d._id === form.doctorId) || {},
-          department: departments.find(d => d._id === form.departmentId) || {},
+          primaryDoctor: doctors.find(d => (d._id || d.id) === cleanDoctorId) || {},
+          department: departments.find(d => (d._id || d.id) === cleanDepartmentId) || {},
           bed: form.selectedBed || {},
         });
       } else {
+        const cleanDepartmentId = extractEntityId(form.departmentId);
+        const cleanDoctorId = extractEntityId(form.doctorId);
         const visitPayload = {
-          patientId: existingPatientId,
+          patientId: extractEntityId(existingPatientId),
           visitType: form.workflowType === 'NONE' ? 'OPD' : form.workflowType,
           allowConcurrent,
-          ...(form.departmentId && { departmentId: form.departmentId }),
-          ...(form.doctorId && { doctorId: form.doctorId }),
+          ...(cleanDepartmentId && { departmentId: cleanDepartmentId }),
+          ...(cleanDoctorId && { doctorId: cleanDoctorId }),
           ...(form.reasonForVisit && { reasonForVisit: form.reasonForVisit }),
           receptionPayment: {
             registrationFee: Number(form.registrationFee) || 0,
@@ -479,7 +491,7 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         };
 
         const visitResult = await visitAPI.create(visitPayload);
-        const matchedPatient = duplicateMatches.find(p => p._id === existingPatientId || p.id === existingPatientId);
+        const matchedPatient = duplicateMatches.find(p => (p._id || p.id) === existingPatientId);
         if (onSuccess) {
           onSuccess({
             patient: matchedPatient,
@@ -552,34 +564,49 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         }
       }
 
-      // Case A: Direct IPD Admission (Medical or Surgical)
+      // Case A: Direct IPD Admission (Medical or Surgical) — Atomic Transaction Coordinator
       if (form.workflowType === 'IPD_MEDICAL' || form.workflowType === 'IPD_SURGICAL') {
-        const regRes = await patientAPI.register(patientPayload);
-        const registeredPatient = regRes.data?.patient || regRes.data?.data || regRes.data;
+        const cleanDepartmentId = extractEntityId(form.departmentId);
+        const cleanDoctorId = extractEntityId(form.doctorId);
+        const cleanBedId = extractEntityId(form.selectedBedId);
 
-        const admissionPayload = {
-          patientId: registeredPatient._id,
-          primaryDoctorId: form.doctorId,
-          admittingDepartmentId: form.departmentId,
-          bedId: form.selectedBedId,
-          admissionType: form.workflowType === 'IPD_SURGICAL' ? 'SURGICAL' : (form.admissionType || 'PLANNED'),
-          provisionalDiagnosis: form.provisionalDiagnosis.trim(),
-          chiefComplaints: form.chiefComplaints || form.reasonForVisit || '',
-          carePlan: form.carePlan || '',
-          dietTier: form.dietTier || 'REGULAR_DIET',
-          initialDepositAmount: Number(form.initialDepositAmount) || 0,
-          paymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
-          depositPaymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
+        const registerPayload = {
+          patient: patientPayload,
+          workflowType: form.workflowType,
+          admission: {
+            primaryDoctorId: cleanDoctorId,
+            admittingDepartmentId: cleanDepartmentId,
+            bedId: cleanBedId,
+            admissionType: form.workflowType === 'IPD_SURGICAL' ? 'SURGICAL' : (form.admissionType || 'PLANNED'),
+            provisionalDiagnosis: form.provisionalDiagnosis.trim(),
+            chiefComplaints: form.chiefComplaints || form.reasonForVisit || '',
+            carePlan: form.carePlan || '',
+            dietTier: form.dietTier || 'REGULAR_DIET',
+            initialDepositAmount: Number(form.initialDepositAmount) || 0,
+            paymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
+            depositPaymentMethod: (form.depositPaymentMethod || 'Cash').toUpperCase(),
+          }
         };
 
-        const admitRes = await ipdApi.admitPatient(admissionPayload);
-        const admissionData = admitRes.data?.data;
+        const result = await patientAPI.registerWithVisit(registerPayload);
+        const rawPatient = result.data?.patient || result.patient;
+        const rawAdmission = result.data?.admission || result.admission;
+
+        const registeredPatient = rawPatient ? {
+          ...rawPatient,
+          _id: extractEntityId(rawPatient._id || rawPatient.id || rawPatient)
+        } : null;
+
+        const admissionData = rawAdmission ? {
+          ...rawAdmission,
+          _id: extractEntityId(rawAdmission._id || rawAdmission.id || rawAdmission)
+        } : null;
 
         const completeSlipData = {
           ...admissionData,
           patient: registeredPatient,
-          primaryDoctor: doctors.find(d => d._id === form.doctorId) || {},
-          department: departments.find(d => d._id === form.departmentId) || {},
+          primaryDoctor: doctors.find(d => (d._id || d.id) === cleanDoctorId) || {},
+          department: departments.find(d => (d._id || d.id) === cleanDepartmentId) || {},
           bed: form.selectedBed || {},
           initialDepositAmount: form.initialDepositAmount,
           depositPaymentMethod: form.depositPaymentMethod,
@@ -652,11 +679,30 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       console.error('[PatientRegistrationForm] Registration submission error:', err);
       const apiDetails = err.response?.data?.details;
       if (Array.isArray(apiDetails) && apiDetails.length > 0) {
+        const FIELD_ALIAS_MAP = {
+          primaryDoctorId: 'doctorId',
+          admittingDepartmentId: 'departmentId',
+          bedId: 'selectedBedId',
+          'visit.departmentId': 'departmentId',
+          'visit.doctorId': 'doctorId',
+          'admission.primaryDoctorId': 'doctorId',
+          'admission.admittingDepartmentId': 'departmentId',
+          'admission.bedId': 'selectedBedId',
+          'admission.provisionalDiagnosis': 'provisionalDiagnosis',
+          'patient.phone': 'phone',
+          'patient.firstName': 'firstName',
+          'patient.lastName': 'lastName',
+          'patient.dob': 'dob',
+          'patient.gender': 'gender',
+          'patient.aadhaar': 'aadhaar',
+        };
+
         const mappedErrors = {};
         apiDetails.forEach((detail) => {
-          const fieldKey = detail.key || (detail.field ? detail.field.split('.').pop() : null);
-          if (fieldKey && detail.message) {
-            mappedErrors[fieldKey] = detail.message;
+          const rawPath = detail.field || detail.key;
+          const mappedKey = FIELD_ALIAS_MAP[rawPath] || FIELD_ALIAS_MAP[detail.key] || detail.key || (detail.field ? detail.field.split('.').pop() : null);
+          if (mappedKey && detail.message) {
+            mappedErrors[mappedKey] = detail.message;
           }
         });
         if (Object.keys(mappedErrors).length > 0) {

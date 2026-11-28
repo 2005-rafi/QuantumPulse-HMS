@@ -152,7 +152,7 @@ export const BedAllocationPicker = ({
   };
 
   return (
-    <div className="md3-bed-picker-container">
+    <div className="md3-bed-picker-container" id="selectedBedId">
       {/* Header */}
       <div className="md3-bed-picker-header">
         <h4 className="md3-bed-picker-title">
