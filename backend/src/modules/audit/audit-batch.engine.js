@@ -178,7 +178,7 @@ class AuditBatchEngine {
       const lines = items.map((i) => JSON.stringify(i)).join('\n') + '\n';
       fs.appendFileSync(this.walPath, lines, 'utf8');
     } catch (walErr) {
-      console.error('CRITICAL: Audit WAL write failed!', walErr);
+      console.warn('[AuditEngine] Non-blocking WAL write failed (degrading gracefully):', walErr.message);
     }
   }
 

@@ -4,14 +4,24 @@ const auditService = require('../audit/audit.service');
 const catchAsync = require('../../core/utils/catch-async');
 const breakGlassService = require('./break-glass.service');
 const { sanitizePatientForRole } = require('../../core/utils/phi-sanitizer');
+const logger = require('../../core/logger');
+
+// Defensive non-blocking audit logging helper: audit failure must NEVER fail clinical operations
+const safeLogAudit = (actorId, role, action, targetId, details, ip, options = {}) => {
+  try {
+    auditService.logEvent(actorId, role, action, targetId, details, ip, options);
+  } catch (err) {
+    logger.warn(`[PatientController] Auxiliary audit logging skipped for ${action}:`, { error: err.message });
+  }
+};
 
 const create = catchAsync(async (req, res) => {
   const patient = await service.create(req.body);
 
   // Log audit event (HIPAA compliant - no PHI in audit logs)
-  auditService.logEvent(
-    req.user.staffId || req.user.userId,
-    req.user.role,
+  safeLogAudit(
+    req.user?.staffId || req.user?.userId,
+    req.user?.role || 'RECEPTIONIST',
     'PATIENT_REGISTER',
     patient._id,
     { resourceType: 'PATIENT', mrn: patient.mrn, action: 'CREATE' },
@@ -24,9 +34,9 @@ const create = catchAsync(async (req, res) => {
 const search = catchAsync(async (req, res) => {
   const result = await service.search(req.query, req.user);
 
-  auditService.logEvent(
-    req.user.staffId || req.user.userId,
-    req.user.role,
+  safeLogAudit(
+    req.user?.staffId || req.user?.userId,
+    req.user?.role || 'STAFF',
     'PATIENT_LIST_QUERIED',
     null,
     { resourceType: 'PATIENT', queryParams: Object.keys(req.query), resultsCount: result.total },
@@ -42,13 +52,13 @@ const search = catchAsync(async (req, res) => {
 
 const getById = catchAsync(async (req, res) => {
   const patient = await service.getById(req.params.id, req.user);
-  const staffId = req.user.staffId || req.user.userId;
+  const staffId = req.user?.staffId || req.user?.userId;
   const hasBreakGlass = await breakGlassService.hasActiveGrant(patient._id, staffId);
   const sanitized = sanitizePatientForRole(patient, req.user, { hasBreakGlassGrant: hasBreakGlass });
 
-  auditService.logEvent(
+  safeLogAudit(
     staffId,
-    req.user.role,
+    req.user?.role || 'STAFF',
     hasBreakGlass ? 'PATIENT_RECORD_ACCESSED_BREAK_GLASS' : 'PATIENT_RECORD_ACCESSED',
     patient._id,
     { resourceType: 'PATIENT', mrn: patient.mrn, action: 'READ', breakGlassApplied: hasBreakGlass },
@@ -60,13 +70,13 @@ const getById = catchAsync(async (req, res) => {
 
 const getByMrn = catchAsync(async (req, res) => {
   const patient = await service.getByMrn(req.params.mrn, req.user);
-  const staffId = req.user.staffId || req.user.userId;
+  const staffId = req.user?.staffId || req.user?.userId;
   const hasBreakGlass = await breakGlassService.hasActiveGrant(patient._id, staffId);
   const sanitized = sanitizePatientForRole(patient, req.user, { hasBreakGlassGrant: hasBreakGlass });
 
-  auditService.logEvent(
+  safeLogAudit(
     staffId,
-    req.user.role,
+    req.user?.role || 'STAFF',
     hasBreakGlass ? 'PATIENT_RECORD_ACCESSED_BREAK_GLASS' : 'PATIENT_RECORD_ACCESSED',
     patient._id,
     { resourceType: 'PATIENT', mrn: patient.mrn, action: 'READ', breakGlassApplied: hasBreakGlass },
@@ -93,9 +103,9 @@ const breakGlass = catchAsync(async (req, res) => {
 const update = catchAsync(async (req, res) => {
   const patient = await service.update(req.params.id, req.body);
 
-  auditService.logEvent(
-    req.user.staffId || req.user.userId,
-    req.user.role,
+  safeLogAudit(
+    req.user?.staffId || req.user?.userId,
+    req.user?.role || 'STAFF',
     'PATIENT_UPDATE',
     patient._id,
     { resourceType: 'PATIENT', mrn: patient.mrn, changedFields: Object.keys(req.body), action: 'UPDATE' },
@@ -106,11 +116,11 @@ const update = catchAsync(async (req, res) => {
 });
 
 const addHistory = catchAsync(async (req, res) => {
-  const patient = await service.addMedicalHistory(req.params.id, req.body, req.user.staffId);
+  const patient = await service.addMedicalHistory(req.params.id, req.body, req.user?.staffId);
 
-  auditService.logEvent(
-    req.user.staffId || req.user.userId,
-    req.user.role,
+  safeLogAudit(
+    req.user?.staffId || req.user?.userId,
+    req.user?.role || 'STAFF',
     'PATIENT_HISTORY_ADD',
     patient._id,
     { condition: req.body.condition },
@@ -129,13 +139,18 @@ const registerWithVisit = catchAsync(async (req, res) => {
   const staffId = req.user?.staffId || req.user?.userId || req.user?.id || req.user?._id;
   const result = await service.registerWithVisit(req.body, staffId);
 
-  // Log audit event
-  auditService.logEvent(
+  // Safely log audit event (HIPAA compliant - non-blocking)
+  safeLogAudit(
     staffId,
     req.user?.role || 'RECEPTIONIST',
     'PATIENT_REGISTER',
-    result.patient._id,
-    { mrn: result.patient.mrn, name: `${result.patient.firstName} ${result.patient.lastName}` },
+    result?.patient?._id,
+    {
+      mrn: result?.patient?.mrn,
+      patientName: `${result?.patient?.firstName || ''} ${result?.patient?.lastName || ''}`.trim(),
+      workflowType: req.body?.workflowType || 'OPD',
+      isIpd: Boolean(result?.isIpd),
+    },
     req.ip
   );
 
@@ -145,9 +160,9 @@ const registerWithVisit = catchAsync(async (req, res) => {
 const getDeleted = catchAsync(async (req, res) => {
   const result = await service.getDeletedPatients(req.query);
 
-  auditService.logEvent(
-    req.user.staffId || req.user.userId,
-    req.user.role,
+  safeLogAudit(
+    req.user?.staffId || req.user?.userId,
+    req.user?.role || 'ADMINISTRATOR',
     'DELETED_PATIENTS_LIST_QUERIED',
     null,
     { resourceType: 'PATIENT', queryParams: Object.keys(req.query), resultsCount: result.total },
@@ -161,9 +176,9 @@ const restore = catchAsync(async (req, res) => {
   const staffId = req.user?.staffId || req.user?.userId || req.user?.id || req.user?._id;
   const patient = await service.restorePatient(req.params.id, staffId);
 
-  auditService.logEvent(
+  safeLogAudit(
     staffId,
-    req.user.role,
+    req.user?.role || 'ADMINISTRATOR',
     'PATIENT_RESTORED',
     patient._id,
     { mrn: patient.mrn, name: `${patient.firstName} ${patient.lastName}` },

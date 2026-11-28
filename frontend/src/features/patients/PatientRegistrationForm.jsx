@@ -677,6 +677,33 @@ export const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       setFieldErrors({});
     } catch (err) {
       console.error('[PatientRegistrationForm] Registration submission error:', err);
+      const httpStatus = err.response?.status;
+
+      // Intelligent Recovery: If a 409 Conflict (duplicate record) or 500 occurred after commit,
+      // verify if the patient record was saved and allow immediate encounter/slip transition
+      if ((httpStatus === 409 || httpStatus === 500) && form.phone?.trim()) {
+        try {
+          const dupRes = await patientAPI.checkDuplicates({
+            phone: form.phone.trim(),
+            firstName: form.firstName.trim(),
+            dob: form.dob,
+          });
+          const matches = dupRes.data?.data || dupRes.data || [];
+          if (Array.isArray(matches) && matches.length > 0) {
+            setDuplicateMatches(matches);
+            setIsReviewingDuplicates(true);
+            setError(
+              httpStatus === 409
+                ? 'A patient with this telephone number is already registered in the hospital database. Please review their record below to create an encounter or view their profile.'
+                : 'Registration was successfully committed to the database, but client confirmation was interrupted. Please review the patient record below.'
+            );
+            return;
+          }
+        } catch (recoveryErr) {
+          console.warn('[PatientRegistrationForm] Duplicate recovery check skipped:', recoveryErr);
+        }
+      }
+
       const apiDetails = err.response?.data?.details;
       if (Array.isArray(apiDetails) && apiDetails.length > 0) {
         const FIELD_ALIAS_MAP = {

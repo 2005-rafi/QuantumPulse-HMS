@@ -1,4 +1,4 @@
-﻿const repo = require('./patient.repository');
+const repo = require('./patient.repository');
 const AppError = require('../../core/errors/app-error');
 const crypto = require('crypto');
 const sequenceService = require('../../core/database/sequence.service');
@@ -596,7 +596,17 @@ const registerWithVisit = async (data, staffId) => {
       visit = await visitService.createVisit(visitPayload, validStaffId, session);
     }
 
-    return { patient, visit, admission, isIpd: isIpdWorkflow };
+    // Sever Mongoose document transaction session bindings before exiting withTransaction
+    const cleanPatient = patient && typeof patient.toObject === 'function' ? patient.toObject() : patient;
+    const cleanVisit = visit && typeof visit.toObject === 'function' ? visit.toObject() : visit;
+    const cleanAdmission = admission && typeof admission.toObject === 'function' ? admission.toObject() : admission;
+
+    return {
+      patient: cleanPatient,
+      visit: cleanVisit,
+      admission: cleanAdmission,
+      isIpd: isIpdWorkflow,
+    };
   });
 };
 
