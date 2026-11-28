@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const dns = require('dns');
 const config = require('../config');
 const logger = require('../logger');
+const { registerAllModels } = require('./register-models');
 
 // Ensure reliable public DNS resolvers (Google / Cloudflare) for MongoDB Atlas SRV record resolution
 try {
@@ -24,6 +25,9 @@ if (typeof dns.setDefaultResultOrder === 'function') {
  */
 const connectDB = async () => {
   try {
+    // 0. Ensure all Mongoose schemas and models are registered in memory
+    registerAllModels();
+
     // Defensive assertion: ensure URI is not local
     if (typeof config.validateCloudMongoUri === 'function') {
       config.validateCloudMongoUri(config.mongoUri);

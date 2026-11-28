@@ -40,8 +40,12 @@ const omnisearchRoutes = require('./modules/search/omnisearch.routes');
 const notificationRoutes = require('./modules/notifications/notification.routes');
 const developmentRoutes = require('./modules/patient/patient-development.routes');
 const { handlePatientStatusSSE } = require('./modules/realtime/patient-status-events.service');
+const { registerAllModels } = require('./core/database/register-models');
 
 const createApp = () => {
+  // Preload all Mongoose models
+  registerAllModels();
+
   const app = express();
 
   // 1. Security & CORS configuration (Zero-Trust Origin Boundary)

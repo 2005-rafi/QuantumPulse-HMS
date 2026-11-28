@@ -14,6 +14,12 @@ const auditService = require('../../audit/audit.service');
 const sequenceService = require('../../../core/database/sequence.service');
 const { withTransaction } = require('../../../core/database/transaction');
 
+// Dependent models required for robust population
+require('../../administration/department.model');
+require('../../staff/staff.model');
+require('../ot/ot-session.model');
+require('../../visits/visit.model');
+
 class IPDAdmissionService {
   async admitPatient(data, admittedByStaffId, externalSession = null) {
     const execute = async (session) => {
@@ -614,7 +620,9 @@ class IPDAdmissionService {
    */
   async getPendingAdmissionAdvice() {
     const Visit = require('../../visits/visit.model');
-    return Visit.find({
+    const patientRepo = require('../../patient/patient.repository');
+
+    const visits = await Visit.find({
       status: { $nin: ['CONVERTED_TO_IPD', 'COMPLETED', 'CANCELLED'] },
       'ipdAdmissionAdvice.status': { $ne: 'ADMITTED' },
       $or: [
@@ -622,12 +630,20 @@ class IPDAdmissionService {
         { 'ipdAdmissionAdvice.status': 'RECOMMENDED' },
       ],
     })
-      .populate('patientId', 'firstName lastName mrn gender dateOfBirth contactNumber age bloodGroup')
+      .populate('patientId', 'firstName lastName mrn gender dob phone bloodGroup age')
       .populate('departmentId', 'name')
       .populate('ipdAdmissionAdvice.advisingDoctorId', 'firstName lastName specialization')
       .populate('ipdAdmissionAdvice.suggestedSurgeonId', 'firstName lastName specialization')
       .populate('ipdAdmissionAdvice.otSessionId', 'procedureName surgeryType urgency status scheduledStart')
-      .sort({ 'ipdAdmissionAdvice.advisedAt': -1 });
+      .sort({ 'ipdAdmissionAdvice.advisedAt': -1 })
+      .lean();
+
+    return visits.map((v) => {
+      if (v.patientId && typeof v.patientId === 'object') {
+        v.patientId = patientRepo.decryptPatient(v.patientId);
+      }
+      return v;
+    });
   }
 
   /**
